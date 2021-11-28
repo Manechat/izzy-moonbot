@@ -42,7 +42,7 @@ namespace Izzy_Moonbot
                     _settings.token);
 
                 await _client.StartAsync();
-                await _client.SetGameAsync("with my paintbrush");
+                await _client.SetGameAsync($".help for commands");
                 await InstallCommandsAsync();
 
                 // Block this task until the program is closed.
