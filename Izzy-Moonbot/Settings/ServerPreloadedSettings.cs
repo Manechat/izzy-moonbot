@@ -7,7 +7,7 @@
         public ServerPreloadedSettings()
         {
             name = "";
-            prefix = ';';
+            prefix = '.';
             listenToBots = false;
             aliases = new Dictionary<string, string>();
         }

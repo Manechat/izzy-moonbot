@@ -13,13 +13,11 @@
     public class AdminModule : ModuleBase<SocketCommandContext>
     {
         private readonly LoggingService _logger;
-        private readonly BooruService _booru;
         private readonly AllPreloadedSettings _servers;
 
-        public AdminModule(LoggingService logger, BooruService booru, AllPreloadedSettings servers)
+        public AdminModule(LoggingService logger, AllPreloadedSettings servers)
         {
             _logger = logger;
-            _booru = booru;
             _servers = servers;
         }
 
@@ -33,14 +31,7 @@
         {
             var settings = new ServerSettings();
             ulong channelSetId;
-            var checkedFilterId = await _booru.CheckFilterAsync(filterId);
-            if (checkedFilterId == 0)
-            {
-                await ReplyAsync(
-                    "I could not find that filter; please make sure it exists and is set to public. You may change the filter later with `;admin filter set <filterId>`. Continuing setup with my default filter of 175.");
-                filterId = 175;
-            }
-
+            
             settings.defaultFilterId = filterId;
             await ReplyAsync($"Using <https://manebooru.art/filters/{filterId}>");
             await ReplyAsync("Moving in to my new place...");
@@ -91,7 +82,6 @@
             await FileHelper.SaveServerSettingsAsync(settings, Context);
             await ReplyAsync(
                 "Settings saved. Now building the spoiler list and redlist. This may take a few minutes, depending on how many tags are spoilered or hidden in the filter. Please wait until they are completed; I will let you know when I am finished.");
-            await _booru.RefreshListsAsync(Context, settings);
             await ReplyAsync("The lists have been built. I'm all set! Type `;help admin` for a list of other admin setup commands.");
             await _logger.Log($"setup: filterId: {filterId}, channel {adminChannelName} <SUCCESS>, role {adminRoleName} <SUCCESS>", Context, true);
         }
@@ -115,28 +105,6 @@
                 case "":
                     await ReplyAsync("You need to specify an admin command.");
                     await _logger.Log("admin: <FAIL>", Context);
-                    break;
-                case "filter":
-                    switch (commandTwo)
-                    {
-                        case "":
-                            await ReplyAsync("You must specify a subcommand.");
-                            await _logger.Log($"admin: {commandOne} <FAIL>", Context);
-                            break;
-                        case "get":
-                            await FilterGetAsync(settings);
-                            await _logger.Log($"admin: {commandOne} {commandTwo} <SUCCESS>", Context);
-                            break;
-                        case "set":
-                            await FilterSetAsync(commandThree, settings);
-                            await _logger.Log($"admin: {commandOne} {commandTwo} {commandThree} <SUCCESS>", Context, true);
-                            break;
-                        default:
-                            await ReplyAsync($"Invalid command {commandTwo}");
-                            await _logger.Log($"admin: {commandOne} {commandTwo} <FAIL>", Context);
-                            break;
-                    }
-
                     break;
                 case "adminchannel":
                     switch (commandTwo)
@@ -205,38 +173,6 @@
                             settings.ignoredChannels.Clear();
                             await FileHelper.SaveServerSettingsAsync(settings, Context);
                             await ReplyAsync("Ignored channels list cleared.");
-                            await _logger.Log($"admin: {commandOne} {commandTwo} <SUCCESS>", Context, true);
-                            break;
-                        default:
-                            await ReplyAsync($"Invalid command {commandTwo}");
-                            await _logger.Log($"admin: {commandOne} {commandTwo} <FAIL>", Context);
-                            break;
-                    }
-
-                    break;
-                case "filterchannel":
-                    switch (commandTwo)
-                    {
-                        case "":
-                            await ReplyAsync("You must specify a subcommand.");
-                            await _logger.Log($"admin: {commandOne} <FAIL>", Context);
-                            break;
-                        case "get":
-                            await FilterChannelGetAsync(settings);
-                            await _logger.Log($"admin: {commandOne} {commandTwo} <SUCCESS>", Context);
-                            break;
-                        case "add":
-                            await FilterChannelAddAsync(commandThree, commandFour, settings);
-                            await _logger.Log($"admin: {commandOne} {commandTwo} {commandThree} <SUCCESS>", Context, true);
-                            break;
-                        case "remove":
-                            await FilterChannelRemoveAsync(commandThree, settings);
-                            await _logger.Log($"admin: {commandOne} {commandTwo} {commandThree} <SUCCESS>", Context, true);
-                            break;
-                        case "clear":
-                            settings.filteredChannels.Clear();
-                            await FileHelper.SaveServerSettingsAsync(settings, Context);
-                            await ReplyAsync("Channel-specific filters cleared.");
                             await _logger.Log($"admin: {commandOne} {commandTwo} <SUCCESS>", Context, true);
                             break;
                         default:
@@ -801,23 +737,6 @@
             return "SUCCESS";
         }
 
-        private async Task FilterSetAsync(string filter, ServerSettings settings)
-        {
-            var filterId = await _booru.CheckFilterAsync(int.Parse(filter));
-            if (filterId > 0)
-            {
-                settings.defaultFilterId = filterId;
-                await FileHelper.SaveServerSettingsAsync(settings, Context);
-                await ReplyAsync($"Filter set to {filterId}. Please wait while the spoiler list and redlist are rebuilt.");
-                await _booru.RefreshListsAsync(Context, settings);
-                await ReplyAsync($"The lists have been refreshed for Filter {filterId}");
-            }
-            else
-            {
-                await ReplyAsync($"Invalid filter {filter}. Make sure the requested filter exists and is set to public");
-            }
-        }
-
         private async Task FilterGetAsync(ServerSettings settings)
         {
             await ReplyAsync($"The current filter is <https://manebooru.art/filters/{settings.defaultFilterId}>");
@@ -989,49 +908,6 @@
                 }
 
                 await ReplyAsync($"<#{channelRemoveId}> was not on the list.");
-            }
-            else
-            {
-                await ReplyAsync($"Invalid channel name #{channelName}.");
-            }
-        }
-
-        private async Task FilterChannelAddAsync(string channelName, int filterId, ServerSettings settings)
-        {
-            var channelAddId = await DiscordHelper.GetChannelIdIfAccessAsync(channelName, Context);
-            if (channelAddId > 0)
-            {
-                var validFilter = await _booru.CheckFilterAsync(filterId);
-                if (validFilter == 0)
-                {
-                    await ReplyAsync(
-                        $"Invalid filter {filterId}. Please make sure that filter exists and is public. <#{channelAddId}> will not be added to the list at this time.");
-                    return;
-                }
-
-                if (validFilter == settings.defaultFilterId)
-                {
-                    await ReplyAsync("That's the server default filter already.");
-                    return;
-                }
-
-                foreach (var channel in settings.filteredChannels)
-                {
-                    if (channel.Item1 != channelAddId)
-                    {
-                        continue;
-                    }
-
-                    await ReplyAsync($"Updated the filter for <#{channelAddId}> from {channel.Item2} to {filterId}.");
-                    settings.filteredChannels.Remove(channel);
-                    settings.filteredChannels.Add(new Tuple<ulong, int>(channelAddId, filterId));
-                    await FileHelper.SaveServerSettingsAsync(settings, Context);
-                    return;
-                }
-
-                settings.filteredChannels.Add(new Tuple<ulong, int>(channelAddId, filterId));
-                await FileHelper.SaveServerSettingsAsync(settings, Context);
-                await ReplyAsync($"Set <#{channelAddId}> to use filter {filterId}.");
             }
             else
             {
@@ -1422,144 +1298,6 @@
             else
             {
                 await ReplyAsync("Log posting channel not set yet.");
-            }
-        }
-
-        [Summary("Submodule for managing the yellowlist")]
-        public class BadlistModule : ModuleBase<SocketCommandContext>
-        {
-            private readonly LoggingService _logger;
-
-            public BadlistModule(LoggingService logger)
-            {
-                _logger = logger;
-            }
-
-            [Command("yellowlist")]
-            [Summary("Manages the search term yellowlist")]
-            public async Task YellowListCommandAsync([Summary("Subcommand")] string command = "", [Remainder] [Summary("Search term")] string term = "")
-            {
-                var settings = await FileHelper.LoadServerSettingsAsync(Context);
-                if (!DiscordHelper.DoesUserHaveAdminRoleAsync(Context, settings))
-                {
-                    return;
-                }
-
-                switch (command)
-                {
-                    case "":
-                        await ReplyAsync("You must specify a subcommand.");
-                        await _logger.Log("yellowlist: <FAIL>", Context);
-                        break;
-                    case "add":
-                        var (addList, failList) = await BadlistHelper.AddYellowTerm(term, settings, Context);
-                        if (failList.Count == 0)
-                        {
-                            var addOutput = "";
-                            for (var x = 0; x < addList.Count; x++)
-                            {
-                                var addedTerm = addList[x];
-                                addOutput += $"`{addedTerm}`";
-                                if (x < addList.Count - 2)
-                                {
-                                    addOutput += ", ";
-                                }
-
-                                if (x == addList.Count - 2)
-                                {
-                                    addOutput += ", and ";
-                                }
-                            }
-
-                            await ReplyAsync($"Added {addOutput} to the yellowlist.");
-                            await _logger.Log($"yellowlist: add {addOutput} <SUCCESS>", Context, true);
-                        }
-                        else if (addList.Count == 0)
-                        {
-                            await ReplyAsync("All terms entered are already on the yellowlist.");
-                            await _logger.Log($"yellowlist: add <FAIL> {term}", Context);
-                        }
-                        else
-                        {
-                            var failOutput = "";
-                            var addOutput = "";
-                            for (var x = 0; x < addList.Count; x++)
-                            {
-                                var addedTerm = addList[x];
-                                addOutput += $"`{addedTerm}`";
-                                if (x < addList.Count - 2)
-                                {
-                                    addOutput += ", ";
-                                }
-
-                                if (x == addList.Count - 2)
-                                {
-                                    addOutput += ", and ";
-                                }
-                            }
-
-                            for (var x = 0; x < failList.Count; x++)
-                            {
-                                var failedTerm = failList[x];
-                                failOutput += $"`{failedTerm}`";
-                                if (x < failList.Count - 2)
-                                {
-                                    failOutput += ", ";
-                                }
-
-                                if (x == failList.Count - 2)
-                                {
-                                    failOutput += ", and ";
-                                }
-                            }
-
-                            await ReplyAsync($"Added {addOutput} to the yellowlist, and the yellowlist already contained {failOutput}.");
-                            await _logger.Log($"yellowlist: add {addOutput} <FAIL> {failOutput}", Context);
-                        }
-
-                        break;
-                    case "remove":
-                        var removed = await BadlistHelper.RemoveYellowTerm(term, settings, Context);
-                        if (removed)
-                        {
-                            await ReplyAsync($"Removed `{term}` from the yellowlist.");
-                            await _logger.Log($"yellowlist: remove {term} <SUCCESS>", Context, true);
-                        }
-                        else
-                        {
-                            await ReplyAsync($"`{term}` was not on the yellowlist.");
-                            await _logger.Log($"yellowlist: remove {term} <FAIL>", Context);
-                        }
-
-                        break;
-                    case "get":
-                        var output = "The yellowlist is currently empty.";
-                        foreach (var item in settings.yellowList)
-                        {
-                            if (output == "The yellowlist is currently empty.")
-                            {
-                                output = $"`{item}`";
-                            }
-                            else
-                            {
-                                output += $", `{item}`";
-                            }
-                        }
-
-                        await ReplyAsync($"__Yellowlist Terms:__{Environment.NewLine}{output}");
-                        await _logger.Log("yellowlist: get", Context);
-                        break;
-                    case "clear":
-                        settings.yellowList.Clear();
-                        await FileHelper.SaveServerSettingsAsync(settings, Context);
-                        await ReplyAsync("Yellowlist cleared");
-                        await _logger.Log("yellowlist: clear", Context, true);
-                        break;
-                    default:
-                        await ReplyAsync("Invalid subcommand");
-                        await _logger.Log($"yellowlist: {command} <FAIL>", Context);
-                        break;
-                }
             }
         }
 
