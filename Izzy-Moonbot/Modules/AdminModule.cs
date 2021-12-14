@@ -499,6 +499,33 @@
             await _logger.Log("getsettings: <SUCCESS>", Context);
         }
 
+        [Command("gethistory")]
+        [RequireOwner]
+        public async Task GetChannelHistoryCommandAsync(string channel, ulong messageId)
+        {
+            var settings = await FileHelper.LoadServerSettingsAsync(Context);
+            if (!DiscordHelper.DoesUserHaveAdminRoleAsync(Context, settings))
+            {
+                return;
+            }
+
+            if (Context.IsPrivate)
+            {
+                await ReplyAsync("Cannot get settings in a DM.");
+                return;
+            }
+
+            var errorMessage = await ChannelHistoryGetAsync(Context, settings, channel, messageId);
+            if (errorMessage.Contains("<ERROR>"))
+            {
+                await ReplyAsync(errorMessage);
+                await _logger.Log($"getsettings: {errorMessage} <FAIL>", Context);
+                return;
+            }
+
+            await _logger.Log("getsettings: <SUCCESS>", Context);
+        }
+
         [Command("<blank message>")]
         [Summary("Runs on a blank message")]
         public async Task BlankMessageCommandAsync()
@@ -573,6 +600,31 @@
 
             var logPostChannel = context.Guild.GetTextChannel(settings.logPostChannel);
             await logPostChannel.SendFileAsync(filepath, $"{context.Guild.Name}-users.conf");
+            return "SUCCESS";
+        }
+
+        private async Task<string> ChannelHistoryGetAsync(SocketCommandContext context, ServerSettings settings, string channelString, ulong messageId)
+        {
+            await ReplyAsync("Writing channel history to file...");
+            var channelId = await DiscordHelper.GetChannelIdIfAccessAsync(channelString, context);
+            var channel = context.Guild.GetTextChannel(channelId);
+            var filepath = FileHelper.SetUpFilepath(FilePathType.Server, channelString, "log", Context);
+            if (!File.Exists(filepath))
+            {
+                File.Create(filepath);
+            }
+
+            var messageList = new List<string>();
+            var messages = await channel.GetMessagesAsync(messageId, Direction.After, 200000).FlattenAsync<IMessage>();
+            
+            foreach (var message in messages)
+            {
+                messageList.Add(message.Content);
+            }
+            await File.WriteAllLinesAsync(filepath, messageList);
+
+            var logPostChannel = context.Guild.GetTextChannel(settings.logPostChannel);
+            await logPostChannel.SendFileAsync(filepath, $"{context.Guild.Name}-{channelString}.log");
             return "SUCCESS";
         }
 

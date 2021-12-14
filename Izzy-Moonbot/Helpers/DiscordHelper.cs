@@ -113,7 +113,7 @@
 
         private static async Task<ulong> CheckIfChannelExistsAsync(string channelName, SocketCommandContext context)
         {
-            var cloudyCanvas = await context.Channel.GetUserAsync(context.Client.CurrentUser.Id);
+            var izzyMoonbot = await context.Channel.GetUserAsync(context.Client.CurrentUser.Id);
             if (context.IsPrivate)
             {
                 return 0;
@@ -121,7 +121,7 @@
 
             foreach (var channel in context.Guild.TextChannels)
             {
-                if (channel.Name == channelName && channel.Users.Contains(cloudyCanvas))
+                if (channel.Name == channelName && channel.Users.Contains(izzyMoonbot))
                 {
                     return channel.Id;
                 }
@@ -132,7 +132,7 @@
 
         private static async Task<ulong> CheckIfChannelExistsAsync(ulong channelId, SocketCommandContext context)
         {
-            var cloudyCanvas = await context.Channel.GetUserAsync(context.Client.CurrentUser.Id);
+            var izzyMoonbot = await context.Channel.GetUserAsync(context.Client.CurrentUser.Id);
             if (context.IsPrivate)
             {
                 return 0;
@@ -140,7 +140,7 @@
 
             foreach (var channel in context.Guild.TextChannels)
             {
-                if (channel.Id == channelId && channel.Users.Contains(cloudyCanvas))
+                if (channel.Id == channelId && channel.Users.Contains(izzyMoonbot))
                 {
                     return channel.Id;
                 }
