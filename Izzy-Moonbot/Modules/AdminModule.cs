@@ -8,6 +8,7 @@
     using Izzy_Moonbot.Settings;
     using Discord;
     using Discord.Commands;
+    using System.Collections.Generic;
 
     [Summary("Module for managing admin functions")]
     public class AdminModule : ModuleBase<SocketCommandContext>
@@ -471,6 +472,33 @@
             await _logger.Log("getsettings: <SUCCESS>", Context);
         }
 
+        [Command("getusers")]
+        [RequireOwner]
+        public async Task GetUsersCommandAsync()
+        {
+            var settings = await FileHelper.LoadServerSettingsAsync(Context);
+            if (!DiscordHelper.DoesUserHaveAdminRoleAsync(Context, settings))
+            {
+                return;
+            }
+
+            if (Context.IsPrivate)
+            {
+                await ReplyAsync("Cannot get settings in a DM.");
+                return;
+            }
+
+            var errorMessage = await UsersGetAsync(Context, settings);
+            if (errorMessage.Contains("<ERROR>"))
+            {
+                await ReplyAsync(errorMessage);
+                await _logger.Log($"getsettings: {errorMessage} <FAIL>", Context);
+                return;
+            }
+
+            await _logger.Log("getsettings: <SUCCESS>", Context);
+        }
+
         [Command("<blank message>")]
         [Summary("Runs on a blank message")]
         public async Task BlankMessageCommandAsync()
@@ -522,6 +550,29 @@
 
             var logPostChannel = context.Guild.GetTextChannel(settings.logPostChannel);
             await logPostChannel.SendFileAsync(filepath, $"{context.Guild.Name}-settings.conf");
+            return "SUCCESS";
+        }
+
+        private async Task<string> UsersGetAsync(SocketCommandContext context, ServerSettings settings)
+        {
+            await ReplyAsync("Writing user list to file...");
+            var filepath = FileHelper.SetUpFilepath(FilePathType.Server, "users", "conf", Context);
+            if (!File.Exists(filepath))
+            {
+                File.Create(filepath);
+            }
+
+            var userlist = new List<string>();
+            await context.Guild.DownloadUsersAsync();
+            var users = context.Guild.Users;
+            foreach (var user in users)
+            {
+                userlist.Add($"<@{user.Id}>, {user.Username}#{user.Discriminator}");
+            }
+            await File.WriteAllLinesAsync(filepath, userlist);
+
+            var logPostChannel = context.Guild.GetTextChannel(settings.logPostChannel);
+            await logPostChannel.SendFileAsync(filepath, $"{context.Guild.Name}-users.conf");
             return "SUCCESS";
         }
 
