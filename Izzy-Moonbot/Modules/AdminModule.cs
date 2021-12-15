@@ -9,6 +9,7 @@
     using Discord;
     using Discord.Commands;
     using System.Collections.Generic;
+    using System.Linq;
 
     [Summary("Module for managing admin functions")]
     public class AdminModule : ModuleBase<SocketCommandContext>
@@ -607,6 +608,11 @@
         {
             await ReplyAsync("Writing channel history to file...");
             var channelId = await DiscordHelper.GetChannelIdIfAccessAsync(channelString, context);
+            if (channelId == 0)
+            {
+                return "<ERROR> No channel access";
+            }
+
             var channel = context.Guild.GetTextChannel(channelId);
             var filepath = FileHelper.SetUpFilepath(FilePathType.Server, channelString, "log", Context);
             if (!File.Exists(filepath))
@@ -614,17 +620,44 @@
                 File.Create(filepath);
             }
 
+            var id = messageId;
             var messageList = new List<string>();
-            var messages = await channel.GetMessagesAsync(messageId, Direction.After, 200000).FlattenAsync<IMessage>();
-            
-            foreach (var message in messages)
-            {
-                messageList.Add(message.Content);
-            }
+            var limit = 1000;
+            var initialMessage = await channel.GetMessageAsync(id);
+            messageList.Add($"{initialMessage.Author.Username}#{initialMessage.Author.Discriminator} ({initialMessage.Author.Id}) at {initialMessage.CreatedAt.UtcDateTime.ToShortDateString()} {initialMessage.CreatedAt.UtcDateTime.ToShortTimeString()}: {initialMessage.Content}");
             await File.WriteAllLinesAsync(filepath, messageList);
+            messageList.Clear();
+
+            var messages = await channel.GetMessagesAsync(id, Direction.After, limit).FlattenAsync();
+            var list = messages.ToList();
+            list.Reverse();
+            var done = false;
+
+            while (!done)
+            {
+                if (list.Count < limit)
+                {
+                    done = true;
+                }
+
+                foreach (var message in list)
+                {
+                    messageList.Add($"{message.Author.Username}#{message.Author.Discriminator} ({message.Author.Id}) at {message.CreatedAt.UtcDateTime.ToShortDateString()} {message.CreatedAt.UtcDateTime.ToShortTimeString()}: {message.Content}");
+                }
+                await File.AppendAllLinesAsync(filepath, messageList);
+                messageList.Clear();
+                if (list.Count > 0)
+                {
+                    id = list[list.Count - 1].Id;
+                    messages = await channel.GetMessagesAsync(id, Direction.After, limit).FlattenAsync();
+                    list = messages.ToList();
+                    list.Reverse();
+                }
+            }
 
             var logPostChannel = context.Guild.GetTextChannel(settings.logPostChannel);
             await logPostChannel.SendFileAsync(filepath, $"{context.Guild.Name}-{channelString}.log");
+            await ReplyAsync("Success!");
             return "SUCCESS";
         }
 
