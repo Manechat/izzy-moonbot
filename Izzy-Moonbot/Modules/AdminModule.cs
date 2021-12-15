@@ -615,14 +615,14 @@
 
             var channel = context.Guild.GetTextChannel(channelId);
             var filepath = FileHelper.SetUpFilepath(FilePathType.Server, channelString, "log", Context);
-            if (!File.Exists(filepath))
-            {
-                File.Create(filepath);
-            }
+            //if (!File.Exists(filepath))
+            //{
+            //    File.Create(filepath);
+            //}
 
             var id = messageId;
             var messageList = new List<string>();
-            var limit = 1000;
+            var limit = 100;
             var initialMessage = await channel.GetMessageAsync(id);
             messageList.Add($"{initialMessage.Author.Username}#{initialMessage.Author.Discriminator} ({initialMessage.Author.Id}) at {initialMessage.CreatedAt.UtcDateTime.ToShortDateString()} {initialMessage.CreatedAt.UtcDateTime.ToShortTimeString()}: {initialMessage.Content}");
             await File.WriteAllLinesAsync(filepath, messageList);
