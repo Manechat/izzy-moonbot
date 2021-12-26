@@ -1,11 +1,11 @@
 ﻿namespace Izzy_Moonbot.Helpers
 {
+    using Discord.Commands;
+    using Izzy_Moonbot.Settings;
+    using Newtonsoft.Json;
     using System;
     using System.IO;
     using System.Threading.Tasks;
-    using Izzy_Moonbot.Settings;
-    using Discord.Commands;
-    using Newtonsoft.Json;
 
     public static class FileHelper
     {
@@ -18,9 +18,6 @@
             //Server
             if (type != FilePathType.Root)
             {
-                filepath = Path.Join(filepath, "servers");
-                CreateDirectoryIfNotExists(filepath);
-
                 if (context != null && context.IsPrivate)
                 {
                     filepath = Path.Join(filepath, "_users");
@@ -32,24 +29,21 @@
                 {
                     if (context != null)
                     {
-                        filepath = Path.Join(filepath, $"{context.Guild.Name}");
+                        filepath = Path.Join(filepath, "channels");
                         CreateDirectoryIfNotExists(filepath);
 
                         //channel
-                        if (type != FilePathType.Server)
+                        if (type == FilePathType.Channel)
                         {
-                            if (type == FilePathType.Channel)
-                            {
-                                filepath = Path.Join(filepath, $"{context.Channel.Name}");
-                                CreateDirectoryIfNotExists(filepath);
-                            }
-                            else
-                            {
-                                filepath = Path.Join(filepath, $"{logChannel}");
-                                CreateDirectoryIfNotExists(filepath);
-                                filepath = Path.Join(filepath, $"{date}.{extension}");
-                                return filepath;
-                            }
+                            filepath = Path.Join(filepath, $"{context.Channel.Name}");
+                            CreateDirectoryIfNotExists(filepath);
+                        }
+                        else
+                        {
+                            filepath = Path.Join(filepath, $"{logChannel}");
+                            CreateDirectoryIfNotExists(filepath);
+                            filepath = Path.Join(filepath, $"{date}.{extension}");
+                            return filepath;
                         }
                     }
                 }
@@ -67,7 +61,7 @@
         public static async Task<ServerSettings> LoadAllPresettingsAsync()
         {
             var settings = new ServerSettings();
-            var filepath = SetUpFilepath(FilePathType.Root, "preloadedsettings", "conf");
+            var filepath = SetUpFilepath(FilePathType.Root, "settings", "conf");
             if (!File.Exists(filepath))
             {
                 var defaultFileContents = JsonConvert.SerializeObject(settings, Formatting.Indented);
@@ -100,7 +94,7 @@
 
         public static async Task SaveAllPresettingsAsync(ServerSettings settings)
         {
-            var filepath = SetUpFilepath(FilePathType.Root, "preloadedsettings", "conf");
+            var filepath = SetUpFilepath(FilePathType.Root, "settings", "conf");
             var fileContents = JsonConvert.SerializeObject(settings, Formatting.Indented);
             await File.WriteAllTextAsync(filepath, fileContents);
         }
@@ -118,7 +112,6 @@
     public enum FilePathType
     {
         Root,
-        Server,
         Channel,
         LogRetrieval,
     }

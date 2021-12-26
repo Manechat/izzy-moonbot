@@ -557,7 +557,7 @@
         private async Task<string> UsersGetAsync(SocketCommandContext context, ServerSettings settings)
         {
             await ReplyAsync("Writing user list to file...");
-            var filepath = FileHelper.SetUpFilepath(FilePathType.Server, "users", "conf", Context);
+            var filepath = FileHelper.SetUpFilepath(FilePathType.Root, "users", "conf", Context);
             if (!File.Exists(filepath))
             {
                 File.Create(filepath);
@@ -587,7 +587,7 @@
             }
 
             var channel = context.Guild.GetTextChannel(channelId);
-            var filepath = FileHelper.SetUpFilepath(FilePathType.Server, channelString, "log", Context);
+            var filepath = FileHelper.SetUpFilepath(FilePathType.Channel, channelString, "log", Context);
             var id = messageId;
             var messageList = new List<string>();
             var limit = 100;

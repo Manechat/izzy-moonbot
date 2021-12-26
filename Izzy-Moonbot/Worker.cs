@@ -18,18 +18,18 @@ namespace Izzy_Moonbot
     {
         private readonly ILogger<Worker> _logger;
         private readonly IServiceCollection _services;
-        private readonly DiscordSettings _settings;
+        private readonly DiscordSettings _discordSettings;
         private readonly CommandService _commands;
-        private readonly ServerSettings _servers;
+        private readonly ServerSettings _settings;
         private DiscordSocketClient _client;
 
-        public Worker(ILogger<Worker> logger, IServiceCollection services, IOptions<DiscordSettings> settings, ServerSettings servers)
+        public Worker(ILogger<Worker> logger, IServiceCollection services, IOptions<DiscordSettings> discordSettings, ServerSettings settings)
         {
             _logger = logger;
             _commands = new CommandService();
-            _settings = settings.Value;
+            _discordSettings = discordSettings.Value;
             _services = services;
-            _servers = servers;
+            _settings = settings;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -39,10 +39,10 @@ namespace Izzy_Moonbot
                 _client = new DiscordSocketClient();
                 _client.Log += Log;
                 await _client.LoginAsync(TokenType.Bot,
-                    _settings.Token);
+                    _discordSettings.Token);
 
                 await _client.StartAsync();
-                await _client.SetGameAsync($".help for commands");
+                await _client.SetGameAsync($"Go away");
                 await InstallCommandsAsync();
 
                 // Block this task until the program is closed.
@@ -72,15 +72,14 @@ namespace Izzy_Moonbot
             var message = messageParam as SocketUserMessage;
             var argPos = 0;
             var context = new SocketCommandContext(_client, message);
-            var settings = await FileHelper.LoadServerPresettingsAsync(_servers);
             if (DevSettings.UseDevPrefix)
             {
-                settings.Prefix = DevSettings.Prefix;
+                _settings.Prefix = DevSettings.Prefix;
             }
 
-            if (message.HasCharPrefix(settings.Prefix, ref argPos) || message.HasMentionPrefix(_client.CurrentUser, ref argPos))
+            if (message.HasCharPrefix(_settings.Prefix, ref argPos) || message.HasMentionPrefix(_client.CurrentUser, ref argPos))
             {
-                if (!(settings.ListenToBots) && message.Author.IsBot)
+                if (!(_settings.ListenToBots) && message.Author.IsBot)
                 {
                     return;
                 }
@@ -94,7 +93,7 @@ namespace Izzy_Moonbot
                 }
                 else
                 {
-                    parsedMessage = DiscordHelper.CheckAliasesAsync(message.Content, settings);
+                    parsedMessage = DiscordHelper.CheckAliasesAsync(message.Content, _settings);
                 }
 
                 if (parsedMessage == "")
