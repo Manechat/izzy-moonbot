@@ -15,12 +15,12 @@
     public class AdminModule : ModuleBase<SocketCommandContext>
     {
         private readonly LoggingService _logger;
-        private readonly ServerSettings _servers;
+        private readonly ServerSettings _settings;
 
         public AdminModule(LoggingService logger, ServerSettings servers)
         {
             _logger = logger;
-            _servers = servers;
+            _settings = servers;
         }
 
         [Command("setup")]
@@ -30,7 +30,6 @@
             [Summary("Admin channel name")] string adminChannelName = "",
             [Remainder] [Summary("Admin role name")] string adminRoleName = "")
         {
-            var settings = new ServerSettingsOld();
             var serverPresettings = await FileHelper.LoadServerPresettingsAsync();
             char prefix = serverPresettings.Prefix;
             ulong channelSetId;
@@ -47,10 +46,10 @@
 
             if (channelSetId > 0)
             {
-                settings.AdminChannel = channelSetId;
+                _settings.AdminChannel = channelSetId;
                 await ReplyAsync($"Moved into <#{channelSetId}>!");
-                var adminChannel = Context.Guild.GetTextChannel(settings.AdminChannel);
-                await FileHelper.SaveAllPresettingsAsync(_servers);
+                var adminChannel = Context.Guild.GetTextChannel(_settings.AdminChannel);
+                await FileHelper.SaveAllPresettingsAsync(this._settings);
                 await adminChannel.SendMessageAsync("Hi new friends! I will send important message here now.");
             }
             else
@@ -64,7 +63,7 @@
             var roleSetId = DiscordHelper.GetRoleIdIfAccessAsync(adminRoleName, Context);
             if (roleSetId > 0)
             {
-                settings.AdminRole = roleSetId;
+                _settings.AdminRole = roleSetId;
                 await ReplyAsync($"<@&{roleSetId}> is in charge now!", allowedMentions: AllowedMentions.None);
             }
             else
@@ -75,8 +74,8 @@
             }
 
             await ReplyAsync("Setting the remaining admin settings to default values (all alerts will post to the admin channel, and no roles will be pinged)...");
-            settings.LogPostChannel = settings.AdminChannel;
-            await FileHelper.SaveServerSettingsAsync(settings, Context);
+            _settings.LogPostChannel = _settings.AdminChannel;
+            await FileHelper.SaveAllPresettingsAsync(this._settings);
             await ReplyAsync(
                 $"Settings saved. I'm all set! Type `{prefix}help admin` for a list of other admin setup commands.");
             await _logger.Log($"setup: channel {adminChannelName} <SUCCESS>, role {adminRoleName} <SUCCESS>", Context, true);
@@ -333,8 +332,8 @@
             var serverPresettings = await FileHelper.LoadServerPresettingsAsync();
             serverPresettings.Prefix = prefix;
             await ReplyAsync($"I will now listen for '{prefix}' on this server.");
-            _servers.Prefix = serverPresettings.Prefix;
-            await FileHelper.SaveAllPresettingsAsync(_servers);
+            _settings.Prefix = serverPresettings.Prefix;
+            await FileHelper.SaveAllPresettingsAsync(_settings);
         }
 
         [Command("listentobots")]
@@ -365,8 +364,8 @@
                 case "true":
                     await ReplyAsync("Now listening to bots.");
                     serverPresettings.ListenToBots = true;
-                    _servers.ListenToBots = serverPresettings.ListenToBots;
-                    await FileHelper.SaveAllPresettingsAsync(_servers);
+                    _settings.ListenToBots = serverPresettings.ListenToBots;
+                    await FileHelper.SaveAllPresettingsAsync(_settings);
                     break;
                 case "n":
                 case "no":
@@ -374,8 +373,8 @@
                 case "false":
                     await ReplyAsync("Not listening to bots.");
                     serverPresettings.ListenToBots = false;
-                    _servers.ListenToBots = serverPresettings.ListenToBots;
-                    await FileHelper.SaveAllPresettingsAsync(_servers);
+                    _settings.ListenToBots = serverPresettings.ListenToBots;
+                    await FileHelper.SaveAllPresettingsAsync(_settings);
                     break;
                 default:
                     await ReplyAsync("Invalid command.");
@@ -412,29 +411,29 @@
                     if (serverPresettings.Aliases.ContainsKey(shortForm))
                     {
                         serverPresettings.Aliases[shortForm] = longForm;
-                        _servers.Aliases = serverPresettings.Aliases;
-                        await FileHelper.SaveAllPresettingsAsync(_servers);
+                        _settings.Aliases = serverPresettings.Aliases;
+                        await FileHelper.SaveAllPresettingsAsync(_settings);
                         await ReplyAsync($"`{shortForm}` now aliased to `{longForm}`, replacing what was there before.");
                     }
                     else
                     {
                         serverPresettings.Aliases.Add(shortForm, longForm);
-                        _servers.Aliases = serverPresettings.Aliases;
-                        await FileHelper.SaveAllPresettingsAsync(_servers);
+                        _settings.Aliases = serverPresettings.Aliases;
+                        await FileHelper.SaveAllPresettingsAsync(_settings);
                         await ReplyAsync($"`{shortForm}` now aliased to `{longForm}`");
                     }
 
                     break;
                 case "remove":
                     serverPresettings.Aliases.Remove(shortForm);
-                    _servers.Aliases = serverPresettings.Aliases;
-                    await FileHelper.SaveAllPresettingsAsync(_servers);
+                    _settings.Aliases = serverPresettings.Aliases;
+                    await FileHelper.SaveAllPresettingsAsync(_settings);
                     await ReplyAsync($"`{shortForm}` alias cleared.");
                     break;
                 case "clear":
                     serverPresettings.Aliases.Clear();
-                    _servers.Aliases = serverPresettings.Aliases;
-                    await FileHelper.SaveAllPresettingsAsync(_servers);
+                    _settings.Aliases = serverPresettings.Aliases;
+                    await FileHelper.SaveAllPresettingsAsync(_settings);
                     await ReplyAsync("All aliases cleared.");
                     break;
                 default:
@@ -665,7 +664,7 @@
             {
                 settings.AdminChannel = channelSetId;
                 await FileHelper.SaveServerSettingsAsync(settings, Context);
-                await FileHelper.SaveAllPresettingsAsync(_servers);
+                await FileHelper.SaveAllPresettingsAsync(_settings);
                 await ReplyAsync($"Admin channel set to <#{channelSetId}>");
             }
             else
