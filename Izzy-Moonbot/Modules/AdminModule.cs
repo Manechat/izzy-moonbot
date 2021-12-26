@@ -1,15 +1,15 @@
 ﻿namespace Izzy_Moonbot.Modules
 {
-    using System;
-    using System.IO;
-    using System.Threading.Tasks;
+    using Discord;
+    using Discord.Commands;
     using Izzy_Moonbot.Helpers;
     using Izzy_Moonbot.Service;
     using Izzy_Moonbot.Settings;
-    using Discord;
-    using Discord.Commands;
+    using System;
     using System.Collections.Generic;
+    using System.IO;
     using System.Linq;
+    using System.Threading.Tasks;
 
     [Summary("Module for managing admin functions")]
     public class AdminModule : ModuleBase<SocketCommandContext>
@@ -28,11 +28,11 @@
         [RequireUserPermission(GuildPermission.Administrator)]
         public async Task SetupCommandAsync(
             [Summary("Admin channel name")] string adminChannelName = "",
-            [Remainder] [Summary("Admin role name")] string adminRoleName = "")
+            [Remainder][Summary("Admin role name")] string adminRoleName = "")
         {
             char prefix = _settings.Prefix;
             ulong channelSetId;
-            
+
             await ReplyAsync("Moving in to my new place...");
             if (adminChannelName == "")
             {
@@ -273,7 +273,7 @@
 
         [Command("echo")]
         [Summary("Posts a message to a specified channel")]
-        public async Task EchoCommandAsync([Summary("The channel to send to")] string channelName = "", [Remainder] [Summary("The message to send")] string message = "")
+        public async Task EchoCommandAsync([Summary("The channel to send to")] string channelName = "", [Remainder][Summary("The message to send")] string message = "")
         {
             if (!DiscordHelper.DoesUserHaveAdminRoleAsync(Context, _settings))
             {

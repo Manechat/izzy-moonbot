@@ -1,9 +1,9 @@
 ﻿namespace Izzy_Moonbot.Helpers
 {
+    using Discord.Commands;
+    using Izzy_Moonbot.Settings;
     using System.Linq;
     using System.Threading.Tasks;
-    using Izzy_Moonbot.Settings;
-    using Discord.Commands;
 
     public static class DiscordHelper
     {

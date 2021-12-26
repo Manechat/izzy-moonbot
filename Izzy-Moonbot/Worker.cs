@@ -1,18 +1,18 @@
 namespace Izzy_Moonbot
 {
-    using System;
-    using System.Reflection;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using Izzy_Moonbot.Helpers;
-    using Izzy_Moonbot.Settings;
     using Discord;
     using Discord.Commands;
     using Discord.WebSocket;
+    using Izzy_Moonbot.Helpers;
+    using Izzy_Moonbot.Settings;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Hosting;
     using Microsoft.Extensions.Logging;
     using Microsoft.Extensions.Options;
+    using System;
+    using System.Reflection;
+    using System.Threading;
+    using System.Threading.Tasks;
 
     public class Worker : BackgroundService
     {

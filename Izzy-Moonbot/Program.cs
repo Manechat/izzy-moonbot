@@ -1,6 +1,5 @@
 namespace Izzy_Moonbot
 {
-    using System;
     using Izzy_Moonbot.Helpers;
     using Izzy_Moonbot.Service;
     using Izzy_Moonbot.Settings;
@@ -8,6 +7,7 @@ namespace Izzy_Moonbot
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Hosting;
     using Serilog;
+    using System;
 
     public class Program
     {
@@ -42,7 +42,7 @@ namespace Izzy_Moonbot
             {
                 var config = hostContext.Configuration;
                 services.Configure<DiscordSettings>(config.GetSection(nameof(DiscordSettings)));
-                services.AddTransient<IDateTimeService,DateTimeService>();
+                services.AddTransient<IDateTimeService, DateTimeService>();
                 services.AddSingleton<LoggingService>();
                 var settings = FileHelper.LoadAllPresettingsAsync().GetAwaiter().GetResult();
                 services.AddSingleton(settings);
