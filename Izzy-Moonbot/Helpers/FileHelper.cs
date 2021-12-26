@@ -1,11 +1,11 @@
 ﻿namespace Izzy_Moonbot.Helpers
 {
+    using Discord.Commands;
+    using Izzy_Moonbot.Settings;
+    using Newtonsoft.Json;
     using System;
     using System.IO;
     using System.Threading.Tasks;
-    using Izzy_Moonbot.Settings;
-    using Discord.Commands;
-    using Newtonsoft.Json;
 
     public static class FileHelper
     {
@@ -18,12 +18,9 @@
             //Server
             if (type != FilePathType.Root)
             {
-                filepath = Path.Join(filepath, "servers");
-                CreateDirectoryIfNotExists(filepath);
-
                 if (context != null && context.IsPrivate)
                 {
-                    filepath = Path.Join(filepath, "_userdms");
+                    filepath = Path.Join(filepath, "_users");
                     CreateDirectoryIfNotExists(filepath);
                     filepath = Path.Join(filepath, $"{context.User.Username}");
                     CreateDirectoryIfNotExists(filepath);
@@ -32,49 +29,39 @@
                 {
                     if (context != null)
                     {
-                        filepath = Path.Join(filepath, $"{context.Guild.Name}");
+                        filepath = Path.Join(filepath, "channels");
                         CreateDirectoryIfNotExists(filepath);
 
                         //channel
-                        if (type != FilePathType.Server)
+                        if (type == FilePathType.Channel)
                         {
-                            if (type == FilePathType.Channel)
-                            {
-                                filepath = Path.Join(filepath, $"{context.Channel.Name}");
-                                CreateDirectoryIfNotExists(filepath);
-                            }
-                            else
-                            {
-                                filepath = Path.Join(filepath, $"{logChannel}");
-                                CreateDirectoryIfNotExists(filepath);
-                                filepath = Path.Join(filepath, $"{date}.{extension}");
-                                return filepath;
-                            }
+                            filepath = Path.Join(filepath, $"{context.Channel.Name}");
+                            CreateDirectoryIfNotExists(filepath);
+                        }
+                        else
+                        {
+                            filepath = Path.Join(filepath, $"{logChannel}");
+                            CreateDirectoryIfNotExists(filepath);
+                            filepath = Path.Join(filepath, $"{date}.{extension}");
+                            return filepath;
                         }
                     }
                 }
             }
 
-            switch (filename)
+            filepath = filename switch
             {
-                case "":
-                    filepath = Path.Join(filepath, $"default.{extension}");
-                    break;
-                case "<date>":
-                    filepath = Path.Join(filepath, $"{DateTime.UtcNow:yyyy-MM-dd}.{extension}");
-                    break;
-                default:
-                    filepath = Path.Join(filepath, $"{filename}.{extension}");
-                    break;
-            }
-
+                "" => Path.Join(filepath, $"default.{extension}"),
+                "<date>" => Path.Join(filepath, $"{DateTime.UtcNow:yyyy-MM-dd}.{extension}"),
+                _ => Path.Join(filepath, $"{filename}.{extension}"),
+            };
             return filepath;
         }
 
-        public static async Task<ServerSettings> LoadServerSettingsAsync(SocketCommandContext context)
+        public static async Task<ServerSettings> LoadAllPresettingsAsync()
         {
-            var filepath = SetUpFilepath(FilePathType.Server, "settings", "conf", context);
             var settings = new ServerSettings();
+            var filepath = SetUpFilepath(FilePathType.Root, "settings", "conf");
             if (!File.Exists(filepath))
             {
                 var defaultFileContents = JsonConvert.SerializeObject(settings, Formatting.Indented);
@@ -89,63 +76,25 @@
             return settings;
         }
 
-        public static async Task SaveServerSettingsAsync(ServerSettings settings, SocketCommandContext context)
+        public static async Task<ServerSettings> LoadServerPresettingsAsync(ServerSettings allPresettingsInput = null)
         {
-            var filepath = SetUpFilepath(FilePathType.Server, "settings", "conf", context);
-            var fileContents = JsonConvert.SerializeObject(settings, Formatting.Indented);
-            await File.WriteAllTextAsync(filepath, fileContents);
-        }
-
-        public static async Task<AllPreloadedSettings> LoadAllPresettingsAsync()
-        {
-            var servers = new AllPreloadedSettings();
-            var filepath = SetUpFilepath(FilePathType.Root, "preloadedsettings", "conf");
-            if (!File.Exists(filepath))
-            {
-                var defaultFileContents = JsonConvert.SerializeObject(servers, Formatting.Indented);
-                await File.WriteAllTextAsync(filepath, defaultFileContents);
-            }
-            else
-            {
-                var fileContents = await File.ReadAllTextAsync(filepath);
-                servers = JsonConvert.DeserializeObject<AllPreloadedSettings>(fileContents);
-            }
-
-            return servers;
-        }
-
-        public static async Task<ServerPreloadedSettings> LoadServerPresettingsAsync(SocketCommandContext context, AllPreloadedSettings allPresettingsInput = null)
-        {
-            AllPreloadedSettings allPresettings;
+            ServerSettings settings;
             if (allPresettingsInput == null)
             {
-                allPresettings = await LoadAllPresettingsAsync();
+                settings = await LoadAllPresettingsAsync();
             }
             else
             {
-                allPresettings = allPresettingsInput;
-            }
-
-            var settings = new ServerPreloadedSettings();
-            var serverId = context.IsPrivate ? context.User.Id : context.Guild.Id;
-            var name = context.IsPrivate ? context.User.Username + "#" + context.User.Discriminator : context.Guild.Name;
-            settings.name = name;
-            if (allPresettings.settings.ContainsKey(serverId))
-            {
-                settings = allPresettings.settings[serverId];
-            }
-            else
-            {
-                allPresettings.settings.Add(serverId, settings);
-                await SaveAllPresettingsAsync(allPresettings);
+                settings = allPresettingsInput;
+                await SaveAllPresettingsAsync(settings);
             }
 
             return settings;
         }
 
-        public static async Task SaveAllPresettingsAsync(AllPreloadedSettings settings)
+        public static async Task SaveAllPresettingsAsync(ServerSettings settings)
         {
-            var filepath = SetUpFilepath(FilePathType.Root, "preloadedsettings", "conf");
+            var filepath = SetUpFilepath(FilePathType.Root, "settings", "conf");
             var fileContents = JsonConvert.SerializeObject(settings, Formatting.Indented);
             await File.WriteAllTextAsync(filepath, fileContents);
         }
@@ -163,7 +112,6 @@
     public enum FilePathType
     {
         Root,
-        Server,
         Channel,
         LogRetrieval,
     }

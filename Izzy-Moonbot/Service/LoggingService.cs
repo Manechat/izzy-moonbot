@@ -1,12 +1,11 @@
 ﻿namespace Izzy_Moonbot.Service
 {
+    using Discord.Commands;
+    using Izzy_Moonbot.Helpers;
+    using Microsoft.Extensions.Logging;
     using System;
-    using System.Globalization;
     using System.IO;
     using System.Threading.Tasks;
-    using Izzy_Moonbot.Helpers;
-    using Discord.Commands;
-    using Microsoft.Extensions.Logging;
 
     public class LoggingService
     {

@@ -1,38 +1,35 @@
 ﻿namespace Izzy_Moonbot.Modules
 {
-    using System;
-    using System.Threading.Tasks;
+    using Discord;
+    using Discord.Commands;
     using Izzy_Moonbot.Helpers;
     using Izzy_Moonbot.Service;
     using Izzy_Moonbot.Settings;
-    using Discord;
-    using Discord.Commands;
+    using System;
+    using System.Threading.Tasks;
 
     [Summary("Module for providing information")]
     public class InfoModule : ModuleBase<SocketCommandContext>
     {
         private readonly LoggingService _logger;
-        private readonly AllPreloadedSettings _servers;
+        private readonly ServerSettings _settings;
 
-        public InfoModule(LoggingService logger, AllPreloadedSettings servers)
+        public InfoModule(LoggingService logger, ServerSettings settings)
         {
             _logger = logger;
-            _servers = servers;
+            _settings = settings;
         }
 
         [Command("help")]
         [Summary("Lists all commands")]
-        public async Task HelpCommandAsync([Summary("First subcommand")] string command = "", [Remainder] [Summary("Second subcommand")] string subCommand = "")
+        public async Task HelpCommandAsync([Summary("First subcommand")] string command = "", [Remainder][Summary("Second subcommand")] string subCommand = "")
         {
-            var settings = await FileHelper.LoadServerSettingsAsync(Context);
-            if (!DiscordHelper.CanUserRunThisCommand(Context, settings))
+            if (!DiscordHelper.CanUserRunThisCommand(Context, _settings))
             {
                 return;
             }
 
-            var prefix = '.';
-            var serverPresettings = await FileHelper.LoadServerPresettingsAsync(Context);
-            prefix = serverPresettings.prefix;
+            char prefix = _settings.Prefix;
 
             await _logger.Log($"help {command} {subCommand}", Context);
 
@@ -123,15 +120,14 @@
         [Summary("About the bot")]
         public async Task AboutCommandAsync()
         {
-            var settings = await FileHelper.LoadServerSettingsAsync(Context);
-            if (!DiscordHelper.CanUserRunThisCommand(Context, settings))
+            if (!DiscordHelper.CanUserRunThisCommand(Context, _settings))
             {
                 return;
             }
-            
+
             await _logger.Log("about", Context);
             await ReplyAsync(
-                $"**__Izzy Moonbot__**{Environment.NewLine}Created November 27th, 2021{Environment.NewLine}A Discord bot for Manechat management.{Environment.NewLine}Currently active on {_servers.guildList.Count} servers.{Environment.NewLine}{Environment.NewLine}Created by Raymond Welch (<@221742476153716736>) in C# using Discord.net by cloning Cloudy Canvas and rewriting.{Environment.NewLine}{Environment.NewLine}**GitHub:** <https://github.com/Manechat/izzy-moonbot>",
+                $"**__Izzy Moonbot__**{Environment.NewLine}Created November 27th, 2021{Environment.NewLine}A Discord bot for Manechat management.{Environment.NewLine}{Environment.NewLine}Created by Raymond Welch (<@221742476153716736>) in C# using Discord.net.",
                 allowedMentions: AllowedMentions.None);
         }
     }

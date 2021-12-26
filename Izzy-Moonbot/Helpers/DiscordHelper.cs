@@ -1,9 +1,9 @@
 ﻿namespace Izzy_Moonbot.Helpers
 {
+    using Discord.Commands;
+    using Izzy_Moonbot.Settings;
     using System.Linq;
     using System.Threading.Tasks;
-    using Izzy_Moonbot.Settings;
-    using Discord.Commands;
 
     public static class DiscordHelper
     {
@@ -43,7 +43,7 @@
                 return true;
             }
 
-            return settings.adminRole == 0 || context.Guild.GetUser(context.User.Id).Roles.Any(x => x.Id == settings.adminRole);
+            return settings.AdminRole == 0 || context.Guild.GetUser(context.User.Id).Roles.Any(x => x.Id == settings.AdminRole);
         }
 
         public static bool CanUserRunThisCommand(SocketCommandContext context, ServerSettings settings)
@@ -53,12 +53,12 @@
                 return true;
             }
 
-            if (context.Guild.GetUser(context.User.Id).Roles.Any(x => x.Id == settings.adminRole))
+            if (context.Guild.GetUser(context.User.Id).Roles.Any(x => x.Id == settings.AdminRole))
             {
                 return true;
             }
 
-            foreach (var allowedUser in settings.allowedUsers)
+            foreach (var allowedUser in settings.AllowedUsers)
             {
                 if (context.User.Id == allowedUser)
                 {
@@ -66,7 +66,7 @@
                 }
             }
 
-            foreach (var ignoredChannel in settings.ignoredChannels)
+            foreach (var ignoredChannel in settings.IgnoredChannels)
             {
                 if (context.Channel.Id == ignoredChannel)
                 {
@@ -74,7 +74,7 @@
                 }
             }
 
-            foreach (var ignoredRole in settings.ignoredRoles)
+            foreach (var ignoredRole in settings.IgnoredRoles)
             {
                 if (context.Guild.GetUser(context.User.Id).Roles.Any(x => x.Id == ignoredRole))
                 {
@@ -97,14 +97,14 @@
             return userList.Count != 1 ? 0 : userList.First().Id;
         }
 
-        public static string CheckAliasesAsync(string message, ServerPreloadedSettings settings)
+        public static string CheckAliasesAsync(string message, ServerSettings settings)
         {
-            var parsedMessage = message.Substring(1).TrimStart();
-            foreach (var (shortForm, longForm) in settings.aliases)
+            var parsedMessage = message[1..].TrimStart();
+            foreach (var (shortForm, longForm) in settings.Aliases)
             {
-                if (message.Substring(1).TrimStart().StartsWith(shortForm))
+                if (message[1..].TrimStart().StartsWith(shortForm))
                 {
-                    parsedMessage = message.Replace(shortForm, longForm).Substring(1).TrimStart();
+                    parsedMessage = message.Replace(shortForm, longForm)[1..].TrimStart();
                 }
             }
 
@@ -156,7 +156,7 @@
                 return 0;
             }
 
-            var frontTrim = channelPing.Substring(2);
+            var frontTrim = channelPing[2..];
             var trim = frontTrim.Split('>', 2)[0];
             return ulong.Parse(trim);
         }
@@ -168,7 +168,7 @@
                 return 0;
             }
 
-            var frontTrim = userPing.Substring(3);
+            var frontTrim = userPing[3..];
             var trim = frontTrim.Split('>', 2)[0];
             return ulong.Parse(trim);
         }
@@ -216,7 +216,7 @@
                 return 0;
             }
 
-            var frontTrim = rolePing.Substring(3);
+            var frontTrim = rolePing[3..];
             var trim = frontTrim.Split('>', 2)[0];
             return ulong.Parse(trim);
         }
