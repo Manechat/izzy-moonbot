@@ -9,8 +9,8 @@
         //------------------------------------------------------------
 
         ////-------------------------Development------------------------
-        //public static char prefix { get; } = '.'; //development prefix
-        //public static bool useDevPrefix { get; } = true; //Use the alternate prefix
+        //public static char Prefix { get; } = '.'; //development prefix
+        //public static bool UseDevPrefix { get; } = true; //Use the alternate prefix
         //public static string RootPath { get; } = "devsettings"; //Development folders
         ////------------------------------------------------------------
     }
