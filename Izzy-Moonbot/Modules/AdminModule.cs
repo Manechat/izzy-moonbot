@@ -15,9 +15,9 @@
     public class AdminModule : ModuleBase<SocketCommandContext>
     {
         private readonly LoggingService _logger;
-        private readonly AllPreloadedSettings _servers;
+        private readonly ServerSettings _servers;
 
-        public AdminModule(LoggingService logger, AllPreloadedSettings servers)
+        public AdminModule(LoggingService logger, ServerSettings servers)
         {
             _logger = logger;
             _servers = servers;
@@ -30,8 +30,8 @@
             [Summary("Admin channel name")] string adminChannelName = "",
             [Remainder] [Summary("Admin role name")] string adminRoleName = "")
         {
-            var settings = new ServerSettings();
-            var serverPresettings = await FileHelper.LoadServerPresettingsAsync(Context);
+            var settings = new ServerSettingsOld();
+            var serverPresettings = await FileHelper.LoadServerPresettingsAsync();
             char prefix = serverPresettings.Prefix;
             ulong channelSetId;
             
@@ -330,10 +330,10 @@
                 return;
             }
 
-            var serverPresettings = await FileHelper.LoadServerPresettingsAsync(Context);
+            var serverPresettings = await FileHelper.LoadServerPresettingsAsync();
             serverPresettings.Prefix = prefix;
             await ReplyAsync($"I will now listen for '{prefix}' on this server.");
-            _servers.Settings[Context.IsPrivate ? Context.User.Id : Context.Guild.Id] = serverPresettings;
+            _servers.Prefix = serverPresettings.Prefix;
             await FileHelper.SaveAllPresettingsAsync(_servers);
         }
 
@@ -347,7 +347,7 @@
                 return;
             }
 
-            var serverPresettings = await FileHelper.LoadServerPresettingsAsync(Context);
+            var serverPresettings = await FileHelper.LoadServerPresettingsAsync();
             switch (command.ToLower())
             {
                 case "":
@@ -365,7 +365,7 @@
                 case "true":
                     await ReplyAsync("Now listening to bots.");
                     serverPresettings.ListenToBots = true;
-                    _servers.Settings[Context.IsPrivate ? Context.User.Id : Context.Guild.Id] = serverPresettings;
+                    _servers.ListenToBots = serverPresettings.ListenToBots;
                     await FileHelper.SaveAllPresettingsAsync(_servers);
                     break;
                 case "n":
@@ -374,7 +374,7 @@
                 case "false":
                     await ReplyAsync("Not listening to bots.");
                     serverPresettings.ListenToBots = false;
-                    _servers.Settings[Context.IsPrivate ? Context.User.Id : Context.Guild.Id] = serverPresettings;
+                    _servers.ListenToBots = serverPresettings.ListenToBots;
                     await FileHelper.SaveAllPresettingsAsync(_servers);
                     break;
                 default:
@@ -393,7 +393,7 @@
                 return;
             }
 
-            var serverPresettings = await FileHelper.LoadServerPresettingsAsync(Context);
+            var serverPresettings = await FileHelper.LoadServerPresettingsAsync();
             switch (subcommand)
             {
                 case "":
@@ -412,14 +412,14 @@
                     if (serverPresettings.Aliases.ContainsKey(shortForm))
                     {
                         serverPresettings.Aliases[shortForm] = longForm;
-                        _servers.Settings[Context.IsPrivate ? Context.User.Id : Context.Guild.Id] = serverPresettings;
+                        _servers.Aliases = serverPresettings.Aliases;
                         await FileHelper.SaveAllPresettingsAsync(_servers);
                         await ReplyAsync($"`{shortForm}` now aliased to `{longForm}`, replacing what was there before.");
                     }
                     else
                     {
                         serverPresettings.Aliases.Add(shortForm, longForm);
-                        _servers.Settings[Context.IsPrivate ? Context.User.Id : Context.Guild.Id] = serverPresettings;
+                        _servers.Aliases = serverPresettings.Aliases;
                         await FileHelper.SaveAllPresettingsAsync(_servers);
                         await ReplyAsync($"`{shortForm}` now aliased to `{longForm}`");
                     }
@@ -427,13 +427,13 @@
                     break;
                 case "remove":
                     serverPresettings.Aliases.Remove(shortForm);
-                    _servers.Settings[Context.IsPrivate ? Context.User.Id : Context.Guild.Id] = serverPresettings;
+                    _servers.Aliases = serverPresettings.Aliases;
                     await FileHelper.SaveAllPresettingsAsync(_servers);
                     await ReplyAsync($"`{shortForm}` alias cleared.");
                     break;
                 case "clear":
                     serverPresettings.Aliases.Clear();
-                    _servers.Settings[Context.IsPrivate ? Context.User.Id : Context.Guild.Id] = serverPresettings;
+                    _servers.Aliases = serverPresettings.Aliases;
                     await FileHelper.SaveAllPresettingsAsync(_servers);
                     await ReplyAsync("All aliases cleared.");
                     break;
@@ -560,11 +560,11 @@
                 return;
             }
 
-            var serverPresettings = await FileHelper.LoadServerPresettingsAsync(Context);
+            var serverPresettings = await FileHelper.LoadServerPresettingsAsync();
             await ReplyAsync($"The current prefix is '{serverPresettings.Prefix}'. Type `{serverPresettings.Prefix}help` for a list of commands.");
         }
 
-        private async Task<string> SettingsGetAsync(SocketCommandContext context, ServerSettings settings)
+        private async Task<string> SettingsGetAsync(SocketCommandContext context, ServerSettingsOld settings)
         {
             await ReplyAsync("Retrieving settings file...");
             var filepath = FileHelper.SetUpFilepath(FilePathType.Server, "settings", "conf", Context);
@@ -578,7 +578,7 @@
             return "SUCCESS";
         }
 
-        private async Task<string> UsersGetAsync(SocketCommandContext context, ServerSettings settings)
+        private async Task<string> UsersGetAsync(SocketCommandContext context, ServerSettingsOld settings)
         {
             await ReplyAsync("Writing user list to file...");
             var filepath = FileHelper.SetUpFilepath(FilePathType.Server, "users", "conf", Context);
@@ -601,7 +601,7 @@
             return "SUCCESS";
         }
 
-        private async Task<string> ChannelHistoryGetAsync(SocketCommandContext context, ServerSettings settings, string channelString, ulong messageId)
+        private async Task<string> ChannelHistoryGetAsync(SocketCommandContext context, ServerSettingsOld settings, string channelString, ulong messageId)
         {
             await ReplyAsync("Writing channel history to file...");
             var channelId = await DiscordHelper.GetChannelIdIfAccessAsync(channelString, context);
@@ -658,7 +658,7 @@
             return "SUCCESS";
         }
 
-        private async Task AdminChannelSetAsync(string channelName, ServerSettings settings)
+        private async Task AdminChannelSetAsync(string channelName, ServerSettingsOld settings)
         {
             var channelSetId = await DiscordHelper.GetChannelIdIfAccessAsync(channelName, Context);
             if (channelSetId > 0)
@@ -674,7 +674,7 @@
             }
         }
 
-        private async Task AdminChannelGetAsync(ServerSettings settings)
+        private async Task AdminChannelGetAsync(ServerSettingsOld settings)
         {
             if (settings.AdminChannel > 0)
             {
@@ -686,7 +686,7 @@
             }
         }
 
-        private async Task AdminRoleSetAsync(string roleName, ServerSettings settings)
+        private async Task AdminRoleSetAsync(string roleName, ServerSettingsOld settings)
         {
             var roleSetId = DiscordHelper.GetRoleIdIfAccessAsync(roleName, Context);
             if (roleSetId > 0)
@@ -701,7 +701,7 @@
             }
         }
 
-        private async Task AdminRoleGetAsync(ServerSettings settings)
+        private async Task AdminRoleGetAsync(ServerSettingsOld settings)
         {
             if (settings.AdminRole > 0)
             {
@@ -713,7 +713,7 @@
             }
         }
 
-        private async Task IgnoreChannelGetAsync(ServerSettings settings)
+        private async Task IgnoreChannelGetAsync(ServerSettingsOld settings)
         {
             if (settings.IgnoredChannels.Count > 0)
             {
@@ -731,7 +731,7 @@
             }
         }
 
-        private async Task IgnoreChannelRemoveAsync(string channelName, ServerSettings settings)
+        private async Task IgnoreChannelRemoveAsync(string channelName, ServerSettingsOld settings)
         {
             var channelRemoveId = await DiscordHelper.GetChannelIdIfAccessAsync(channelName, Context);
             if (channelRemoveId > 0)
@@ -758,7 +758,7 @@
             }
         }
 
-        private async Task IgnoreChannelAddAsync(string channelName, ServerSettings settings)
+        private async Task IgnoreChannelAddAsync(string channelName, ServerSettingsOld settings)
         {
             var channelAddId = await DiscordHelper.GetChannelIdIfAccessAsync(channelName, Context);
             if (channelAddId > 0)
@@ -784,7 +784,7 @@
             }
         }
 
-        private async Task IgnoreRoleRemoveAsync(string roleName, ServerSettings settings)
+        private async Task IgnoreRoleRemoveAsync(string roleName, ServerSettingsOld settings)
         {
             var roleRemoveId = DiscordHelper.GetRoleIdIfAccessAsync(roleName, Context);
             if (roleRemoveId > 0)
@@ -811,7 +811,7 @@
             }
         }
 
-        private async Task IgnoreRoleAddAsync(string roleName, ServerSettings settings)
+        private async Task IgnoreRoleAddAsync(string roleName, ServerSettingsOld settings)
         {
             var roleAddId = DiscordHelper.GetRoleIdIfAccessAsync(roleName, Context);
             if (roleAddId > 0)
@@ -837,7 +837,7 @@
             }
         }
 
-        private async Task IgnoreRoleGetAsync(ServerSettings settings)
+        private async Task IgnoreRoleGetAsync(ServerSettingsOld settings)
         {
             if (settings.IgnoredRoles.Count > 0)
             {
@@ -855,7 +855,7 @@
             }
         }
 
-        private async Task AllowUserRemoveAsync(string userName, ServerSettings settings)
+        private async Task AllowUserRemoveAsync(string userName, ServerSettingsOld settings)
         {
             var userRemoveId = await DiscordHelper.GeUserIdFromPingOrIfOnlySearchResultAsync(userName, Context);
             if (userRemoveId > 0)
@@ -882,7 +882,7 @@
             }
         }
 
-        private async Task AllowUserAddAsync(string userName, ServerSettings settings)
+        private async Task AllowUserAddAsync(string userName, ServerSettingsOld settings)
         {
             var userAddId = await DiscordHelper.GeUserIdFromPingOrIfOnlySearchResultAsync(userName, Context);
             if (userAddId > 0)
@@ -908,7 +908,7 @@
             }
         }
 
-        private async Task AllowUserGetAsync(ServerSettings settings)
+        private async Task AllowUserGetAsync(ServerSettingsOld settings)
         {
             if (settings.AllowedUsers.Count > 0)
             {
@@ -926,14 +926,14 @@
             }
         }
 
-        private async Task LogChannelClearAsync(ServerSettings settings)
+        private async Task LogChannelClearAsync(ServerSettingsOld settings)
         {
             settings.LogPostChannel = settings.AdminChannel;
             await FileHelper.SaveServerSettingsAsync(settings, Context);
             await ReplyAsync($"Report alert channel reset to the current admin channel, <#{settings.LogPostChannel}>");
         }
 
-        private async Task LogChannelSetAsync(string channelName, ServerSettings settings)
+        private async Task LogChannelSetAsync(string channelName, ServerSettingsOld settings)
         {
             var channelSetId = await DiscordHelper.GetChannelIdIfAccessAsync(channelName, Context);
             if (channelSetId > 0)
@@ -948,7 +948,7 @@
             }
         }
 
-        private async Task LogChannelGetAsync(ServerSettings settings)
+        private async Task LogChannelGetAsync(ServerSettingsOld settings)
         {
             if (settings.LogPostChannel > 0)
             {
@@ -1013,7 +1013,7 @@
                 await _logger.Log($"log: {channel} {date} <SUCCESS>", Context);
             }
 
-            private async Task<string> LogGetAsync(string channelName, string date, SocketCommandContext context, ServerSettings settings)
+            private async Task<string> LogGetAsync(string channelName, string date, SocketCommandContext context, ServerSettingsOld settings)
             {
                 await ReplyAsync($"Retrieving log from {channelName} on {date}...");
                 var confirmedName = DiscordHelper.ConvertChannelPingToName(channelName, context);

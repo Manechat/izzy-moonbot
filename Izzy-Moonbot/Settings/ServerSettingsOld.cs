@@ -1,14 +1,12 @@
 ﻿namespace Izzy_Moonbot.Settings
 {
+    using System;
     using System.Collections.Generic;
 
-    public class ServerSettings
+    public class ServerSettingsOld
     {
-        public ServerSettings()
+        public ServerSettingsOld()
         {
-            Prefix = '.';
-            ListenToBots = false;
-            Aliases = new Dictionary<string, string>();
             AdminChannel = 0;
             AdminRole = 0;
             LogPostChannel = 0;
@@ -17,9 +15,6 @@
             AllowedUsers = new List<ulong>();
         }
 
-        public char Prefix { get; set; }
-        public bool ListenToBots { get; set; }
-        public Dictionary<string, string> Aliases { get; set; }
         public ulong AdminChannel { get; set; }
         public ulong AdminRole { get; set; }
         public ulong LogPostChannel { get; set; }

@@ -20,10 +20,10 @@ namespace Izzy_Moonbot
         private readonly IServiceCollection _services;
         private readonly DiscordSettings _settings;
         private readonly CommandService _commands;
-        private readonly AllPreloadedSettings _servers;
+        private readonly ServerSettings _servers;
         private DiscordSocketClient _client;
 
-        public Worker(ILogger<Worker> logger, IServiceCollection services, IOptions<DiscordSettings> settings, AllPreloadedSettings servers)
+        public Worker(ILogger<Worker> logger, IServiceCollection services, IOptions<DiscordSettings> settings, ServerSettings servers)
         {
             _logger = logger;
             _commands = new CommandService();
@@ -72,7 +72,7 @@ namespace Izzy_Moonbot
             var message = messageParam as SocketUserMessage;
             var argPos = 0;
             var context = new SocketCommandContext(_client, message);
-            var settings = await FileHelper.LoadServerPresettingsAsync(context, _servers);
+            var settings = await FileHelper.LoadServerPresettingsAsync(_servers);
             if (DevSettings.UseDevPrefix)
             {
                 settings.Prefix = DevSettings.Prefix;

@@ -28,7 +28,7 @@
                 return;
             }
 
-            var serverPresettings = await FileHelper.LoadServerPresettingsAsync(Context);
+            var serverPresettings = await FileHelper.LoadServerPresettingsAsync();
             char prefix = serverPresettings.Prefix;
 
             await _logger.Log($"help {command} {subCommand}", Context);

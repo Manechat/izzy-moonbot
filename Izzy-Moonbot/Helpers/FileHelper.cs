@@ -64,10 +64,35 @@
             return filepath;
         }
 
-        public static async Task<ServerSettings> LoadServerSettingsAsync(SocketCommandContext context)
+        public static async Task<ServerSettingsOld> LoadServerSettingsAsync(SocketCommandContext context)
         {
             var filepath = SetUpFilepath(FilePathType.Server, "settings", "conf", context);
+            var settings = new ServerSettingsOld();
+            if (!File.Exists(filepath))
+            {
+                var defaultFileContents = JsonConvert.SerializeObject(settings, Formatting.Indented);
+                await File.WriteAllTextAsync(filepath, defaultFileContents);
+            }
+            else
+            {
+                var fileContents = await File.ReadAllTextAsync(filepath);
+                settings = JsonConvert.DeserializeObject<ServerSettingsOld>(fileContents);
+            }
+
+            return settings;
+        }
+
+        public static async Task SaveServerSettingsAsync(ServerSettingsOld settings, SocketCommandContext context)
+        {
+            var filepath = SetUpFilepath(FilePathType.Server, "settings", "conf", context);
+            var fileContents = JsonConvert.SerializeObject(settings, Formatting.Indented);
+            await File.WriteAllTextAsync(filepath, fileContents);
+        }
+
+        public static async Task<ServerSettings> LoadAllPresettingsAsync()
+        {
             var settings = new ServerSettings();
+            var filepath = SetUpFilepath(FilePathType.Root, "preloadedsettings", "conf");
             if (!File.Exists(filepath))
             {
                 var defaultFileContents = JsonConvert.SerializeObject(settings, Formatting.Indented);
@@ -82,61 +107,23 @@
             return settings;
         }
 
-        public static async Task SaveServerSettingsAsync(ServerSettings settings, SocketCommandContext context)
+        public static async Task<ServerSettings> LoadServerPresettingsAsync(ServerSettings allPresettingsInput = null)
         {
-            var filepath = SetUpFilepath(FilePathType.Server, "settings", "conf", context);
-            var fileContents = JsonConvert.SerializeObject(settings, Formatting.Indented);
-            await File.WriteAllTextAsync(filepath, fileContents);
-        }
-
-        public static async Task<AllPreloadedSettings> LoadAllPresettingsAsync()
-        {
-            var servers = new AllPreloadedSettings();
-            var filepath = SetUpFilepath(FilePathType.Root, "preloadedsettings", "conf");
-            if (!File.Exists(filepath))
-            {
-                var defaultFileContents = JsonConvert.SerializeObject(servers, Formatting.Indented);
-                await File.WriteAllTextAsync(filepath, defaultFileContents);
-            }
-            else
-            {
-                var fileContents = await File.ReadAllTextAsync(filepath);
-                servers = JsonConvert.DeserializeObject<AllPreloadedSettings>(fileContents);
-            }
-
-            return servers;
-        }
-
-        public static async Task<ServerPreloadedSettings> LoadServerPresettingsAsync(SocketCommandContext context, AllPreloadedSettings allPresettingsInput = null)
-        {
-            AllPreloadedSettings allPresettings;
+            ServerSettings settings;
             if (allPresettingsInput == null)
             {
-                allPresettings = await LoadAllPresettingsAsync();
+                settings = await LoadAllPresettingsAsync();
             }
             else
             {
-                allPresettings = allPresettingsInput;
-            }
-
-            var settings = new ServerPreloadedSettings();
-            var serverId = context.IsPrivate ? context.User.Id : context.Guild.Id;
-            var name = context.IsPrivate ? context.User.Username + "#" + context.User.Discriminator : context.Guild.Name;
-            settings.Name = name;
-            if (allPresettings.Settings.ContainsKey(serverId))
-            {
-                settings = allPresettings.Settings[serverId];
-            }
-            else
-            {
-                allPresettings.Settings.Add(serverId, settings);
-                await SaveAllPresettingsAsync(allPresettings);
+                settings = allPresettingsInput;
+                await SaveAllPresettingsAsync(settings);
             }
 
             return settings;
         }
 
-        public static async Task SaveAllPresettingsAsync(AllPreloadedSettings settings)
+        public static async Task SaveAllPresettingsAsync(ServerSettings settings)
         {
             var filepath = SetUpFilepath(FilePathType.Root, "preloadedsettings", "conf");
             var fileContents = JsonConvert.SerializeObject(settings, Formatting.Indented);

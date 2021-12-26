@@ -36,7 +36,7 @@
             return id > 0 ? CheckIfRoleExistsAsync(id, context) : CheckIfRoleExistsAsync(roleName, context);
         }
 
-        public static bool DoesUserHaveAdminRoleAsync(SocketCommandContext context, ServerSettings settings)
+        public static bool DoesUserHaveAdminRoleAsync(SocketCommandContext context, ServerSettingsOld settings)
         {
             if (context.IsPrivate)
             {
@@ -46,7 +46,7 @@
             return settings.AdminRole == 0 || context.Guild.GetUser(context.User.Id).Roles.Any(x => x.Id == settings.AdminRole);
         }
 
-        public static bool CanUserRunThisCommand(SocketCommandContext context, ServerSettings settings)
+        public static bool CanUserRunThisCommand(SocketCommandContext context, ServerSettingsOld settings)
         {
             if (context.IsPrivate)
             {
@@ -97,7 +97,7 @@
             return userList.Count != 1 ? 0 : userList.First().Id;
         }
 
-        public static string CheckAliasesAsync(string message, ServerPreloadedSettings settings)
+        public static string CheckAliasesAsync(string message, ServerSettings settings)
         {
             var parsedMessage = message[1..].TrimStart();
             foreach (var (shortForm, longForm) in settings.Aliases)
