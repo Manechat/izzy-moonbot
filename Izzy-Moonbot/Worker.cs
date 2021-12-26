@@ -39,14 +39,14 @@ namespace Izzy_Moonbot
                 _client = new DiscordSocketClient();
                 _client.Log += Log;
                 await _client.LoginAsync(TokenType.Bot,
-                    _settings.token);
+                    _settings.Token);
 
                 await _client.StartAsync();
                 await _client.SetGameAsync($".help for commands");
                 await InstallCommandsAsync();
 
                 // Block this task until the program is closed.
-                await Task.Delay(-1);
+                await Task.Delay(-1, stoppingToken);
 
 
                 while (!stoppingToken.IsCancellationRequested)
@@ -72,16 +72,15 @@ namespace Izzy_Moonbot
             var message = messageParam as SocketUserMessage;
             var argPos = 0;
             var context = new SocketCommandContext(_client, message);
-            var serverId = context.IsPrivate ? context.User.Id : context.Guild.Id;
             var settings = await FileHelper.LoadServerPresettingsAsync(context, _servers);
-            if (DevSettings.useDevPrefix)
+            if (DevSettings.UseDevPrefix)
             {
-                settings.prefix = DevSettings.prefix;
+                settings.Prefix = DevSettings.Prefix;
             }
 
-            if (message.HasCharPrefix(settings.prefix, ref argPos) || message.HasMentionPrefix(_client.CurrentUser, ref argPos))
+            if (message.HasCharPrefix(settings.Prefix, ref argPos) || message.HasMentionPrefix(_client.CurrentUser, ref argPos))
             {
-                if (!(settings.listenToBots) && message.Author.IsBot)
+                if (!(settings.ListenToBots) && message.Author.IsBot)
                 {
                     return;
                 }
@@ -124,16 +123,6 @@ namespace Izzy_Moonbot
                     }
                 }
 
-                if (parsedMessage.Split(" ")[0] == "broadcast")
-                {
-                    if (context.User.Id == 221742476153716736) //Dr. Romulus#4444
-                    {
-                        var messagePart = parsedMessage.Split(' ', 2)[1];
-                        await BroadcastAsync(messagePart);
-                        await context.Channel.SendMessageAsync("Message broadcasted to all servers' admin channels.");
-                    }
-                }
-
                 await _commands.ExecuteAsync(context, parsedMessage, _services.BuildServiceProvider());
             }
         }
@@ -142,16 +131,6 @@ namespace Izzy_Moonbot
         {
             _logger.LogInformation(msg.Message);
             return Task.CompletedTask;
-        }
-
-        [RequireOwner]
-        private async Task BroadcastAsync(string message = "")
-        {
-            var guildList = _servers.guildList;
-            foreach (var (guild, adminChannel) in guildList)
-            {
-                await _client.GetGuild(guild).GetTextChannel(adminChannel).SendMessageAsync(message);
-            }
         }
     }
 }

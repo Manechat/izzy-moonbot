@@ -31,9 +31,8 @@
             [Remainder] [Summary("Admin role name")] string adminRoleName = "")
         {
             var settings = new ServerSettings();
-            var prefix = '.';
             var serverPresettings = await FileHelper.LoadServerPresettingsAsync(Context);
-            prefix = serverPresettings.prefix;
+            char prefix = serverPresettings.Prefix;
             ulong channelSetId;
             
             await ReplyAsync("Moving in to my new place...");
@@ -48,10 +47,9 @@
 
             if (channelSetId > 0)
             {
-                settings.adminChannel = channelSetId;
+                settings.AdminChannel = channelSetId;
                 await ReplyAsync($"Moved into <#{channelSetId}>!");
-                var adminChannel = Context.Guild.GetTextChannel(settings.adminChannel);
-                _servers.guildList[Context.Guild.Id] = adminChannel.Id;
+                var adminChannel = Context.Guild.GetTextChannel(settings.AdminChannel);
                 await FileHelper.SaveAllPresettingsAsync(_servers);
                 await adminChannel.SendMessageAsync("Hi new friends! I will send important message here now.");
             }
@@ -66,7 +64,7 @@
             var roleSetId = DiscordHelper.GetRoleIdIfAccessAsync(adminRoleName, Context);
             if (roleSetId > 0)
             {
-                settings.adminRole = roleSetId;
+                settings.AdminRole = roleSetId;
                 await ReplyAsync($"<@&{roleSetId}> is in charge now!", allowedMentions: AllowedMentions.None);
             }
             else
@@ -77,7 +75,7 @@
             }
 
             await ReplyAsync("Setting the remaining admin settings to default values (all alerts will post to the admin channel, and no roles will be pinged)...");
-            settings.logPostChannel = settings.adminChannel;
+            settings.LogPostChannel = settings.AdminChannel;
             await FileHelper.SaveServerSettingsAsync(settings, Context);
             await ReplyAsync(
                 $"Settings saved. I'm all set! Type `{prefix}help admin` for a list of other admin setup commands.");
@@ -89,8 +87,7 @@
         public async Task AdminCommandAsync(
             [Summary("First subcommand")] string commandOne = "",
             [Summary("Second subcommand")] string commandTwo = "",
-            [Summary("Third subcommand")] string commandThree = "",
-            [Remainder] [Summary("Fourth subcommand")] int commandFour = 175)
+            [Remainder][Summary("Third subcommand")] string commandThree = "")
         {
             var settings = await FileHelper.LoadServerSettingsAsync(Context);
             if (!DiscordHelper.DoesUserHaveAdminRoleAsync(Context, settings))
@@ -168,7 +165,7 @@
                             await _logger.Log($"admin: {commandOne} {commandTwo} {commandThree} <SUCCESS>", Context, true);
                             break;
                         case "clear":
-                            settings.ignoredChannels.Clear();
+                            settings.IgnoredChannels.Clear();
                             await FileHelper.SaveServerSettingsAsync(settings, Context);
                             await ReplyAsync("Ignored channels list cleared.");
                             await _logger.Log($"admin: {commandOne} {commandTwo} <SUCCESS>", Context, true);
@@ -200,7 +197,7 @@
                             await _logger.Log($"admin: {commandOne} {commandTwo} {commandThree} <SUCCESS>", Context, true);
                             break;
                         case "clear":
-                            settings.ignoredRoles.Clear();
+                            settings.IgnoredRoles.Clear();
                             await FileHelper.SaveServerSettingsAsync(settings, Context);
                             await ReplyAsync("Ignored roles list cleared.");
                             await _logger.Log($"admin: {commandOne} {commandTwo} <SUCCESS>", Context, true);
@@ -232,7 +229,7 @@
                             await _logger.Log($"admin: {commandOne} {commandTwo} {commandThree} <SUCCESS>", Context, true);
                             break;
                         case "clear":
-                            settings.allowedUsers.Clear();
+                            settings.AllowedUsers.Clear();
                             await FileHelper.SaveServerSettingsAsync(settings, Context);
                             await ReplyAsync("Allowed users list cleared.");
                             await _logger.Log($"admin: {commandOne} {commandTwo} <SUCCESS>", Context, true);
@@ -334,9 +331,9 @@
             }
 
             var serverPresettings = await FileHelper.LoadServerPresettingsAsync(Context);
-            serverPresettings.prefix = prefix;
+            serverPresettings.Prefix = prefix;
             await ReplyAsync($"I will now listen for '{prefix}' on this server.");
-            _servers.settings[Context.IsPrivate ? Context.User.Id : Context.Guild.Id] = serverPresettings;
+            _servers.Settings[Context.IsPrivate ? Context.User.Id : Context.Guild.Id] = serverPresettings;
             await FileHelper.SaveAllPresettingsAsync(_servers);
         }
 
@@ -355,7 +352,7 @@
             {
                 case "":
                     var not = "";
-                    if (!serverPresettings.listenToBots)
+                    if (!serverPresettings.ListenToBots)
                     {
                         not = " not";
                     }
@@ -367,8 +364,8 @@
                 case "on":
                 case "true":
                     await ReplyAsync("Now listening to bots.");
-                    serverPresettings.listenToBots = true;
-                    _servers.settings[Context.IsPrivate ? Context.User.Id : Context.Guild.Id] = serverPresettings;
+                    serverPresettings.ListenToBots = true;
+                    _servers.Settings[Context.IsPrivate ? Context.User.Id : Context.Guild.Id] = serverPresettings;
                     await FileHelper.SaveAllPresettingsAsync(_servers);
                     break;
                 case "n":
@@ -376,8 +373,8 @@
                 case "off":
                 case "false":
                     await ReplyAsync("Not listening to bots.");
-                    serverPresettings.listenToBots = false;
-                    _servers.settings[Context.IsPrivate ? Context.User.Id : Context.Guild.Id] = serverPresettings;
+                    serverPresettings.ListenToBots = false;
+                    _servers.Settings[Context.IsPrivate ? Context.User.Id : Context.Guild.Id] = serverPresettings;
                     await FileHelper.SaveAllPresettingsAsync(_servers);
                     break;
                 default:
@@ -404,7 +401,7 @@
                     break;
                 case "get":
                     var output = $"__Current aliases:__{Environment.NewLine}";
-                    foreach (var (shortFormA, longFormA) in serverPresettings.aliases)
+                    foreach (var (shortFormA, longFormA) in serverPresettings.Aliases)
                     {
                         output += $"`{shortFormA}`: `{longFormA}`{Environment.NewLine}";
                     }
@@ -412,31 +409,31 @@
                     await ReplyAsync(output);
                     break;
                 case "add":
-                    if (serverPresettings.aliases.ContainsKey(shortForm))
+                    if (serverPresettings.Aliases.ContainsKey(shortForm))
                     {
-                        serverPresettings.aliases[shortForm] = longForm;
-                        _servers.settings[Context.IsPrivate ? Context.User.Id : Context.Guild.Id] = serverPresettings;
+                        serverPresettings.Aliases[shortForm] = longForm;
+                        _servers.Settings[Context.IsPrivate ? Context.User.Id : Context.Guild.Id] = serverPresettings;
                         await FileHelper.SaveAllPresettingsAsync(_servers);
                         await ReplyAsync($"`{shortForm}` now aliased to `{longForm}`, replacing what was there before.");
                     }
                     else
                     {
-                        serverPresettings.aliases.Add(shortForm, longForm);
-                        _servers.settings[Context.IsPrivate ? Context.User.Id : Context.Guild.Id] = serverPresettings;
+                        serverPresettings.Aliases.Add(shortForm, longForm);
+                        _servers.Settings[Context.IsPrivate ? Context.User.Id : Context.Guild.Id] = serverPresettings;
                         await FileHelper.SaveAllPresettingsAsync(_servers);
                         await ReplyAsync($"`{shortForm}` now aliased to `{longForm}`");
                     }
 
                     break;
                 case "remove":
-                    serverPresettings.aliases.Remove(shortForm);
-                    _servers.settings[Context.IsPrivate ? Context.User.Id : Context.Guild.Id] = serverPresettings;
+                    serverPresettings.Aliases.Remove(shortForm);
+                    _servers.Settings[Context.IsPrivate ? Context.User.Id : Context.Guild.Id] = serverPresettings;
                     await FileHelper.SaveAllPresettingsAsync(_servers);
                     await ReplyAsync($"`{shortForm}` alias cleared.");
                     break;
                 case "clear":
-                    serverPresettings.aliases.Clear();
-                    _servers.settings[Context.IsPrivate ? Context.User.Id : Context.Guild.Id] = serverPresettings;
+                    serverPresettings.Aliases.Clear();
+                    _servers.Settings[Context.IsPrivate ? Context.User.Id : Context.Guild.Id] = serverPresettings;
                     await FileHelper.SaveAllPresettingsAsync(_servers);
                     await ReplyAsync("All aliases cleared.");
                     break;
@@ -564,7 +561,7 @@
             }
 
             var serverPresettings = await FileHelper.LoadServerPresettingsAsync(Context);
-            await ReplyAsync($"The current prefix is '{serverPresettings.prefix}'. Type `{serverPresettings.prefix}help` for a list of commands.");
+            await ReplyAsync($"The current prefix is '{serverPresettings.Prefix}'. Type `{serverPresettings.Prefix}help` for a list of commands.");
         }
 
         private async Task<string> SettingsGetAsync(SocketCommandContext context, ServerSettings settings)
@@ -576,7 +573,7 @@
                 return "<ERROR> File does not exist";
             }
 
-            var logPostChannel = context.Guild.GetTextChannel(settings.logPostChannel);
+            var logPostChannel = context.Guild.GetTextChannel(settings.LogPostChannel);
             await logPostChannel.SendFileAsync(filepath, $"{context.Guild.Name}-settings.conf");
             return "SUCCESS";
         }
@@ -599,7 +596,7 @@
             }
             await File.WriteAllLinesAsync(filepath, userlist);
 
-            var logPostChannel = context.Guild.GetTextChannel(settings.logPostChannel);
+            var logPostChannel = context.Guild.GetTextChannel(settings.LogPostChannel);
             await logPostChannel.SendFileAsync(filepath, $"{context.Guild.Name}-users.conf");
             return "SUCCESS";
         }
@@ -648,14 +645,14 @@
                 messageList.Clear();
                 if (list.Count > 0)
                 {
-                    id = list[list.Count - 1].Id;
+                    id = list[^1].Id;
                     messages = await channel.GetMessagesAsync(id, Direction.After, limit).FlattenAsync();
                     list = messages.ToList();
                     list.Reverse();
                 }
             }
 
-            var logPostChannel = context.Guild.GetTextChannel(settings.logPostChannel);
+            var logPostChannel = context.Guild.GetTextChannel(settings.LogPostChannel);
             await logPostChannel.SendFileAsync(filepath, $"{context.Guild.Name}-{channelString}.log");
             await ReplyAsync("Success!");
             return "SUCCESS";
@@ -666,9 +663,8 @@
             var channelSetId = await DiscordHelper.GetChannelIdIfAccessAsync(channelName, Context);
             if (channelSetId > 0)
             {
-                settings.adminChannel = channelSetId;
+                settings.AdminChannel = channelSetId;
                 await FileHelper.SaveServerSettingsAsync(settings, Context);
-                _servers.guildList[Context.Guild.Id] = channelSetId;
                 await FileHelper.SaveAllPresettingsAsync(_servers);
                 await ReplyAsync($"Admin channel set to <#{channelSetId}>");
             }
@@ -680,9 +676,9 @@
 
         private async Task AdminChannelGetAsync(ServerSettings settings)
         {
-            if (settings.adminChannel > 0)
+            if (settings.AdminChannel > 0)
             {
-                await ReplyAsync($"Admin channel is <#{settings.adminChannel}>");
+                await ReplyAsync($"Admin channel is <#{settings.AdminChannel}>");
             }
             else
             {
@@ -695,7 +691,7 @@
             var roleSetId = DiscordHelper.GetRoleIdIfAccessAsync(roleName, Context);
             if (roleSetId > 0)
             {
-                settings.adminRole = roleSetId;
+                settings.AdminRole = roleSetId;
                 await FileHelper.SaveServerSettingsAsync(settings, Context);
                 await ReplyAsync($"Admin role set to <@&{roleSetId}>", allowedMentions: AllowedMentions.None);
             }
@@ -707,9 +703,9 @@
 
         private async Task AdminRoleGetAsync(ServerSettings settings)
         {
-            if (settings.adminRole > 0)
+            if (settings.AdminRole > 0)
             {
-                await ReplyAsync($"Admin role is <@&{settings.adminRole}>", allowedMentions: AllowedMentions.None);
+                await ReplyAsync($"Admin role is <@&{settings.AdminRole}>", allowedMentions: AllowedMentions.None);
             }
             else
             {
@@ -719,10 +715,10 @@
 
         private async Task IgnoreChannelGetAsync(ServerSettings settings)
         {
-            if (settings.ignoredChannels.Count > 0)
+            if (settings.IgnoredChannels.Count > 0)
             {
                 var output = $"__Channel Ignore List:__{Environment.NewLine}";
-                foreach (var channel in settings.ignoredChannels)
+                foreach (var channel in settings.IgnoredChannels)
                 {
                     output += $"<#{channel}>{Environment.NewLine}";
                 }
@@ -740,15 +736,15 @@
             var channelRemoveId = await DiscordHelper.GetChannelIdIfAccessAsync(channelName, Context);
             if (channelRemoveId > 0)
             {
-                for (var x = settings.ignoredChannels.Count - 1; x >= 0; x--)
+                for (var x = settings.IgnoredChannels.Count - 1; x >= 0; x--)
                 {
-                    var channel = settings.ignoredChannels[x];
+                    var channel = settings.IgnoredChannels[x];
                     if (channel != channelRemoveId)
                     {
                         continue;
                     }
 
-                    settings.ignoredChannels.Remove(channel);
+                    settings.IgnoredChannels.Remove(channel);
                     await FileHelper.SaveServerSettingsAsync(settings, Context);
                     await ReplyAsync($"Removed <#{channelRemoveId}> from ignore list.");
                     return;
@@ -767,7 +763,7 @@
             var channelAddId = await DiscordHelper.GetChannelIdIfAccessAsync(channelName, Context);
             if (channelAddId > 0)
             {
-                foreach (var channel in settings.ignoredChannels)
+                foreach (var channel in settings.IgnoredChannels)
                 {
                     if (channel != channelAddId)
                     {
@@ -778,7 +774,7 @@
                     return;
                 }
 
-                settings.ignoredChannels.Add(channelAddId);
+                settings.IgnoredChannels.Add(channelAddId);
                 await FileHelper.SaveServerSettingsAsync(settings, Context);
                 await ReplyAsync($"Added <#{channelAddId}> to ignore list.");
             }
@@ -793,15 +789,15 @@
             var roleRemoveId = DiscordHelper.GetRoleIdIfAccessAsync(roleName, Context);
             if (roleRemoveId > 0)
             {
-                for (var x = settings.ignoredRoles.Count - 1; x >= 0; x--)
+                for (var x = settings.IgnoredRoles.Count - 1; x >= 0; x--)
                 {
-                    var role = settings.ignoredRoles[x];
+                    var role = settings.IgnoredRoles[x];
                     if (role != roleRemoveId)
                     {
                         continue;
                     }
 
-                    settings.ignoredRoles.Remove(role);
+                    settings.IgnoredRoles.Remove(role);
                     await FileHelper.SaveServerSettingsAsync(settings, Context);
                     await ReplyAsync($"Removed <@&{roleRemoveId}> from ignore list.", allowedMentions: AllowedMentions.None);
                     return;
@@ -820,7 +816,7 @@
             var roleAddId = DiscordHelper.GetRoleIdIfAccessAsync(roleName, Context);
             if (roleAddId > 0)
             {
-                foreach (var role in settings.ignoredRoles)
+                foreach (var role in settings.IgnoredRoles)
                 {
                     if (role != roleAddId)
                     {
@@ -831,7 +827,7 @@
                     return;
                 }
 
-                settings.ignoredRoles.Add(roleAddId);
+                settings.IgnoredRoles.Add(roleAddId);
                 await FileHelper.SaveServerSettingsAsync(settings, Context);
                 await ReplyAsync($"Added <@&{roleAddId}> to ignore list.", allowedMentions: AllowedMentions.None);
             }
@@ -843,10 +839,10 @@
 
         private async Task IgnoreRoleGetAsync(ServerSettings settings)
         {
-            if (settings.ignoredRoles.Count > 0)
+            if (settings.IgnoredRoles.Count > 0)
             {
                 var output = $"__Role Ignore List:__{Environment.NewLine}";
-                foreach (var role in settings.ignoredRoles)
+                foreach (var role in settings.IgnoredRoles)
                 {
                     output += $"<@&{role}>{Environment.NewLine}";
                 }
@@ -864,15 +860,15 @@
             var userRemoveId = await DiscordHelper.GeUserIdFromPingOrIfOnlySearchResultAsync(userName, Context);
             if (userRemoveId > 0)
             {
-                for (var x = settings.allowedUsers.Count - 1; x >= 0; x--)
+                for (var x = settings.AllowedUsers.Count - 1; x >= 0; x--)
                 {
-                    var user = settings.allowedUsers[x];
+                    var user = settings.AllowedUsers[x];
                     if (user != userRemoveId)
                     {
                         continue;
                     }
 
-                    settings.allowedUsers.Remove(user);
+                    settings.AllowedUsers.Remove(user);
                     await FileHelper.SaveServerSettingsAsync(settings, Context);
                     await ReplyAsync($"Removed <@{userRemoveId}> from allow list.", allowedMentions: AllowedMentions.None);
                     return;
@@ -891,7 +887,7 @@
             var userAddId = await DiscordHelper.GeUserIdFromPingOrIfOnlySearchResultAsync(userName, Context);
             if (userAddId > 0)
             {
-                foreach (var user in settings.allowedUsers)
+                foreach (var user in settings.AllowedUsers)
                 {
                     if (user != userAddId)
                     {
@@ -902,7 +898,7 @@
                     return;
                 }
 
-                settings.allowedUsers.Add(userAddId);
+                settings.AllowedUsers.Add(userAddId);
                 await FileHelper.SaveServerSettingsAsync(settings, Context);
                 await ReplyAsync($"Added <@{userAddId}> to allow list.", allowedMentions: AllowedMentions.None);
             }
@@ -914,10 +910,10 @@
 
         private async Task AllowUserGetAsync(ServerSettings settings)
         {
-            if (settings.allowedUsers.Count > 0)
+            if (settings.AllowedUsers.Count > 0)
             {
                 var output = $"__Allowed User List:__{Environment.NewLine}";
-                foreach (var user in settings.allowedUsers)
+                foreach (var user in settings.AllowedUsers)
                 {
                     output += $"<@{user}>{Environment.NewLine}";
                 }
@@ -932,9 +928,9 @@
 
         private async Task LogChannelClearAsync(ServerSettings settings)
         {
-            settings.logPostChannel = settings.adminChannel;
+            settings.LogPostChannel = settings.AdminChannel;
             await FileHelper.SaveServerSettingsAsync(settings, Context);
-            await ReplyAsync($"Report alert channel reset to the current admin channel, <#{settings.logPostChannel}>");
+            await ReplyAsync($"Report alert channel reset to the current admin channel, <#{settings.LogPostChannel}>");
         }
 
         private async Task LogChannelSetAsync(string channelName, ServerSettings settings)
@@ -942,7 +938,7 @@
             var channelSetId = await DiscordHelper.GetChannelIdIfAccessAsync(channelName, Context);
             if (channelSetId > 0)
             {
-                settings.logPostChannel = channelSetId;
+                settings.LogPostChannel = channelSetId;
                 await FileHelper.SaveServerSettingsAsync(settings, Context);
                 await ReplyAsync($"Retrieved logs will be sent to <#{channelSetId}>");
             }
@@ -954,9 +950,9 @@
 
         private async Task LogChannelGetAsync(ServerSettings settings)
         {
-            if (settings.logPostChannel > 0)
+            if (settings.LogPostChannel > 0)
             {
-                await ReplyAsync($"Logs are being posted in <#{settings.logPostChannel}>");
+                await ReplyAsync($"Logs are being posted in <#{settings.LogPostChannel}>");
             }
             else
             {
@@ -1026,7 +1022,7 @@
                     return confirmedName;
                 }
 
-                if (settings.logPostChannel <= 0)
+                if (settings.LogPostChannel <= 0)
                 {
                     return "<ERROR> Log post channel not set.";
                 }
@@ -1037,7 +1033,7 @@
                     return "<ERROR> File does not exist";
                 }
 
-                var logPostChannel = context.Guild.GetTextChannel(settings.logPostChannel);
+                var logPostChannel = context.Guild.GetTextChannel(settings.LogPostChannel);
                 await logPostChannel.SendFileAsync(filepath, $"{confirmedName}-{date}.log");
                 return "SUCCESS";
             }

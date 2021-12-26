@@ -12,12 +12,10 @@
     public class InfoModule : ModuleBase<SocketCommandContext>
     {
         private readonly LoggingService _logger;
-        private readonly AllPreloadedSettings _servers;
 
-        public InfoModule(LoggingService logger, AllPreloadedSettings servers)
+        public InfoModule(LoggingService logger)
         {
             _logger = logger;
-            _servers = servers;
         }
 
         [Command("help")]
@@ -30,9 +28,8 @@
                 return;
             }
 
-            var prefix = '.';
             var serverPresettings = await FileHelper.LoadServerPresettingsAsync(Context);
-            prefix = serverPresettings.prefix;
+            char prefix = serverPresettings.Prefix;
 
             await _logger.Log($"help {command} {subCommand}", Context);
 
@@ -131,7 +128,7 @@
             
             await _logger.Log("about", Context);
             await ReplyAsync(
-                $"**__Izzy Moonbot__**{Environment.NewLine}Created November 27th, 2021{Environment.NewLine}A Discord bot for Manechat management.{Environment.NewLine}Currently active on {_servers.guildList.Count} servers.{Environment.NewLine}{Environment.NewLine}Created by Raymond Welch (<@221742476153716736>) in C# using Discord.net by cloning Cloudy Canvas and rewriting.{Environment.NewLine}{Environment.NewLine}**GitHub:** <https://github.com/Manechat/izzy-moonbot>",
+                $"**__Izzy Moonbot__**{Environment.NewLine}Created November 27th, 2021{Environment.NewLine}A Discord bot for Manechat management.{Environment.NewLine}{Environment.NewLine}Created by Raymond Welch (<@221742476153716736>) in C# using Discord.net.",
                 allowedMentions: AllowedMentions.None);
         }
     }

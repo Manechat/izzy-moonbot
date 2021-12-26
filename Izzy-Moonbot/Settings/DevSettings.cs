@@ -3,8 +3,8 @@
     public static class DevSettings
     {
         //-------------------------Production-------------------------
-        public static char prefix { get; } = '.'; //production prefix
-        public static bool useDevPrefix { get; } = false; //Use the alternate prefix
+        public static char Prefix { get; } = '.'; //production prefix
+        public static bool UseDevPrefix { get; } = false; //Use the alternate prefix
         public static string RootPath { get; } = "botsettings"; //Production folders
         //------------------------------------------------------------
 

@@ -7,19 +7,19 @@
     {
         public ServerSettings()
         {
-            adminChannel = 0;
-            adminRole = 0;
-            logPostChannel = 0;
-            ignoredChannels = new List<ulong>();
-            ignoredRoles = new List<ulong>();
-            allowedUsers = new List<ulong>();
+            AdminChannel = 0;
+            AdminRole = 0;
+            LogPostChannel = 0;
+            IgnoredChannels = new List<ulong>();
+            IgnoredRoles = new List<ulong>();
+            AllowedUsers = new List<ulong>();
         }
 
-        public ulong adminChannel { get; set; }
-        public ulong adminRole { get; set; }
-        public ulong logPostChannel { get; set; }
-        public List<ulong> ignoredChannels { get; set; }
-        public List<ulong> ignoredRoles { get; set; }
-        public List<ulong> allowedUsers { get; set; }
+        public ulong AdminChannel { get; set; }
+        public ulong AdminRole { get; set; }
+        public ulong LogPostChannel { get; set; }
+        public List<ulong> IgnoredChannels { get; set; }
+        public List<ulong> IgnoredRoles { get; set; }
+        public List<ulong> AllowedUsers { get; set; }
     }
 }

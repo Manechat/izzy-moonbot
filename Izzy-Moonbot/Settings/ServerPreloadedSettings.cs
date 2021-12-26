@@ -6,15 +6,15 @@
     {
         public ServerPreloadedSettings()
         {
-            name = "";
-            prefix = '.';
-            listenToBots = false;
-            aliases = new Dictionary<string, string>();
+            Name = "";
+            Prefix = '.';
+            ListenToBots = false;
+            Aliases = new Dictionary<string, string>();
         }
 
-        public string name { get; set; }
-        public char prefix { get; set; }
-        public bool listenToBots { get; set; }
-        public Dictionary<string, string> aliases { get; set; }
+        public string Name { get; set; }
+        public char Prefix { get; set; }
+        public bool ListenToBots { get; set; }
+        public Dictionary<string, string> Aliases { get; set; }
     }
 }

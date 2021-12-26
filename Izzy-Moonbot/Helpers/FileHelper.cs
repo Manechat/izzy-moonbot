@@ -23,7 +23,7 @@
 
                 if (context != null && context.IsPrivate)
                 {
-                    filepath = Path.Join(filepath, "_userdms");
+                    filepath = Path.Join(filepath, "_users");
                     CreateDirectoryIfNotExists(filepath);
                     filepath = Path.Join(filepath, $"{context.User.Username}");
                     CreateDirectoryIfNotExists(filepath);
@@ -55,19 +55,12 @@
                 }
             }
 
-            switch (filename)
+            filepath = filename switch
             {
-                case "":
-                    filepath = Path.Join(filepath, $"default.{extension}");
-                    break;
-                case "<date>":
-                    filepath = Path.Join(filepath, $"{DateTime.UtcNow:yyyy-MM-dd}.{extension}");
-                    break;
-                default:
-                    filepath = Path.Join(filepath, $"{filename}.{extension}");
-                    break;
-            }
-
+                "" => Path.Join(filepath, $"default.{extension}"),
+                "<date>" => Path.Join(filepath, $"{DateTime.UtcNow:yyyy-MM-dd}.{extension}"),
+                _ => Path.Join(filepath, $"{filename}.{extension}"),
+            };
             return filepath;
         }
 
@@ -129,14 +122,14 @@
             var settings = new ServerPreloadedSettings();
             var serverId = context.IsPrivate ? context.User.Id : context.Guild.Id;
             var name = context.IsPrivate ? context.User.Username + "#" + context.User.Discriminator : context.Guild.Name;
-            settings.name = name;
-            if (allPresettings.settings.ContainsKey(serverId))
+            settings.Name = name;
+            if (allPresettings.Settings.ContainsKey(serverId))
             {
-                settings = allPresettings.settings[serverId];
+                settings = allPresettings.Settings[serverId];
             }
             else
             {
-                allPresettings.settings.Add(serverId, settings);
+                allPresettings.Settings.Add(serverId, settings);
                 await SaveAllPresettingsAsync(allPresettings);
             }
 
