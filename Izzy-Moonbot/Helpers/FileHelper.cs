@@ -64,31 +64,6 @@
             return filepath;
         }
 
-        public static async Task<ServerSettingsOld> LoadServerSettingsAsync(SocketCommandContext context)
-        {
-            var filepath = SetUpFilepath(FilePathType.Server, "settings", "conf", context);
-            var settings = new ServerSettingsOld();
-            if (!File.Exists(filepath))
-            {
-                var defaultFileContents = JsonConvert.SerializeObject(settings, Formatting.Indented);
-                await File.WriteAllTextAsync(filepath, defaultFileContents);
-            }
-            else
-            {
-                var fileContents = await File.ReadAllTextAsync(filepath);
-                settings = JsonConvert.DeserializeObject<ServerSettingsOld>(fileContents);
-            }
-
-            return settings;
-        }
-
-        public static async Task SaveServerSettingsAsync(ServerSettingsOld settings, SocketCommandContext context)
-        {
-            var filepath = SetUpFilepath(FilePathType.Server, "settings", "conf", context);
-            var fileContents = JsonConvert.SerializeObject(settings, Formatting.Indented);
-            await File.WriteAllTextAsync(filepath, fileContents);
-        }
-
         public static async Task<ServerSettings> LoadAllPresettingsAsync()
         {
             var settings = new ServerSettings();

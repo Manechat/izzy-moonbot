@@ -22,7 +22,7 @@
         [Summary("Lists all commands")]
         public async Task HelpCommandAsync([Summary("First subcommand")] string command = "", [Remainder] [Summary("Second subcommand")] string subCommand = "")
         {
-            var settings = await FileHelper.LoadServerSettingsAsync(Context);
+            var settings = await FileHelper.LoadAllPresettingsAsync();
             if (!DiscordHelper.CanUserRunThisCommand(Context, settings))
             {
                 return;
@@ -120,7 +120,7 @@
         [Summary("About the bot")]
         public async Task AboutCommandAsync()
         {
-            var settings = await FileHelper.LoadServerSettingsAsync(Context);
+            var settings = await FileHelper.LoadAllPresettingsAsync();
             if (!DiscordHelper.CanUserRunThisCommand(Context, settings))
             {
                 return;
