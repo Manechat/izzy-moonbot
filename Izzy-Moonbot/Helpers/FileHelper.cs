@@ -4,6 +4,7 @@
     using Izzy_Moonbot.Settings;
     using Newtonsoft.Json;
     using System;
+    using System.Collections.Generic;
     using System.IO;
     using System.Threading.Tasks;
 
@@ -58,7 +59,7 @@
             return filepath;
         }
 
-        public static async Task<ServerSettings> LoadAllPresettingsAsync()
+        public static async Task<ServerSettings> LoadSettingsAsync()
         {
             var settings = new ServerSettings();
             var filepath = SetUpFilepath(FilePathType.Root, "settings", "conf");
@@ -76,26 +77,35 @@
             return settings;
         }
 
-        public static async Task<ServerSettings> LoadServerPresettingsAsync(ServerSettings allPresettingsInput = null)
-        {
-            ServerSettings settings;
-            if (allPresettingsInput == null)
-            {
-                settings = await LoadAllPresettingsAsync();
-            }
-            else
-            {
-                settings = allPresettingsInput;
-                await SaveAllPresettingsAsync(settings);
-            }
-
-            return settings;
-        }
-
-        public static async Task SaveAllPresettingsAsync(ServerSettings settings)
+        public static async Task SaveSettingsAsync(ServerSettings settings)
         {
             var filepath = SetUpFilepath(FilePathType.Root, "settings", "conf");
             var fileContents = JsonConvert.SerializeObject(settings, Formatting.Indented);
+            await File.WriteAllTextAsync(filepath, fileContents);
+        }
+
+        public static async Task<Dictionary<ulong, User>> LoadUsersAsync()
+        {
+            var users = new Dictionary<ulong, User>();
+            var filepath = SetUpFilepath(FilePathType.Root, "users", "conf");
+            if (!File.Exists(filepath))
+            {
+                var defaultFileContents = JsonConvert.SerializeObject(users, Formatting.Indented);
+                await File.WriteAllTextAsync(filepath, defaultFileContents);
+            }
+            else
+            {
+                var fileContents = await File.ReadAllTextAsync(filepath);
+                users = JsonConvert.DeserializeObject<Dictionary<ulong, User>>(fileContents);
+            }
+
+            return users;
+        }
+
+        public static async Task SaveUsersAsync(Dictionary<ulong, User> users)
+        {
+            var filepath = SetUpFilepath(FilePathType.Root, "users", "conf");
+            var fileContents = JsonConvert.SerializeObject(users, Formatting.Indented);
             await File.WriteAllTextAsync(filepath, fileContents);
         }
 

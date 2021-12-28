@@ -48,7 +48,7 @@
                 _settings.AdminChannel = channelSetId;
                 await ReplyAsync($"Moved into <#{channelSetId}>!");
                 var adminChannel = Context.Guild.GetTextChannel(_settings.AdminChannel);
-                await FileHelper.SaveAllPresettingsAsync(this._settings);
+                await FileHelper.SaveSettingsAsync(this._settings);
                 await adminChannel.SendMessageAsync("Hi new friends! I will send important message here now.");
             }
             else
@@ -74,7 +74,7 @@
 
             await ReplyAsync("Setting the remaining admin settings to default values (all alerts will post to the admin channel, and no roles will be pinged)...");
             _settings.LogPostChannel = _settings.AdminChannel;
-            await FileHelper.SaveAllPresettingsAsync(this._settings);
+            await FileHelper.SaveSettingsAsync(this._settings);
             await ReplyAsync(
                 $"Settings saved. I'm all set! Type `{prefix}help admin` for a list of other admin setup commands.");
             await _logger.Log($"setup: channel {adminChannelName} <SUCCESS>, role {adminRoleName} <SUCCESS>", Context, true);
@@ -163,7 +163,7 @@
                             break;
                         case "clear":
                             this._settings.IgnoredChannels.Clear();
-                            await FileHelper.SaveAllPresettingsAsync(this._settings);
+                            await FileHelper.SaveSettingsAsync(this._settings);
                             await ReplyAsync("Ignored channels list cleared.");
                             await _logger.Log($"admin: {commandOne} {commandTwo} <SUCCESS>", Context, true);
                             break;
@@ -195,7 +195,7 @@
                             break;
                         case "clear":
                             _settings.IgnoredRoles.Clear();
-                            await FileHelper.SaveAllPresettingsAsync(this._settings);
+                            await FileHelper.SaveSettingsAsync(this._settings);
                             await ReplyAsync("Ignored roles list cleared.");
                             await _logger.Log($"admin: {commandOne} {commandTwo} <SUCCESS>", Context, true);
                             break;
@@ -227,7 +227,7 @@
                             break;
                         case "clear":
                             _settings.AllowedUsers.Clear();
-                            await FileHelper.SaveAllPresettingsAsync(this._settings);
+                            await FileHelper.SaveSettingsAsync(this._settings);
                             await ReplyAsync("Allowed users list cleared.");
                             await _logger.Log($"admin: {commandOne} {commandTwo} <SUCCESS>", Context, true);
                             break;
@@ -327,7 +327,7 @@
 
             await ReplyAsync($"I will now listen for '{prefix}' on this server.");
             this._settings.Prefix = prefix;
-            await FileHelper.SaveAllPresettingsAsync(this._settings);
+            await FileHelper.SaveSettingsAsync(this._settings);
         }
 
         [Command("listentobots")]
@@ -356,7 +356,7 @@
                 case "true":
                     await ReplyAsync("Now listening to bots.");
                     _settings.ListenToBots = true;
-                    await FileHelper.SaveAllPresettingsAsync(this._settings);
+                    await FileHelper.SaveSettingsAsync(this._settings);
                     break;
                 case "n":
                 case "no":
@@ -364,7 +364,7 @@
                 case "false":
                     await ReplyAsync("Not listening to bots.");
                     _settings.ListenToBots = false;
-                    await FileHelper.SaveAllPresettingsAsync(this._settings);
+                    await FileHelper.SaveSettingsAsync(this._settings);
                     break;
                 default:
                     await ReplyAsync("Invalid command.");
@@ -399,25 +399,25 @@
                     if (_settings.Aliases.ContainsKey(shortForm))
                     {
                         _settings.Aliases[shortForm] = longForm;
-                        await FileHelper.SaveAllPresettingsAsync(this._settings);
+                        await FileHelper.SaveSettingsAsync(this._settings);
                         await ReplyAsync($"`{shortForm}` now aliased to `{longForm}`, replacing what was there before.");
                     }
                     else
                     {
                         _settings.Aliases.Add(shortForm, longForm);
-                        await FileHelper.SaveAllPresettingsAsync(this._settings);
+                        await FileHelper.SaveSettingsAsync(this._settings);
                         await ReplyAsync($"`{shortForm}` now aliased to `{longForm}`");
                     }
 
                     break;
                 case "remove":
                     _settings.Aliases.Remove(shortForm);
-                    await FileHelper.SaveAllPresettingsAsync(this._settings);
+                    await FileHelper.SaveSettingsAsync(this._settings);
                     await ReplyAsync($"`{shortForm}` alias cleared.");
                     break;
                 case "clear":
                     _settings.Aliases.Clear();
-                    await FileHelper.SaveAllPresettingsAsync(this._settings);
+                    await FileHelper.SaveSettingsAsync(this._settings);
                     await ReplyAsync("All aliases cleared.");
                     break;
                 default:
@@ -635,7 +635,7 @@
             if (channelSetId > 0)
             {
                 _settings.AdminChannel = channelSetId;
-                await FileHelper.SaveAllPresettingsAsync(_settings);
+                await FileHelper.SaveSettingsAsync(_settings);
                 await ReplyAsync($"Admin channel set to <#{channelSetId}>");
             }
             else
@@ -662,7 +662,7 @@
             if (roleSetId > 0)
             {
                 _settings.AdminRole = roleSetId;
-                await FileHelper.SaveAllPresettingsAsync(_settings);
+                await FileHelper.SaveSettingsAsync(_settings);
                 await ReplyAsync($"Admin role set to <@&{roleSetId}>", allowedMentions: AllowedMentions.None);
             }
             else
@@ -715,7 +715,7 @@
                     }
 
                     _settings.IgnoredChannels.Remove(channel);
-                    await FileHelper.SaveAllPresettingsAsync(_settings);
+                    await FileHelper.SaveSettingsAsync(_settings);
                     await ReplyAsync($"Removed <#{channelRemoveId}> from ignore list.");
                     return;
                 }
@@ -745,7 +745,7 @@
                 }
 
                 _settings.IgnoredChannels.Add(channelAddId);
-                await FileHelper.SaveAllPresettingsAsync(_settings);
+                await FileHelper.SaveSettingsAsync(_settings);
                 await ReplyAsync($"Added <#{channelAddId}> to ignore list.");
             }
             else
@@ -768,7 +768,7 @@
                     }
 
                     _settings.IgnoredRoles.Remove(role);
-                    await FileHelper.SaveAllPresettingsAsync(_settings);
+                    await FileHelper.SaveSettingsAsync(_settings);
                     await ReplyAsync($"Removed <@&{roleRemoveId}> from ignore list.", allowedMentions: AllowedMentions.None);
                     return;
                 }
@@ -798,7 +798,7 @@
                 }
 
                 _settings.IgnoredRoles.Add(roleAddId);
-                await FileHelper.SaveAllPresettingsAsync(_settings);
+                await FileHelper.SaveSettingsAsync(_settings);
                 await ReplyAsync($"Added <@&{roleAddId}> to ignore list.", allowedMentions: AllowedMentions.None);
             }
             else
@@ -839,7 +839,7 @@
                     }
 
                     _settings.AllowedUsers.Remove(user);
-                    await FileHelper.SaveAllPresettingsAsync(_settings);
+                    await FileHelper.SaveSettingsAsync(_settings);
                     await ReplyAsync($"Removed <@{userRemoveId}> from allow list.", allowedMentions: AllowedMentions.None);
                     return;
                 }
@@ -869,7 +869,7 @@
                 }
 
                 _settings.AllowedUsers.Add(userAddId);
-                await FileHelper.SaveAllPresettingsAsync(_settings);
+                await FileHelper.SaveSettingsAsync(_settings);
                 await ReplyAsync($"Added <@{userAddId}> to allow list.", allowedMentions: AllowedMentions.None);
             }
             else
@@ -899,7 +899,7 @@
         private async Task LogChannelClearAsync()
         {
             _settings.LogPostChannel = _settings.AdminChannel;
-            await FileHelper.SaveAllPresettingsAsync(_settings);
+            await FileHelper.SaveSettingsAsync(_settings);
             await ReplyAsync($"Report alert channel reset to the current admin channel, <#{_settings.LogPostChannel}>");
         }
 
@@ -909,7 +909,7 @@
             if (channelSetId > 0)
             {
                 _settings.LogPostChannel = channelSetId;
-                await FileHelper.SaveAllPresettingsAsync(_settings);
+                await FileHelper.SaveSettingsAsync(_settings);
                 await ReplyAsync($"Retrieved logs will be sent to <#{channelSetId}>");
             }
             else

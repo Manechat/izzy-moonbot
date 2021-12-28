@@ -8,6 +8,7 @@ namespace Izzy_Moonbot
     using Microsoft.Extensions.Hosting;
     using Serilog;
     using System;
+    using System.Collections.Generic;
 
     public class Program
     {
@@ -44,10 +45,12 @@ namespace Izzy_Moonbot
                 services.Configure<DiscordSettings>(config.GetSection(nameof(DiscordSettings)));
                 services.AddTransient<IDateTimeService, DateTimeService>();
                 services.AddSingleton<LoggingService>();
-                var settings = FileHelper.LoadAllPresettingsAsync().GetAwaiter().GetResult();
+                var settings = FileHelper.LoadSettingsAsync().GetAwaiter().GetResult();
                 services.AddSingleton(settings);
+                var users = FileHelper.LoadUsersAsync().GetAwaiter().GetResult();
+                services.AddSingleton(users);
                 services.AddSingleton(services);
-
+                
                 services.AddHostedService<Worker>();
             });
     }

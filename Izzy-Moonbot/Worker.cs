@@ -10,6 +10,7 @@ namespace Izzy_Moonbot
     using Microsoft.Extensions.Logging;
     using Microsoft.Extensions.Options;
     using System;
+    using System.Collections.Generic;
     using System.Reflection;
     using System.Threading;
     using System.Threading.Tasks;
@@ -21,15 +22,17 @@ namespace Izzy_Moonbot
         private readonly DiscordSettings _discordSettings;
         private readonly CommandService _commands;
         private readonly ServerSettings _settings;
+        private readonly Dictionary<ulong, User> _users;
         private DiscordSocketClient _client;
 
-        public Worker(ILogger<Worker> logger, IServiceCollection services, IOptions<DiscordSettings> discordSettings, ServerSettings settings)
+        public Worker(ILogger<Worker> logger, IServiceCollection services, IOptions<DiscordSettings> discordSettings, ServerSettings settings, Dictionary<ulong, User> users)
         {
             _logger = logger;
             _commands = new CommandService();
             _discordSettings = discordSettings.Value;
             _services = services;
             _settings = settings;
+            _users = users;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -72,6 +75,9 @@ namespace Izzy_Moonbot
             var message = messageParam as SocketUserMessage;
             var argPos = 0;
             var context = new SocketCommandContext(_client, message);
+
+            await ProcessUser(message);
+
             if (DevSettings.UseDevPrefix)
             {
                 _settings.Prefix = DevSettings.Prefix;
@@ -130,6 +136,52 @@ namespace Izzy_Moonbot
         {
             _logger.LogInformation(msg.Message);
             return Task.CompletedTask;
+        }
+        private double CalculatePressure(ulong id, SocketUserMessage message)
+        {
+            var now = message.Timestamp;
+            var basePressure = 10.0;
+            var pressureDecay = 2.5;
+            var pressureLossPerSecond = basePressure / pressureDecay;
+            var pressure = _users[id].Pressure;
+            var difference = now - _users[id].Timestamp;
+            var totalSeconds = difference.TotalSeconds;
+            var totalPressureLoss = totalSeconds * pressureLossPerSecond;
+            pressure -= totalPressureLoss;
+            if (pressure < 0)
+            {
+                pressure = 0;
+            }
+
+            pressure += basePressure;
+            _users[id].Pressure = pressure;
+            _users[id].Timestamp = now.UtcDateTime;
+            return pressure;
+        }
+        private async Task ProcessUser(SocketUserMessage message)
+        {
+            var guildUser = message.Author as SocketGuildUser;
+            var id = guildUser.Id;
+            if (!_users.ContainsKey(id))
+            {
+                _users.Add(id, new User());
+            }
+
+            _users[id].Username = $"{guildUser.Username}#{guildUser.Discriminator}";
+            if (!_users[id].Aliases.Contains(guildUser.Username))
+            {
+                _users[id].Aliases.Add(guildUser.Username);
+            }
+            if (guildUser.Nickname != null)
+            {
+
+                if (!_users[id].Aliases.Contains(guildUser.Nickname))
+                {
+                    _users[id].Aliases.Add(guildUser.Nickname);
+                }
+            }
+            CalculatePressure(id, message);
+            await FileHelper.SaveUsersAsync(_users);
         }
     }
 }
