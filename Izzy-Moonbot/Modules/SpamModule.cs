@@ -46,6 +46,8 @@ namespace Izzy_Moonbot.Modules
                 pressure = 0;
             }
 
+            _users[id].Pressure = pressure;
+            _users[id].Timestamp = now;
             await FileHelper.SaveUsersAsync(_users);
             return pressure;
         }

@@ -140,9 +140,8 @@ namespace Izzy_Moonbot
         private double ProcessPressure(ulong id, SocketUserMessage message)
         {
             var now = DateTime.UtcNow;
-            var basePressure = 10.0;
             var pressure = GetCurrentPressure(id);
-            pressure += basePressure;
+            pressure += _settings.SpamBasePressure;
             _users[id].Pressure = pressure;
             _users[id].Timestamp = now;
             return pressure;
@@ -151,13 +150,10 @@ namespace Izzy_Moonbot
         private double GetCurrentPressure(ulong id)
         {
             var now = DateTime.UtcNow;
-            var basePressure = 10.0;
-            var pressureDecay = 2.5;
-            var pressureLossPerSecond = basePressure / pressureDecay;
+            var pressureLossPerSecond = _settings.SpamBasePressure / _settings.SpamPressureDecay;
             var pressure = _users[id].Pressure;
             var difference = now - _users[id].Timestamp;
-            var totalSeconds = difference.TotalSeconds;
-            var totalPressureLoss = totalSeconds * pressureLossPerSecond;
+            var totalPressureLoss = difference.TotalSeconds * pressureLossPerSecond;
             pressure -= totalPressureLoss;
             if (pressure < 0)
             {
