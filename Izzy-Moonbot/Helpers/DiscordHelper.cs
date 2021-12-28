@@ -85,7 +85,7 @@
             return true;
         }
 
-        public static async Task<ulong> GeUserIdFromPingOrIfOnlySearchResultAsync(string userName, SocketCommandContext context)
+        public static async Task<ulong> GetUserIdFromPingOrIfOnlySearchResultAsync(string userName, SocketCommandContext context)
         {
             var userId = ConvertUserPingToId(userName);
             if (userId > 0)
@@ -220,5 +220,6 @@
             var trim = frontTrim.Split('>', 2)[0];
             return ulong.Parse(trim);
         }
+
     }
 }

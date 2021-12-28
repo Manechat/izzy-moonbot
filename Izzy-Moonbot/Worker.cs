@@ -137,9 +137,20 @@ namespace Izzy_Moonbot
             _logger.LogInformation(msg.Message);
             return Task.CompletedTask;
         }
-        private double CalculatePressure(ulong id, SocketUserMessage message)
+        private double ProcessPressure(ulong id, SocketUserMessage message)
         {
-            var now = message.Timestamp;
+            var now = DateTime.UtcNow;
+            var basePressure = 10.0;
+            var pressure = GetCurrentPressure(id);
+            pressure += basePressure;
+            _users[id].Pressure = pressure;
+            _users[id].Timestamp = now;
+            return pressure;
+        }
+
+        private double GetCurrentPressure(ulong id)
+        {
+            var now = DateTime.UtcNow;
             var basePressure = 10.0;
             var pressureDecay = 2.5;
             var pressureLossPerSecond = basePressure / pressureDecay;
@@ -153,11 +164,9 @@ namespace Izzy_Moonbot
                 pressure = 0;
             }
 
-            pressure += basePressure;
-            _users[id].Pressure = pressure;
-            _users[id].Timestamp = now.UtcDateTime;
             return pressure;
         }
+
         private async Task ProcessUser(SocketUserMessage message)
         {
             var guildUser = message.Author as SocketGuildUser;
@@ -180,7 +189,7 @@ namespace Izzy_Moonbot
                     _users[id].Aliases.Add(guildUser.Nickname);
                 }
             }
-            CalculatePressure(id, message);
+            ProcessPressure(id, message);
             await FileHelper.SaveUsersAsync(_users);
         }
     }

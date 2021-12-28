@@ -827,7 +827,7 @@
 
         private async Task AllowUserRemoveAsync(string userName)
         {
-            var userRemoveId = await DiscordHelper.GeUserIdFromPingOrIfOnlySearchResultAsync(userName, Context);
+            var userRemoveId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(userName, Context);
             if (userRemoveId > 0)
             {
                 for (var x = _settings.AllowedUsers.Count - 1; x >= 0; x--)
@@ -854,7 +854,7 @@
 
         private async Task AllowUserAddAsync(string userName)
         {
-            var userAddId = await DiscordHelper.GeUserIdFromPingOrIfOnlySearchResultAsync(userName, Context);
+            var userAddId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(userName, Context);
             if (userAddId > 0)
             {
                 foreach (var user in _settings.AllowedUsers)
