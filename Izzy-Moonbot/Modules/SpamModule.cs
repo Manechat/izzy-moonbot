@@ -26,11 +26,11 @@ namespace Izzy_Moonbot.Modules
         public async Task GetPressureAsync([Summary("userid")] string userName)
         {
             var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(userName, Context);
-            var pressure = GetCurrentPressure(userId);
+            var pressure = await GetCurrentPressure(userId);
             await ReplyAsync($"<@{userId}> Current Pressure: {pressure}", allowedMentions: AllowedMentions.None);
         }
 
-        private double GetCurrentPressure(ulong id)
+        private async Task<double> GetCurrentPressure(ulong id)
         {
             var now = DateTime.UtcNow;
             var basePressure = 10.0;
@@ -46,6 +46,7 @@ namespace Izzy_Moonbot.Modules
                 pressure = 0;
             }
 
+            await FileHelper.SaveUsersAsync(_users);
             return pressure;
         }
     }
