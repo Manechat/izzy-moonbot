@@ -23,19 +23,29 @@ namespace Izzy_Moonbot.Modules
         }
         [Command("getpressure")]
         [Summary("get user pressure")]
-        public async Task GetPressureAsync([Summary("userid")] string userName)
+        public async Task GetPressureAsync([Summary("userid")][Remainder] string userName)
         {
             var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(userName, Context);
             var pressure = await GetCurrentPressure(userId);
-            await ReplyAsync($"<@{userId}> Current Pressure: {pressure}", allowedMentions: AllowedMentions.None);
+            if (pressure < 0)
+            {
+                await ReplyAsync($"Could not find user <@{userId}>", allowedMentions: AllowedMentions.None);
+            }
+            else
+            {
+                await ReplyAsync($"<@{userId}> Current Pressure: {pressure}", allowedMentions: AllowedMentions.None);
+            }
         }
 
         private async Task<double> GetCurrentPressure(ulong id)
         {
+            if (!_users.ContainsKey(id))
+            {
+                return -1;
+            }
+
             var now = DateTime.UtcNow;
-            var basePressure = 10.0;
-            var pressureDecay = 2.5;
-            var pressureLossPerSecond = basePressure / pressureDecay;
+            var pressureLossPerSecond = _settings.SpamBasePressure / _settings.SpamPressureDecay;
             var pressure = _users[id].Pressure;
             var difference = now - _users[id].Timestamp;
             var totalSeconds = difference.TotalSeconds;
