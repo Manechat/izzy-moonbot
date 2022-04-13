@@ -9,57 +9,47 @@ using System.Threading.Tasks;
 
 namespace Izzy_Moonbot.Modules
 {
+    [Summary("Module for preventing spam")]
     public class SpamModule : ModuleBase<SocketCommandContext>
     {
         private readonly LoggingService _logger;
+        private readonly PressureService _pressureService;
         private readonly ServerSettings _settings;
         private readonly Dictionary<ulong, User> _users;
 
-        public SpamModule(LoggingService logger, ServerSettings settings, Dictionary<ulong, User> users)
+        public SpamModule(LoggingService logger, PressureService pressureService, ServerSettings settings, Dictionary<ulong, User> users)
         {
             _logger = logger;
+            _pressureService = pressureService;
             _settings = settings;
             _users = users;
         }
-        [Command("getpressure")]
+        [Command("pressure")]
         [Summary("get user pressure")]
-        public async Task GetPressureAsync([Summary("userid")][Remainder] string userName)
+        public async Task PressureAsync([Summary("userid")][Remainder] string userName = "")
         {
+            // If no target is specified, target self.
+            if (userName == "") userName = $"<@!{Context.User.Id}>";
+
             var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(userName, Context);
-            var pressure = await GetCurrentPressure(userId);
-            if (pressure < 0)
+            var user = await Context.Channel.GetUserAsync(userId);
+
+            if (user == null)
             {
-                await ReplyAsync($"Could not find user <@{userId}>", allowedMentions: AllowedMentions.None);
+                await ReplyAsync($"Couldn't find that user in this server", allowedMentions: AllowedMentions.None, messageReference: new MessageReference(Context.Message.Id, Context.Channel.Id, Context.Guild.Id));
             }
             else
             {
-                await ReplyAsync($"<@{userId}> Current Pressure: {pressure}", allowedMentions: AllowedMentions.None);
+                var pressure = await _pressureService.GetPressure(userId);
+                if (pressure < 0)
+                {
+                    await ReplyAsync($"Couldn't find pressure for {user.Username}#{user.Discriminator}. Maybe they haven't spoken before?", allowedMentions: AllowedMentions.None, messageReference: new MessageReference(Context.Message.Id, Context.Channel.Id, Context.Guild.Id));
+                }
+                else
+                {
+                    await ReplyAsync($"Current Pressure for {user.Username}#{user.Discriminator}: {pressure}", allowedMentions: AllowedMentions.None, messageReference: new MessageReference(Context.Message.Id, Context.Channel.Id, Context.Guild.Id));
+                }
             }
-        }
-
-        private async Task<double> GetCurrentPressure(ulong id)
-        {
-            if (!_users.ContainsKey(id))
-            {
-                return -1;
-            }
-
-            var now = DateTime.UtcNow;
-            var pressureLossPerSecond = _settings.SpamBasePressure / _settings.SpamPressureDecay;
-            var pressure = _users[id].Pressure;
-            var difference = now - _users[id].Timestamp;
-            var totalSeconds = difference.TotalSeconds;
-            var totalPressureLoss = totalSeconds * pressureLossPerSecond;
-            pressure -= totalPressureLoss;
-            if (pressure < 0)
-            {
-                pressure = 0;
-            }
-
-            _users[id].Pressure = pressure;
-            _users[id].Timestamp = now;
-            await FileHelper.SaveUsersAsync(_users);
-            return pressure;
         }
     }
 }

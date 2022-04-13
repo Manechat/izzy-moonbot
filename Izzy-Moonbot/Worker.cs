@@ -5,6 +5,7 @@ namespace Izzy_Moonbot
     using Discord.WebSocket;
     using Izzy_Moonbot.Helpers;
     using Izzy_Moonbot.Settings;
+    using Izzy_Moonbot.Service;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Hosting;
     using Microsoft.Extensions.Logging;
@@ -19,15 +20,17 @@ namespace Izzy_Moonbot
     {
         private readonly ILogger<Worker> _logger;
         private readonly IServiceCollection _services;
+        private readonly PressureService _pressureService;
         private readonly DiscordSettings _discordSettings;
         private readonly CommandService _commands;
         private readonly ServerSettings _settings;
         private readonly Dictionary<ulong, User> _users;
         private DiscordSocketClient _client;
 
-        public Worker(ILogger<Worker> logger, IServiceCollection services, IOptions<DiscordSettings> discordSettings, ServerSettings settings, Dictionary<ulong, User> users)
+        public Worker(ILogger<Worker> logger, IServiceCollection services, PressureService pressureService, IOptions<DiscordSettings> discordSettings, ServerSettings settings, Dictionary<ulong, User> users)
         {
             _logger = logger;
+            _pressureService = pressureService;
             _commands = new CommandService();
             _discordSettings = discordSettings.Value;
             _services = services;
@@ -76,7 +79,7 @@ namespace Izzy_Moonbot
             var argPos = 0;
             var context = new SocketCommandContext(_client, message);
 
-            await ProcessUser(message);
+            await _pressureService.ProcessMessage(message);
 
             if (DevSettings.UseDevPrefix)
             {
@@ -136,57 +139,6 @@ namespace Izzy_Moonbot
         {
             _logger.LogInformation(msg.Message);
             return Task.CompletedTask;
-        }
-        private double ProcessPressure(ulong id, SocketUserMessage message)
-        {
-            var now = DateTime.UtcNow;
-            var pressure = GetCurrentPressure(id);
-            pressure += _settings.SpamBasePressure;
-            _users[id].Pressure = pressure;
-            _users[id].Timestamp = now;
-            return pressure;
-        }
-
-        private double GetCurrentPressure(ulong id)
-        {
-            var now = DateTime.UtcNow;
-            var pressureLossPerSecond = _settings.SpamBasePressure / _settings.SpamPressureDecay;
-            var pressure = _users[id].Pressure;
-            var difference = now - _users[id].Timestamp;
-            var totalPressureLoss = difference.TotalSeconds * pressureLossPerSecond;
-            pressure -= totalPressureLoss;
-            if (pressure < 0)
-            {
-                pressure = 0;
-            }
-
-            return pressure;
-        }
-
-        private async Task ProcessUser(SocketUserMessage message)
-        {
-            var guildUser = message.Author as SocketGuildUser;
-            var id = guildUser.Id;
-            if (!_users.ContainsKey(id))
-            {
-                _users.Add(id, new User());
-            }
-
-            _users[id].Username = $"{guildUser.Username}#{guildUser.Discriminator}";
-            if (!_users[id].Aliases.Contains(guildUser.Username))
-            {
-                _users[id].Aliases.Add(guildUser.Username);
-            }
-            if (guildUser.Nickname != null)
-            {
-
-                if (!_users[id].Aliases.Contains(guildUser.Nickname))
-                {
-                    _users[id].Aliases.Add(guildUser.Nickname);
-                }
-            }
-            ProcessPressure(id, message);
-            await FileHelper.SaveUsersAsync(_users);
         }
     }
 }

@@ -45,6 +45,7 @@ namespace Izzy_Moonbot
                 services.Configure<DiscordSettings>(config.GetSection(nameof(DiscordSettings)));
                 services.AddTransient<IDateTimeService, DateTimeService>();
                 services.AddSingleton<LoggingService>();
+                services.AddSingleton<PressureService>();
                 var settings = FileHelper.LoadSettingsAsync().GetAwaiter().GetResult();
                 services.AddSingleton(settings);
                 var users = FileHelper.LoadUsersAsync().GetAwaiter().GetResult();

@@ -13,11 +13,13 @@
     {
         private readonly LoggingService _logger;
         private readonly ServerSettings _settings;
+        private readonly PressureService _example;
 
-        public InfoModule(LoggingService logger, ServerSettings settings)
+        public InfoModule(LoggingService logger, ServerSettings settings, PressureService example)
         {
             _logger = logger;
             _settings = settings;
+            _example = example;
         }
 
         [Command("help")]

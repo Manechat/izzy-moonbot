@@ -163,12 +163,16 @@
 
         private static ulong ConvertUserPingToId(string userPing)
         {
-            if (!userPing.Contains("<@!") || !userPing.Contains(">"))
+            if (!userPing.Contains("<@") || !userPing.Contains(">"))
             {
                 return 0;
             }
 
-            var frontTrim = userPing[3..];
+            var frontTrim = userPing[2..];
+
+            // Discord is sometimes weird and gives us a mention like <@ID> or <@!ID> seemingly randomly???
+            if (userPing.Contains("!")) frontTrim = userPing[3..];
+                     
             var trim = frontTrim.Split('>', 2)[0];
             return ulong.Parse(trim);
         }
