@@ -1,32 +1,32 @@
-﻿using Discord;
-using Discord.Commands;
-using Izzy_Moonbot.Helpers;
-using Izzy_Moonbot.Service;
-using Izzy_Moonbot.Settings;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using System.Linq;
+using Izzy_Moonbot.Attributes;
 
 namespace Izzy_Moonbot.Modules
 {
-    [Summary("Module for preventing spam")]
+    using Discord;
+    using Discord.Commands;
+    using Izzy_Moonbot.Helpers;
+    using Izzy_Moonbot.Service;
+    using Izzy_Moonbot.Settings;
+    using System.Threading.Tasks;
+
+    [Summary("Module for interacting with the spam prevention services.")]
     public class SpamModule : ModuleBase<SocketCommandContext>
     {
-        private readonly LoggingService _logger;
+        private ServerSettings _settings;
         private readonly PressureService _pressureService;
-        private readonly ServerSettings _settings;
-        private readonly Dictionary<ulong, User> _users;
 
-        public SpamModule(LoggingService logger, PressureService pressureService, ServerSettings settings, Dictionary<ulong, User> users)
+        public SpamModule(ServerSettings settings, PressureService pressureService)
         {
-            _logger = logger;
-            _pressureService = pressureService;
             _settings = settings;
-            _users = users;
+            _pressureService = pressureService;
         }
-        [Command("pressure")]
-        [Summary("get user pressure")]
-        public async Task PressureAsync([Summary("userid")][Remainder] string userName = "")
+
+        [Command("getpressure")]
+        [Summary("Get a users pressure")]
+        [ModCommand(Group = "Permissions")]
+        [DevCommand(Group = "Permissions")]
+        public async Task GetPressureAsync([Summary("userid")] string userName = "", [Summary("Whether to return the value the users last message returned")][Remainder] string noModifying = "")
         {
             // If no target is specified, target self.
             if (userName == "") userName = $"<@!{Context.User.Id}>";
@@ -40,7 +40,16 @@ namespace Izzy_Moonbot.Modules
             }
             else
             {
-                var pressure = await _pressureService.GetPressure(userId);
+                double pressure = -1;
+                if ("yes|true|y".Split("|").Contains(noModifying))
+                {
+                    pressure = await _pressureService.GetPressureWithoutModifying(userId);
+                }
+                else
+                {
+                    pressure = await _pressureService.GetPressure(userId);
+                }
+                
                 if (pressure < 0)
                 {
                     await ReplyAsync($"Couldn't find pressure for {user.Username}#{user.Discriminator}. Maybe they haven't spoken before?", allowedMentions: AllowedMentions.None, messageReference: new MessageReference(Context.Message.Id, Context.Channel.Id, Context.Guild.Id));

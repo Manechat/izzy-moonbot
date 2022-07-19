@@ -15,7 +15,7 @@ namespace Izzy_Moonbot
         public static void Main(string[] args)
         {
             Log.Logger = new LoggerConfiguration().Enrich.FromLogContext().WriteTo
-                .Console(outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}").CreateLogger();
+                .Console(outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}").MinimumLevel.Verbose().CreateLogger();
 
             try
             {
@@ -45,11 +45,20 @@ namespace Izzy_Moonbot
                 services.Configure<DiscordSettings>(config.GetSection(nameof(DiscordSettings)));
                 services.AddTransient<IDateTimeService, DateTimeService>();
                 services.AddSingleton<LoggingService>();
+                //services.AddSingleton<StateService>();
                 services.AddSingleton<PressureService>();
+                services.AddSingleton<ModService>();
+                services.AddSingleton<RoleService>();
+                services.AddSingleton<RaidService>();
+                services.AddSingleton<FilterService>();
                 var settings = FileHelper.LoadSettingsAsync().GetAwaiter().GetResult();
                 services.AddSingleton(settings);
+                services.AddSingleton<ServerSettingsDescriber>();
                 var users = FileHelper.LoadUsersAsync().GetAwaiter().GetResult();
                 services.AddSingleton(users);
+                services.AddSingleton<ScheduleService>();
+                var scheduledTasks = FileHelper.LoadScheduleAsync().GetAwaiter().GetResult();
+                services.AddSingleton(scheduledTasks);
                 services.AddSingleton(services);
                 
                 services.AddHostedService<Worker>();

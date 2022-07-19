@@ -108,6 +108,31 @@
             var fileContents = JsonConvert.SerializeObject(users, Formatting.Indented);
             await File.WriteAllTextAsync(filepath, fileContents);
         }
+        
+        public static async Task<List<ScheduledTask>> LoadScheduleAsync()
+        {
+            var scheduledTasks = new List<ScheduledTask>();
+            var filepath = SetUpFilepath(FilePathType.Root, "scheduled-tasks", "conf");
+            if (!File.Exists(filepath))
+            {
+                var defaultFileContents = JsonConvert.SerializeObject(scheduledTasks, Formatting.Indented);
+                await File.WriteAllTextAsync(filepath, defaultFileContents);
+            }
+            else
+            {
+                var fileContents = await File.ReadAllTextAsync(filepath);
+                scheduledTasks = JsonConvert.DeserializeObject<List<ScheduledTask>>(fileContents);
+            }
+
+            return scheduledTasks;
+        }
+
+        public static async Task SaveScheduleAsync(List<ScheduledTask> scheduledTasks)
+        {
+            var filepath = SetUpFilepath(FilePathType.Root, "scheduled-tasks", "conf");
+            var fileContents = JsonConvert.SerializeObject(scheduledTasks, Formatting.Indented);
+            await File.WriteAllTextAsync(filepath, fileContents);
+        }
 
         private static void CreateDirectoryIfNotExists(string path)
         {

@@ -38,22 +38,13 @@
 
         public static bool DoesUserHaveAdminRoleAsync(SocketCommandContext context, ServerSettings settings)
         {
-            if (context.IsPrivate)
-            {
-                return true;
-            }
-
-            return settings.AdminRole == 0 || context.Guild.GetUser(context.User.Id).Roles.Any(x => x.Id == settings.AdminRole);
+            return context.Guild.GetUser(context.User.Id).Roles.Any(x => x.Id == settings.ModRole);
         }
 
         public static bool CanUserRunThisCommand(SocketCommandContext context, ServerSettings settings)
         {
-            if (context.IsPrivate)
-            {
-                return true;
-            }
 
-            if (context.Guild.GetUser(context.User.Id).Roles.Any(x => x.Id == settings.AdminRole))
+            if (context.Guild.GetUser(context.User.Id).Roles.Any(x => x.Id == settings.ModRole))
             {
                 return true;
             }
@@ -94,19 +85,19 @@
             }
 
             var userList = await context.Guild.SearchUsersAsync(userName);
-            return userList.Count != 1 ? 0 : userList.First().Id;
+            return userList.Count < 1 ? 0 : userList.First().Id;
         }
 
         public static string CheckAliasesAsync(string message, ServerSettings settings)
         {
             var parsedMessage = message[1..].TrimStart();
-            foreach (var (shortForm, longForm) in settings.Aliases)
+            /*foreach (var (shortForm, longForm) in settings.Aliases)
             {
                 if (message[1..].TrimStart().StartsWith(shortForm))
                 {
                     parsedMessage = message.Replace(shortForm, longForm)[1..].TrimStart();
                 }
-            }
+            }*/
 
             return parsedMessage;
         }
@@ -153,6 +144,7 @@
         {
             if (!channelPing.Contains("<#") || !channelPing.Contains(">"))
             {
+                if (ulong.TryParse(channelPing, out ulong result)) return result;
                 return 0;
             }
 
@@ -165,6 +157,7 @@
         {
             if (!userPing.Contains("<@") || !userPing.Contains(">"))
             {
+                if (ulong.TryParse(userPing, out ulong result)) return result;
                 return 0;
             }
 
@@ -217,6 +210,7 @@
         {
             if (!rolePing.Contains("<@&") || !rolePing.Contains(">"))
             {
+                if (ulong.TryParse(rolePing, out ulong result)) return result;
                 return 0;
             }
 

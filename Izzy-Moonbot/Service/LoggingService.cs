@@ -16,7 +16,7 @@
             _logger = logger;
         }
 
-        public async Task Log(string message, SocketCommandContext context, bool file = false)
+        public async Task Log(string message, SocketCommandContext context, bool file = false, LogLevel level = LogLevel.Information)
         {
             if (file)
             {
@@ -24,7 +24,8 @@
             }
 
             var logMessage = PrepareMessageForLogging(message, context);
-            _logger.LogInformation(logMessage);
+            //_logger.LogInformation(logMessage, level);
+            _logger.Log(level, logMessage);
         }
 
         private static string PrepareMessageForLogging(string message, SocketCommandContext context, bool fileEntry = false, bool header = false)
@@ -32,43 +33,52 @@
             var logMessage = "";
             if (!header)
             {
-                logMessage += $"[{DateTime.UtcNow:s}] ";
+                //logMessage += $"[{DateTime.UtcNow:s}] ";
             }
 
-            if (context.IsPrivate)
+            if (context != null)
             {
-                if (!fileEntry)
+                if (context.IsPrivate)
                 {
-                    logMessage += $"DM with @{context.User.Username}#{context.User.Discriminator} ({context.User.Id})";
-                }
+                    if (!fileEntry)
+                    {
+                        logMessage +=
+                            $"DM with @{context.User.Username}#{context.User.Discriminator} ({context.User.Id})";
+                    }
 
-                if (!fileEntry && !header)
-                {
-                    logMessage += ", ";
-                }
+                    if (!fileEntry && !header)
+                    {
+                        logMessage += ", ";
+                    }
 
-                if (!header)
+                    if (!header)
+                    {
+                        logMessage += message;
+                    }
+                }
+                else
                 {
-                    logMessage += message;
+                    if (!fileEntry)
+                    {
+                        logMessage +=
+                            $"server: {context.Guild.Name} ({context.Guild.Id}) #{context.Channel.Name} ({context.Channel.Id})";
+                    }
+
+                    if (!fileEntry && !header)
+                    {
+                        logMessage += " ";
+                    }
+
+                    if (!header)
+                    {
+                        logMessage += $"@{context.User.Username}#{context.User.Discriminator} ({context.User.Id}), ";
+                        logMessage += message;
+                    }
                 }
             }
             else
             {
-                if (!fileEntry)
-                {
-                    logMessage += $"server: {context.Guild.Name} ({context.Guild.Id}) #{context.Channel.Name} ({context.Channel.Id})";
-                }
-
-                if (!fileEntry && !header)
-                {
-                    logMessage += " ";
-                }
-
-                if (!header)
-                {
-                    logMessage += $"@{context.User.Username}#{context.User.Discriminator} ({context.User.Id}), ";
-                    logMessage += message;
-                }
+                logMessage += message;
             }
 
             if (fileEntry || header)
