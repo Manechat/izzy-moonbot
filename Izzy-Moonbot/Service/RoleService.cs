@@ -38,6 +38,20 @@ namespace Izzy_Moonbot.Service
             _users[user.Id].FirstMessageTimestamp = null;
 
             await FileHelper.SaveUsersAsync(_users);
+            
+            if (_settings.NewMemberRole != null)
+            {
+                Dictionary<string, string> fields = new Dictionary<string, string>
+                {
+                    { "roleId", _settings.NewMemberRole.ToString() },
+                    { "userId", user.Id.ToString() },
+                    { "reason", $"{_settings.NewMemberRoleDecay} minutes (`NewMemberRoleDecay`) passed, user no longer a new pony." }
+                };
+                ScheduledTaskAction action = new ScheduledTaskAction(ScheduledTaskActionType.RemoveRole, fields);
+                ScheduledTask task = new ScheduledTask(DateTimeOffset.UtcNow,
+                    (DateTimeOffset.UtcNow + TimeSpan.FromMinutes(_settings.NewMemberRoleDecay)), action);
+                _scheduleService.CreateScheduledTask(task, user.Guild);
+            }
         }
 
         public async Task ProcessMemberMessage(SocketCommandContext context)
@@ -49,19 +63,7 @@ namespace Izzy_Moonbot.Service
 
                 await FileHelper.SaveUsersAsync(_users);
 
-                if (_settings.NewMemberRole != null)
-                {
-                    Dictionary<string, string> fields = new Dictionary<string, string>
-                    {
-                        { "roleId", _settings.NewMemberRole.ToString() },
-                        { "userId", context.User.Id.ToString() },
-                        { "reason", $"{_settings.NewMemberRoleDecay} minutes (`NewMemberRoleDecay`) passed, user no longer a new pony." }
-                    };
-                    ScheduledTaskAction action = new ScheduledTaskAction(ScheduledTaskActionType.RemoveRole, fields);
-                    ScheduledTask task = new ScheduledTask(DateTimeOffset.UtcNow,
-                        (DateTimeOffset.UtcNow + TimeSpan.FromMinutes(_settings.NewMemberRoleDecay)), action);
-                    _scheduleService.CreateScheduledTask(task, context.Guild);
-                }
+                
             }
         }
     }

@@ -11,6 +11,7 @@ namespace Izzy_Moonbot.Settings
             // Core settings
             Prefix = '.';
             SafeMode = true;
+            DevUsers = new HashSet<ulong>();
             IgnoredChannels = new HashSet<ulong>();
             IgnoredRoles = new HashSet<ulong>();
             MentionResponseEnabled = false;
@@ -68,6 +69,7 @@ namespace Izzy_Moonbot.Settings
         // Core settings
         public char Prefix { get; set; }
         public bool SafeMode { get; set; }
+        public HashSet<ulong> DevUsers { get; set; }
         public HashSet<ulong> IgnoredChannels { get; set; }
         public HashSet<ulong> IgnoredRoles { get; set; }
         public bool MentionResponseEnabled { get; set; }
