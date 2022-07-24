@@ -11,7 +11,6 @@ namespace Izzy_Moonbot.Settings
             // Core settings
             Prefix = '.';
             SafeMode = true;
-            DevUsers = new HashSet<ulong>();
             IgnoredChannels = new HashSet<ulong>();
             IgnoredRoles = new HashSet<ulong>();
             MentionResponseEnabled = false;
