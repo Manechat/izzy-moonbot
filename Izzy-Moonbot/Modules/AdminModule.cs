@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using Izzy_Moonbot.Describers;
 
 namespace Izzy_Moonbot.Modules
 {
@@ -53,7 +54,7 @@ namespace Izzy_Moonbot.Modules
             [Summary("Mod log channel name")] string logChannelName = "",
             [Remainder][Summary("Mod role name")] string modRoleName = "")
         {
-            char prefix = _settings.Prefix;
+            var prefix = _settings.Prefix;
             ulong channelSetId;
 
             await ReplyAsync("Moving in to my new place...");
