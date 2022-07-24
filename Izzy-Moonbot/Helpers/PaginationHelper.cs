@@ -13,16 +13,16 @@ public class PaginationHelper
     public int PageNumber;
     public DateTime ExpiresAt;
     
-    private DiscordSocketClient _client;
+    private readonly DiscordSocketClient _client;
     private ulong _authorId;
     private IUserMessage _message;
-    private string[] _staticParts;
+    private readonly string[] _staticParts;
     private Task _cancelTask;
     private bool _easterEgg;
 
-    private bool _useCodeBlock;
-    private AllowedMentions _allowedMentions;
-    private RequestOptions _options;
+    private readonly bool _useCodeBlock;
+    private readonly AllowedMentions _allowedMentions;
+    private readonly RequestOptions _options;
     
     public PaginationHelper(SocketCommandContext context, string[] pages, string[] staticParts, int pageNumber = 0, bool codeblock = true, 
         AllowedMentions allowedMentions = null, 
@@ -71,12 +71,12 @@ public class PaginationHelper
 
     private async void RedrawPagination()
     {
-        string expireMessage = "";
+        var expireMessage = "";
         if (this.ExpiresAt <= DateTime.UtcNow) expireMessage = "<:info:964284521488986133> **This paginated message has expired.**";
 
         await this._message.ModifyAsync(msg =>
         {
-            string codeBlock = "";
+            var codeBlock = "";
             if (this._useCodeBlock) codeBlock = $"```";
             
             msg.Content =
@@ -121,43 +121,33 @@ public class PaginationHelper
 
     private async Task ButtonEvent(SocketMessageComponent component)
     {
-        try
-        {
-            if (component.User.Id == this._client.CurrentUser.Id) return;
-            if (component.Message.Id != this._message.Id) return;
+        if (component.User.Id == this._client.CurrentUser.Id) return;
+        if (component.Message.Id != this._message.Id) return;
 
-            switch (component.Data.CustomId)
-            {
-                case "goto-start":
-                    this.PageNumber = 0;
-                    this.RedrawPagination();
-                    break;
-                case "goto-previous":
-                    if (this.PageNumber >= 1) this.PageNumber -= 1;
-                    this.RedrawPagination();
-                    break;
-                case "goto-next":
-                    if (this.PageNumber < this.Pages.Length-1) this.PageNumber += 1;
-                    this.RedrawPagination();
-                    break;
-                case "goto-end":
-                    this.PageNumber = this.Pages.Length-1;
-                    this.RedrawPagination();
-                    break;
-                case "trigger-easteregg":
-                    this._easterEgg = true;
-                    this.RedrawPagination();
-                    break;
-                default:
-                    // We don't actually know what this emote is. Don't do anything
-                    break;
-            }
-
-            await component.DeferAsync();
-        }
-        catch (Exception exp)
+        switch (component.Data.CustomId)
         {
-            component.Channel.SendMessageAsync($"{exp.Message}{Environment.NewLine}{exp.StackTrace}");
+            case "goto-start": 
+                this.PageNumber = 0;
+                this.RedrawPagination();
+                break;
+            case "goto-previous":
+                if (this.PageNumber >= 1) this.PageNumber -= 1;
+                this.RedrawPagination();
+                break;
+            case "goto-next":
+                if (this.PageNumber < this.Pages.Length-1) this.PageNumber += 1;
+                this.RedrawPagination();
+                break;
+            case "goto-end":
+                this.PageNumber = this.Pages.Length-1;
+                this.RedrawPagination();
+                break;
+            case "trigger-easteregg":
+                this._easterEgg = true;
+                this.RedrawPagination();
+                break;
         }
+
+        await component.DeferAsync();
     }
 }
