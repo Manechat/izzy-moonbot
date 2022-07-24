@@ -53,7 +53,7 @@ public class PaginationHelper
             .WithButton(customId: "goto-end", emote: Emoji.Parse(":track_next:"), disabled: false);
             
         
-        this._message = await context.Message.ReplyAsync($"{this._staticParts[0]}{Environment.NewLine}{Environment.NewLine}<a:loading:967008483956387840> Pagination is loading. Please wait...{Environment.NewLine}{Environment.NewLine}{this._staticParts[1]}", components: builder.Build(), allowedMentions: this._allowedMentions, options: this._options);
+        this._message = await context.Message.ReplyAsync($"{this._staticParts[0]}{Environment.NewLine}{Environment.NewLine}<a:rdloop:910875692785336351> Pagination is loading. Please wait...{Environment.NewLine}{Environment.NewLine}{this._staticParts[1]}", components: builder.Build(), allowedMentions: this._allowedMentions, options: this._options);
 
         this._client.ButtonExecuted += ButtonEvent;
         
@@ -72,7 +72,7 @@ public class PaginationHelper
     private async void RedrawPagination()
     {
         var expireMessage = "";
-        if (this.ExpiresAt <= DateTime.UtcNow) expireMessage = "<:info:964284521488986133> **This paginated message has expired.**";
+        if (this.ExpiresAt <= DateTime.UtcNow) expireMessage = "ℹ **This paginated message has expired.**";
 
         await this._message.ModifyAsync(msg =>
         {
