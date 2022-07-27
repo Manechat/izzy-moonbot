@@ -8,7 +8,7 @@
     using System.Collections.Generic;
     using System.Threading.Tasks;
 
-    /*[Summary("Module for interacting with the antiraid services.")]
+    [Summary("Module for interacting with the antiraid services.")]
     public class RaidModule : ModuleBase<SocketCommandContext>
     {
         private ServerSettings _settings;
@@ -114,5 +114,5 @@
 
             await ReplyAsync($"I consider the following users as part of the current raid and thus have been banned.{Environment.NewLine}```{Environment.NewLine}{string.Join(", ", potentialRaiders)}{Environment.NewLine}```", messageReference: new Discord.MessageReference(Context.Message.Id, Context.Channel.Id, Context.Guild.Id));
         }
-    }*/
+    }
 }
