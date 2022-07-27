@@ -122,7 +122,10 @@ namespace Izzy_Moonbot
                 await FileHelper.SaveUsersAsync(_users);
             }
 
-            _roleService.ProcessMemberJoin(member);
+            Task.Factory.StartNew(async () =>
+            {
+                await _roleService.ProcessMemberJoin(member);
+            });
 
             string autoSilence = " and was silenced (`AutoSilenceNewJoins` is on)";
             if (!_settings.AutoSilenceNewJoins) autoSilence = "";
@@ -134,7 +137,10 @@ namespace Izzy_Moonbot
             
             if (_settings.RaidProtectionEnabled)
             {
-                await _raidService.ProcessMemberJoin(member);
+                Task.Factory.StartNew(async () =>
+                {
+                    await _raidService.ProcessMemberJoin(member);
+                });
             }
         }
 
