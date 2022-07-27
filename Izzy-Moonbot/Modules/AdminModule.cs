@@ -41,7 +41,7 @@ public class AdminModule : ModuleBase<SocketCommandContext>
     {
         // Just closes the connection.
         await ReplyAsync("<a:izzywhat:891381404741550130>");
-        await Context.Client.LogoutAsync();
+        Environment.Exit(1);
     }
 
     [Command("scan")]
