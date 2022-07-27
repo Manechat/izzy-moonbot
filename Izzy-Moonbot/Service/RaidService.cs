@@ -205,7 +205,7 @@ namespace Izzy_Moonbot.Service
                     }
                 }
 
-                CurrentRaidMode = RaidMode.SMALL;
+                CurrentRaidMode = RaidMode.LARGE;
                 _settings.AutoSilenceNewJoins = true;
 
                 await FileHelper.SaveSettingsAsync(_settings);
