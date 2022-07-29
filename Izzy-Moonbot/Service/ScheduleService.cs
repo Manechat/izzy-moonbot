@@ -50,7 +50,7 @@ namespace Izzy_Moonbot.Service
                         await Task.Delay(Convert.ToInt32(scheduledTask.ExecuteAt.ToUnixTimeMilliseconds() - DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()));
                         if (!_scheduledTasks.Contains(scheduledTask)) return;
                         await this.ExecuteTask(scheduledTask.Action, guild);
-                        this.DeleteScheduledTask(scheduledTask);
+                        await this.DeleteScheduledTask(scheduledTask);
                     });
                 }
             }
@@ -63,6 +63,7 @@ namespace Izzy_Moonbot.Service
                 case ScheduledTaskActionType.RemoveRole:
                     SocketRole roleToRemove = guild.GetRole(ulong.Parse(action.Fields["roleId"]));
                     SocketGuildUser userToRemoveFrom = guild.GetUser(ulong.Parse(action.Fields["userId"]));
+                    if (roleToRemove == null || userToRemoveFrom == null) return;
                     string reasonForRemoval = null;
                     if (action.Fields.ContainsKey("reason")) reasonForRemoval = action.Fields["reason"];
 
@@ -71,6 +72,7 @@ namespace Izzy_Moonbot.Service
                 case ScheduledTaskActionType.AddRole:
                     SocketRole roleToAdd = guild.GetRole(ulong.Parse(action.Fields["roleId"]));
                     SocketGuildUser userToAddTo = guild.GetUser(ulong.Parse(action.Fields["userId"]));
+                    if (roleToAdd == null || userToAddTo == null) return;
                     string reasonForAdding = null;
                     if (action.Fields.ContainsKey("reason")) reasonForAdding = action.Fields["reason"];
 
@@ -81,6 +83,7 @@ namespace Izzy_Moonbot.Service
                     break;
                 case ScheduledTaskActionType.Echo:
                     SocketTextChannel channelToEchoTo = guild.GetTextChannel(ulong.Parse(action.Fields["channelId"]));
+                    if (channelToEchoTo == null) return;
                     string contentToEcho = action.Fields["content"];
                     Console.WriteLine(
                         $"#{channelToEchoTo.Name} ({channelToEchoTo.Id}) Scheduled Echo: {contentToEcho}");
