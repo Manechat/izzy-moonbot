@@ -34,10 +34,11 @@ namespace Izzy_Moonbot.Service
 
         public void ResumeScheduledTasks(SocketGuild guild)
         {
-            foreach (var scheduledTask in _scheduledTasks)
+            _scheduledTasks.ToArray().ToList().ForEach(scheduledTask =>
             {
                 // Work out if the task needs to execute now
-                if (scheduledTask.ExecuteAt.ToUniversalTime().ToUnixTimeMilliseconds() <= DateTimeOffset.UtcNow.ToUnixTimeMilliseconds())
+                if (scheduledTask.ExecuteAt.ToUniversalTime().ToUnixTimeMilliseconds() <=
+                    DateTimeOffset.UtcNow.ToUnixTimeMilliseconds())
                 {
                     this.ExecuteTask(scheduledTask.Action, guild);
                     this.DeleteScheduledTask(scheduledTask);
@@ -47,13 +48,14 @@ namespace Izzy_Moonbot.Service
                     // Task does not need to execute now, but should have a Task set up on a seperate thread to trigger when needed.
                     Task.Factory.StartNew(async () =>
                     {
-                        await Task.Delay(Convert.ToInt32(scheduledTask.ExecuteAt.ToUnixTimeMilliseconds() - DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()));
+                        await Task.Delay(Convert.ToInt32(scheduledTask.ExecuteAt.ToUnixTimeMilliseconds() -
+                                                         DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()));
                         if (!_scheduledTasks.Contains(scheduledTask)) return;
                         await this.ExecuteTask(scheduledTask.Action, guild);
                         await this.DeleteScheduledTask(scheduledTask);
                     });
                 }
-            }
+            });
         }
 
         private async Task ExecuteTask(ScheduledTaskAction action, SocketGuild guild)
