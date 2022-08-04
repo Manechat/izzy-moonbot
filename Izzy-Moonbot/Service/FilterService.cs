@@ -16,7 +16,7 @@ namespace Izzy_Moonbot.Service
     {
         private ServerSettings _settings;
         private ModService _mod;
-        private DiscordSocketClient _client;
+        private ModLoggingService _modLog;
 
         /*
          * The testString is a specific string that, while not in the actual filter list
@@ -31,10 +31,11 @@ namespace Izzy_Moonbot.Service
         };
         #endif
 
-        public FilterService(ServerSettings settings, ModService mod)
+        public FilterService(ServerSettings settings, ModService mod, ModLoggingService modLog)
         {
             _settings = settings;
             _mod = mod;
+            _modLog = modLog;
         }
 
         private async Task LogFilterTrip(SocketCommandContext context, string word, string category, List<string> actionsTaken, bool onEdit = false, RestUserMessage message = null)
@@ -58,19 +59,29 @@ namespace Izzy_Moonbot.Service
             }
             if (actionsTaken.Contains("silence")) 
             { 
-                actions.Add(":speech_balloon: - **I've silenced the user**");
+                actions.Add(":mute: - **I've silenced the user**");
+            }
+
+            List<ulong> roleIds = context.Guild.GetUser(context.User.Id).Roles.Select(role => role.Id).ToList();
+            if (_settings.FilterBypassRoles.Overlaps(roleIds))
+            {
+                actions.Clear();
+                actions.Add(":information_source: - **I've done nothing as this user has a role which is in `FilterBypassRoles`.");
             }
 
             if (_settings.SafeMode)
             {
-                embedBuilder.AddField("How do I want to respond?", string.Join(Environment.NewLine, actions));
+                embedBuilder.AddField("How do I want to respond? (`SafeMode` is enabled)", string.Join(Environment.NewLine, actions));
             }
             else
             {
                 embedBuilder.AddField("What have I done in response?", string.Join(Environment.NewLine, actions));
             }
-            
-            await context.Guild.GetTextChannel(_settings.ModChannel).SendMessageAsync(embed: embedBuilder.Build());
+
+            await _modLog.CreateModLog(context.Guild)
+                .SetContent($"<@-&{_settings.ModRole}>")
+                .SetEmbed(embedBuilder.Build())
+                .Send();
         }
 
         private async Task ProcessFilterTrip(SocketCommandContext context, string word, string category, bool onEdit = false)
@@ -85,6 +96,13 @@ namespace Izzy_Moonbot.Service
                 
                 string? messageResponse = _settings.FilterResponseMessages[category];
                 bool shouldSilence = _settings.FilterResponseSilence[category];
+                
+                List<ulong> roleIds = context.Guild.GetUser(context.User.Id).Roles.Select(role => role.Id).ToList();
+                if (_settings.FilterBypassRoles.Overlaps(roleIds))
+                {
+                    messageResponse = null;
+                    shouldSilence = false;
+                }
 
                 List<string> actions = new List<string>();
                 RestUserMessage message = null;
@@ -119,24 +137,23 @@ namespace Izzy_Moonbot.Service
         
         public async Task ProcessMessageUpdate(SocketCommandContext context)
         {
-            if (_settings.FilterMonitorEdits)
-            {
-                List<ulong> roleIds = (context.User as SocketGuildUser).Roles.Select(role => role.Id).ToList();
-                if (_settings.FilterIgnoredRoles.Overlaps(roleIds)) return;
+            if (!_settings.FilterMonitorEdits) return;
+            List<ulong> channelIds = context.Guild.TextChannels.Select(channel => channel.Id).ToList();
+            if (_settings.FilterIgnoredChannels.Overlaps(channelIds)) return;
 
-                    foreach (var (category, words) in _settings.FilteredWords)
-                {
-                    #if DEBUG
-                    words.Add(_testString[0] + category + _testString[1]);
-                    #endif
+            foreach (var (category, words) in _settings.FilteredWords)
+            {
+                var filteredWords = words.ToArray().ToList();
+                #if DEBUG
+                filteredWords.Add(_testString[0] + category + _testString[1]);
+                #endif
                 
-                    foreach (var word in words)
+                foreach (var word in filteredWords)
+                {
+                    if (context.Message.Content.Contains(word))
                     {
-                        if (context.Message.Content.Contains(word))
-                        {
-                            // Filter Trip!
-                            this.ProcessFilterTrip(context, word, category, true);
-                        }
+                        // Filter Trip!
+                        this.ProcessFilterTrip(context, word, category, true);
                     }
                 }
             }
@@ -145,13 +162,16 @@ namespace Izzy_Moonbot.Service
         public void ProcessMessage(SocketCommandContext context)
         {
             if (!_settings.FilterEnabled) return;
+            List<ulong> channelIds = context.Guild.TextChannels.Select(channel => channel.Id).ToList();
+            if (_settings.FilterIgnoredChannels.Overlaps(channelIds)) return;
             foreach (var (category, words) in _settings.FilteredWords)
             {
+                var filteredWords = words.ToArray().ToList();
                 #if DEBUG
-                words.Add(_testString[0] + category + _testString[1]);
+                filteredWords.Add(_testString[0] + category + _testString[1]);
                 #endif
                 
-                foreach (var word in words)
+                foreach (var word in filteredWords)
                 {
                     if (context.Message.Content.Contains(word))
                     {

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Reflection;
 
 namespace Izzy_Moonbot.Describers
@@ -13,11 +14,13 @@ namespace Izzy_Moonbot.Describers
             // Core settings
             _settings.Add("Prefix", new ServerSettingsItem(SettingsItemType.Char, "The prefix I will listen to for commands.", SettingsItemCategory.Core));
             _settings.Add("SafeMode", new ServerSettingsItem(SettingsItemType.Boolean, "If set to true, I will not preform any moderation actions. This is best used when testing moderation functions in case of potentially broken code.", SettingsItemCategory.Core));
+            _settings.Add("BatchSendLogs", new ServerSettingsItem(SettingsItemType.Boolean, "If set to true, I will batch send mod/action logs instead of sending them immediately. This is managed automatically by the Raid service to prevent me from being ratelimited.", SettingsItemCategory.Core));
+            _settings.Add("BatchLogsSendRate", new ServerSettingsItem(SettingsItemType.Double, "The amount of seconds between each batch send.", SettingsItemCategory.Core));
             _settings.Add("IgnoredChannels", new ServerSettingsItem(SettingsItemType.ChannelList, "A list of channels I will ignore commands from.", SettingsItemCategory.Core));
             _settings.Add("IgnoredRoles", new ServerSettingsItem(SettingsItemType.RoleList, "A list of roles I will ignore commands from.", SettingsItemCategory.Core));
-            _settings.Add("MentionResponseEnabled", new ServerSettingsItem(SettingsItemType.Boolean, "Whether I will respond to someone mentioning me.", SettingsItemCategory.Core));
-            _settings.Add("MentionResponses", new ServerSettingsItem(SettingsItemType.StringList, "A list of responses I will send whenever someone mentions me.", SettingsItemCategory.Core));
-            _settings.Add("MentionResponseCooldown", new ServerSettingsItem(SettingsItemType.Double, "How many seconds I should wait between responding to a mention", SettingsItemCategory.Core));
+            //_settings.Add("MentionResponseEnabled", new ServerSettingsItem(SettingsItemType.Boolean, "Whether I will respond to someone mentioning me.", SettingsItemCategory.Core));
+            //_settings.Add("MentionResponses", new ServerSettingsItem(SettingsItemType.StringList, "A list of responses I will send whenever someone mentions me.", SettingsItemCategory.Core));
+            //_settings.Add("MentionResponseCooldown", new ServerSettingsItem(SettingsItemType.Double, "How many seconds I should wait between responding to a mention", SettingsItemCategory.Core));
 
             // Mod settings
             _settings.Add("ModRole", new ServerSettingsItem(SettingsItemType.Role, "The role that I allow to execute sensitive commands.", SettingsItemCategory.Moderation));
@@ -34,7 +37,7 @@ namespace Izzy_Moonbot.Describers
             _settings.Add("FilterEnabled", new ServerSettingsItem(SettingsItemType.Boolean, "Whether I will filter messages for words in the `FilteredWords` list.", SettingsItemCategory.Filter));
             _settings.Add("FilterMonitorEdits", new ServerSettingsItem(SettingsItemType.Boolean, "Whether I will refilter edited messages for words in the `FilteredWords` list.", SettingsItemCategory.Filter));
             _settings.Add("FilterIgnoredChannels", new ServerSettingsItem(SettingsItemType.ChannelList, "The list of channels I will not filter messages in.", SettingsItemCategory.Filter));
-            _settings.Add("FilterIgnoredRoles", new ServerSettingsItem(SettingsItemType.RoleList, "The list of roles I will not filter messages for.", SettingsItemCategory.Filter));
+            _settings.Add("FilterBypassRoles", new ServerSettingsItem(SettingsItemType.RoleList, "The list of roles I will not take action against when I detect a slur. Please note that I __will still check for filter violations for roles in this value__. I just won't try to delete the message or silence the user..", SettingsItemCategory.Filter));
             _settings.Add("FilteredWords", new ServerSettingsItem(SettingsItemType.StringListDictionary, "The map of the list of words I will filter. Each key is a separate filter category.", SettingsItemCategory.Filter));
             _settings.Add("FilterResponseDelete", new ServerSettingsItem(SettingsItemType.BooleanDictionary, "The map containing if I'll delete a message on filter violation depending on which filter category was violated.", SettingsItemCategory.Filter));
             _settings.Add("FilterResponseMessages", new ServerSettingsItem(SettingsItemType.StringDictionary, "The map of messages I will send on a filter violation depending on which filter category was violated.", SettingsItemCategory.Filter, true));
@@ -44,7 +47,7 @@ namespace Izzy_Moonbot.Describers
             _settings.Add("SpamEnabled", new ServerSettingsItem(SettingsItemType.Boolean, "Whether I will process messages and apply pressure to users.", SettingsItemCategory.Spam));
             _settings.Add("SpamMonitorEdits", new ServerSettingsItem(SettingsItemType.Boolean, "Whether I will reprocess edited messages for pressure. This only happens if the message is `SpamEditReprocessThreshold` more characters than the original message and I still know what the previous message was.", SettingsItemCategory.Spam));
             _settings.Add("SpamEditReprocessThreshold", new ServerSettingsItem(SettingsItemType.Integer, "The amount of differences in characters needed on a message edit to reprocess the edited message for pressure, if `SpamMonitorEdits` is set to `true`.", SettingsItemCategory.Spam));
-            _settings.Add("SpamIgnoredRoles", new ServerSettingsItem(SettingsItemType.RoleList, "The roles I will not silence if they exceed `SpamMaxPressure`. Please note that I __will still process pressure for roles in this value__, I just won't silence them and I'll just log that it occured.", SettingsItemCategory.Spam));
+            _settings.Add("SpamBypassRoles", new ServerSettingsItem(SettingsItemType.RoleList, "The roles I will not silence if they exceed `SpamMaxPressure`. Please note that I __will still process pressure for roles in this value__, I just won't silence them and I'll just log that it occured.", SettingsItemCategory.Spam));
             _settings.Add("SpamIgnoredChannels", new ServerSettingsItem(SettingsItemType.ChannelList, "The channels I will not process pressure for. Best used for channels where spam is allowed.", SettingsItemCategory.Spam));
             _settings.Add("SpamBasePressure", new ServerSettingsItem(SettingsItemType.Double, "The base pressure given to a user when they send a message.", SettingsItemCategory.Spam));
             _settings.Add("SpamImagePressure", new ServerSettingsItem(SettingsItemType.Double, "Additional pressure generated by each image, link, or attachment. This is only parsed if I detect that there's an attachment on the message.", SettingsItemCategory.Spam));
@@ -58,13 +61,16 @@ namespace Izzy_Moonbot.Describers
             
             // Raid settings
             _settings.Add("RaidProtectionEnabled", new ServerSettingsItem(SettingsItemType.Boolean, "Whether or not I will protect this server against raids. It's best to disable if you anticipate a large increase in member count over a few days (3000 in 4 days for example)", SettingsItemCategory.Raid));
-            _settings.Add("AutoSilenceNewJoins", new ServerSettingsItem(SettingsItemType.Boolean, "Whether or not I should automatically silence new users joining the server. Usually toggled on and off by the `raidsilence` command.", SettingsItemCategory.Raid));
-            _settings.Add("RaidAutoEnd", new ServerSettingsItem(SettingsItemType.Double, "How long to wait, in seconds, for me to automatically consider a raid over after it has started.", SettingsItemCategory.Raid, true));
+            _settings.Add("NormalVerificationLevel", new ServerSettingsItem(SettingsItemType.Integer, $"The verification level I will set when a raid ends. Values not specified below will result in this feature being disabled.{Environment.NewLine}0 - Unrestricted{Environment.NewLine}1 - Verified email{Environment.NewLine}2 - Account age older than 5 minutes{Environment.NewLine}3 - Member of server for longer than 10 minutes.{Environment.NewLine}4 - Must have verified phone.", SettingsItemCategory.Raid, true));
+            _settings.Add("RaidVerificationLevel", new ServerSettingsItem(SettingsItemType.Integer, $"The verification level I will set when I detect a raid. Values not specified below will result in this feature being disabled.{Environment.NewLine}0 - Unrestricted{Environment.NewLine}1 - Verified email{Environment.NewLine}2 - Account age older than 5 minutes{Environment.NewLine}3 - Member of server for longer than 10 minutes.{Environment.NewLine}4 - Must have verified phone.", SettingsItemCategory.Raid, true));
+            _settings.Add("AutoSilenceNewJoins", new ServerSettingsItem(SettingsItemType.Boolean, "Whether or not I should automatically silence new users joining the server. Usually toggled on and off by the `ass` and `assoff` commands respectivly.", SettingsItemCategory.Raid));
             _settings.Add("SmallRaidSize", new ServerSettingsItem(SettingsItemType.Integer, "How many users have to join in `SmallRaidTime` seconds in order for me to notify mods about a potential raid.", SettingsItemCategory.Raid));
             _settings.Add("SmallRaidTime", new ServerSettingsItem(SettingsItemType.Double, "In how many seconds do `SmallRaidSize` users need to join in order for me to notify mods about a potential raid.", SettingsItemCategory.Raid));
             _settings.Add("LargeRaidSize", new ServerSettingsItem(SettingsItemType.Integer, "How many users have to join in `LargeRaidTime` seconds in order for me to automatically enable raidsilence.", SettingsItemCategory.Raid));
             _settings.Add("LargeRaidTime", new ServerSettingsItem(SettingsItemType.Double, "In how many seconds do `LargeRaidSize` users need to join in order for me to automatically enable raidsilence.", SettingsItemCategory.Raid));
             _settings.Add("RecentJoinDecay", new ServerSettingsItem(SettingsItemType.Double, "How long to wait, in seconds, before I no longer considering a new member a 'recent join' (no longer considered part of any raid if one were to occur).", SettingsItemCategory.Raid));
+            _settings.Add("SmallRaidDecay", new ServerSettingsItem(SettingsItemType.Double, "How many minutes does there have to be no raid for me to automatically downgrade a Small raid to No raid.", SettingsItemCategory.Raid, true));
+            _settings.Add("LargeRaidDecay", new ServerSettingsItem(SettingsItemType.Double, "How many minutes does there have to be no raid for me to automatically downgrade a Large raid to a Small raid.", SettingsItemCategory.Raid, true));
         }
 
         public List<string> GetSettableConfigItems()

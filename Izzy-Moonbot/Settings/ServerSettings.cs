@@ -11,11 +11,13 @@ namespace Izzy_Moonbot.Settings
             // Core settings
             Prefix = '.';
             SafeMode = true;
+            BatchSendLogs = false;
+            BatchLogsSendRate = 10;
             IgnoredChannels = new HashSet<ulong>();
             IgnoredRoles = new HashSet<ulong>();
-            MentionResponseEnabled = false;
-            MentionResponses = new List<string>();
-            MentionResponseCooldown = 600;
+            //MentionResponseEnabled = false;
+            //MentionResponses = new List<string>();
+            //MentionResponseCooldown = 600;
 
             // Mod settings
             AllowedUsers = new HashSet<ulong>();
@@ -32,7 +34,7 @@ namespace Izzy_Moonbot.Settings
             FilterEnabled = true;
             FilterMonitorEdits = true;
             FilterIgnoredChannels = new HashSet<ulong>();
-            FilterIgnoredRoles = new HashSet<ulong>();
+            FilterBypassRoles = new HashSet<ulong>();
             FilteredWords = new Dictionary<string, List<string>>();
             FilterResponseDelete = new Dictionary<string, bool>();
             FilterResponseMessages = new Dictionary<string, string?>();
@@ -42,7 +44,7 @@ namespace Izzy_Moonbot.Settings
             SpamEnabled = true;
             SpamMonitorEdits = true;
             SpamEditReprocessThreshold = 10;
-            SpamIgnoredRoles = new HashSet<ulong>();
+            FilterBypassRoles = new HashSet<ulong>();
             SpamIgnoredChannels = new HashSet<ulong>();
             SpamBasePressure = 10.0;
             SpamImagePressure = 8.3;
@@ -56,19 +58,23 @@ namespace Izzy_Moonbot.Settings
 
             // Raid settings
             RaidProtectionEnabled = true;
+            NormalVerificationLevel = 3;
+            RaidVerificationLevel = 4;
             AutoSilenceNewJoins = false;
-            RaidAutoEnd = null;
             SmallRaidSize = 3;
             SmallRaidTime = 180;
             LargeRaidSize = 10;
             LargeRaidTime = 120;
             RecentJoinDecay = 300;
+            SmallRaidDecay = 5;
+            LargeRaidDecay = 30;
         }
 
         // Core settings
         public char Prefix { get; set; }
         public bool SafeMode { get; set; }
-        public HashSet<ulong> DevUsers { get; set; }
+        public bool BatchSendLogs { get; set; }
+        public double BatchLogsSendRate { get; set; }
         public HashSet<ulong> IgnoredChannels { get; set; }
         public HashSet<ulong> IgnoredRoles { get; set; }
         public bool MentionResponseEnabled { get; set; }
@@ -90,7 +96,7 @@ namespace Izzy_Moonbot.Settings
         public bool FilterEnabled { get; set; }
         public bool FilterMonitorEdits { get; set; }
         public HashSet<ulong> FilterIgnoredChannels { get; set; }
-        public HashSet<ulong> FilterIgnoredRoles { get; set; }
+        public HashSet<ulong> FilterBypassRoles { get; set; }
         public Dictionary<string, List<string>> FilteredWords { get; set; }
         public Dictionary<string, bool> FilterResponseDelete { get; set; }
         public Dictionary<string, string?> FilterResponseMessages { get; set; }
@@ -100,7 +106,7 @@ namespace Izzy_Moonbot.Settings
         public bool SpamEnabled { get; set; }
         public bool SpamMonitorEdits { get; set; }
         public int SpamEditReprocessThreshold { get; set; }
-        public HashSet<ulong> SpamIgnoredRoles { get; set; }
+        public HashSet<ulong> SpamBypassRoles { get; set; }
         public HashSet<ulong> SpamIgnoredChannels { get; set; }
         public double SpamBasePressure { get; set; }
         public double SpamImagePressure { get; set; }
@@ -114,12 +120,15 @@ namespace Izzy_Moonbot.Settings
 
         // Raid settings
         public bool RaidProtectionEnabled { get; set; }
+        public int? NormalVerificationLevel { get; set; }
+        public int? RaidVerificationLevel { get; set; }
         public bool AutoSilenceNewJoins { get; set; }
-        public double? RaidAutoEnd { get; set; }
         public int SmallRaidSize { get; set; }
         public double SmallRaidTime { get; set; }
         public int LargeRaidSize { get; set; }
         public double LargeRaidTime { get; set; }
         public double RecentJoinDecay { get; set; }
+        public double? SmallRaidDecay { get; set; }
+        public double? LargeRaidDecay { get; set; }
     }
 }

@@ -26,6 +26,7 @@ namespace Izzy_Moonbot.Service
     public class PressureService
     {
         private readonly LoggingService _logger;
+        private ModLoggingService _modLog;
         private ServerSettings _settings;
         private ModService _mod;
         private Dictionary<ulong, User> _users;
@@ -35,9 +36,10 @@ namespace Izzy_Moonbot.Service
         
         private readonly string _testString = "=+i7B3s+#(-{×jn6Ga3F~lA:IZZY_PRESSURE_TEST:H4fgd3!#!";
 
-        public PressureService(LoggingService logger, ServerSettings settings, ModService mod, Dictionary<ulong, User> users)
+        public PressureService(LoggingService logger, ModLoggingService modLog, ServerSettings settings, ModService mod, Dictionary<ulong, User> users)
         {
             _logger = logger;
+            _modLog = modLog;
             _settings = settings;
             _mod = mod;
             _users = users;
@@ -167,15 +169,23 @@ namespace Izzy_Moonbot.Service
             if (newPressure >= _settings.SpamMaxPressure)
             {
                 List<ulong> roleIds = user.Roles.Select(role => role.Id).ToList();
-                if (_settings.SpamIgnoredRoles.Overlaps(roleIds))
+                if (_settings.SpamBypassRoles.Overlaps(roleIds))
                 {
                     // Don't silence, but inform mods.
-                    await _mod.LogBotAction(ActionType.Notice, (message.Author as SocketGuildUser), DateTimeOffset.Now, null, $"Exceeded pressure max ({newPressure}/{_settings.SpamMaxPressure}) in <#{message.Channel.Id}>. Didn't silence as they have a role which is ignored (`SpamIgnoredRoles`).");
+                    await _modLog.CreateActionLog(context.Guild)
+                        .SetTarget(message.Author as SocketGuildUser)
+                        .SetReason(
+                            $"Exceeded pressure max ({newPressure}/{_settings.SpamMaxPressure}) in <#{message.Channel.Id}>. Didn't silence as they have a role which bypasses punishment (`SpamBypassRoles`).")
+                        .Send();
                 }
                 else
                 {
                     // Silence user.
                     await _mod.SilenceUser((message.Author as SocketGuildUser), DateTimeOffset.Now, null, $"Exceeded pressure max ({newPressure}/{_settings.SpamMaxPressure}) in <#{message.Channel.Id}>");
+                    await _modLog.CreateModLog(context.Guild)
+                        .SetContent(
+                            $"<@{user.Id}> (`{user.Id}`) was silenced for exceeding pressure max ({newPressure}/{_settings.SpamMaxPressure}) in <#{message.Channel.Id}>. Please investigate.")
+                        .Send();
                 }
             }
         }

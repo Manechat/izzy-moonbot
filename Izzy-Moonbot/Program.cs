@@ -47,10 +47,11 @@ namespace Izzy_Moonbot
                 services.Configure<DiscordSettings>(config.GetSection(nameof(DiscordSettings)));
                 services.AddTransient<IDateTimeService, DateTimeService>();
                 services.AddSingleton<LoggingService>();
+                services.AddSingleton<ModLoggingService>();
                 //services.AddSingleton<StateService>();
                 services.AddSingleton<PressureService>();
+                services.AddSingleton<RaidService>();
                 services.AddSingleton<ModService>();
-                services.AddSingleton<RoleService>();
                 services.AddSingleton<RaidService>();
                 services.AddSingleton<FilterService>();
                 var settings = FileHelper.LoadSettingsAsync().GetAwaiter().GetResult();

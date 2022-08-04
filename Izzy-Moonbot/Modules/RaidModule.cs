@@ -29,7 +29,7 @@ namespace Izzy_Moonbot.Modules
         [DevCommand(Group = "Permissions")]
         public async Task AssAsync()
         {
-            if (_raidService.CurrentRaidMode == RaidMode.NONE)
+            if (_raidService.CurrentRaidMode == RaidMode.None)
             {
                 await ReplyAsync("There doesn't seem to be any raids going on...", messageReference: new Discord.MessageReference(Context.Message.Id, Context.Channel.Id, Context.Guild.Id));
                 return;
@@ -46,7 +46,7 @@ namespace Izzy_Moonbot.Modules
         [DevCommand(Group = "Permissions")]
         public async Task AssOffAsync()
         {
-            if (_raidService.CurrentRaidMode == RaidMode.NONE)
+            if (_raidService.CurrentRaidMode == RaidMode.None)
             {
                 await ReplyAsync("There doesn't seem to be any raids going on...", messageReference: new Discord.MessageReference(Context.Message.Id, Context.Channel.Id, Context.Guild.Id));
                 return;
@@ -64,7 +64,7 @@ namespace Izzy_Moonbot.Modules
         [DevCommand(Group = "Permissions")]
         public async Task GetRaidAsync()
         {
-            if (_raidService.CurrentRaidMode == RaidMode.NONE)
+            if (_raidService.CurrentRaidMode == RaidMode.None)
             {
                 await ReplyAsync("There doesn't seem to be any raids going on...", messageReference: new Discord.MessageReference(Context.Message.Id, Context.Channel.Id, Context.Guild.Id));
                 return;

@@ -22,10 +22,10 @@ namespace Izzy_Moonbot
     public class Worker : BackgroundService
     {
         private readonly ILogger<Worker> _logger;
+        private readonly ModLoggingService _modLog;
         private readonly IServiceCollection _services;
         private readonly PressureService _pressureService;
         private readonly ModService _modService;
-        private readonly RoleService _roleService;
         private readonly RaidService _raidService;
         private readonly FilterService _filterService;
         private readonly ScheduleService _scheduleService;
@@ -36,12 +36,12 @@ namespace Izzy_Moonbot
         private DiscordSocketClient _client;
         private int LaserCount = 10;
 
-        public Worker(ILogger<Worker> logger, IServiceCollection services, PressureService pressureService, ModService modService, RoleService roleService, RaidService raidService, FilterService filterService, ScheduleService scheduleService, IOptions<DiscordSettings> discordSettings, ServerSettings settings, Dictionary<ulong, User> users)
+        public Worker(ILogger<Worker> logger, ModLoggingService modLog, IServiceCollection services, PressureService pressureService, ModService modService, RaidService raidService, FilterService filterService, ScheduleService scheduleService, IOptions<DiscordSettings> discordSettings, ServerSettings settings, Dictionary<ulong, User> users)
         {
             _logger = logger;
+            _modLog = modLog;
             _pressureService = pressureService;
             _modService = modService;
-            _roleService = roleService;
             _raidService = raidService;
             _filterService = filterService;
             _scheduleService = scheduleService;
@@ -66,7 +66,7 @@ namespace Izzy_Moonbot
                 
                 await _client.StartAsync();
                 //await _client.SetGameAsync($"Go away");
-                await _client.SetGameAsync($"Pressure + AntiRaid System Test - SafeMode Active");
+                await _client.SetGameAsync($"MVP System Test - SafeMode Active");
                 await InstallCommandsAsync();
 
                 _client.UserJoined += HandleMemberJoin;
@@ -102,12 +102,6 @@ namespace Izzy_Moonbot
         public async Task ReadyEvent()
         {
             _logger.LogTrace("Ready event called");
-            foreach (var socketGuild in _client.Guilds.ToArray())
-            {
-                _logger.LogTrace(socketGuild.Name);
-            }
-
-            _logger.LogTrace(_client.Guilds.ToArray()[0].Name);
             _scheduleService.ResumeScheduledTasks(_client.Guilds.ToArray()[0]);
         }
 
@@ -124,7 +118,44 @@ namespace Izzy_Moonbot
 
             Task.Factory.StartNew(async () =>
             {
-                await _roleService.ProcessMemberJoin(member);
+                List<ulong> roles = new List<ulong>();
+                string expiresString = "";
+                
+                _logger.Log(LogLevel.Information, $"{member.Username}#{member.DiscriminatorValue} ({member.Id}) Joined. Processing roles..."); 
+                if (_settings.MemberRole != null)
+                {
+                    if (!_settings.AutoSilenceNewJoins)
+                    {
+                        roles.Add((ulong)_settings.MemberRole);
+                    }
+                }
+                
+                if (_settings.NewMemberRole != null)
+                {
+                    roles.Add((ulong) _settings.NewMemberRole);
+                    expiresString =
+                        $"{Environment.NewLine}New Member role expires in <t:{(DateTimeOffset.UtcNow + TimeSpan.FromMinutes(_settings.NewMemberRoleDecay)).ToUnixTimeSeconds()}:R>";
+                    
+                    Dictionary<string, string> fields = new Dictionary<string, string>
+                    {
+                        { "roleId", _settings.NewMemberRole.ToString() },
+                        { "userId", member.Id.ToString() },
+                        { "reason", $"{_settings.NewMemberRoleDecay} minutes (`NewMemberRoleDecay`) passed, user no longer a new pony." }
+                    };
+                    ScheduledTaskAction action = new ScheduledTaskAction(ScheduledTaskActionType.RemoveRole, fields);
+                    ScheduledTask task = new ScheduledTask(DateTimeOffset.UtcNow,
+                        (DateTimeOffset.UtcNow + TimeSpan.FromMinutes(_settings.NewMemberRoleDecay)), action);
+                    _scheduleService.CreateScheduledTask(task, member.Guild);
+                }
+                
+                string autoSilence = $" (User autosilenced, `AuthoSilenceNewJoins` is true.)";
+                if (!_settings.AutoSilenceNewJoins) autoSilence = "";
+
+                await _modService.AddRoles(member, roles, $"New user join{autoSilence}.{expiresString}");
+                
+                if (_settings.NewMemberRole != null)
+                {
+                }
             });
 
             string autoSilence = " and was silenced (`AutoSilenceNewJoins` is on)";
@@ -132,8 +163,9 @@ namespace Izzy_Moonbot
             if (_users[member.Id].Silenced)
                 autoSilence =
                     " and was silenced (user's `Silenced` value is true, they likely tried to bypass a silence)";
-            member.Guild.GetTextChannel(_settings.ModChannel)
-                .SendMessageAsync($"<@{member.Id}> ({member.Id}) joined the server{autoSilence}.");
+            await _modLog.CreateModLog(member.Guild)
+                .SetContent($"<@{member.Id}> ({member.Id}) joined the server{autoSilence}.")
+                .Send();
             
             if (_settings.RaidProtectionEnabled)
             {
@@ -158,7 +190,6 @@ namespace Izzy_Moonbot
                 }
 
                 _filterService.ProcessMessageUpdate(context);
-
             });
         }
 
@@ -173,7 +204,6 @@ namespace Izzy_Moonbot
             Task.Factory.StartNew(() =>
             {
                 _pressureService.ProcessMessage(context);
-                _roleService.ProcessMemberMessage(context);
                 _filterService.ProcessMessage(context);
             });
             
@@ -182,36 +212,24 @@ namespace Izzy_Moonbot
                 _settings.Prefix = DevSettings.Prefix;
             }
 
-            if (message.HasCharPrefix(_settings.Prefix, ref argPos) || message.HasMentionPrefix(_client.CurrentUser, ref argPos))
+            if (message.HasCharPrefix(_settings.Prefix, ref argPos))
             {
-                string parsedMessage;
-                bool checkCommands = true;
-                if (message.Content.StartsWith("<@"+_client.CurrentUser.Id+">"))
+                string parsedMessage = DiscordHelper.CheckAliasesAsync(message.Content, _settings);;
+                
+                bool validCommand = false;
+                foreach (var command in _commands.Commands)
                 {
-                    parsedMessage = "<mention>";
-                    checkCommands = false;
-                }
-                else
-                {
-                    parsedMessage = DiscordHelper.CheckAliasesAsync(message.Content, _settings);
-                }
-
-                if (checkCommands)
-                {
-                    bool validCommand = false;
-                    foreach (var command in _commands.Commands)
+                    if (command.Name != parsedMessage.Split(" ")[0])
                     {
-                        if (command.Name != parsedMessage.Split(" ")[0])
-                        {
-                            continue;
-                        }
-
-                        validCommand = true;
-                        break;
+                        continue;
                     }
 
-                    if (!validCommand) return;
+                    validCommand = true;
+                    break;
                 }
+
+                if (!validCommand) return;
+                
 
                 // Check for BotsAllowed attribute
                 bool hasBotsAllowedAttribute = false;

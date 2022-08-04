@@ -12,8 +12,6 @@
             Joins = new List<DateTimeOffset>();
             Pressure = 0;
             Timestamp = DateTimeOffset.UtcNow;
-            FirstMessageTimestamp = null;
-            ActivePunishments = new List<Punishment>();
             KnownAlts = new HashSet<ulong>();
             PreviousMessage = "";
             Silenced = false;
@@ -23,8 +21,6 @@
         public List<DateTimeOffset> Joins { get; set; }
         public double Pressure { get; set; }
         public DateTimeOffset Timestamp { get; set; }
-        public DateTimeOffset? FirstMessageTimestamp { get; set; }
-        public List<Punishment> ActivePunishments { get; set; }
         public HashSet<ulong> KnownAlts { get; set; }
         public string PreviousMessage { get; set; }
         public bool Silenced { get; set; }
