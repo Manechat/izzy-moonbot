@@ -15,9 +15,9 @@ namespace Izzy_Moonbot.Settings
             BatchLogsSendRate = 10;
             IgnoredChannels = new HashSet<ulong>();
             IgnoredRoles = new HashSet<ulong>();
-            //MentionResponseEnabled = false;
-            //MentionResponses = new List<string>();
-            //MentionResponseCooldown = 600;
+            MentionResponseEnabled = false;
+            MentionResponses = new List<string>();
+            MentionResponseCooldown = 600;
 
             // Mod settings
             AllowedUsers = new HashSet<ulong>();

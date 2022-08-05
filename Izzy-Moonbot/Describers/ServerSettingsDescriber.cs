@@ -18,9 +18,9 @@ namespace Izzy_Moonbot.Describers
             _settings.Add("BatchLogsSendRate", new ServerSettingsItem(SettingsItemType.Double, "The amount of seconds between each batch send.", SettingsItemCategory.Core));
             _settings.Add("IgnoredChannels", new ServerSettingsItem(SettingsItemType.ChannelList, "A list of channels I will ignore commands from.", SettingsItemCategory.Core));
             _settings.Add("IgnoredRoles", new ServerSettingsItem(SettingsItemType.RoleList, "A list of roles I will ignore commands from.", SettingsItemCategory.Core));
-            //_settings.Add("MentionResponseEnabled", new ServerSettingsItem(SettingsItemType.Boolean, "Whether I will respond to someone mentioning me.", SettingsItemCategory.Core));
-            //_settings.Add("MentionResponses", new ServerSettingsItem(SettingsItemType.StringList, "A list of responses I will send whenever someone mentions me.", SettingsItemCategory.Core));
-            //_settings.Add("MentionResponseCooldown", new ServerSettingsItem(SettingsItemType.Double, "How many seconds I should wait between responding to a mention", SettingsItemCategory.Core));
+            _settings.Add("MentionResponseEnabled", new ServerSettingsItem(SettingsItemType.Boolean, "Whether I will respond to someone mentioning me.", SettingsItemCategory.Core));
+            _settings.Add("MentionResponses", new ServerSettingsItem(SettingsItemType.StringList, "A list of responses I will send whenever someone mentions me.", SettingsItemCategory.Core));
+            _settings.Add("MentionResponseCooldown", new ServerSettingsItem(SettingsItemType.Double, "How many seconds I should wait between responding to a mention", SettingsItemCategory.Core));
 
             // Mod settings
             _settings.Add("ModRole", new ServerSettingsItem(SettingsItemType.Role, "The role that I allow to execute sensitive commands.", SettingsItemCategory.Moderation));
