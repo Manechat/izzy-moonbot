@@ -15,11 +15,13 @@ namespace Izzy_Moonbot.Modules
     {
         private ServerSettings _settings;
         private readonly RaidService _raidService;
+        private StateStorage _state;
 
-        public RaidModule(ServerSettings settings, RaidService raidService)
+        public RaidModule(ServerSettings settings, RaidService raidService, StateStorage state)
         {
             _settings = settings;
             _raidService = raidService;
+            _state = state;
         }
 
         [Command("ass")]
@@ -29,7 +31,7 @@ namespace Izzy_Moonbot.Modules
         [DevCommand(Group = "Permissions")]
         public async Task AssAsync()
         {
-            if (_raidService.CurrentRaidMode == RaidMode.None)
+            if (_state.CurrentRaidMode == RaidMode.None)
             {
                 await ReplyAsync("There doesn't seem to be any raids going on...", messageReference: new Discord.MessageReference(Context.Message.Id, Context.Channel.Id, Context.Guild.Id));
                 return;
@@ -46,7 +48,7 @@ namespace Izzy_Moonbot.Modules
         [DevCommand(Group = "Permissions")]
         public async Task AssOffAsync()
         {
-            if (_raidService.CurrentRaidMode == RaidMode.None)
+            if (_state.CurrentRaidMode == RaidMode.None)
             {
                 await ReplyAsync("There doesn't seem to be any raids going on...", messageReference: new Discord.MessageReference(Context.Message.Id, Context.Channel.Id, Context.Guild.Id));
                 return;
@@ -64,7 +66,7 @@ namespace Izzy_Moonbot.Modules
         [DevCommand(Group = "Permissions")]
         public async Task GetRaidAsync()
         {
-            if (_raidService.CurrentRaidMode == RaidMode.None)
+            if (_state.CurrentRaidMode == RaidMode.None)
             {
                 await ReplyAsync("There doesn't seem to be any raids going on...", messageReference: new Discord.MessageReference(Context.Message.Id, Context.Channel.Id, Context.Guild.Id));
                 return;
@@ -87,7 +89,7 @@ namespace Izzy_Moonbot.Modules
         [DevCommand(Group = "Permissions")]
         public async Task BanRaidAsync()
         {
-            if (_raidService.CurrentRaidMode == RaidMode.NONE)
+            if (_state.CurrentRaidMode == RaidMode.NONE)
             {
                 await ReplyAsync("There doesn't seem to be any raids going on...", messageReference: new Discord.MessageReference(Context.Message.Id, Context.Channel.Id, Context.Guild.Id));
                 return;

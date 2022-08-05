@@ -18,6 +18,7 @@ namespace Izzy_Moonbot.Modules
     public class InfoModule : ModuleBase<SocketCommandContext>
     {
         private readonly LoggingService _logger;
+        private StateStorage _state;
         private readonly ModLoggingService _modLogging;
         private readonly ServerSettings _settings;
         private readonly RaidService _raid;
@@ -27,9 +28,10 @@ namespace Izzy_Moonbot.Modules
         private readonly ScheduleService _scheduleService;
         private readonly Dictionary<ulong, User> _users;
 
-        public InfoModule(LoggingService logger, ModLoggingService modLogging, ServerSettings settings, ModService mod, PressureService pressureService, CommandService commands, ScheduleService scheduleService, Dictionary<ulong, User> users, RaidService raid)
+        public InfoModule(LoggingService logger, StateStorage state, ModLoggingService modLogging, ServerSettings settings, ModService mod, PressureService pressureService, CommandService commands, ScheduleService scheduleService, Dictionary<ulong, User> users, RaidService raid)
         {
             _logger = logger;
+            _state = state;
             _modLogging = modLogging;
             _settings = settings;
             _mod = mod;
@@ -211,6 +213,10 @@ namespace Izzy_Moonbot.Modules
                             await raidMsg.ModifyAsync(message => message.Content = "⚠  **Cancelled.**");
                         }
                     });
+                    break;
+                case "state":
+                    _state.CurrentSmallJoinCount++;
+                    await ReplyAsync($"At {_state.CurrentSmallJoinCount}.");
                     break;
                 default:
                     Context.Message.ReplyAsync("Unknown test.");

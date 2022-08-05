@@ -156,6 +156,7 @@ namespace Izzy_Moonbot.Service
             {
                 // Test string for pressure.
                 pressure = _settings.SpamMaxPressure + 1;
+                pressureTrace = $"{_settings.SpamMaxPressure + 1} teststring.";
             }
             
             double newPressure = await IncreasePressure(id, pressure);
@@ -163,14 +164,15 @@ namespace Izzy_Moonbot.Service
             _users[message.Author.Id].PreviousMessage = message.Content.ToLower();
             FileHelper.SaveUsersAsync(_users);
 
-            await _logger.Log($"Pressure increased by {pressure} to {newPressure}", context, level: LogLevel.Debug);
-            //await _logger.Log(pressureTrace, null, level: LogLevel.Trace);
+            await _logger.Log($"Pressure increased by {pressure} to {newPressure}/{_settings.SpamMaxPressure}", context, level: LogLevel.Debug);
+            await _logger.Log(pressureTrace, null, level: LogLevel.Trace);
             
             if (newPressure >= _settings.SpamMaxPressure)
             {
                 List<ulong> roleIds = user.Roles.Select(role => role.Id).ToList();
                 if (_settings.SpamBypassRoles.Overlaps(roleIds))
                 {
+                    await _logger.Log("Spam pressure trip, user has role in SpamBypassRoles", context, level: LogLevel.Trace);
                     // Don't silence, but inform mods.
                     await _modLog.CreateActionLog(context.Guild)
                         .SetTarget(message.Author as SocketGuildUser)
@@ -180,11 +182,13 @@ namespace Izzy_Moonbot.Service
                 }
                 else
                 {
+                    await _logger.Log("Spam pressure trip, trying to bap", context, level: LogLevel.Trace);
                     // Silence user.
                     await _mod.SilenceUser((message.Author as SocketGuildUser), DateTimeOffset.Now, null, $"Exceeded pressure max ({newPressure}/{_settings.SpamMaxPressure}) in <#{message.Channel.Id}>");
                     await _modLog.CreateModLog(context.Guild)
                         .SetContent(
-                            $"<@{user.Id}> (`{user.Id}`) was silenced for exceeding pressure max ({newPressure}/{_settings.SpamMaxPressure}) in <#{message.Channel.Id}>. Please investigate.")
+                            $"<@{user.Id}> (`{user.Id}`) was silenced for exceeding pressure max ({newPressure}/{_settings.SpamMaxPressure}) in <#{message.Channel.Id}>. Please investigate.{Environment.NewLine}"+
+                            $"Pressure breakdown: {pressureTrace}")
                         .Send();
                 }
             }

@@ -48,9 +48,7 @@ namespace Izzy_Moonbot
                 services.AddTransient<IDateTimeService, DateTimeService>();
                 services.AddSingleton<LoggingService>();
                 services.AddSingleton<ModLoggingService>();
-                //services.AddSingleton<StateService>();
                 services.AddSingleton<PressureService>();
-                services.AddSingleton<RaidService>();
                 services.AddSingleton<ModService>();
                 services.AddSingleton<RaidService>();
                 services.AddSingleton<FilterService>();
@@ -62,6 +60,8 @@ namespace Izzy_Moonbot
                 services.AddSingleton<ScheduleService>();
                 var scheduledTasks = FileHelper.LoadScheduleAsync().GetAwaiter().GetResult();
                 services.AddSingleton(scheduledTasks);
+                var stateStorage = new StateStorage();
+                services.AddSingleton(stateStorage);
                 services.AddSingleton(services);
                 
                 services.AddHostedService<Worker>();

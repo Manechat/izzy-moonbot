@@ -19,14 +19,14 @@ public class AdminModule : ModuleBase<SocketCommandContext>
     private readonly LoggingService _logger;
     private readonly ServerSettings _settings;
     private readonly Dictionary<ulong, User> _users;
+    private StateStorage _state;
 
-    private DateTimeOffset _lastMentionResponse = DateTimeOffset.MinValue;
-
-    public AdminModule(LoggingService logger, ServerSettings settings, Dictionary<ulong, User> users)
+    public AdminModule(LoggingService logger, ServerSettings settings, Dictionary<ulong, User> users, StateStorage state)
     {
         _logger = logger;
         _settings = settings;
         _users = users;
+        _state = state;
     }
 
     [Command("panic")]
@@ -211,16 +211,16 @@ public class AdminModule : ModuleBase<SocketCommandContext>
     {
         if (!_settings.MentionResponseEnabled) return; // Responding to mention is disabled.
         _logger.Log((DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString()), Context);
-        _logger.Log(_lastMentionResponse.ToUnixTimeSeconds().ToString(), Context);
-        _logger.Log((DateTimeOffset.UtcNow.ToUnixTimeSeconds() - _lastMentionResponse.ToUnixTimeSeconds()).ToString(), Context);
-        if ((DateTimeOffset.UtcNow - _lastMentionResponse).TotalMinutes < _settings.MentionResponseCooldown)
+        _logger.Log(_state.LastMentionResponse.ToUnixTimeSeconds().ToString(), Context);
+        _logger.Log((DateTimeOffset.UtcNow.ToUnixTimeSeconds() - _state.LastMentionResponse.ToUnixTimeSeconds()).ToString(), Context);
+        if ((DateTimeOffset.UtcNow - _state.LastMentionResponse).TotalMinutes < _settings.MentionResponseCooldown)
             return; // Still on cooldown.
 
         var random = new Random();
         var index = random.Next(_settings.MentionResponses.Count);
         var response = _settings.MentionResponses[index];
 
-        _lastMentionResponse = DateTimeOffset.UtcNow;
+        _state.LastMentionResponse = DateTimeOffset.UtcNow;
 
         await ReplyAsync($"{response}");
     }
