@@ -70,6 +70,7 @@ namespace Izzy_Moonbot
                 await InstallCommandsAsync();
 
                 _client.UserJoined += HandleMemberJoin;
+                _client.UserLeft += HandleUserLeave;
                 _client.MessageUpdated += HandleMessageUpdate;
 
                 _client.LatencyUpdated += async (int old, int value) =>
@@ -112,7 +113,13 @@ namespace Izzy_Moonbot
                 User newUser = new User();
                 newUser.Username = $"{member.Username}#{member.Discriminator}";
                 newUser.Aliases.Add(member.Username);
+                newUser.Joins.Add(member.JoinedAt.Value);
                 _users.Add(member.Id, newUser);
+                await FileHelper.SaveUsersAsync(_users);
+            }
+            else
+            {
+                _users[member.Id].Joins.Add(member.JoinedAt.Value);
                 await FileHelper.SaveUsersAsync(_users);
             }
 
@@ -152,10 +159,6 @@ namespace Izzy_Moonbot
                 if (!_settings.AutoSilenceNewJoins) autoSilence = "";
 
                 await _modService.AddRoles(member, roles, $"New user join{autoSilence}.{expiresString}");
-                
-                if (_settings.NewMemberRole != null)
-                {
-                }
             });
 
             string autoSilence = " and was silenced (`AutoSilenceNewJoins` is on)";
@@ -163,8 +166,10 @@ namespace Izzy_Moonbot
             if (_users[member.Id].Silenced)
                 autoSilence =
                     " and was silenced (user's `Silenced` value is true, they likely tried to bypass a silence)";
+            string joinedBefore = $"Joined {_users[member.Id].Joins.Count-1} times before.";
+            if (_users[member.Id].Joins.Count <= 1) joinedBefore = "";
             await _modLog.CreateModLog(member.Guild)
-                .SetContent($"<@{member.Id}> ({member.Id}) joined the server{autoSilence}.")
+                .SetContent($"<@{member.Id}> ({member.Id}) joined the server{autoSilence}, account created <t:{member.CreatedAt.ToUnixTimeSeconds()}:F> [<t:{member.CreatedAt.ToUnixTimeSeconds()}:R>].{joinedBefore}")
                 .Send();
             
             if (_settings.RaidProtectionEnabled)
@@ -174,6 +179,24 @@ namespace Izzy_Moonbot
                     await _raidService.ProcessMemberJoin(member);
                 });
             }
+        }
+
+        private async Task HandleUserLeave(SocketGuild guild, SocketUser user)
+        {
+            var lastNickname = _users[user.Id].Aliases.Last();
+            var wasKicked = guild.GetAuditLogsAsync(1, userId: user.Id, actionType: ActionType.Kick).FirstAsync().GetAwaiter().GetResult()
+                .Any(audit => (audit.CreatedAt.ToUnixTimeSeconds() - DateTimeOffset.UtcNow.ToUnixTimeSeconds()) <= 2 );
+            var wasBanned = guild.GetAuditLogsAsync(1, userId: user.Id, actionType: ActionType.Ban).FirstAsync().GetAwaiter().GetResult()
+                .Any(audit => (audit.CreatedAt.ToUnixTimeSeconds() - DateTimeOffset.UtcNow.ToUnixTimeSeconds()) <= 2 );
+
+            var output = $"{user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) left the server, joined <t:{_users[user.Id].Joins.Last().ToUnixTimeSeconds()}:F> [<t:{_users[user.Id].Joins.Last().ToUnixTimeSeconds()}:R>]";
+            
+            if(wasBanned) output = $"{user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) left the server due to a ban, joined <t:{_users[user.Id].Joins.Last().ToUnixTimeSeconds()}:F> [<t:{_users[user.Id].Joins.Last().ToUnixTimeSeconds()}:R>]";
+            if(wasKicked) output = $"{user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) left the server due to a kick, joined <t:{_users[user.Id].Joins.Last().ToUnixTimeSeconds()}:F> [<t:{_users[user.Id].Joins.Last().ToUnixTimeSeconds()}:R>]";
+
+            await _modLog.CreateModLog(guild)
+                .SetContent(output)
+                .Send();
         }
 
         private async Task HandleMessageUpdate(Cacheable<IMessage, ulong> oldMessage, SocketMessage newMessage,
@@ -212,24 +235,36 @@ namespace Izzy_Moonbot
                 _settings.Prefix = DevSettings.Prefix;
             }
 
-            if (message.HasCharPrefix(_settings.Prefix, ref argPos))
+            if (message.HasCharPrefix(_settings.Prefix, ref argPos) || message.Content.StartsWith($"<@{_client.CurrentUser.Id}>"))
             {
-                string parsedMessage = DiscordHelper.CheckAliasesAsync(message.Content, _settings);;
-                
-                bool validCommand = false;
-                foreach (var command in _commands.Commands)
+                string parsedMessage = null;
+                bool checkCommands = true;
+                if (message.Content.StartsWith($"<@{_client.CurrentUser.Id}>"))
                 {
-                    if (command.Name != parsedMessage.Split(" ")[0])
-                    {
-                        continue;
-                    }
-
-                    validCommand = true;
-                    break;
+                    checkCommands = false;
+                    parsedMessage = "<mention>";
+                }
+                else
+                {
+                    parsedMessage = DiscordHelper.CheckAliasesAsync(message.Content, _settings);
                 }
 
-                if (!validCommand) return;
-                
+                if (checkCommands)
+                {
+                    bool validCommand = false;
+                    foreach (var command in _commands.Commands)
+                    {
+                        if (command.Name != parsedMessage.Split(" ")[0])
+                        {
+                            continue;
+                        }
+
+                        validCommand = true;
+                        break;
+                    }
+
+                    if (!validCommand) return;
+                }
 
                 // Check for BotsAllowed attribute
                 bool hasBotsAllowedAttribute = false;
