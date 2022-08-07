@@ -226,13 +226,13 @@ namespace Izzy_Moonbot.Service
                     if (!raidResult || !normalResult) return;
                     await _modService.ChangeVerificationLevel(guild, raidLevel, DateTimeOffset.Now, null, "Server is being raided.");
                     verificationLevelRaised =
-                        $"{Environment.NewLine}{Environment.NewLine}*I have raised the server verification level to {raidLevel.ToString()}. This will be lowered down to {normalLevel.ToString()} when the raid ends.";
+                        $"{Environment.NewLine}{Environment.NewLine}*I have raised the server verification level to {raidLevel.ToString()}. This will be lowered down to {normalLevel.ToString()} when the raid ends.*";
                 }
 
                 // Potential raid. Bug the mods
                 await _modLog.CreateModLog(guild)
                     .SetContent(
-                        $"<@-&{_settings.ModRole}> Bing-bong! Possible raid detected! (over {_settings.SmallRaidSize} (`SmallRaidSize`) users joined within {_settings.SmallRaidTime} (`SmallRaidTime`) seconds.){Environment.NewLine}{Environment.NewLine}" +
+                        $"<@-&{_settings.ModRole}> Bing-bong! Possible raid detected! ({_settings.SmallRaidSize} (`SmallRaidSize`) users joined within {_settings.SmallRaidTime} (`SmallRaidTime`) seconds.){Environment.NewLine}{Environment.NewLine}" +
                         $"{string.Join($"{Environment.NewLine}", potentialRaiders)}{Environment.NewLine}{Environment.NewLine}" +
                         $"Possible commands for this scenario are:{Environment.NewLine}" +
                         $"`{_settings.Prefix}ass` - Enable automatically silencing new joins *and* autosilence those considered part of the raid (those who joined within {_settings.RecentJoinDecay} (`RecentJoinDecay`) seconds).{Environment.NewLine}" +
@@ -290,12 +290,12 @@ namespace Izzy_Moonbot.Service
                         if (!raidResult || !normalResult) return;
                         await _modService.ChangeVerificationLevel(guild, raidLevel, DateTimeOffset.Now, null, "Server is being raided.");
                         verificationLevelRaised =
-                            $"{Environment.NewLine}{Environment.NewLine}*I have raised the server verification level to {raidLevel.ToString()}. This will be lowered down to {normalLevel.ToString()} when the raid ends.";
+                            $"{Environment.NewLine}{Environment.NewLine}*I have raised the server verification level to {raidLevel.ToString()}. This will be lowered down to {normalLevel.ToString()} when the raid ends.*";
                     }
                     
                     await _modLog.CreateModLog(guild)
                         .SetContent(
-                            $"<@-&{_settings.ModRole}> Bing-bong! Raid detected! (over {_settings.LargeRaidSize} (`LargeRaidSize`) users joined within {_settings.LargeRaidTime} (`LargeRaidTime`) seconds.){Environment.NewLine}" +
+                            $"<@-&{_settings.ModRole}> Bing-bong! Raid detected! ({_settings.LargeRaidSize} (`LargeRaidSize`) users joined within {_settings.LargeRaidTime} (`LargeRaidTime`) seconds.){Environment.NewLine}" +
                             $"I have automatically silenced all the members below members and enabled autosilencing users on join.{Environment.NewLine}{Environment.NewLine}" +
                             $"{string.Join($"{Environment.NewLine}", potentialRaiders)}{Environment.NewLine}{Environment.NewLine}" +
                             $"Possible commands for this scenario are:{Environment.NewLine}" +
@@ -311,14 +311,14 @@ namespace Izzy_Moonbot.Service
                     {
                         await _modLog.CreateModLog(guild)
                             .SetContent(
-                                $"<@-&{_settings.ModRole}> **The current raid has escalated. Silencing new joins has already been enabled manually.** (over {_settings.LargeRaidSize} (`LargeRaidSize`) users joined within {_settings.LargeRaidTime} (`LargeRaidTime`) seconds.)")
+                                $"<@-&{_settings.ModRole}> **The current raid has escalated. Silencing new joins has already been enabled manually.** ({_settings.LargeRaidSize} (`LargeRaidSize`) users joined within {_settings.LargeRaidTime} (`LargeRaidTime`) seconds.)")
                             .Send();
                     }
                     else
                     {
                         await _modLog.CreateModLog(guild)
                             .SetContent(
-                                $"<@-&{_settings.ModRole}> **The current raid has escalated and I have automatically enabled silencing new joins and I've silenced those considered part of the raid.** (over {_settings.LargeRaidSize} (`LargeRaidSize`) users joined within {_settings.LargeRaidTime} (`LargeRaidTime`) seconds.)")
+                                $"<@-&{_settings.ModRole}> **The current raid has escalated and I have automatically enabled silencing new joins and I've silenced those considered part of the raid.** ({_settings.LargeRaidSize} (`LargeRaidSize`) users joined within {_settings.LargeRaidTime} (`LargeRaidTime`) seconds.)")
                             .Send();
                     }
                 }
