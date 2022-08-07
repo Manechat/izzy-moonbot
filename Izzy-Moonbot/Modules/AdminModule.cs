@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Sockets;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
@@ -71,19 +72,29 @@ public class AdminModule : ModuleBase<SocketCommandContext>
                     }
                     else
                     {
+                        var skip = false;
                         if (_users[socketGuildUser.Id].Username == "")
                         {
                             _users[socketGuildUser.Id].Username =
                                 $"{socketGuildUser.Username}#{socketGuildUser.Discriminator}";
                             reloadUserCount += 1;
+                            skip = true;
                         }
-                        else if (!_users[socketGuildUser.Id].Aliases.Contains(socketGuildUser.DisplayName))
+                        if (!_users[socketGuildUser.Id].Aliases.Contains(socketGuildUser.DisplayName))
                         {
                             _users[socketGuildUser.Id].Aliases.Add(socketGuildUser.DisplayName);
                             reloadUserCount += 1;
+                            skip = true;
                         }
-                        else
+                        
+                        if (socketGuildUser.JoinedAt.HasValue && !_users[socketGuildUser.Id].Joins.Contains(socketGuildUser.JoinedAt.Value))
                         {
+                            _users[socketGuildUser.Id].Joins.Add(socketGuildUser.JoinedAt.Value);
+                            reloadUserCount += 1;
+                            skip = true;
+                        }
+                        
+                        if (!skip) {
                             knownUserCount += 1;
                         }
                     }
