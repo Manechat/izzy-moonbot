@@ -144,16 +144,19 @@ namespace Izzy_Moonbot.Service
             foreach (var (category, words) in _settings.FilteredWords)
             {
                 var filteredWords = words.ToArray().ToList();
+                var trip = false;
                 #if DEBUG
                 filteredWords.Add(_testString[0] + category + _testString[1]);
                 #endif
                 
                 foreach (var word in filteredWords)
                 {
+                    if (trip) continue;
                     if (context.Message.Content.Contains(word))
                     {
                         // Filter Trip!
                         this.ProcessFilterTrip(context, word, category, true);
+                        trip = true;
                     }
                 }
             }
@@ -167,16 +170,20 @@ namespace Izzy_Moonbot.Service
             foreach (var (category, words) in _settings.FilteredWords)
             {
                 var filteredWords = words.ToArray().ToList();
+                var trip = false;
                 #if DEBUG
                 filteredWords.Add(_testString[0] + category + _testString[1]);
                 #endif
                 
+                
                 foreach (var word in filteredWords)
                 {
+                    if (trip) continue;
                     if (context.Message.Content.Contains(word))
                     {
                         // Filter Trip!
                         this.ProcessFilterTrip(context, word, category);
+                        trip = true;
                     }
                 }
             }
