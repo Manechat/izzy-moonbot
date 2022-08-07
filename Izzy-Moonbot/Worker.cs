@@ -161,15 +161,15 @@ namespace Izzy_Moonbot
                 await _modService.AddRoles(member, roles, $"New user join{autoSilence}.{expiresString}");
             });
 
-            string autoSilence = " and was silenced (`AutoSilenceNewJoins` is on)";
+            string autoSilence = ", silenced (`AutoSilenceNewJoins` is on)";
             if (!_settings.AutoSilenceNewJoins) autoSilence = "";
             if (_users[member.Id].Silenced)
                 autoSilence =
-                    " and was silenced (user's `Silenced` value is true, they likely tried to bypass a silence)";
-            string joinedBefore = $"Joined {_users[member.Id].Joins.Count-1} times before.";
+                    ", silenced (attempted silence bypass)";
+            string joinedBefore = $", Joined {_users[member.Id].Joins.Count-1} times before";
             if (_users[member.Id].Joins.Count <= 1) joinedBefore = "";
             await _modLog.CreateModLog(member.Guild)
-                .SetContent($"<@{member.Id}> ({member.Id}) joined the server{autoSilence}, account created <t:{member.CreatedAt.ToUnixTimeSeconds()}:F> [<t:{member.CreatedAt.ToUnixTimeSeconds()}:R>].{joinedBefore}")
+                .SetContent($"Join: <@{member.Id}> (`{member.Id}`), created <t:{member.CreatedAt.ToUnixTimeSeconds()}:R>{autoSilence}{joinedBefore}")
                 .Send();
             
             if (_settings.RaidProtectionEnabled)
@@ -184,16 +184,30 @@ namespace Izzy_Moonbot
         private async Task HandleUserLeave(SocketGuild guild, SocketUser user)
         {
             var lastNickname = _users[user.Id].Aliases.Last();
-            var wasKicked = guild.GetAuditLogsAsync(1, userId: user.Id, actionType: ActionType.Kick).FirstAsync().GetAwaiter().GetResult()
+            var wasKicked = guild.GetAuditLogsAsync(1, userId: user.Id, actionType: ActionType.Kick).FirstAsync()
+                .GetAwaiter().GetResult()
                 .Any(audit => (audit.CreatedAt.ToUnixTimeSeconds() - DateTimeOffset.UtcNow.ToUnixTimeSeconds()) <= 2 );
-            var wasBanned = guild.GetAuditLogsAsync(1, userId: user.Id, actionType: ActionType.Ban).FirstAsync().GetAwaiter().GetResult()
+            var wasBanned = guild.GetAuditLogsAsync(1, userId: user.Id, actionType: ActionType.Ban).FirstAsync()
+                .GetAwaiter().GetResult()
                 .Any(audit => (audit.CreatedAt.ToUnixTimeSeconds() - DateTimeOffset.UtcNow.ToUnixTimeSeconds()) <= 2 );
 
-            var output = $"{user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) left the server, joined <t:{_users[user.Id].Joins.Last().ToUnixTimeSeconds()}:F> [<t:{_users[user.Id].Joins.Last().ToUnixTimeSeconds()}:R>]";
+            var output = $"Leave: {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined <t:{_users[user.Id].Joins.Last().ToUnixTimeSeconds()}:R>";
             
-            if(wasBanned) output = $"{user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) left the server due to a ban, joined <t:{_users[user.Id].Joins.Last().ToUnixTimeSeconds()}:F> [<t:{_users[user.Id].Joins.Last().ToUnixTimeSeconds()}:R>]";
-            if(wasKicked) output = $"{user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) left the server due to a kick, joined <t:{_users[user.Id].Joins.Last().ToUnixTimeSeconds()}:F> [<t:{_users[user.Id].Joins.Last().ToUnixTimeSeconds()}:R>]";
+            if(wasBanned) output = $"Leave (Ban): {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined <t:{_users[user.Id].Joins.Last().ToUnixTimeSeconds()}:R>";
+            if(wasKicked) output = $"Leave (Kick): {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined <t:{_users[user.Id].Joins.Last().ToUnixTimeSeconds()}:R>";
 
+            var scheduledTasks = _scheduleService.GetScheduledTasks().ToList().Select(action =>
+            {
+                return action.Action.Fields.ContainsKey("userId") &&
+                       action.Action.Fields["userId"] == user.Id.ToString() ? action : null;
+            });
+            
+            foreach (var scheduledTask in scheduledTasks)
+            {
+                if (scheduledTask == null) continue;
+                await _scheduleService.DeleteScheduledTask(scheduledTask);
+            }
+            
             await _modLog.CreateModLog(guild)
                 .SetContent(output)
                 .Send();
