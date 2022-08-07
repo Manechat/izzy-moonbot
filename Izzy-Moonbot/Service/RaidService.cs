@@ -290,7 +290,7 @@ namespace Izzy_Moonbot.Service
                         if (!raidResult || !normalResult) return;
                         await _modService.ChangeVerificationLevel(guild, raidLevel, DateTimeOffset.Now, null, "Server is being raided.");
                         verificationLevelRaised =
-                            $"{Environment.NewLine}{Environment.NewLine}*I have raised the server verification level to {raidLevel.ToString()}. This will be lowered down to {normalLevel.ToString()} when the raid ends.*";
+                            $"{Environment.NewLine}{Environment.NewLine}*I have raised the server verification level to {raidLevel.ToString().Replace("Extreme", "Highest")}. This will be lowered down to {normalLevel.ToString().Replace("Extreme", "Highest")} when the raid ends.*";
                     }
                     
                     await _modLog.CreateModLog(guild)

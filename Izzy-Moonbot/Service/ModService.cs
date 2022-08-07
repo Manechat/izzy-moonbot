@@ -73,7 +73,7 @@ namespace Izzy_Moonbot.Service
 
             await _modLog.CreateActionLog(guild)
                 .SetActionType(LogType.VerificationLevel)
-                .SetChangelog(previousLevel.ToString(), level.ToString())
+                .SetChangelog(previousLevel.ToString().Replace("Extreme", "Highest"), level.ToString().Replace("Extreme", "Highest"))
                 .SetTime(time)
                 .SetUntilTime(until)
                 .SetReason(reason)
