@@ -1,4 +1,5 @@
 using System.Linq;
+using Discord.Rest;
 
 namespace Izzy_Moonbot
 {
@@ -129,15 +130,12 @@ namespace Izzy_Moonbot
                 string expiresString = "";
                 
                 _logger.Log(LogLevel.Information, $"{member.Username}#{member.DiscriminatorValue} ({member.Id}) Joined. Processing roles..."); 
-                if (_settings.MemberRole != null)
+                if (_settings.MemberRole != null && !_settings.AutoSilenceNewJoins)
                 {
-                    if (!_settings.AutoSilenceNewJoins)
-                    {
-                        roles.Add((ulong)_settings.MemberRole);
-                    }
+                    roles.Add((ulong)_settings.MemberRole);
                 }
                 
-                if (_settings.NewMemberRole != null)
+                if (_settings.NewMemberRole != null && !_settings.AutoSilenceNewJoins)
                 {
                     roles.Add((ulong) _settings.NewMemberRole);
                     expiresString =
@@ -154,8 +152,9 @@ namespace Izzy_Moonbot
                         (DateTimeOffset.UtcNow + TimeSpan.FromMinutes(_settings.NewMemberRoleDecay)), action);
                     _scheduleService.CreateScheduledTask(task, member.Guild);
                 }
-                
-                string autoSilence = $" (User autosilenced, `AuthoSilenceNewJoins` is true.)";
+
+                if (roles.Count == 0) return; // What's the point of logging if Izzy doesn't do anything??
+                string autoSilence = $" (User autosilenced, `AutoSilenceNewJoins` is true.)";
                 if (!_settings.AutoSilenceNewJoins) autoSilence = "";
 
                 await _modService.AddRoles(member, roles, $"New user join{autoSilence}.{expiresString}");
@@ -184,17 +183,59 @@ namespace Izzy_Moonbot
         private async Task HandleUserLeave(SocketGuild guild, SocketUser user)
         {
             var lastNickname = _users[user.Id].Aliases.Last();
-            var wasKicked = guild.GetAuditLogsAsync(1, userId: user.Id, actionType: ActionType.Kick).FirstAsync()
+            var wasKicked = guild.GetAuditLogsAsync(2, actionType: ActionType.Kick).FirstAsync()
                 .GetAwaiter().GetResult()
-                .Any(audit => (audit.CreatedAt.ToUnixTimeSeconds() - DateTimeOffset.UtcNow.ToUnixTimeSeconds()) <= 2 );
-            var wasBanned = guild.GetAuditLogsAsync(1, userId: user.Id, actionType: ActionType.Ban).FirstAsync()
+                .Select(audit =>
+                {
+                    var data = audit.Data as KickAuditLogData;
+                    if (data.Target.Id == user.Id) 
+                    {
+                        _logger.Log(LogLevel.Trace, $"Target: {data.Target.Username}#{data.Target.Discriminator}");
+                        _logger.Log(LogLevel.Trace, $"Moderator: {audit.User.Username}#{audit.User.Discriminator}");
+                        _logger.Log(LogLevel.Trace, $"Action: {audit.Action.ToString()}");
+                        _logger.Log(LogLevel.Trace, $"Reason: {audit.Reason}");
+
+                        if ((audit.CreatedAt.ToUnixTimeSeconds() - DateTimeOffset.UtcNow.ToUnixTimeSeconds()) <= 2)
+                            return audit;
+                    }
+
+                    return null;
+                });
+
+            var wasBanned = guild.GetAuditLogsAsync(2, actionType: ActionType.Ban).FirstAsync()
                 .GetAwaiter().GetResult()
-                .Any(audit => (audit.CreatedAt.ToUnixTimeSeconds() - DateTimeOffset.UtcNow.ToUnixTimeSeconds()) <= 2 );
+                .Select(audit =>
+                {
+                    var data = audit.Data as BanAuditLogData;
+                    if (data.Target.Id == user.Id) 
+                    {
+                        _logger.Log(LogLevel.Trace, $"Target: {data.Target.Username}#{data.Target.Discriminator}");
+                        _logger.Log(LogLevel.Trace, $"Moderator: {audit.User.Username}#{audit.User.Discriminator}");
+                        _logger.Log(LogLevel.Trace, $"Action: {audit.Action.ToString()}");
+                        _logger.Log(LogLevel.Trace, $"Reason: {audit.Reason}");
+
+                        if ((audit.CreatedAt.ToUnixTimeSeconds() - DateTimeOffset.UtcNow.ToUnixTimeSeconds()) <= 2)
+                            return audit;
+                    }
+
+                    return null;
+                });
 
             var output = $"Leave: {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined <t:{_users[user.Id].Joins.Last().ToUnixTimeSeconds()}:R>";
-            
-            if(wasBanned) output = $"Leave (Ban): {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined <t:{_users[user.Id].Joins.Last().ToUnixTimeSeconds()}:R>";
-            if(wasKicked) output = $"Leave (Kick): {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined <t:{_users[user.Id].Joins.Last().ToUnixTimeSeconds()}:R>";
+
+            var banAuditLogEntries = wasBanned as RestAuditLogEntry[] ?? wasBanned.ToArray();
+            if (banAuditLogEntries.Any(audit => audit != null))
+            {
+                var audit = banAuditLogEntries.First();
+                output = $"Leave (Ban): {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined <t:{_users[user.Id].Joins.Last().ToUnixTimeSeconds()}:R>, \"{audit.Reason}\" by {audit.User.Username}#{audit.User.Discriminator} ({guild.GetUser(audit.User.Id).DisplayName})";
+            }
+
+            var kickAuditLogEntries = wasKicked as RestAuditLogEntry[] ?? wasKicked.ToArray();
+            if (kickAuditLogEntries.Any(audit => audit != null))
+            {
+                var audit = kickAuditLogEntries.First();
+                output = $"Leave (Kick): {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined <t:{_users[user.Id].Joins.Last().ToUnixTimeSeconds()}:R>, \"{audit.Reason}\" by {audit.User.Username}#{audit.User.Discriminator} ({guild.GetUser(audit.User.Id).DisplayName})";
+            }
 
             var scheduledTasks = _scheduleService.GetScheduledTasks().ToList().Select(action =>
             {
