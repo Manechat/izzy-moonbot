@@ -154,14 +154,6 @@ namespace Izzy_Moonbot.Modules
                     });
 
                     break;
-                case "changelog":
-                    await _modLogging.CreateActionLog(Context.Guild)
-                        .SetActionType(LogType.VerificationLevel)
-                        .SetChangelog("Old content", "New content")
-                        .SetReason(
-                            $"Testing changelog logging (used for changing server settings e.g. verification level)")
-                        .Send();
-                    break;
                 case "raid":
                     // Simulates a raid.
                     // args[0] is time in seconds between joins

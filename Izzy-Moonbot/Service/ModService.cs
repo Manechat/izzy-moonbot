@@ -65,21 +65,6 @@ namespace Izzy_Moonbot.Service
                 .Send();
         }
 
-        public async Task ChangeVerificationLevel(SocketGuild guild, VerificationLevel level, DateTimeOffset time,
-            DateTimeOffset? until, string reason = "No reason provided.")
-        {
-            var previousLevel = guild.VerificationLevel;
-            //if (!_settings.SafeMode) await guild.ModifyAsync(properties => properties.VerificationLevel = level);
-
-            await _modLog.CreateActionLog(guild)
-                .SetActionType(LogType.VerificationLevel)
-                .SetChangelog(previousLevel.ToString().Replace("Extreme", "Highest"), level.ToString().Replace("Extreme", "Highest"))
-                .SetTime(time)
-                .SetUntilTime(until)
-                .SetReason(reason)
-                .Send();
-        }
-
         public async Task AddRole(SocketGuildUser user, ulong roleId, string? reason = null, bool log = true)
         {
             //if (!_settings.SafeMode) await user.AddRoleAsync(roleId);

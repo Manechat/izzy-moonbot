@@ -127,6 +127,12 @@ public class ActionLogConstructor
         return this;
     }
 
+    public ActionLogConstructor AddTargets(List<SocketGuildUser?> targets)
+    {
+        // TODO: Allow several targets.
+        return this;
+    }
+
     public ActionLogConstructor SetTime(DateTimeOffset time)
     {
         _time = time;
@@ -159,14 +165,6 @@ public class ActionLogConstructor
         return this;
     }
 
-    public ActionLogConstructor SetChangelog(string original, string current)
-    {
-        if (_changeLog == null) _changeLog = new List<string>();
-        _changeLog.Add(original);
-        _changeLog.Add(current);
-        return this;
-    }
-    
     public async Task Send()
     {
         EmbedBuilder embedBuilder = new EmbedBuilder();
