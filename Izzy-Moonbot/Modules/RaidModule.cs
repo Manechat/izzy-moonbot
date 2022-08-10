@@ -1,4 +1,8 @@
-﻿using Izzy_Moonbot.Attributes;
+﻿using System.Linq;
+using System.Text.RegularExpressions;
+using Discord;
+using Discord.WebSocket;
+using Izzy_Moonbot.Attributes;
 
 namespace Izzy_Moonbot.Modules
 {
@@ -54,9 +58,123 @@ namespace Izzy_Moonbot.Modules
                 return;
             }
 
-            await _raidService.EndRaid(Context);
+            var userList = await _raidService.EndRaid(Context);
             
-            await ReplyAsync($"Jinxie avoided! I'm returning to normal operation.{Environment.NewLine}", messageReference: new Discord.MessageReference(Context.Message.Id, Context.Channel.Id, Context.Guild.Id));
+            var stowawaysString =
+                $"{Environment.NewLine}These users were autosilenced. Please run `{_settings.Prefix}stowaways fix` while replying to this message to unsilence or `{_settings.Prefix}stowaways kick` while replying to this message to kick.{Environment.NewLine}{string.Join(", ", userList)}{Environment.NewLine}||!stowaway-usable!||";
+            if (!userList.Any()) stowawaysString = "";
+            
+            await ReplyAsync($"Jinxie avoided! I'm returning to normal operation.{stowawaysString}", messageReference: new Discord.MessageReference(Context.Message.Id, Context.Channel.Id, Context.Guild.Id));
+        }
+
+        [Command("stowaways")]
+        [Summary("Process users who were autosilenced by a raid.")]
+        [RequireContext(ContextType.Guild)]
+        [ModCommand(Group = "Permissions")]
+        [DevCommand(Group = "Permissions")]
+        public async Task StowawaysAsync([Summary("Test Identifier")] string task = "")
+        {
+            if (task == "")
+            {
+                string fixOption = $"`fix` - Unsilence stowaways and give them <@&{_settings.NewMemberRole}> for {_settings.NewMemberRoleDecay} minutes.";
+                if (_settings.NewMemberRole == null) fixOption = $"`fix` - Unsilence stowaways.";
+
+                await ReplyAsync(
+                    $"`This command processes users who were autosilenced by a raid.{Environment.NewLine}" +
+                    $"To use, run `{_settings.Prefix}stowaways <action>` while replying to a raid end message." +
+                    $"`<action>` can be one of the following:{Environment.NewLine}" +
+                    $"{fixOption}{Environment.NewLine}" +
+                    $"`kick` - Kick stowaways");
+                return;
+            }
+            
+            task = task.ToLower();
+            if (task != "fix" && task != "kick")
+            {
+                string fixOption = $"`fix` - Unsilence stowaways and give them <@&{_settings.NewMemberRole}> for {_settings.NewMemberRoleDecay} minutes.";
+                if (_settings.NewMemberRole == null) fixOption = $"`fix` - Unsilence stowaways.";
+
+                await ReplyAsync(
+                    $"`{task}` is not a valid action to take on stowaways. Please use one of the following{Environment.NewLine}" +
+                    $"{fixOption}{Environment.NewLine}" +
+                    $"`kick` - Kick stowaways");
+                return;
+            }
+
+            if (task == "fix" && _settings.MemberRole == null)
+            {
+                await ReplyAsync(
+                    $"`{task}` is not a valid action to take on stowaways at the current time as `MemberRole` is not set. Please set it before continuing.");
+                return;
+            }
+
+            if (Context.Message.ReferencedMessage == null)
+            {
+                await ReplyAsync("Please reply to a raid end message in order to process stowaways from a raid.");
+                return;
+            }
+
+            if (Context.Message.ReferencedMessage.CleanContent.Split(Environment.NewLine).Length != 4 || !Context.Message.Content.EndsWith("||!stowaway-usable!||"))
+            {
+                await ReplyAsync("I'm... not entirely sure if that's an actual raid end message...");
+                return;
+            }
+            
+            var toProcess = Context.Message.ReferencedMessage.CleanContent.Split(Environment.NewLine)[2].Split(", ").ToList();
+            var users = new List<SocketGuildUser>();
+            
+            var unprocessable = 0;
+            var processable = 0;
+            
+            foreach (var userResolvable in toProcess)
+            {
+                if (userResolvable.StartsWith("Unknown user"))
+                {
+                    unprocessable++;
+                    continue;
+                }
+
+                var userId = new Regex("<@([0-9]+)>").Match(userResolvable).Groups[0].Value;
+                Console.WriteLine(userId);
+                bool result = uint.TryParse(userId, out var uId);
+                if (!result)
+                {
+                    unprocessable++;
+                    continue;
+                }
+                var user = Context.Guild.GetUser(uId);
+                if (user == null)
+                {
+                    unprocessable++;
+                    continue;
+                }
+
+                processable++;
+                users.Add(user);
+            }
+
+            var msgContent = "";
+            switch (task)
+            {
+                case "fix":
+                    msgContent = $"Giving {users.Count} users the Member and New Pony role ({unprocessable} users were unprocessable). Please wait... <a:rdloop:910875692785336351>";
+                    if (_settings.NewMemberRole == null) msgContent = $"Giving {users.Count} users the Member role ({unprocessable} users were unprocessable). Please wait... <a:rdloop:910875692785336351>";
+                    break;
+                case "kick":
+                    msgContent = $"Kicking {users.Count} users ({unprocessable} users were unprocessable). Please wait... <a:rdloop:910875692785336351>";
+                    break;
+            }
+
+            var message = await ReplyAsync(msgContent);
+
+            _settings.BatchSendLogs = true;
+            
+            switch (task)
+            {
+                case "fix": 
+                    // TODO: Continue;
+                    break;
+            }
         }
 
         [Command("getraid")]

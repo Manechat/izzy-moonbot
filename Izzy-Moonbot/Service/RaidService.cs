@@ -77,12 +77,19 @@ namespace Izzy_Moonbot.Service
             await FileHelper.SaveSettingsAsync(_settings);
         }
 
-        public async Task EndRaid(SocketCommandContext context)
+        public async Task<List<string>> EndRaid(SocketCommandContext context)
         {
             _state.CurrentRaidMode = RaidMode.None;
             
             _settings.AutoSilenceNewJoins = false;
             _settings.BatchSendLogs = false;
+            
+            var userList = _state.RecentJoins.Select(userId =>
+            {
+                var user = context.Guild.GetUser(userId);
+                if (user == null) return $"Unknown user (`{userId}`)";
+                return "<@{user.Id}>";
+            });
 
             _state.RecentJoins.ForEach((userId) =>
             {
@@ -112,15 +119,9 @@ namespace Izzy_Moonbot.Service
             });
 
             _state.ManualRaidSilence = false;
-            if (_settings.NormalVerificationLevel != null && _settings.RaidVerificationLevel != null)
-            {
-                bool raidResult = Enum.TryParse(_settings.RaidVerificationLevel.Value.ToString(), out VerificationLevel raidLevel);
-                bool normalResult = Enum.TryParse(_settings.NormalVerificationLevel.Value.ToString(), out VerificationLevel normalLevel);
-                if (!raidResult || !normalResult) return;
-                await _modService.ChangeVerificationLevel(context.Guild, normalLevel, DateTimeOffset.Now, null, "Raid was ended manually (`.assoff`).");
-            }
 
             await FileHelper.SaveSettingsAsync(_settings);
+            return userList.ToList();
         }
 
         private async Task DecaySmallRaid(SocketGuild guild)
@@ -129,9 +130,20 @@ namespace Izzy_Moonbot.Service
             
             _settings.AutoSilenceNewJoins = false;
             _settings.BatchSendLogs = false;
+
+            var userList = _state.RecentJoins.Select(userId =>
+            {
+                var user = guild.GetUser(userId);
+                if (user == null) return $"Unknown user (`{userId}`)";
+                return "<@{user.Id}>";
+            });
+
+            var stowawaysString =
+                $"{Environment.NewLine}These users were autosilenced. Please run `{_settings.Prefix}stowaways fix` while replying to this message to unsilence or `{_settings.Prefix}stowaways kick` while replying to this message to kick.{Environment.NewLine}{string.Join(", ", userList)}{Environment.NewLine}||!stowaway-usable!||";
+            if (!userList.Any()) stowawaysString = "";
             
             await _modLog.CreateModLog(guild)
-                .SetContent($"The raid has ended. I've disabled raid defences and cleared my internal cache of all recent joins.")
+                .SetContent($"The raid has ended. I've disabled raid defences and cleared my internal cache of all recent joins.{stowawaysString}")
                 .Send();
 
             _state.RecentJoins.ForEach((userId) =>
@@ -160,14 +172,6 @@ namespace Izzy_Moonbot.Service
                     _state.RecentJoins.Remove(userId);
                 }
             });
-            
-            if (_settings.NormalVerificationLevel != null && _settings.RaidVerificationLevel != null)
-            {
-                bool raidResult = Enum.TryParse(_settings.RaidVerificationLevel.Value.ToString(), out VerificationLevel raidLevel);
-                bool normalResult = Enum.TryParse(_settings.NormalVerificationLevel.Value.ToString(), out VerificationLevel normalLevel);
-                if (!raidResult || !normalResult) return;
-                await _modService.ChangeVerificationLevel(guild, normalLevel, DateTimeOffset.Now, null, "Raid has ended.");
-            }
 
             await FileHelper.SaveSettingsAsync(_settings);
         }
@@ -175,8 +179,8 @@ namespace Izzy_Moonbot.Service
         private async Task DecayLargeRaid(SocketGuild guild)
         {
             _state.CurrentRaidMode = RaidMode.Small;
-
-            if(!_state.ManualRaidSilence) _settings.AutoSilenceNewJoins = false;
+            
+            if (!_state.ManualRaidSilence) _settings.AutoSilenceNewJoins = false;
             _settings.BatchSendLogs = false;
 
             var manualRaidActive =
@@ -217,17 +221,6 @@ namespace Izzy_Moonbot.Service
                         potentialRaiders.Add($"{member.Username}#{member.Discriminator} (joined: {joinDate})");
                     }
                 });
-                
-                var verificationLevelRaised = "";
-                if (_settings.NormalVerificationLevel != null && _settings.RaidVerificationLevel != null)
-                {
-                    bool raidResult = Enum.TryParse(_settings.RaidVerificationLevel.Value.ToString(), out VerificationLevel raidLevel);
-                    bool normalResult = Enum.TryParse(_settings.NormalVerificationLevel.Value.ToString(), out VerificationLevel normalLevel);
-                    if (!raidResult || !normalResult) return;
-                    await _modService.ChangeVerificationLevel(guild, raidLevel, DateTimeOffset.Now, null, "Server is being raided.");
-                    verificationLevelRaised =
-                        $"{Environment.NewLine}{Environment.NewLine}*I have raised the server verification level to {raidLevel.ToString()}. This will be lowered down to {normalLevel.ToString()} when the raid ends.*";
-                }
 
                 // Potential raid. Bug the mods
                 await _modLog.CreateModLog(guild)
@@ -238,8 +231,7 @@ namespace Izzy_Moonbot.Service
                         $"`{_settings.Prefix}ass` - Enable automatically silencing new joins *and* autosilence those considered part of the raid (those who joined within {_settings.RecentJoinDecay} (`RecentJoinDecay`) seconds).{Environment.NewLine}" +
                         $"`{_settings.Prefix}assoff` - Disable automatically silencing new joins and resets the raid level back to 'no raid'. This will **not** unsilence those considered part of the raid.{Environment.NewLine}" +
                         $"`{_settings.Prefix}getraid` - Returns a list of those who are considered part of the raid by Izzy. (those who joined {_settings.RecentJoinDecay} (`RecentJoinDecay`) seconds before the raid began).{Environment.NewLine}" +
-                        $"`{_settings.Prefix}banraid` - Bans everyone considered to be part of the raid. **This should be a last measure if Izzy becomes ratelimited while trying to deal with the raid. Use `getraid` to see who would be banned.**"+
-                        $"{verificationLevelRaised}")
+                        $"`{_settings.Prefix}banraid` - Bans everyone considered to be part of the raid. **This should be a last measure if Izzy becomes ratelimited while trying to deal with the raid. Use `getraid` to see who would be banned.**")
                     .Send();
 
                 _state.CurrentRaidMode = RaidMode.Small;
@@ -282,17 +274,6 @@ namespace Izzy_Moonbot.Service
 
                 if (_state.CurrentRaidMode == RaidMode.None)
                 {
-                    var verificationLevelRaised = "";
-                    if (_settings.NormalVerificationLevel != null && _settings.RaidVerificationLevel != null)
-                    {
-                        bool raidResult = Enum.TryParse(_settings.RaidVerificationLevel.Value.ToString(), out VerificationLevel raidLevel);
-                        bool normalResult = Enum.TryParse(_settings.NormalVerificationLevel.Value.ToString(), out VerificationLevel normalLevel);
-                        if (!raidResult || !normalResult) return;
-                        await _modService.ChangeVerificationLevel(guild, raidLevel, DateTimeOffset.Now, null, "Server is being raided.");
-                        verificationLevelRaised =
-                            $"{Environment.NewLine}{Environment.NewLine}*I have raised the server verification level to {raidLevel.ToString().Replace("Extreme", "Highest")}. This will be lowered down to {normalLevel.ToString().Replace("Extreme", "Highest")} when the raid ends.*";
-                    }
-                    
                     await _modLog.CreateModLog(guild)
                         .SetContent(
                             $"<@-&{_settings.ModRole}> Bing-bong! Raid detected! ({_settings.LargeRaidSize} (`LargeRaidSize`) users joined within {_settings.LargeRaidTime} (`LargeRaidTime`) seconds.){Environment.NewLine}" +
@@ -301,8 +282,7 @@ namespace Izzy_Moonbot.Service
                             $"Possible commands for this scenario are:{Environment.NewLine}" +
                             $"`{_settings.Prefix}assoff` - Disable automatically silencing new joins and resets the raid level back to 'no raid'.. This will **not** unsilence those considered part of the raid.{Environment.NewLine}" +
                             $"`{_settings.Prefix}getraid` - Returns a list of those who are considered part of the raid by Izzy. (those who joined within {_settings.RecentJoinDecay} (`RecentJoinDecay`) seconds).{Environment.NewLine}" +
-                            $"`{_settings.Prefix}banraid` - Bans everyone considered to be part of the raid. **This should be a last measure if Izzy becomes ratelimited while trying to deal with the raid. Use `getraid` to see who would be banned.**"+
-                            $"{verificationLevelRaised}")
+                            $"`{_settings.Prefix}banraid` - Bans everyone considered to be part of the raid. **This should be a last measure if Izzy becomes ratelimited while trying to deal with the raid. Use `getraid` to see who would be banned.**")
                         .Send();
                 }
                 else
