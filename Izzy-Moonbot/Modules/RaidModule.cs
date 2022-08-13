@@ -17,15 +17,19 @@ namespace Izzy_Moonbot.Modules
     [Summary("Module for interacting with the antiraid services.")]
     public class RaidModule : ModuleBase<SocketCommandContext>
     {
-        private ServerSettings _settings;
+        private readonly ServerSettings _settings;
         private readonly RaidService _raidService;
-        private StateStorage _state;
+        private readonly ScheduleService _scheduleService;
+        private readonly ModService _modService;
+        private readonly StateStorage _state;
 
-        public RaidModule(ServerSettings settings, RaidService raidService, StateStorage state)
+        public RaidModule(ServerSettings settings, RaidService raidService, StateStorage state, ScheduleService scheduleService, ModService modService)
         {
             _settings = settings;
             _raidService = raidService;
             _state = state;
+            _scheduleService = scheduleService;
+            _modService = modService;
         }
 
         [Command("ass")]
@@ -171,8 +175,49 @@ namespace Izzy_Moonbot.Modules
             
             switch (task)
             {
-                case "fix": 
-                    // TODO: Continue;
+                case "fix":
+                    var roles = new List<ulong>();
+                    
+                    if (_settings.NewMemberRole != null)
+                    {
+                        roles.Add((ulong)_settings.NewMemberRole);
+                    }
+                    
+                    if (_settings.MemberRole != null)
+                    {
+                        roles.Add((ulong)_settings.MemberRole);
+                    }
+                    
+                    foreach (var socketGuildUser in users)
+                    {
+                        if (_settings.NewMemberRole != null)
+                        {
+                            var expiresString =
+                                $"{Environment.NewLine}New Member role expires in <t:{(DateTimeOffset.UtcNow + TimeSpan.FromMinutes(_settings.NewMemberRoleDecay)).ToUnixTimeSeconds()}:R>";
+
+                            Dictionary<string, string> fields = new Dictionary<string, string>
+                            {
+                                { "roleId", _settings.NewMemberRole.ToString() },
+                                { "userId", socketGuildUser.Id.ToString() },
+                                {
+                                    "reason",
+                                    $"{_settings.NewMemberRoleDecay} minutes (`NewMemberRoleDecay`) passed, user no longer a new pony."
+                                }
+                            };
+                            ScheduledTaskAction action =
+                                new ScheduledTaskAction(ScheduledTaskActionType.RemoveRole, fields);
+                            ScheduledTask scheduledTask = new ScheduledTask(DateTimeOffset.UtcNow,
+                                (DateTimeOffset.UtcNow + TimeSpan.FromMinutes(_settings.NewMemberRoleDecay)), action);
+                            _scheduleService.CreateScheduledTask(scheduledTask, socketGuildUser.Guild);
+                        }
+                    }
+
+                    await _modService.AddRolesToUsers(users, roles, DateTimeOffset.Now, "Fixing stowaways");
+                    await ReplyAsync($"I've fixed {users.Count} stowaways.");
+                    break;
+                case "kick":
+                    await _modService.KickUsers(users, DateTimeOffset.Now, "Kicking stowaways");
+                    await ReplyAsync($"I've kicked {users.Count} stowaways.");
                     break;
             }
         }
