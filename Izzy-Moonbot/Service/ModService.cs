@@ -45,24 +45,49 @@ namespace Izzy_Moonbot.Service
             return template;
         }*/
 
-        public async Task SilenceUser(SocketGuildUser target, DateTimeOffset time, DateTimeOffset? until, string reason = "No reason provided.")
+        public async Task SilenceUser(SocketGuildUser user, DateTimeOffset time, DateTimeOffset? until, string reason = "No reason provided.")
         {
-            if (target.IsBot) throw new NotSupportedException("Bots cannot be silenced.");
+            if (user.IsBot) throw new NotSupportedException("Bots cannot be silenced.");
             if (!(_settings.SafeMode))
             {
                 //await target.RemoveRoleAsync(_settings.MemberRole);
 
-                _users[target.Id].Silenced = true;
+                _users[user.Id].Silenced = true;
                 await FileHelper.SaveUsersAsync(_users);
             }
             
-            await _modLog.CreateActionLog(target.Guild)
+            await _modLog.CreateActionLog(user.Guild)
                 .SetActionType(LogType.Silence)
-                .SetTarget(target)
+                .AddTarget(user)
                 .SetTime(time)
                 .SetUntilTime(until)
                 .SetReason(reason)
                 .Send();
+        }
+        
+        public async Task SilenceUsers(List<SocketGuildUser> users, DateTimeOffset time, DateTimeOffset? until, string reason = "No reason provided.")
+        {
+            if (users.Count == 0) throw new NullReferenceException("users must have users in them");
+            var actionLog = _modLog.CreateActionLog(users[0].Guild)
+                .SetActionType(LogType.Silence)
+                .SetTime(time)
+                .SetUntilTime(until)
+                .SetReason(reason);
+
+            foreach (var user in users)
+            {
+                if (user.IsBot) throw new NotSupportedException("Bots cannot be silenced.");
+
+                actionLog.AddTarget(user);
+                
+                if (_settings.SafeMode) continue;
+                //await target.RemoveRoleAsync(_settings.MemberRole);
+
+                _users[user.Id].Silenced = true;
+                await FileHelper.SaveUsersAsync(_users);
+            }
+            
+            await actionLog.Send();
         }
 
         public async Task AddRole(SocketGuildUser user, ulong roleId, string? reason = null, bool log = true)
@@ -71,10 +96,26 @@ namespace Izzy_Moonbot.Service
 
             await _modLog.CreateActionLog(user.Guild)
                 .SetActionType(LogType.AddRoles)
-                .SetTarget(user)
+                .AddTarget(user)
                 .AddRole(roleId)
                 .SetReason(reason)
                 .Send();
+        }
+        
+        public async Task AddRoleToUsers(List<SocketGuildUser> users, ulong roleId, string? reason = null, bool log = true)
+        {
+            var actionLog = _modLog.CreateActionLog(users[0].Guild)
+                .SetActionType(LogType.AddRoles)
+                .AddRole(roleId)
+                .SetReason(reason);
+            
+            foreach (var socketGuildUser in users)
+            {
+                //if (!_settings.SafeMode) await user.AddRoleAsync(roleId);
+                actionLog.AddTarget(socketGuildUser);
+            }
+
+            await actionLog.Send();
         }
         
         public async Task RemoveRole(SocketGuildUser user, ulong roleId, string? reason = null, bool log = true)
@@ -83,10 +124,26 @@ namespace Izzy_Moonbot.Service
                 
             await _modLog.CreateActionLog(user.Guild)
                 .SetActionType(LogType.RemoveRoles)
-                .SetTarget(user)
+                .AddTarget(user)
                 .AddRole(roleId)
                 .SetReason(reason)
                 .Send();
+        }
+        
+        public async Task RemoveRoleFromUsers(List<SocketGuildUser> users, ulong roleId, string? reason = null, bool log = true)
+        {
+            var actionLog = _modLog.CreateActionLog(users[0].Guild)
+                .SetActionType(LogType.RemoveRoles)
+                .AddRole(roleId)
+                .SetReason(reason);
+            
+            foreach (var socketGuildUser in users)
+            {
+                //if (!_settings.SafeMode) await user.RemoveRoleAsync(roleId);
+                actionLog.AddTarget(socketGuildUser);
+            }
+
+            await actionLog.Send();
         }
         
         public async Task AddRoles(SocketGuildUser user, List<ulong> roles, string? reason = null)
@@ -95,10 +152,26 @@ namespace Izzy_Moonbot.Service
             
             await _modLog.CreateActionLog(user.Guild)
                 .SetActionType(LogType.AddRoles)
-                .SetTarget(user)
+                .AddTarget(user)
                 .AddRoles(roles)
                 .SetReason(reason)
                 .Send();
+        }
+        
+        public async Task AddRolesToUsers(List<SocketGuildUser> users, List<ulong> roles, string? reason = null)
+        {
+            var actionLog = _modLog.CreateActionLog(users[0].Guild)
+                .SetActionType(LogType.AddRoles)
+                .AddRoles(roles)
+                .SetReason(reason);
+            
+            foreach (var socketGuildUser in users)
+            {
+                //if (!_settings.SafeMode) await user.AddRolesAsync(roleId);
+                actionLog.AddTarget(socketGuildUser);
+            }
+
+            await actionLog.Send();
         }
         
         public async Task RemoveRoles(SocketGuildUser user, List<ulong> roles, string? reason = null)
@@ -107,10 +180,26 @@ namespace Izzy_Moonbot.Service
             
             await _modLog.CreateActionLog(user.Guild)
                 .SetActionType(LogType.RemoveRoles)
-                .SetTarget(user)
+                .AddTarget(user)
                 .AddRoles(roles)
                 .SetReason(reason)
                 .Send();
+        }
+        
+        public async Task RemoveRolesFromUsers(List<SocketGuildUser> users, List<ulong> roles, string? reason = null)
+        {
+            var actionLog = _modLog.CreateActionLog(users[0].Guild)
+                .SetActionType(LogType.RemoveRoles)
+                .AddRoles(roles)
+                .SetReason(reason);
+            
+            foreach (var socketGuildUser in users)
+            {
+                //if (!_settings.SafeMode) await user.RemoveRolesAsync(roleId);
+                actionLog.AddTarget(socketGuildUser);
+            }
+
+            await actionLog.Send();
         }
     }
 }

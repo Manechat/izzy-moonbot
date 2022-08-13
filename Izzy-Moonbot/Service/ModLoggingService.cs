@@ -99,7 +99,7 @@ public class ActionLogConstructor
     private ActionLog _log = new ActionLog();
 
     private LogType _actionType = LogType.Notice;
-    private SocketGuildUser? _target;
+    private List<SocketGuildUser>? _targets;
     private DateTimeOffset _time = DateTimeOffset.Now;
     private DateTimeOffset? _until;
     private string _reason = "No reason provided.";
@@ -121,15 +121,10 @@ public class ActionLogConstructor
         return this;
     }
 
-    public ActionLogConstructor SetTarget(SocketGuildUser? target)
+    public ActionLogConstructor AddTarget(SocketGuildUser target)
     {
-        _target = target;
-        return this;
-    }
-
-    public ActionLogConstructor AddTargets(List<SocketGuildUser?> targets)
-    {
-        // TODO: Allow several targets.
+        if (_targets == null) _targets = new List<SocketGuildUser>();
+        _targets.Add(target);
         return this;
     }
 
@@ -174,7 +169,18 @@ public class ActionLogConstructor
                 "ℹ **This was an automated action Izzy Moonbot would have taken outside of `SafeMode`.**");
         else embedBuilder.WithDescription("ℹ **This was an automated action Izzy Moonbot took.**");
 
-        if (_target != null) embedBuilder.AddField("User", $"<@{_target.Id}> (`{_target.Id}`)", true);
+        if (_targets != null)
+        {
+            if (_targets.Count == 1)
+            {
+                embedBuilder.AddField("User", $"<@{_targets[0].Id}> (`{_targets[0].Id}`)", true);
+            }
+            else
+            {
+                var users = _targets.Select(target => $"<@{target.Id}> (`{target.Id}`)");
+                embedBuilder.AddField("Users", string.Join(", ", users));
+            }
+        }
         embedBuilder.AddField("Action", GetLogTypeName(_actionType), true);
         embedBuilder.AddField("Occured At", $"<t:{_time.ToUnixTimeSeconds()}:F>", true);
         if (_until != null) embedBuilder.AddField("Ends At", $"<t:{_until.Value.ToUnixTimeSeconds()}:F>", true);

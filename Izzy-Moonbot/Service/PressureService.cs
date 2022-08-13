@@ -175,7 +175,7 @@ namespace Izzy_Moonbot.Service
                     await _logger.Log("Spam pressure trip, user has role in SpamBypassRoles", context, level: LogLevel.Trace);
                     // Don't silence, but inform mods.
                     await _modLog.CreateActionLog(context.Guild)
-                        .SetTarget(message.Author as SocketGuildUser)
+                        .AddTarget(message.Author as SocketGuildUser)
                         .SetReason(
                             $"Exceeded pressure max ({newPressure}/{_settings.SpamMaxPressure}) in <#{message.Channel.Id}>. Didn't silence as they have a role which bypasses punishment (`SpamBypassRoles`).")
                         .Send();

@@ -58,8 +58,21 @@ namespace Izzy_Moonbot.Service
         {
             _settings.AutoSilenceNewJoins = true;
             _settings.BatchSendLogs = true;
+
+            var recentJoins = _state.RecentJoins.Select(recentJoin =>
+            {
+                var member = context.Guild.GetUser(recentJoin);
+
+                if (member == null) return null;
+                return member;
+            }).Where(member => member != null).ToList();
+
+            DateTimeOffset? muteUntil = null;
+            if (_settings.SilenceTimeout.HasValue) muteUntil = DateTimeOffset.Now.AddSeconds(_settings.SilenceTimeout.Value);
+
+            await _modService.SilenceUsers(recentJoins, DateTimeOffset.Now, muteUntil, "Suspected raider");
             
-            _state.RecentJoins.ForEach(async (userId) =>
+            /*_state.RecentJoins.ForEach(async (userId) =>
             {
                 SocketGuildUser member = context.Guild.GetUser(userId);
 
@@ -70,7 +83,7 @@ namespace Izzy_Moonbot.Service
 
                     await _modService.SilenceUser(member, DateTimeOffset.Now, muteUntil, "Suspected raider");
                 }
-            });
+            });*/
 
             _state.ManualRaidSilence = true;
 
@@ -243,6 +256,19 @@ namespace Izzy_Moonbot.Service
                 _log.Log(
                     $"Large raid detected!",
                     null, false);
+                
+                var recentJoins = _state.RecentJoins.Select(recentJoin =>
+                {
+                    var member = guild.GetUser(recentJoin);
+
+                    if (member == null) return null;
+                    return member;
+                }).Where(member => member != null).ToList();
+
+                DateTimeOffset? muteUntil = null;
+                if (_settings.SilenceTimeout.HasValue) muteUntil = DateTimeOffset.Now.AddSeconds(_settings.SilenceTimeout.Value);
+
+                await _modService.SilenceUsers(recentJoins, DateTimeOffset.Now, muteUntil, "Suspected raider");
 
                 _state.RecentJoins.ForEach(async (userId) =>
                 {
@@ -261,14 +287,14 @@ namespace Izzy_Moonbot.Service
                         if (member.JoinedAt.HasValue) joinDate = $"<t:{member.JoinedAt.Value.ToUnixTimeSeconds()}:F>";
                         potentialRaiders.Add($"{member.Username}#{member.Discriminator} (joined: {joinDate})");
 
-                        if (member.Roles.Any(role => role.Id == _settings.MemberRole))
+                        /*if (member.Roles.Any(role => role.Id == _settings.MemberRole))
                         {
                             DateTimeOffset? muteUntil = null;
                             if (_settings.SilenceTimeout.HasValue)
                                 muteUntil = DateTimeOffset.Now.AddSeconds(_settings.SilenceTimeout.Value);
 
                             await _modService.SilenceUser(member, DateTimeOffset.Now, muteUntil, "Suspected raider");
-                        }
+                        }*/
                     }
                 });
 
