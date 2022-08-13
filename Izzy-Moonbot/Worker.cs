@@ -157,7 +157,7 @@ namespace Izzy_Moonbot
                 string autoSilence = $" (User autosilenced, `AutoSilenceNewJoins` is true.)";
                 if (!_settings.AutoSilenceNewJoins) autoSilence = "";
 
-                await _modService.AddRoles(member, roles, $"New user join{autoSilence}.{expiresString}");
+                await _modService.AddRoles(member, roles, DateTimeOffset.Now, $"New user join{autoSilence}.{expiresString}");
             });
 
             string autoSilence = ", silenced (`AutoSilenceNewJoins` is on)";

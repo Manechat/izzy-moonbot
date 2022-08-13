@@ -225,17 +225,14 @@ public class ActionLogConstructor
             case LogType.Silence:
                 output = "Silence";
                 break;
-            case LogType.Banish:
-                output = "Banish";
+            case LogType.Kick:
+                output = "Kick";
                 break;
             case LogType.Ban:
                 output = "Ban";
                 break;
             case LogType.Unban:
                 output = "Unban";
-                break;
-            case LogType.VerificationLevel:
-                output = "Change verification level";
                 break;
             default:
                 output = "what";
@@ -258,10 +255,9 @@ public class ActionLogConstructor
             case LogType.Silence:
                 output = 0xffbb00;
                 break;
-            case LogType.Banish:
+            case LogType.Kick:
                 output = 0xff8800;
                 break;
-            case LogType.VerificationLevel:
             case LogType.Ban:
                 output = 0xaa0000;
                 break;
@@ -351,8 +347,7 @@ public enum LogType
     AddRoles,
     RemoveRoles,
     Silence,
-    Banish,
+    Kick,
     Ban,
-    Unban,
-    VerificationLevel,
+    Unban
 }

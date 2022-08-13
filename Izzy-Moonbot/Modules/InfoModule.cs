@@ -210,6 +210,15 @@ namespace Izzy_Moonbot.Modules
                     _state.CurrentSmallJoinCount++;
                     await ReplyAsync($"At {_state.CurrentSmallJoinCount}.");
                     break;
+                case "kicklog":
+                    await _modLogging.CreateActionLog(Context.Guild)
+                        .SetActionType(LogType.Kick)
+                        .AddTarget(Context.User as SocketGuildUser)
+                        .SetTime(DateTimeOffset.Now)
+                        .SetReason(
+                            $"This is a test of the kick log type.")
+                        .Send();
+                    break;
                 default:
                     Context.Message.ReplyAsync("Unknown test.");
                     break;

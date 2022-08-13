@@ -69,7 +69,7 @@ namespace Izzy_Moonbot.Service
                     string reasonForRemoval = null;
                     if (action.Fields.ContainsKey("reason")) reasonForRemoval = action.Fields["reason"];
 
-                    await _mod.RemoveRole(userToRemoveFrom, roleToRemove.Id, reasonForRemoval);
+                    await _mod.RemoveRole(userToRemoveFrom, roleToRemove.Id, DateTimeOffset.Now, reasonForRemoval);
                     break;
                 case ScheduledTaskActionType.AddRole:
                     SocketRole roleToAdd = guild.GetRole(ulong.Parse(action.Fields["roleId"]));
@@ -78,7 +78,7 @@ namespace Izzy_Moonbot.Service
                     string reasonForAdding = null;
                     if (action.Fields.ContainsKey("reason")) reasonForAdding = action.Fields["reason"];
 
-                    await _mod.RemoveRole(userToAddTo, roleToAdd.Id, reasonForAdding);
+                    await _mod.RemoveRole(userToAddTo, roleToAdd.Id, DateTimeOffset.Now, reasonForAdding);
                     break;
                 case ScheduledTaskActionType.Unban:
                     throw new NotImplementedException("Timed bans are not implemented at this current time.");
