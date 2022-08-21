@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Discord.WebSocket;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Settings;
+using Microsoft.Extensions.Logging;
 
 namespace Izzy_Moonbot.Service
 {
@@ -24,12 +25,16 @@ namespace Izzy_Moonbot.Service
     public class ScheduleService
     {
         private List<ScheduledTask> _scheduledTasks;
+        private LoggingService _logging;
         private ModService _mod;
+        private ModLoggingService _modLoggingService;
 
-        public ScheduleService(List<ScheduledTask> scheduledTasks, ModService mod)
+        public ScheduleService(List<ScheduledTask> scheduledTasks, ModService mod, ModLoggingService modLoggingService, LoggingService logging)
         {
             _scheduledTasks = scheduledTasks;
             _mod = mod;
+            _modLoggingService = modLoggingService;
+            _logging = logging;
         }
 
         public void ResumeScheduledTasks(SocketGuild guild)
@@ -40,6 +45,8 @@ namespace Izzy_Moonbot.Service
                 if (scheduledTask.ExecuteAt.ToUniversalTime().ToUnixTimeMilliseconds() <=
                     DateTimeOffset.UtcNow.ToUnixTimeMilliseconds())
                 {
+                    _logging.Log("Executing following task due to immediate on startup", null,
+                        level: LogLevel.Trace);
                     this.ExecuteTask(scheduledTask.Action, guild);
                     this.DeleteScheduledTask(scheduledTask);
                 }
@@ -51,6 +58,8 @@ namespace Izzy_Moonbot.Service
                         await Task.Delay(Convert.ToInt32(scheduledTask.ExecuteAt.ToUnixTimeMilliseconds() -
                                                          DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()));
                         if (!_scheduledTasks.Contains(scheduledTask)) return;
+                        _logging.Log("Executing following task due to time passing after restart", null,
+                            level: LogLevel.Trace);
                         await this.ExecuteTask(scheduledTask.Action, guild);
                         await this.DeleteScheduledTask(scheduledTask);
                     });
@@ -69,7 +78,14 @@ namespace Izzy_Moonbot.Service
                     string reasonForRemoval = null;
                     if (action.Fields.ContainsKey("reason")) reasonForRemoval = action.Fields["reason"];
 
+                    _logging.Log($"Removing {roleToRemove.Name} ({roleToRemove.Id}) from {userToRemoveFrom.Username}#{userToRemoveFrom.Discriminator} ({userToRemoveFrom.Id})", null,
+                        level: LogLevel.Trace);
+                    
                     await _mod.RemoveRole(userToRemoveFrom, roleToRemove.Id, DateTimeOffset.Now, reasonForRemoval);
+                    await _modLoggingService.CreateModLog(guild)
+                        .SetContent(
+                            $"Removed <@&{roleToRemove.Id}> from <@{userToRemoveFrom.Id}> (`{userToRemoveFrom.Id}`)")
+                        .Send();
                     break;
                 case ScheduledTaskActionType.AddRole:
                     SocketRole roleToAdd = guild.GetRole(ulong.Parse(action.Fields["roleId"]));
@@ -77,8 +93,15 @@ namespace Izzy_Moonbot.Service
                     if (roleToAdd == null || userToAddTo == null) return;
                     string reasonForAdding = null;
                     if (action.Fields.ContainsKey("reason")) reasonForAdding = action.Fields["reason"];
+                    
+                    _logging.Log($"Adding {roleToAdd.Name} ({roleToAdd.Id}) from {userToAddTo.Username}#{userToAddTo.Discriminator} ({userToAddTo.Id})", null,
+                        level: LogLevel.Trace);
 
                     await _mod.RemoveRole(userToAddTo, roleToAdd.Id, DateTimeOffset.Now, reasonForAdding);
+                    await _modLoggingService.CreateModLog(guild)
+                        .SetContent(
+                            $"Gave <@&{roleToAdd.Id}> to <@{userToAddTo.Id}> (`{userToAddTo.Id}`)")
+                        .Send();
                     break;
                 case ScheduledTaskActionType.Unban:
                     throw new NotImplementedException("Timed bans are not implemented at this current time.");
@@ -127,6 +150,8 @@ namespace Izzy_Moonbot.Service
             {
                 await Task.Delay(Convert.ToInt32(task.ExecuteAt.ToUnixTimeMilliseconds() - DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()));
                 if (!_scheduledTasks.Contains(task)) return;
+                _logging.Log("Executing following task due to time passing", null,
+                    level: LogLevel.Trace);
                 this.ExecuteTask(task.Action, guild);
                 this.DeleteScheduledTask(task);
             });
