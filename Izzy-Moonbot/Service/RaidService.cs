@@ -97,6 +97,8 @@ namespace Izzy_Moonbot.Service
             _settings.AutoSilenceNewJoins = false;
             _settings.BatchSendLogs = false;
             
+            await FileHelper.SaveSettingsAsync(_settings);
+            
             var userList = _state.RecentJoins.Select(userId =>
             {
                 var user = context.Guild.GetUser(userId);
@@ -132,8 +134,7 @@ namespace Izzy_Moonbot.Service
             });
 
             _state.ManualRaidSilence = false;
-
-            await FileHelper.SaveSettingsAsync(_settings);
+            
             return userList.ToList();
         }
 
