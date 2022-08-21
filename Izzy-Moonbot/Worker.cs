@@ -35,7 +35,8 @@ namespace Izzy_Moonbot
         private readonly ServerSettings _settings;
         private readonly Dictionary<ulong, User> _users;
         private DiscordSocketClient _client;
-        private int LaserCount = 10;
+        public int LaserCount = 10;
+        public bool hasProgrammingSocks = false;
 
         public Worker(ILogger<Worker> logger, ModLoggingService modLog, IServiceCollection services, PressureService pressureService, ModService modService, RaidService raidService, FilterService filterService, ScheduleService scheduleService, IOptions<DiscordSettings> discordSettings, ServerSettings settings, Dictionary<ulong, User> users)
         {
@@ -130,12 +131,12 @@ namespace Izzy_Moonbot
                 string expiresString = "";
                 
                 _logger.Log(LogLevel.Information, $"{member.Username}#{member.DiscriminatorValue} ({member.Id}) Joined. Processing roles..."); 
-                if (_settings.MemberRole != null && !_settings.AutoSilenceNewJoins)
+                if (_settings.MemberRole != null && (!_settings.AutoSilenceNewJoins || !_users[member.Id].Silenced))
                 {
                     roles.Add((ulong)_settings.MemberRole);
                 }
                 
-                if (_settings.NewMemberRole != null && !_settings.AutoSilenceNewJoins)
+                if (_settings.NewMemberRole != null && (!_settings.AutoSilenceNewJoins || !_users[member.Id].Silenced))
                 {
                     roles.Add((ulong) _settings.NewMemberRole);
                     expiresString =
@@ -156,6 +157,9 @@ namespace Izzy_Moonbot
                 if (roles.Count == 0) return; // What's the point of logging if Izzy doesn't do anything??
                 string autoSilence = $" (User autosilenced, `AutoSilenceNewJoins` is true.)";
                 if (!_settings.AutoSilenceNewJoins) autoSilence = "";
+                if (_users[member.Id].Silenced)
+                    autoSilence =
+                        ", silenced (attempted silence bypass)";
 
                 await _modService.AddRoles(member, roles, DateTimeOffset.Now, $"New user join{autoSilence}.{expiresString}");
             });
