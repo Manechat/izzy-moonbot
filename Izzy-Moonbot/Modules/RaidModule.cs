@@ -41,12 +41,12 @@ namespace Izzy_Moonbot.Modules
         {
             if (_state.CurrentRaidMode == RaidMode.None)
             {
-                await ReplyAsync("There doesn't seem to be any raids going on...", messageReference: new Discord.MessageReference(Context.Message.Id, Context.Channel.Id, Context.Guild.Id));
+                await ReplyAsync("There doesn't seem to be any raids going on...");
                 return;
             }
 
             await _raidService.SilenceRecentJoins(Context);
-            await ReplyAsync($"I've enabled autosilencing new members! I also autosilenced those who joined earlier than {_settings.RecentJoinDecay} seconds ago.", messageReference: new Discord.MessageReference(Context.Message.Id, Context.Channel.Id, Context.Guild.Id));
+            await ReplyAsync($"I've enabled autosilencing new members! I also autosilenced those who joined earlier than {_settings.RecentJoinDecay} seconds ago.");
         }
 
         [Command("assoff")]
@@ -68,7 +68,7 @@ namespace Izzy_Moonbot.Modules
                 $"{Environment.NewLine}These users were autosilenced. Please run `{_settings.Prefix}stowaways fix` while replying to this message to unsilence or `{_settings.Prefix}stowaways kick` while replying to this message to kick.{Environment.NewLine}{string.Join(", ", userList)}{Environment.NewLine}||!stowaway-usable!||";
             if (!userList.Any()) stowawaysString = "";
             
-            await ReplyAsync($"Jinxie avoided! I'm returning to normal operation.{stowawaysString}", messageReference: new Discord.MessageReference(Context.Message.Id, Context.Channel.Id, Context.Guild.Id));
+            await ReplyAsync($"Jinxie avoided! I'm returning to normal operation.{stowawaysString}");
         }
 
         [Command("stowaways")]
