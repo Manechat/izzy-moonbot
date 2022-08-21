@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord;
@@ -8,7 +7,6 @@ using Discord.Commands;
 using Izzy_Moonbot.Attributes;
 using Izzy_Moonbot.Describers;
 using Izzy_Moonbot.Helpers;
-using Izzy_Moonbot.Service;
 using Izzy_Moonbot.Settings;
 
 namespace Izzy_Moonbot.Modules;

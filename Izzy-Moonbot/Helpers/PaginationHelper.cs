@@ -9,38 +9,39 @@ namespace Izzy_Moonbot.Helpers;
 
 public class PaginationHelper
 {
-    public string[] Pages;
-    public int PageNumber;
-    public DateTime ExpiresAt;
-    
+    private readonly AllowedMentions _allowedMentions;
+
     private readonly DiscordSocketClient _client;
-    private ulong _authorId;
-    private IUserMessage _message;
+    private readonly RequestOptions _options;
     private readonly string[] _staticParts;
-    private Task _cancelTask;
-    private bool _easterEgg;
 
     private readonly bool _useCodeBlock;
-    private readonly AllowedMentions _allowedMentions;
-    private readonly RequestOptions _options;
-    
-    public PaginationHelper(SocketCommandContext context, string[] pages, string[] staticParts, int pageNumber = 0, bool codeblock = true, 
-        AllowedMentions allowedMentions = null, 
+    private ulong _authorId;
+    private Task _cancelTask;
+    private bool _easterEgg;
+    private IUserMessage _message;
+    public DateTime ExpiresAt;
+    public int PageNumber;
+    public string[] Pages;
+
+    public PaginationHelper(SocketCommandContext context, string[] pages, string[] staticParts, int pageNumber = 0,
+        bool codeblock = true,
+        AllowedMentions allowedMentions = null,
         RequestOptions options = null)
     {
-        this._client = context.Client;
-        this._authorId = context.Message.Author.Id;
-        this.Pages = pages;
-        this.PageNumber = pageNumber;
-        this._staticParts = staticParts;
-        this._easterEgg = false;
-        this._useCodeBlock = codeblock;
-        this._allowedMentions = allowedMentions;
-        this._options = options;
+        _client = context.Client;
+        _authorId = context.Message.Author.Id;
+        Pages = pages;
+        PageNumber = pageNumber;
+        _staticParts = staticParts;
+        _easterEgg = false;
+        _useCodeBlock = codeblock;
+        _allowedMentions = allowedMentions;
+        _options = options;
 
-        this.ExpiresAt = DateTime.UtcNow + TimeSpan.FromMinutes(5);
-        
-        this.CreatePaginationMessage(context);
+        ExpiresAt = DateTime.UtcNow + TimeSpan.FromMinutes(5);
+
+        CreatePaginationMessage(context);
     }
 
     private async void CreatePaginationMessage(SocketCommandContext context)
@@ -48,59 +49,65 @@ public class PaginationHelper
         var builder = new ComponentBuilder()
             .WithButton(customId: "goto-start", emote: Emoji.Parse(":track_previous:"), disabled: false)
             .WithButton(customId: "goto-previous", emote: Emoji.Parse(":arrow_backward:"), disabled: false)
-            .WithButton(customId: "trigger-easteregg", emote: Emote.Parse("<:izzylurk:994638513431646298>"), disabled: false)
+            .WithButton(customId: "trigger-easteregg", emote: Emote.Parse("<:izzylurk:994638513431646298>"),
+                disabled: false)
             .WithButton(customId: "goto-next", emote: Emoji.Parse(":arrow_forward:"), disabled: false)
             .WithButton(customId: "goto-end", emote: Emoji.Parse(":track_next:"), disabled: false);
-            
-        
-        this._message = await context.Message.ReplyAsync($"{this._staticParts[0]}{Environment.NewLine}{Environment.NewLine}<a:rdloop:910875692785336351> Pagination is loading. Please wait...{Environment.NewLine}{Environment.NewLine}{this._staticParts[1]}", components: builder.Build(), allowedMentions: this._allowedMentions, options: this._options);
 
-        this._client.ButtonExecuted += ButtonEvent;
-        
-        this.RedrawPagination();
-        
+
+        _message = await context.Message.ReplyAsync(
+            $"{_staticParts[0]}{Environment.NewLine}{Environment.NewLine}<a:rdloop:910875692785336351> Pagination is loading. Please wait...{Environment.NewLine}{Environment.NewLine}{_staticParts[1]}",
+            components: builder.Build(), allowedMentions: _allowedMentions, options: _options);
+
+        _client.ButtonExecuted += ButtonEvent;
+
+        RedrawPagination();
+
         await Task.Factory.StartNew(() =>
         {
-            Thread.Sleep((5*60*1000)+1); // Sleep for 5 minutes
-            
-            this._client.ButtonExecuted -= ButtonEvent; // Remove the event listener
+            Thread.Sleep(5 * 60 * 1000 + 1); // Sleep for 5 minutes
 
-            this.RedrawPagination();
+            _client.ButtonExecuted -= ButtonEvent; // Remove the event listener
+
+            RedrawPagination();
         });
     }
 
     private async void RedrawPagination()
     {
         var expireMessage = "";
-        if (this.ExpiresAt <= DateTime.UtcNow) expireMessage = "ℹ **This paginated message has expired.**";
+        if (ExpiresAt <= DateTime.UtcNow) expireMessage = "ℹ **This paginated message has expired.**";
 
-        await this._message.ModifyAsync(msg =>
+        await _message.ModifyAsync(msg =>
         {
             var codeBlock = "";
-            if (this._useCodeBlock) codeBlock = $"```";
-            
-            msg.Content =
-                $"{this._staticParts[0]}{Environment.NewLine}{codeBlock}{Environment.NewLine}{this.Pages[this.PageNumber]}{Environment.NewLine}{codeBlock}`Page {this.PageNumber+1} out of {this.Pages.Length}`{Environment.NewLine}{this._staticParts[1]}{Environment.NewLine}{Environment.NewLine}{expireMessage}";
+            if (_useCodeBlock) codeBlock = "```";
 
-            if (this._easterEgg)
+            msg.Content =
+                $"{_staticParts[0]}{Environment.NewLine}{codeBlock}{Environment.NewLine}{Pages[PageNumber]}{Environment.NewLine}{codeBlock}`Page {PageNumber + 1} out of {Pages.Length}`{Environment.NewLine}{_staticParts[1]}{Environment.NewLine}{Environment.NewLine}{expireMessage}";
+
+            if (_easterEgg)
             {
                 var builder = new ComponentBuilder()
                     .WithButton(customId: "goto-start", emote: Emoji.Parse(":track_previous:"))
                     .WithButton(customId: "goto-previous", emote: Emoji.Parse(":arrow_backward:"))
-                    .WithButton(customId: "trigger-easteregg-active", emote: Emote.Parse("<:izzyohyou:967943490698887258>"), style: ButtonStyle.Success)
+                    .WithButton(customId: "trigger-easteregg-active",
+                        emote: Emote.Parse("<:izzyohyou:967943490698887258>"), style: ButtonStyle.Success)
                     .WithButton(customId: "goto-next", emote: Emoji.Parse(":arrow_forward:"))
                     .WithButton(customId: "goto-end", emote: Emoji.Parse(":track_next:"));
                 msg.Components = builder.Build();
             }
 
-            if (this.ExpiresAt <= DateTime.UtcNow)
+            if (ExpiresAt <= DateTime.UtcNow)
             {
-                if (this._easterEgg)
+                if (_easterEgg)
                 {
                     var builder = new ComponentBuilder()
                         .WithButton(customId: "goto-start", emote: Emoji.Parse(":track_previous:"), disabled: true)
                         .WithButton(customId: "goto-previous", emote: Emoji.Parse(":arrow_backward:"), disabled: true)
-                        .WithButton(customId: "trigger-easteregg-active", emote: Emote.Parse("<:izzyohyou:967943490698887258>"), style: ButtonStyle.Success, disabled: true)
+                        .WithButton(customId: "trigger-easteregg-active",
+                            emote: Emote.Parse("<:izzyohyou:967943490698887258>"), style: ButtonStyle.Success,
+                            disabled: true)
                         .WithButton(customId: "goto-next", emote: Emoji.Parse(":arrow_forward:"), disabled: true)
                         .WithButton(customId: "goto-end", emote: Emoji.Parse(":track_next:"), disabled: true);
                     msg.Components = builder.Build();
@@ -110,7 +117,8 @@ public class PaginationHelper
                     var builder = new ComponentBuilder()
                         .WithButton(customId: "goto-start", emote: Emoji.Parse(":track_previous:"), disabled: true)
                         .WithButton(customId: "goto-previous", emote: Emoji.Parse(":arrow_backward:"), disabled: true)
-                        .WithButton(customId: "trigger-easteregg", emote: Emote.Parse("<:izzylurk:994638513431646298>"), disabled: true)
+                        .WithButton(customId: "trigger-easteregg", emote: Emote.Parse("<:izzylurk:994638513431646298>"),
+                            disabled: true)
                         .WithButton(customId: "goto-next", emote: Emoji.Parse(":arrow_forward:"), disabled: true)
                         .WithButton(customId: "goto-end", emote: Emoji.Parse(":track_next:"), disabled: true);
                     msg.Components = builder.Build();
@@ -121,30 +129,30 @@ public class PaginationHelper
 
     private async Task ButtonEvent(SocketMessageComponent component)
     {
-        if (component.User.Id == this._client.CurrentUser.Id) return;
-        if (component.Message.Id != this._message.Id) return;
+        if (component.User.Id == _client.CurrentUser.Id) return;
+        if (component.Message.Id != _message.Id) return;
 
         switch (component.Data.CustomId)
         {
-            case "goto-start": 
-                this.PageNumber = 0;
-                this.RedrawPagination();
+            case "goto-start":
+                PageNumber = 0;
+                RedrawPagination();
                 break;
             case "goto-previous":
-                if (this.PageNumber >= 1) this.PageNumber -= 1;
-                this.RedrawPagination();
+                if (PageNumber >= 1) PageNumber -= 1;
+                RedrawPagination();
                 break;
             case "goto-next":
-                if (this.PageNumber < this.Pages.Length-1) this.PageNumber += 1;
-                this.RedrawPagination();
+                if (PageNumber < Pages.Length - 1) PageNumber += 1;
+                RedrawPagination();
                 break;
             case "goto-end":
-                this.PageNumber = this.Pages.Length-1;
-                this.RedrawPagination();
+                PageNumber = Pages.Length - 1;
+                RedrawPagination();
                 break;
             case "trigger-easteregg":
-                this._easterEgg = true;
-                this.RedrawPagination();
+                _easterEgg = true;
+                RedrawPagination();
                 break;
         }
 

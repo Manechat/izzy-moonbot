@@ -21,8 +21,8 @@ public class DevModule : ModuleBase<SocketCommandContext>
     private readonly PressureService _pressureService;
     private readonly RaidService _raidService;
     private readonly ScheduleService _scheduleService;
-    private readonly StateStorage _state;
     private readonly ServerSettings _settings;
+    private readonly StateStorage _state;
     private readonly Dictionary<ulong, User> _users;
 
     public DevModule(ServerSettings settings, Dictionary<ulong, User> users, FilterService filterService,
@@ -44,7 +44,8 @@ public class DevModule : ModuleBase<SocketCommandContext>
     [Command("test")]
     [Summary("Unit tests for Izzy Moonbow")]
     public async Task TestCommandAsync([Summary("Test Identifier")] string testId = "",
-        [Remainder] [Summary("Test arguments")] string argString = "")
+        [Remainder] [Summary("Test arguments")]
+        string argString = "")
     {
         var args = argString.Split(" ");
         switch (testId)
@@ -252,15 +253,16 @@ public class DevModule : ModuleBase<SocketCommandContext>
             if (stateKey == "")
             {
                 var stateKeys = typeof(StateStorage).GetProperties().Select(info => info.Name);
-                await ReplyAsync($"Please provide a state to view the value of (`.state <state>`):{Environment.NewLine}```{Environment.NewLine}" +
-                                 string.Join(", ", stateKeys) +
-                                 $"{Environment.NewLine}```");
+                await ReplyAsync(
+                    $"Please provide a state to view the value of (`.state <state>`):{Environment.NewLine}```{Environment.NewLine}" +
+                    string.Join(", ", stateKeys) +
+                    $"{Environment.NewLine}```");
             }
         }
-        
+
         public static bool DoesStateExist<T>(string key) where T : StateStorage
         {
-            Type t = typeof(T);
+            var t = typeof(T);
 
             if (t.GetProperty(key) == null) return false;
             return true;

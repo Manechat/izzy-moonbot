@@ -13,8 +13,8 @@ namespace Izzy_Moonbot.Service;
 public class ModLoggingService
 {
     private readonly ServerSettings _settings;
-    private BatchLogger _batchLogger;
-    
+    private readonly BatchLogger _batchLogger;
+
     public ModLoggingService(ServerSettings settings)
     {
         _settings = settings;
@@ -25,7 +25,7 @@ public class ModLoggingService
     {
         return new ModLogConstructor(_settings, guild, _batchLogger);
     }
-    
+
     public ActionLogConstructor CreateActionLog(SocketGuild guild)
     {
         return new ActionLogConstructor(_settings, guild, _batchLogger);
@@ -47,12 +47,12 @@ public class ActionLog
 
 public class ModLogConstructor
 {
-    private readonly ServerSettings _settings;
     private readonly SocketGuild _guild;
-    private BatchLogger _batchLogger;
-    
-    private ModLog _log = new ModLog();
-    
+    private readonly ServerSettings _settings;
+    private readonly BatchLogger _batchLogger;
+
+    private readonly ModLog _log = new();
+
     public ModLogConstructor(ServerSettings settings, SocketGuild guild, BatchLogger batchLogger)
     {
         _settings = settings;
@@ -79,33 +79,28 @@ public class ModLogConstructor
         if (_log.Content == null) throw new InvalidOperationException("A moderation log cannot have no content");
 
         if (_settings.BatchSendLogs)
-        {
             _batchLogger.AddModLog(_log);
-        }
         else
-        {
             await _log.Channel.SendMessageAsync(_log.Content, embed: _log.Embed);
-        }
     }
 }
 
-
 public class ActionLogConstructor
 {
-    private readonly ServerSettings _settings;
-    private readonly SocketGuild _guild;
     private readonly BatchLogger _batchLogger;
-    
-    private ActionLog _log = new ActionLog();
+    private readonly SocketGuild _guild;
+    private readonly ServerSettings _settings;
 
     private LogType _actionType = LogType.Notice;
+    private List<string>? _changeLog;
+
+    private readonly ActionLog _log = new();
+    private string _reason = "No reason provided.";
+    private List<ulong>? _roles;
     private List<SocketGuildUser>? _targets;
     private DateTimeOffset _time = DateTimeOffset.Now;
     private DateTimeOffset? _until;
-    private string _reason = "No reason provided.";
-    private List<ulong>? _roles;
-    private List<string>? _changeLog;
-    
+
     public ActionLogConstructor(ServerSettings settings, SocketGuild guild, BatchLogger batchLogger)
     {
         _settings = settings;
@@ -152,7 +147,7 @@ public class ActionLogConstructor
         _roles.Add(role);
         return this;
     }
-    
+
     public ActionLogConstructor AddRoles(List<ulong> roles)
     {
         if (_roles == null) _roles = new List<ulong>();
@@ -162,7 +157,7 @@ public class ActionLogConstructor
 
     public async Task Send()
     {
-        EmbedBuilder embedBuilder = new EmbedBuilder();
+        var embedBuilder = new EmbedBuilder();
 
         if (_settings.SafeMode)
             embedBuilder.WithDescription(
@@ -181,6 +176,7 @@ public class ActionLogConstructor
                 embedBuilder.AddField("Users", string.Join(", ", users));
             }
         }
+
         embedBuilder.AddField("Action", GetLogTypeName(_actionType), true);
         embedBuilder.AddField("Occured At", $"<t:{_time.ToUnixTimeSeconds()}:F>", true);
         if (_until != null) embedBuilder.AddField("Ends At", $"<t:{_until.Value.ToUnixTimeSeconds()}:F>", true);
@@ -190,6 +186,7 @@ public class ActionLogConstructor
             embedBuilder.AddField("From", _changeLog[0]);
             embedBuilder.AddField("To", _changeLog[1]);
         }
+
         embedBuilder.AddField("Reason", _reason);
 
         embedBuilder.WithColor(GetLogColor(_actionType));
@@ -197,20 +194,16 @@ public class ActionLogConstructor
         _log.Embed = embedBuilder.Build();
 
         Console.WriteLine(_settings.BatchSendLogs);
-        
+
         if (_settings.BatchSendLogs)
-        {
             _batchLogger.AddActionLog(_log);
-        }
         else
-        {
             await _log.Channel.SendMessageAsync(embed: _log.Embed);
-        }
     }
-    
+
     private string GetLogTypeName(LogType action)
     {
-        string output = "";
+        var output = "";
         switch (action)
         {
             case LogType.Notice:
@@ -244,11 +237,11 @@ public class ActionLogConstructor
 
     private Color GetLogColor(LogType action)
     {
-        int output = 0x000000;
+        var output = 0x000000;
         switch (action)
         {
             case LogType.Notice:
-            case LogType.AddRoles: 
+            case LogType.AddRoles:
             case LogType.RemoveRoles:
                 output = 0x002920;
                 break;
@@ -275,15 +268,15 @@ public class ActionLogConstructor
 
 public class BatchLogger
 {
+    private readonly List<ActionLog> _actionLogs = new();
+
+    private readonly List<ModLog> _modLogs = new();
     private readonly ServerSettings _settings;
-    
-    private readonly List<ModLog> _modLogs = new List<ModLog>();
-    private readonly List<ActionLog> _actionLogs = new List<ActionLog>();
 
     public BatchLogger(ServerSettings settings)
     {
         _settings = settings;
-        
+
         RefreshBatchInterval();
     }
 
@@ -324,14 +317,10 @@ public class BatchLogger
             }
 
             if (modLogChannel != null)
-            {
-                await modLogChannel.SendMessageAsync(string.Join($"{Environment.NewLine}", modLogContent), embeds: modLogEmbeds.ToArray());
-            }
+                await modLogChannel.SendMessageAsync(string.Join($"{Environment.NewLine}", modLogContent),
+                    embeds: modLogEmbeds.ToArray());
 
-            if (actionLogChannel != null)
-            {
-                await actionLogChannel.SendMessageAsync(embeds: actionLogEmbeds.ToArray());
-            }
+            if (actionLogChannel != null) await actionLogChannel.SendMessageAsync(embeds: actionLogEmbeds.ToArray());
 
             _actionLogs.Clear();
             _modLogs.Clear();

@@ -1,17 +1,16 @@
 using System;
 
-namespace Izzy_Moonbot.Service
-{
-    public interface IDateTimeService
-    {
-        DateTime UtcNow();
-    }
+namespace Izzy_Moonbot.Service;
 
-    public class DateTimeService : IDateTimeService
+public interface IDateTimeService
+{
+    DateTime UtcNow();
+}
+
+public class DateTimeService : IDateTimeService
+{
+    public DateTime UtcNow()
     {
-        public DateTime UtcNow()
-        {
-            return DateTime.UtcNow;
-        }
+        return DateTime.UtcNow;
     }
 }

@@ -1,44 +1,46 @@
+using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
+using Discord;
+using Discord.Commands;
 using Discord.Rest;
+using Discord.WebSocket;
+using Izzy_Moonbot.Attributes;
+using Izzy_Moonbot.Helpers;
+using Izzy_Moonbot.Service;
+using Izzy_Moonbot.Settings;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Izzy_Moonbot
 {
-    using Discord;
-    using Discord.Commands;
-    using Discord.WebSocket;
-    using Izzy_Moonbot.Helpers;
-    using Izzy_Moonbot.Settings;
-    using Izzy_Moonbot.Service;
-    using Microsoft.Extensions.DependencyInjection;
-    using Microsoft.Extensions.Hosting;
-    using Microsoft.Extensions.Logging;
-    using Microsoft.Extensions.Options;
-    using System;
-    using System.Collections.Generic;
-    using System.Reflection;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using Izzy_Moonbot.Attributes;
-
     public class Worker : BackgroundService
     {
+        private readonly CommandService _commands;
+        private readonly DiscordSettings _discordSettings;
+        private readonly FilterService _filterService;
         private readonly ILogger<Worker> _logger;
         private readonly ModLoggingService _modLog;
-        private readonly IServiceCollection _services;
-        private readonly PressureService _pressureService;
         private readonly ModService _modService;
+        private readonly PressureService _pressureService;
         private readonly RaidService _raidService;
-        private readonly FilterService _filterService;
         private readonly ScheduleService _scheduleService;
-        private readonly DiscordSettings _discordSettings;
-        private readonly CommandService _commands;
+        private readonly IServiceCollection _services;
         private readonly ServerSettings _settings;
         private readonly Dictionary<ulong, User> _users;
         private DiscordSocketClient _client;
-        public int LaserCount = 10;
         public bool hasProgrammingSocks = false;
+        public int LaserCount = 10;
 
-        public Worker(ILogger<Worker> logger, ModLoggingService modLog, IServiceCollection services, PressureService pressureService, ModService modService, RaidService raidService, FilterService filterService, ScheduleService scheduleService, IOptions<DiscordSettings> discordSettings, ServerSettings settings, Dictionary<ulong, User> users)
+        public Worker(ILogger<Worker> logger, ModLoggingService modLog, IServiceCollection services,
+            PressureService pressureService, ModService modService, RaidService raidService,
+            FilterService filterService, ScheduleService scheduleService, IOptions<DiscordSettings> discordSettings,
+            ServerSettings settings, Dictionary<ulong, User> users)
         {
             _logger = logger;
             _modLog = modLog;
@@ -65,7 +67,7 @@ namespace Izzy_Moonbot
                     _discordSettings.Token);
 
                 _client.Ready += ReadyEvent;
-                
+
                 await _client.StartAsync();
                 //await _client.SetGameAsync($"Go away");
                 await _client.SetGameAsync($"MVP System Test - SafeMode Active");
@@ -129,24 +131,28 @@ namespace Izzy_Moonbot
             {
                 List<ulong> roles = new List<ulong>();
                 string expiresString = "";
-                
-                _logger.Log(LogLevel.Information, $"{member.Username}#{member.DiscriminatorValue} ({member.Id}) Joined. Processing roles..."); 
+
+                _logger.Log(LogLevel.Information,
+                    $"{member.Username}#{member.DiscriminatorValue} ({member.Id}) Joined. Processing roles...");
                 if (_settings.MemberRole != null && (!_settings.AutoSilenceNewJoins || !_users[member.Id].Silenced))
                 {
                     roles.Add((ulong)_settings.MemberRole);
                 }
-                
+
                 if (_settings.NewMemberRole != null && (!_settings.AutoSilenceNewJoins || !_users[member.Id].Silenced))
                 {
-                    roles.Add((ulong) _settings.NewMemberRole);
+                    roles.Add((ulong)_settings.NewMemberRole);
                     expiresString =
                         $"{Environment.NewLine}New Member role expires in <t:{(DateTimeOffset.UtcNow + TimeSpan.FromMinutes(_settings.NewMemberRoleDecay)).ToUnixTimeSeconds()}:R>";
-                    
+
                     Dictionary<string, string> fields = new Dictionary<string, string>
                     {
                         { "roleId", _settings.NewMemberRole.ToString() },
                         { "userId", member.Id.ToString() },
-                        { "reason", $"{_settings.NewMemberRoleDecay} minutes (`NewMemberRoleDecay`) passed, user no longer a new pony." }
+                        {
+                            "reason",
+                            $"{_settings.NewMemberRoleDecay} minutes (`NewMemberRoleDecay`) passed, user no longer a new pony."
+                        }
                     };
                     ScheduledTaskAction action = new ScheduledTaskAction(ScheduledTaskActionType.RemoveRole, fields);
                     ScheduledTask task = new ScheduledTask(DateTimeOffset.UtcNow,
@@ -161,7 +167,8 @@ namespace Izzy_Moonbot
                     autoSilence =
                         ", silenced (attempted silence bypass)";
 
-                await _modService.AddRoles(member, roles, DateTimeOffset.Now, $"New user join{autoSilence}.{expiresString}");
+                await _modService.AddRoles(member, roles, DateTimeOffset.Now,
+                    $"New user join{autoSilence}.{expiresString}");
             });
 
             string autoSilence = ", silenced (`AutoSilenceNewJoins` is on)";
@@ -169,18 +176,16 @@ namespace Izzy_Moonbot
             if (_users[member.Id].Silenced)
                 autoSilence =
                     ", silenced (attempted silence bypass)";
-            string joinedBefore = $", Joined {_users[member.Id].Joins.Count-1} times before";
+            string joinedBefore = $", Joined {_users[member.Id].Joins.Count - 1} times before";
             if (_users[member.Id].Joins.Count <= 1) joinedBefore = "";
             await _modLog.CreateModLog(member.Guild)
-                .SetContent($"Join: <@{member.Id}> (`{member.Id}`), created <t:{member.CreatedAt.ToUnixTimeSeconds()}:R>{autoSilence}{joinedBefore}")
+                .SetContent(
+                    $"Join: <@{member.Id}> (`{member.Id}`), created <t:{member.CreatedAt.ToUnixTimeSeconds()}:R>{autoSilence}{joinedBefore}")
                 .Send();
-            
+
             if (_settings.RaidProtectionEnabled)
             {
-                Task.Factory.StartNew(async () =>
-                {
-                    await _raidService.ProcessMemberJoin(member);
-                });
+                Task.Factory.StartNew(async () => { await _raidService.ProcessMemberJoin(member); });
             }
         }
 
@@ -192,7 +197,7 @@ namespace Izzy_Moonbot
                 .Select(audit =>
                 {
                     var data = audit.Data as KickAuditLogData;
-                    if (data.Target.Id == user.Id) 
+                    if (data.Target.Id == user.Id)
                     {
                         _logger.Log(LogLevel.Trace, $"Target: {data.Target.Username}#{data.Target.Discriminator}");
                         _logger.Log(LogLevel.Trace, $"Moderator: {audit.User.Username}#{audit.User.Discriminator}");
@@ -211,7 +216,7 @@ namespace Izzy_Moonbot
                 .Select(audit =>
                 {
                     var data = audit.Data as BanAuditLogData;
-                    if (data.Target.Id == user.Id) 
+                    if (data.Target.Id == user.Id)
                     {
                         _logger.Log(LogLevel.Trace, $"Target: {data.Target.Username}#{data.Target.Discriminator}");
                         _logger.Log(LogLevel.Trace, $"Moderator: {audit.User.Username}#{audit.User.Discriminator}");
@@ -225,34 +230,39 @@ namespace Izzy_Moonbot
                     return null;
                 });
 
-            var output = $"Leave: {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined <t:{_users[user.Id].Joins.Last().ToUnixTimeSeconds()}:R>";
+            var output =
+                $"Leave: {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined <t:{_users[user.Id].Joins.Last().ToUnixTimeSeconds()}:R>";
 
             var banAuditLogEntries = wasBanned as RestAuditLogEntry[] ?? wasBanned.ToArray();
             if (banAuditLogEntries.Any(audit => audit != null))
             {
                 var audit = banAuditLogEntries.First();
-                output = $"Leave (Ban): {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined <t:{_users[user.Id].Joins.Last().ToUnixTimeSeconds()}:R>, \"{audit.Reason}\" by {audit.User.Username}#{audit.User.Discriminator} ({guild.GetUser(audit.User.Id).DisplayName})";
+                output =
+                    $"Leave (Ban): {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined <t:{_users[user.Id].Joins.Last().ToUnixTimeSeconds()}:R>, \"{audit.Reason}\" by {audit.User.Username}#{audit.User.Discriminator} ({guild.GetUser(audit.User.Id).DisplayName})";
             }
 
             var kickAuditLogEntries = wasKicked as RestAuditLogEntry[] ?? wasKicked.ToArray();
             if (kickAuditLogEntries.Any(audit => audit != null))
             {
                 var audit = kickAuditLogEntries.First();
-                output = $"Leave (Kick): {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined <t:{_users[user.Id].Joins.Last().ToUnixTimeSeconds()}:R>, \"{audit.Reason}\" by {audit.User.Username}#{audit.User.Discriminator} ({guild.GetUser(audit.User.Id).DisplayName})";
+                output =
+                    $"Leave (Kick): {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined <t:{_users[user.Id].Joins.Last().ToUnixTimeSeconds()}:R>, \"{audit.Reason}\" by {audit.User.Username}#{audit.User.Discriminator} ({guild.GetUser(audit.User.Id).DisplayName})";
             }
 
             var scheduledTasks = _scheduleService.GetScheduledTasks().ToList().Select(action =>
             {
                 return action.Action.Fields.ContainsKey("userId") &&
-                       action.Action.Fields["userId"] == user.Id.ToString() ? action : null;
+                       action.Action.Fields["userId"] == user.Id.ToString()
+                    ? action
+                    : null;
             });
-            
+
             foreach (var scheduledTask in scheduledTasks)
             {
                 if (scheduledTask == null) continue;
                 await _scheduleService.DeleteScheduledTask(scheduledTask);
             }
-            
+
             await _modLog.CreateModLog(guild)
                 .SetContent(output)
                 .Send();
@@ -278,7 +288,8 @@ namespace Izzy_Moonbot
         private async Task HandleCommandAsync(SocketMessage messageParam)
         {
             //_logger.Log(LogLevel.Debug, $"{messageParam.CleanContent}; {messageParam.EditedTimestamp}");
-            if (messageParam.Type != MessageType.Default && messageParam.Type != MessageType.Reply && messageParam.Type != MessageType.ThreadStarterMessage) return;
+            if (messageParam.Type != MessageType.Default && messageParam.Type != MessageType.Reply &&
+                messageParam.Type != MessageType.ThreadStarterMessage) return;
             SocketUserMessage message = messageParam as SocketUserMessage;
             int argPos = 0;
             SocketCommandContext context = new SocketCommandContext(_client, message);
@@ -288,13 +299,14 @@ namespace Izzy_Moonbot
                 _pressureService.ProcessMessage(context);
                 _filterService.ProcessMessage(context);
             });
-            
+
             if (DevSettings.UseDevPrefix)
             {
                 _settings.Prefix = DevSettings.Prefix;
             }
 
-            if (message.HasCharPrefix(_settings.Prefix, ref argPos) || message.Content.StartsWith($"<@{_client.CurrentUser.Id}>"))
+            if (message.HasCharPrefix(_settings.Prefix, ref argPos) ||
+                message.Content.StartsWith($"<@{_client.CurrentUser.Id}>"))
             {
                 string parsedMessage = null;
                 bool checkCommands = true;
@@ -365,6 +377,7 @@ namespace Izzy_Moonbot
                     _logger.LogError($"Stack trace: {msg.Exception.StackTrace}");
                 }
             }
+
             _logger.LogInformation(msg.Message);
             return Task.CompletedTask;
         }
