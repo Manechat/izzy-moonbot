@@ -9,6 +9,7 @@ using Discord.Commands;
 using Discord.Rest;
 using Discord.WebSocket;
 using Izzy_Moonbot.Attributes;
+using Izzy_Moonbot.EventListeners;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Service;
 using Izzy_Moonbot.Settings;
@@ -33,6 +34,7 @@ namespace Izzy_Moonbot
         private readonly IServiceCollection _services;
         private readonly Config _config;
         private readonly Dictionary<ulong, User> _users;
+        private readonly UserListener _userListener;
         private DiscordSocketClient _client;
         public bool hasProgrammingSocks = false;
         public int LaserCount = 10;
@@ -40,7 +42,7 @@ namespace Izzy_Moonbot
         public Worker(ILogger<Worker> logger, ModLoggingService modLog, IServiceCollection services,
             PressureService pressureService, ModService modService, RaidService raidService,
             FilterService filterService, ScheduleService scheduleService, IOptions<DiscordSettings> discordSettings,
-            Config config, Dictionary<ulong, User> users)
+            Config config, Dictionary<ulong, User> users, UserListener userListener)
         {
             _logger = logger;
             _modLog = modLog;
@@ -54,6 +56,7 @@ namespace Izzy_Moonbot
             _services = services;
             _config = config;
             _users = users;
+            _userListener = userListener;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -73,8 +76,8 @@ namespace Izzy_Moonbot
                 await _client.SetGameAsync($"MVP System Test - SafeMode Active");
                 await InstallCommandsAsync();
 
-                _client.UserJoined += HandleMemberJoin;
-                _client.UserLeft += HandleUserLeave;
+                /*_client.UserJoined += HandleMemberJoin;
+                _client.UserLeft += HandleUserLeave;*/
 
                 _client.LatencyUpdated += async (int old, int value) =>
                 {
@@ -110,6 +113,8 @@ namespace Izzy_Moonbot
             _pressureService.RegisterEvents(_client);
             _raidService.RegisterEvents(_client);
             _filterService.RegisterEvents(_client);
+
+            _userListener.RegisterEvents(_client);
         }
 
         public async Task HandleMemberJoin(SocketGuildUser member)

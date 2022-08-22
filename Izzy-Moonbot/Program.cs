@@ -1,5 +1,6 @@
 using System;
 using Izzy_Moonbot.Describers;
+using Izzy_Moonbot.EventListeners;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Service;
 using Izzy_Moonbot.Settings;
@@ -76,7 +77,7 @@ public class Program
             services.AddSingleton(services);
             
             // EventListeners
-            
+            services.AddSingleton<UserListener>();
             
             // Misc
             services.AddTransient<IDateTimeService, DateTimeService>();
