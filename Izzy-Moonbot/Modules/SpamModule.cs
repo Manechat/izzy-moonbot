@@ -13,11 +13,9 @@ namespace Izzy_Moonbot.Modules;
 public class SpamModule : ModuleBase<SocketCommandContext>
 {
     private readonly PressureService _pressureService;
-    private ServerSettings _settings;
 
-    public SpamModule(ServerSettings settings, PressureService pressureService)
+    public SpamModule(PressureService pressureService)
     {
-        _settings = settings;
         _pressureService = pressureService;
     }
 

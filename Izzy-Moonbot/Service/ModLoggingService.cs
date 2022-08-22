@@ -12,23 +12,23 @@ namespace Izzy_Moonbot.Service;
 
 public class ModLoggingService
 {
-    private readonly ServerSettings _settings;
+    private readonly Config _config;
     private readonly BatchLogger _batchLogger;
 
-    public ModLoggingService(ServerSettings settings)
+    public ModLoggingService(Config config)
     {
-        _settings = settings;
-        _batchLogger = new BatchLogger(_settings);
+        _config = config;
+        _batchLogger = new BatchLogger(_config);
     }
 
     public ModLogConstructor CreateModLog(SocketGuild guild)
     {
-        return new ModLogConstructor(_settings, guild, _batchLogger);
+        return new ModLogConstructor(_config, guild, _batchLogger);
     }
 
     public ActionLogConstructor CreateActionLog(SocketGuild guild)
     {
-        return new ActionLogConstructor(_settings, guild, _batchLogger);
+        return new ActionLogConstructor(_config, guild, _batchLogger);
     }
 }
 
@@ -48,18 +48,18 @@ public class ActionLog
 public class ModLogConstructor
 {
     private readonly SocketGuild _guild;
-    private readonly ServerSettings _settings;
+    private readonly Config _config;
     private readonly BatchLogger _batchLogger;
 
     private readonly ModLog _log = new();
 
-    public ModLogConstructor(ServerSettings settings, SocketGuild guild, BatchLogger batchLogger)
+    public ModLogConstructor(Config config, SocketGuild guild, BatchLogger batchLogger)
     {
-        _settings = settings;
+        _config = config;
         _guild = guild;
         _batchLogger = batchLogger;
 
-        _log.Channel = _guild.GetTextChannel(_settings.ModChannel);
+        _log.Channel = _guild.GetTextChannel(_config.ModChannel);
     }
 
     public ModLogConstructor SetContent(string content)
@@ -78,7 +78,7 @@ public class ModLogConstructor
     {
         if (_log.Content == null) throw new InvalidOperationException("A moderation log cannot have no content");
 
-        if (_settings.BatchSendLogs)
+        if (_config.BatchSendLogs)
             _batchLogger.AddModLog(_log);
         else
             await _log.Channel.SendMessageAsync(_log.Content, embed: _log.Embed);
@@ -89,7 +89,7 @@ public class ActionLogConstructor
 {
     private readonly BatchLogger _batchLogger;
     private readonly SocketGuild _guild;
-    private readonly ServerSettings _settings;
+    private readonly Config _config;
 
     private LogType _actionType = LogType.Notice;
     private List<string>? _changeLog;
@@ -101,13 +101,13 @@ public class ActionLogConstructor
     private DateTimeOffset _time = DateTimeOffset.Now;
     private DateTimeOffset? _until;
 
-    public ActionLogConstructor(ServerSettings settings, SocketGuild guild, BatchLogger batchLogger)
+    public ActionLogConstructor(Config config, SocketGuild guild, BatchLogger batchLogger)
     {
-        _settings = settings;
+        _config = config;
         _guild = guild;
         _batchLogger = batchLogger;
 
-        _log.Channel = _guild.GetTextChannel(_settings.LogChannel);
+        _log.Channel = _guild.GetTextChannel(_config.LogChannel);
     }
 
     public ActionLogConstructor SetActionType(LogType type)
@@ -159,7 +159,7 @@ public class ActionLogConstructor
     {
         var embedBuilder = new EmbedBuilder();
 
-        if (_settings.SafeMode)
+        if (_config.SafeMode)
             embedBuilder.WithDescription(
                 "ℹ **This was an automated action Izzy Moonbot would have taken outside of `SafeMode`.**");
         else embedBuilder.WithDescription("ℹ **This was an automated action Izzy Moonbot took.**");
@@ -193,9 +193,9 @@ public class ActionLogConstructor
 
         _log.Embed = embedBuilder.Build();
 
-        Console.WriteLine(_settings.BatchSendLogs);
+        Console.WriteLine(_config.BatchSendLogs);
 
-        if (_settings.BatchSendLogs)
+        if (_config.BatchSendLogs)
             _batchLogger.AddActionLog(_log);
         else
             await _log.Channel.SendMessageAsync(embed: _log.Embed);
@@ -271,11 +271,11 @@ public class BatchLogger
     private readonly List<ActionLog> _actionLogs = new();
 
     private readonly List<ModLog> _modLogs = new();
-    private readonly ServerSettings _settings;
+    private readonly Config _config;
 
-    public BatchLogger(ServerSettings settings)
+    public BatchLogger(Config config)
     {
-        _settings = settings;
+        _config = config;
 
         RefreshBatchInterval();
     }
@@ -294,7 +294,7 @@ public class BatchLogger
     {
         Task.Factory.StartNew(async () =>
         {
-            await Task.Delay(Convert.ToInt32(_settings.BatchLogsSendRate * 1000));
+            await Task.Delay(Convert.ToInt32(_config.BatchLogsSendRate * 1000));
             // Do stuff*tm* to construct and create the batched stuff:tm:
             SocketTextChannel modLogChannel = null;
             SocketTextChannel actionLogChannel = null;

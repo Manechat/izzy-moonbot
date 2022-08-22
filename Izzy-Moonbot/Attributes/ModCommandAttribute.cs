@@ -12,7 +12,7 @@ namespace Izzy_Moonbot.Attributes;
 // Used for sensitive moderation commands
 public class ModCommandAttribute : PreconditionAttribute
 {
-    private readonly ServerSettings _settings = FileHelper.LoadSettingsAsync().Result;
+    private readonly Config _config = FileHelper.LoadConfigAsync().Result;
 
     public override Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command,
         IServiceProvider services)
@@ -21,7 +21,7 @@ public class ModCommandAttribute : PreconditionAttribute
         if (context.User is SocketGuildUser gUser)
         {
             // If this command was executed by a user with the appropriate role, return a success
-            if (gUser.Roles.Any(r => r.Id == _settings.ModRole))
+            if (gUser.Roles.Any(r => r.Id == _config.ModRole))
                 // Since no async work is done, the result has to be wrapped with `Task.FromResult` to avoid compiler errors
                 return Task.FromResult(PreconditionResult.FromSuccess());
             // Since it wasn't, fail

@@ -31,7 +31,7 @@ namespace Izzy_Moonbot
         private readonly RaidService _raidService;
         private readonly ScheduleService _scheduleService;
         private readonly IServiceCollection _services;
-        private readonly ServerSettings _settings;
+        private readonly Config _config;
         private readonly Dictionary<ulong, User> _users;
         private DiscordSocketClient _client;
         public bool hasProgrammingSocks = false;
@@ -40,7 +40,7 @@ namespace Izzy_Moonbot
         public Worker(ILogger<Worker> logger, ModLoggingService modLog, IServiceCollection services,
             PressureService pressureService, ModService modService, RaidService raidService,
             FilterService filterService, ScheduleService scheduleService, IOptions<DiscordSettings> discordSettings,
-            ServerSettings settings, Dictionary<ulong, User> users)
+            Config config, Dictionary<ulong, User> users)
         {
             _logger = logger;
             _modLog = modLog;
@@ -52,7 +52,7 @@ namespace Izzy_Moonbot
             _commands = new CommandService();
             _discordSettings = discordSettings.Value;
             _services = services;
-            _settings = settings;
+            _config = config;
             _users = users;
         }
 
@@ -60,8 +60,8 @@ namespace Izzy_Moonbot
         {
             try
             {
-                var _config = new DiscordSocketConfig { GatewayIntents = GatewayIntents.All, MessageCacheSize = 50 };
-                _client = new DiscordSocketClient(_config);
+                var discordConfig = new DiscordSocketConfig { GatewayIntents = GatewayIntents.All, MessageCacheSize = 50 };
+                _client = new DiscordSocketClient(discordConfig);
                 _client.Log += Log;
                 await _client.LoginAsync(TokenType.Bot,
                     _discordSettings.Token);
@@ -75,7 +75,6 @@ namespace Izzy_Moonbot
 
                 _client.UserJoined += HandleMemberJoin;
                 _client.UserLeft += HandleUserLeave;
-                _client.MessageUpdated += HandleMessageUpdate;
 
                 _client.LatencyUpdated += async (int old, int value) =>
                 {
@@ -84,8 +83,7 @@ namespace Izzy_Moonbot
 
                 // Block this task until the program is closed.
                 await Task.Delay(-1, stoppingToken);
-
-
+                
                 while (!stoppingToken.IsCancellationRequested)
                 {
                     _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
@@ -108,6 +106,10 @@ namespace Izzy_Moonbot
         {
             _logger.LogTrace("Ready event called");
             _scheduleService.ResumeScheduledTasks(_client.Guilds.ToArray()[0]);
+            
+            _pressureService.RegisterEvents(_client);
+            _raidService.RegisterEvents(_client);
+            _filterService.RegisterEvents(_client);
         }
 
         public async Task HandleMemberJoin(SocketGuildUser member)
@@ -134,35 +136,35 @@ namespace Izzy_Moonbot
 
                 _logger.Log(LogLevel.Information,
                     $"{member.Username}#{member.DiscriminatorValue} ({member.Id}) Joined. Processing roles...");
-                if (_settings.MemberRole != null && (!_settings.AutoSilenceNewJoins || !_users[member.Id].Silenced))
+                if (_config.MemberRole != null && (!_config.AutoSilenceNewJoins || !_users[member.Id].Silenced))
                 {
-                    roles.Add((ulong)_settings.MemberRole);
+                    roles.Add((ulong)_config.MemberRole);
                 }
 
-                if (_settings.NewMemberRole != null && (!_settings.AutoSilenceNewJoins || !_users[member.Id].Silenced))
+                if (_config.NewMemberRole != null && (!_config.AutoSilenceNewJoins || !_users[member.Id].Silenced))
                 {
-                    roles.Add((ulong)_settings.NewMemberRole);
+                    roles.Add((ulong)_config.NewMemberRole);
                     expiresString =
-                        $"{Environment.NewLine}New Member role expires in <t:{(DateTimeOffset.UtcNow + TimeSpan.FromMinutes(_settings.NewMemberRoleDecay)).ToUnixTimeSeconds()}:R>";
+                        $"{Environment.NewLine}New Member role expires in <t:{(DateTimeOffset.UtcNow + TimeSpan.FromMinutes(_config.NewMemberRoleDecay)).ToUnixTimeSeconds()}:R>";
 
                     Dictionary<string, string> fields = new Dictionary<string, string>
                     {
-                        { "roleId", _settings.NewMemberRole.ToString() },
+                        { "roleId", _config.NewMemberRole.ToString() },
                         { "userId", member.Id.ToString() },
                         {
                             "reason",
-                            $"{_settings.NewMemberRoleDecay} minutes (`NewMemberRoleDecay`) passed, user no longer a new pony."
+                            $"{_config.NewMemberRoleDecay} minutes (`NewMemberRoleDecay`) passed, user no longer a new pony."
                         }
                     };
                     ScheduledTaskAction action = new ScheduledTaskAction(ScheduledTaskActionType.RemoveRole, fields);
                     ScheduledTask task = new ScheduledTask(DateTimeOffset.UtcNow,
-                        (DateTimeOffset.UtcNow + TimeSpan.FromMinutes(_settings.NewMemberRoleDecay)), action);
+                        (DateTimeOffset.UtcNow + TimeSpan.FromMinutes(_config.NewMemberRoleDecay)), action);
                     _scheduleService.CreateScheduledTask(task, member.Guild);
                 }
 
                 if (roles.Count == 0) return; // What's the point of logging if Izzy doesn't do anything??
                 string autoSilence = $" (User autosilenced, `AutoSilenceNewJoins` is true.)";
-                if (!_settings.AutoSilenceNewJoins) autoSilence = "";
+                if (!_config.AutoSilenceNewJoins) autoSilence = "";
                 if (_users[member.Id].Silenced)
                     autoSilence =
                         ", silenced (attempted silence bypass)";
@@ -172,7 +174,7 @@ namespace Izzy_Moonbot
             });
 
             string autoSilence = ", silenced (`AutoSilenceNewJoins` is on)";
-            if (!_settings.AutoSilenceNewJoins) autoSilence = "";
+            if (!_config.AutoSilenceNewJoins) autoSilence = "";
             if (_users[member.Id].Silenced)
                 autoSilence =
                     ", silenced (attempted silence bypass)";
@@ -182,11 +184,6 @@ namespace Izzy_Moonbot
                 .SetContent(
                     $"Join: <@{member.Id}> (`{member.Id}`), created <t:{member.CreatedAt.ToUnixTimeSeconds()}:R>{autoSilence}{joinedBefore}")
                 .Send();
-
-            if (_settings.RaidProtectionEnabled)
-            {
-                Task.Factory.StartNew(async () => { await _raidService.ProcessMemberJoin(member); });
-            }
         }
 
         private async Task HandleUserLeave(SocketGuild guild, SocketUser user)
@@ -268,23 +265,6 @@ namespace Izzy_Moonbot
                 .Send();
         }
 
-        private async Task HandleMessageUpdate(Cacheable<IMessage, ulong> oldMessage, SocketMessage newMessage,
-            ISocketMessageChannel channel)
-        {
-            SocketUserMessage message = newMessage as SocketUserMessage;
-            SocketCommandContext context = new SocketCommandContext(_client, message);
-
-            Task.Factory.StartNew(() =>
-            {
-                if (oldMessage.HasValue)
-                {
-                    _pressureService.ProcessMessageUpdate(oldMessage.Value, newMessage);
-                }
-
-                _filterService.ProcessMessageUpdate(context);
-            });
-        }
-
         private async Task HandleCommandAsync(SocketMessage messageParam)
         {
             //_logger.Log(LogLevel.Debug, $"{messageParam.CleanContent}; {messageParam.EditedTimestamp}");
@@ -294,18 +274,12 @@ namespace Izzy_Moonbot
             int argPos = 0;
             SocketCommandContext context = new SocketCommandContext(_client, message);
 
-            Task.Factory.StartNew(() =>
-            {
-                _pressureService.ProcessMessage(context);
-                _filterService.ProcessMessage(context);
-            });
-
             if (DevSettings.UseDevPrefix)
             {
-                _settings.Prefix = DevSettings.Prefix;
+                _config.Prefix = DevSettings.Prefix;
             }
 
-            if (message.HasCharPrefix(_settings.Prefix, ref argPos) ||
+            if (message.HasCharPrefix(_config.Prefix, ref argPos) ||
                 message.Content.StartsWith($"<@{_client.CurrentUser.Id}>"))
             {
                 string parsedMessage = null;
@@ -317,7 +291,7 @@ namespace Izzy_Moonbot
                 }
                 else
                 {
-                    parsedMessage = DiscordHelper.CheckAliasesAsync(message.Content, _settings);
+                    parsedMessage = DiscordHelper.CheckAliasesAsync(message.Content, _config);
                 }
 
                 if (checkCommands)
@@ -363,10 +337,7 @@ namespace Izzy_Moonbot
             {
                 if (msg.Exception.Message == "Server missed last heartbeat")
                 {
-                    _logger.LogWarning("Izzy Moonbot missed a heartbeat. Rebooting...");
-                    _client.StopAsync();
-                    _client.LoginAsync(TokenType.Bot,
-                        _discordSettings.Token);
+                    _logger.LogWarning("Izzy Moonbot missed a heartbeat (likely network interruption).");
                 }
                 else
                 {

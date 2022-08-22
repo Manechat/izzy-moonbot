@@ -21,15 +21,15 @@ public class DevModule : ModuleBase<SocketCommandContext>
     private readonly PressureService _pressureService;
     private readonly RaidService _raidService;
     private readonly ScheduleService _scheduleService;
-    private readonly ServerSettings _settings;
-    private readonly StateStorage _state;
+    private readonly Config _config;
+    private readonly State _state;
     private readonly Dictionary<ulong, User> _users;
 
-    public DevModule(ServerSettings settings, Dictionary<ulong, User> users, FilterService filterService,
+    public DevModule(Config config, Dictionary<ulong, User> users, FilterService filterService,
         LoggingService loggingService, ModLoggingService modLoggingService, ModService modService,
-        PressureService pressureService, RaidService raidService, ScheduleService scheduleService, StateStorage state)
+        PressureService pressureService, RaidService raidService, ScheduleService scheduleService, State state)
     {
-        _settings = settings;
+        _config = config;
         _users = users;
         _filterService = filterService;
         _loggingService = loggingService;
@@ -104,8 +104,8 @@ public class DevModule : ModuleBase<SocketCommandContext>
                     .Send();
                 break;
             case "batch-log":
-                _settings.BatchSendLogs = true;
-                await FileHelper.SaveSettingsAsync(_settings);
+                _config.BatchSendLogs = true;
+                await FileHelper.SaveConfigAsync(_config);
                 await _modLoggingService.CreateActionLog(Context.Guild)
                     .SetActionType(LogType.Notice)
                     .SetReason(
@@ -147,9 +147,9 @@ public class DevModule : ModuleBase<SocketCommandContext>
                         await msg.RemoveAllReactionsAsync();
                         await msg.ModifyAsync(message => message.Content = "⚠  **Importing. Please wait...**");
 
-                        _settings.FilteredWords[args[1]].AddRange(toFilter);
+                        _config.FilteredWords[args[1]].AddRange(toFilter);
 
-                        await FileHelper.SaveSettingsAsync(_settings);
+                        await FileHelper.SaveConfigAsync(_config);
                         await msg.ModifyAsync(message => message.Content = "⚠  **Done!**");
                     }
                 });
@@ -239,9 +239,9 @@ public class DevModule : ModuleBase<SocketCommandContext>
     [Summary("Submodule for viewing and modifying the realtime state of Izzy Moonbot")]
     public class StateSubmodule : ModuleBase<SocketCommandContext>
     {
-        private StateStorage _state;
+        private State _state;
 
-        public StateSubmodule(StateStorage state)
+        public StateSubmodule(State state)
         {
             _state = state;
         }
@@ -252,7 +252,7 @@ public class DevModule : ModuleBase<SocketCommandContext>
         {
             if (stateKey == "")
             {
-                var stateKeys = typeof(StateStorage).GetProperties().Select(info => info.Name);
+                var stateKeys = typeof(State).GetProperties().Select(info => info.Name);
                 await ReplyAsync(
                     $"Please provide a state to view the value of (`.state <state>`):{Environment.NewLine}```{Environment.NewLine}" +
                     string.Join(", ", stateKeys) +
@@ -260,7 +260,7 @@ public class DevModule : ModuleBase<SocketCommandContext>
             }
         }
 
-        public static bool DoesStateExist<T>(string key) where T : StateStorage
+        public static bool DoesStateExist<T>(string key) where T : State
         {
             var t = typeof(T);
 

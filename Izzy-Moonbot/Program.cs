@@ -14,9 +14,18 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        Log.Logger = new LoggerConfiguration().Enrich.FromLogContext().WriteTo
-            .Console(outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
-            .MinimumLevel.Verbose().CreateLogger();
+        var loggerConfig = new LoggerConfiguration().Enrich.FromLogContext().WriteTo
+            .Console(outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}");
+        
+        #if DEBUG
+            // Verbose debug logging.
+            loggerConfig = loggerConfig.MinimumLevel.Verbose();
+        #else
+            // Normal logging
+            loggerConfig = loggerConfig.MinimumLevel.Information();
+        #endif
+            
+        Log.Logger = loggerConfig.CreateLogger();
 
         try
         {
@@ -41,26 +50,36 @@ public class Program
                 if (hostContext.HostingEnvironment.IsDevelopment()) builder.AddUserSecrets<Program>();
             }).ConfigureServices((hostContext, services) =>
         {
-            var config = hostContext.Configuration;
-            services.Configure<DiscordSettings>(config.GetSection(nameof(DiscordSettings)));
-            services.AddTransient<IDateTimeService, DateTimeService>();
+            // Configuration
+            var discordSettings = hostContext.Configuration;
+            services.Configure<DiscordSettings>(discordSettings.GetSection(nameof(DiscordSettings)));
+            var config = FileHelper.LoadConfigAsync().GetAwaiter().GetResult();
+            services.AddSingleton(config);
+            var users = FileHelper.LoadUsersAsync().GetAwaiter().GetResult();
+            services.AddSingleton(users);
+            var scheduledTasks = FileHelper.LoadScheduleAsync().GetAwaiter().GetResult();
+            services.AddSingleton(scheduledTasks);
+            var stateStorage = new State();
+            services.AddSingleton(stateStorage);
+
+            // Describers
+            services.AddSingleton<ConfigDescriber>();
+
+            // Services
             services.AddSingleton<LoggingService>();
             services.AddSingleton<ModLoggingService>();
             services.AddSingleton<PressureService>();
             services.AddSingleton<ModService>();
             services.AddSingleton<RaidService>();
             services.AddSingleton<FilterService>();
-            var settings = FileHelper.LoadSettingsAsync().GetAwaiter().GetResult();
-            services.AddSingleton(settings);
-            services.AddSingleton<ServerSettingsDescriber>();
-            var users = FileHelper.LoadUsersAsync().GetAwaiter().GetResult();
-            services.AddSingleton(users);
             services.AddSingleton<ScheduleService>();
-            var scheduledTasks = FileHelper.LoadScheduleAsync().GetAwaiter().GetResult();
-            services.AddSingleton(scheduledTasks);
-            var stateStorage = new StateStorage();
-            services.AddSingleton(stateStorage);
             services.AddSingleton(services);
+            
+            // EventListeners
+            
+            
+            // Misc
+            services.AddTransient<IDateTimeService, DateTimeService>();
 
             services.AddHostedService<Worker>();
         });

@@ -10,7 +10,7 @@ namespace Izzy_Moonbot.Helpers;
 
 public static class ConfigHelper
 {
-    public static bool DoesValueExist<T>(ServerSettings settings, string key) where T : ServerSettings
+    public static bool DoesValueExist<T>(Config settings, string key) where T : Config
     {
         var t = typeof(T);
 
@@ -19,35 +19,35 @@ public static class ConfigHelper
     }
 
 #nullable enable
-    public static object? GetValue<T>(ServerSettings settings, string key) where T : ServerSettings
+    public static object? GetValue<T>(Config settings, string key) where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from ServerSettings.");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config.");
 
         var t = typeof(T);
 
         return t.GetProperty(key).GetValue(settings);
     }
 
-    public static async Task<string?> SetStringValue<T>(ServerSettings settings, string key, string? stringResolvable)
-        where T : ServerSettings
+    public static async Task<string?> SetStringValue<T>(Config settings, string key, string? stringResolvable)
+        where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from ServerSettings.");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config.");
 
         var t = typeof(T);
 
         t.GetProperty(key).SetValue(settings, stringResolvable);
 
-        await FileHelper.SaveSettingsAsync(settings);
+        await FileHelper.SaveConfigAsync(settings);
         return stringResolvable;
     }
 
-    public static async Task<char?> SetCharValue<T>(ServerSettings settings, string key, char? charResolvable)
-        where T : ServerSettings
+    public static async Task<char?> SetCharValue<T>(Config settings, string key, char? charResolvable)
+        where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from ServerSettings.");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config.");
 
         if (charResolvable == null)
         {
@@ -56,7 +56,7 @@ public static class ConfigHelper
 
             t.GetProperty(key).SetValue(settings, null);
 
-            await FileHelper.SaveSettingsAsync(settings);
+            await FileHelper.SaveConfigAsync(settings);
             return null;
         }
         else
@@ -65,16 +65,16 @@ public static class ConfigHelper
 
             t.GetProperty(key).SetValue(settings, charResolvable);
 
-            await FileHelper.SaveSettingsAsync(settings);
+            await FileHelper.SaveConfigAsync(settings);
             return charResolvable;
         }
     }
 
-    public static async Task<bool?> SetBooleanValue<T>(ServerSettings settings, string key, string? boolResolvable)
-        where T : ServerSettings
+    public static async Task<bool?> SetBooleanValue<T>(Config settings, string key, string? boolResolvable)
+        where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from ServerSettings.");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config.");
 
         if (boolResolvable == null)
         {
@@ -83,7 +83,7 @@ public static class ConfigHelper
 
             t.GetProperty(key).SetValue(settings, null);
 
-            await FileHelper.SaveSettingsAsync(settings);
+            await FileHelper.SaveConfigAsync(settings);
             return null;
         }
         else
@@ -100,7 +100,7 @@ public static class ConfigHelper
                 case "y":
                     t.GetProperty(key).SetValue(settings, true);
 
-                    await FileHelper.SaveSettingsAsync(settings);
+                    await FileHelper.SaveConfigAsync(settings);
                     return true;
                 case "false":
                 case "no":
@@ -110,7 +110,7 @@ public static class ConfigHelper
                 case "n":
                     t.GetProperty(key).SetValue(settings, false);
 
-                    await FileHelper.SaveSettingsAsync(settings);
+                    await FileHelper.SaveConfigAsync(settings);
                     return false;
                 default:
                     throw new FormatException($"Couldn't process {boolResolvable} into a boolean.");
@@ -118,11 +118,11 @@ public static class ConfigHelper
         }
     }
 
-    public static async Task<int?> SetIntValue<T>(ServerSettings settings, string key, int? intResolvable)
-        where T : ServerSettings
+    public static async Task<int?> SetIntValue<T>(Config settings, string key, int? intResolvable)
+        where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from ServerSettings!");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
 
         if (intResolvable == null)
         {
@@ -131,7 +131,7 @@ public static class ConfigHelper
 
             t.GetProperty(key).SetValue(settings, null);
 
-            await FileHelper.SaveSettingsAsync(settings);
+            await FileHelper.SaveConfigAsync(settings);
             return null;
         }
         else
@@ -140,16 +140,16 @@ public static class ConfigHelper
 
             t.GetProperty(key).SetValue(settings, intResolvable);
 
-            await FileHelper.SaveSettingsAsync(settings);
+            await FileHelper.SaveConfigAsync(settings);
             return intResolvable;
         }
     }
 
-    public static async Task<double?> SetDoubleValue<T>(ServerSettings settings, string key, double? doubleResolvable)
-        where T : ServerSettings
+    public static async Task<double?> SetDoubleValue<T>(Config settings, string key, double? doubleResolvable)
+        where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from ServerSettings!");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
 
         if (doubleResolvable == null)
         {
@@ -158,7 +158,7 @@ public static class ConfigHelper
 
             t.GetProperty(key).SetValue(settings, null);
 
-            await FileHelper.SaveSettingsAsync(settings);
+            await FileHelper.SaveConfigAsync(settings);
             return null;
         }
         else
@@ -167,16 +167,16 @@ public static class ConfigHelper
 
             t.GetProperty(key).SetValue(settings, doubleResolvable);
 
-            await FileHelper.SaveSettingsAsync(settings);
+            await FileHelper.SaveConfigAsync(settings);
             return doubleResolvable;
         }
     }
 
-    public static async Task<SocketGuildUser?> SetUserValue<T>(ServerSettings settings, string key,
-        string? userResolvable, SocketCommandContext context) where T : ServerSettings
+    public static async Task<SocketGuildUser?> SetUserValue<T>(Config settings, string key,
+        string? userResolvable, SocketCommandContext context) where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from ServerSettings!");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
 
         if (userResolvable == null)
         {
@@ -185,7 +185,7 @@ public static class ConfigHelper
 
             t.GetProperty(key).SetValue(settings, null);
 
-            await FileHelper.SaveSettingsAsync(settings);
+            await FileHelper.SaveConfigAsync(settings);
             return null;
         }
         else
@@ -200,16 +200,16 @@ public static class ConfigHelper
 
             t.GetProperty(key).SetValue(settings, userId, null);
 
-            await FileHelper.SaveSettingsAsync(settings);
+            await FileHelper.SaveConfigAsync(settings);
             return user;
         }
     }
 
-    public static async Task<SocketRole?> SetRoleValue<T>(ServerSettings settings, string key, string? roleResolvable,
-        SocketCommandContext context) where T : ServerSettings
+    public static async Task<SocketRole?> SetRoleValue<T>(Config settings, string key, string? roleResolvable,
+        SocketCommandContext context) where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from ServerSettings!");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
 
         if (roleResolvable == null)
         {
@@ -218,7 +218,7 @@ public static class ConfigHelper
 
             t.GetProperty(key).SetValue(settings, null);
 
-            await FileHelper.SaveSettingsAsync(settings);
+            await FileHelper.SaveConfigAsync(settings);
             return null;
         }
         else
@@ -233,16 +233,16 @@ public static class ConfigHelper
 
             t.GetProperty(key).SetValue(settings, roleId, null);
 
-            await FileHelper.SaveSettingsAsync(settings);
+            await FileHelper.SaveConfigAsync(settings);
             return role;
         }
     }
 
-    public static async Task<SocketGuildChannel?> SetChannelValue<T>(ServerSettings settings, string key,
-        string? channelResolvable, SocketCommandContext context) where T : ServerSettings
+    public static async Task<SocketGuildChannel?> SetChannelValue<T>(Config settings, string key,
+        string? channelResolvable, SocketCommandContext context) where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from ServerSettings!");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
 
         if (channelResolvable == null)
         {
@@ -251,7 +251,7 @@ public static class ConfigHelper
 
             t.GetProperty(key).SetValue(settings, null);
 
-            await FileHelper.SaveSettingsAsync(settings);
+            await FileHelper.SaveConfigAsync(settings);
             return null;
         }
         else
@@ -267,15 +267,15 @@ public static class ConfigHelper
 
             t.GetProperty(key).SetValue(settings, channelId, null);
 
-            await FileHelper.SaveSettingsAsync(settings);
+            await FileHelper.SaveConfigAsync(settings);
             return channel;
         }
     }
 
-    public static bool HasValueInList<T>(ServerSettings settings, string key, object? value) where T : ServerSettings
+    public static bool HasValueInList<T>(Config settings, string key, object? value) where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from ServerSettings!");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
 
         var t = typeof(T);
 
@@ -290,10 +290,10 @@ public static class ConfigHelper
         return false;
     }
 
-    public static List<string>? GetStringList<T>(ServerSettings settings, string key) where T : ServerSettings
+    public static List<string>? GetStringList<T>(Config settings, string key) where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from ServerSettings!");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
 
         var t = typeof(T);
 
@@ -306,16 +306,16 @@ public static class ConfigHelper
 
         if (list == null)
             throw new NullReferenceException(
-                $"'{key}' in ServerSettings is null when it should be a List. Is the config corrupted?");
+                $"'{key}' in Config is null when it should be a List. Is the config corrupted?");
 
         return list;
     }
 
-    public static async Task<string> AddToStringList<T>(ServerSettings settings, string key, string value)
-        where T : ServerSettings
+    public static async Task<string> AddToStringList<T>(Config settings, string key, string value)
+        where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from ServerSettings!");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
 
         var t = typeof(T);
 
@@ -330,15 +330,15 @@ public static class ConfigHelper
 
         t.GetProperty(key).SetValue(settings, list);
 
-        await FileHelper.SaveSettingsAsync(settings);
+        await FileHelper.SaveConfigAsync(settings);
         return value;
     }
 
-    public static async Task<string> RemoveFromStringList<T>(ServerSettings settings, string key, string value)
-        where T : ServerSettings
+    public static async Task<string> RemoveFromStringList<T>(Config settings, string key, string value)
+        where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from ServerSettings!");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
 
         var t = typeof(T);
 
@@ -353,14 +353,14 @@ public static class ConfigHelper
 
         t.GetProperty(key).SetValue(settings, list);
 
-        await FileHelper.SaveSettingsAsync(settings);
+        await FileHelper.SaveConfigAsync(settings);
         return value;
     }
 
-    public static List<char>? GetCharList<T>(ServerSettings settings, string key) where T : ServerSettings
+    public static List<char>? GetCharList<T>(Config settings, string key) where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from ServerSettings!");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
 
         var t = typeof(T);
 
@@ -374,11 +374,11 @@ public static class ConfigHelper
         return list;
     }
 
-    public static async Task<char> AddToCharList<T>(ServerSettings settings, string key, char charResolvable)
-        where T : ServerSettings
+    public static async Task<char> AddToCharList<T>(Config settings, string key, char charResolvable)
+        where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from ServerSettings!");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
 
         var t = typeof(T);
 
@@ -393,15 +393,15 @@ public static class ConfigHelper
 
         t.GetProperty(key).SetValue(settings, list);
 
-        await FileHelper.SaveSettingsAsync(settings);
+        await FileHelper.SaveConfigAsync(settings);
         return charResolvable;
     }
 
-    public static async Task<char> RemoveFromCharList<T>(ServerSettings settings, string key, char charResolvable)
-        where T : ServerSettings
+    public static async Task<char> RemoveFromCharList<T>(Config settings, string key, char charResolvable)
+        where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from ServerSettings!");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
 
         var t = typeof(T);
 
@@ -416,14 +416,14 @@ public static class ConfigHelper
 
         t.GetProperty(key).SetValue(settings, list);
 
-        await FileHelper.SaveSettingsAsync(settings);
+        await FileHelper.SaveConfigAsync(settings);
         return charResolvable;
     }
 
-    public static List<bool>? GetBooleanList<T>(ServerSettings settings, string key) where T : ServerSettings
+    public static List<bool>? GetBooleanList<T>(Config settings, string key) where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from ServerSettings!");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
 
         var t = typeof(T);
 
@@ -437,11 +437,11 @@ public static class ConfigHelper
         return list;
     }
 
-    public static async Task<bool> AddToBooleanList<T>(ServerSettings settings, string key, string booleanResolvable)
-        where T : ServerSettings
+    public static async Task<bool> AddToBooleanList<T>(Config settings, string key, string booleanResolvable)
+        where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from ServerSettings!");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
 
         var t = typeof(T);
 
@@ -464,7 +464,7 @@ public static class ConfigHelper
 
                 t.GetProperty(key).SetValue(settings, list);
 
-                await FileHelper.SaveSettingsAsync(settings);
+                await FileHelper.SaveConfigAsync(settings);
                 return true;
             case "false":
             case "no":
@@ -476,18 +476,18 @@ public static class ConfigHelper
 
                 t.GetProperty(key).SetValue(settings, list);
 
-                await FileHelper.SaveSettingsAsync(settings);
+                await FileHelper.SaveConfigAsync(settings);
                 return false;
             default:
                 throw new FormatException($"Couldn't process {booleanResolvable} into a boolean.");
         }
     }
 
-    public static async Task<bool> RemoveFromBooleanList<T>(ServerSettings settings, string key,
-        string booleanResolvable) where T : ServerSettings
+    public static async Task<bool> RemoveFromBooleanList<T>(Config settings, string key,
+        string booleanResolvable) where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from ServerSettings!");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
 
         var t = typeof(T);
 
@@ -510,7 +510,7 @@ public static class ConfigHelper
 
                 t.GetProperty(key).SetValue(settings, list);
 
-                await FileHelper.SaveSettingsAsync(settings);
+                await FileHelper.SaveConfigAsync(settings);
                 return true;
             case "false":
             case "no":
@@ -522,17 +522,17 @@ public static class ConfigHelper
 
                 t.GetProperty(key).SetValue(settings, list);
 
-                await FileHelper.SaveSettingsAsync(settings);
+                await FileHelper.SaveConfigAsync(settings);
                 return false;
             default:
                 throw new FormatException($"Couldn't process {booleanResolvable} into a boolean.");
         }
     }
 
-    public static List<int>? GetIntList<T>(ServerSettings settings, string key) where T : ServerSettings
+    public static List<int>? GetIntList<T>(Config settings, string key) where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from ServerSettings!");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
 
         var t = typeof(T);
 
@@ -546,11 +546,11 @@ public static class ConfigHelper
         return list;
     }
 
-    public static async Task<int> AddToIntList<T>(ServerSettings settings, string key, int intResolvable)
-        where T : ServerSettings
+    public static async Task<int> AddToIntList<T>(Config settings, string key, int intResolvable)
+        where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from ServerSettings!");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
 
         var t = typeof(T);
 
@@ -565,15 +565,15 @@ public static class ConfigHelper
 
         t.GetProperty(key).SetValue(settings, list);
 
-        await FileHelper.SaveSettingsAsync(settings);
+        await FileHelper.SaveConfigAsync(settings);
         return intResolvable;
     }
 
-    public static async Task<int> RemoveFromIntList<T>(ServerSettings settings, string key, int intResolvable)
-        where T : ServerSettings
+    public static async Task<int> RemoveFromIntList<T>(Config settings, string key, int intResolvable)
+        where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from ServerSettings!");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
 
         var t = typeof(T);
 
@@ -589,14 +589,14 @@ public static class ConfigHelper
 
         t.GetProperty(key).SetValue(settings, list);
 
-        await FileHelper.SaveSettingsAsync(settings);
+        await FileHelper.SaveConfigAsync(settings);
         return intResolvable;
     }
 
-    public static List<double>? GetDoubleList<T>(ServerSettings settings, string key) where T : ServerSettings
+    public static List<double>? GetDoubleList<T>(Config settings, string key) where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from ServerSettings!");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
 
         var t = typeof(T);
 
@@ -610,11 +610,11 @@ public static class ConfigHelper
         return list;
     }
 
-    public static async Task<double> AddToDoubleList<T>(ServerSettings settings, string key, double doubleResolvable)
-        where T : ServerSettings
+    public static async Task<double> AddToDoubleList<T>(Config settings, string key, double doubleResolvable)
+        where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from ServerSettings!");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
 
         var t = typeof(T);
 
@@ -629,15 +629,15 @@ public static class ConfigHelper
 
         t.GetProperty(key).SetValue(settings, list);
 
-        await FileHelper.SaveSettingsAsync(settings);
+        await FileHelper.SaveConfigAsync(settings);
         return doubleResolvable;
     }
 
-    public static async Task<double> RemoveFromDoubleList<T>(ServerSettings settings, string key,
-        double doubleResolvable) where T : ServerSettings
+    public static async Task<double> RemoveFromDoubleList<T>(Config settings, string key,
+        double doubleResolvable) where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from ServerSettings!");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
 
         var t = typeof(T);
 
@@ -653,7 +653,7 @@ public static class ConfigHelper
 
         t.GetProperty(key).SetValue(settings, list);
 
-        await FileHelper.SaveSettingsAsync(settings);
+        await FileHelper.SaveConfigAsync(settings);
         return doubleResolvable;
     }
 
@@ -666,11 +666,11 @@ public static class ConfigHelper
         return finalList;
     }
 
-    public static HashSet<SocketGuildUser> GetUserList<T>(ServerSettings settings, string key,
-        SocketCommandContext context) where T : ServerSettings
+    public static HashSet<SocketGuildUser> GetUserList<T>(Config settings, string key,
+        SocketCommandContext context) where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from ServerSettings!");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
 
         var t = typeof(T);
 
@@ -686,11 +686,11 @@ public static class ConfigHelper
         return UserIdToUser(list, context);
     }
 
-    public static async Task<SocketGuildUser> AddToUserList<T>(ServerSettings settings, string key,
-        string userResolvable, SocketCommandContext context) where T : ServerSettings
+    public static async Task<SocketGuildUser> AddToUserList<T>(Config settings, string key,
+        string userResolvable, SocketCommandContext context) where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from ServerSettings!");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
 
         var t = typeof(T);
 
@@ -714,15 +714,15 @@ public static class ConfigHelper
 
         t.GetProperty(key).SetValue(settings, list);
 
-        await FileHelper.SaveSettingsAsync(settings);
+        await FileHelper.SaveConfigAsync(settings);
         return user;
     }
 
-    public static async Task<SocketGuildUser> RemoveFromUserList<T>(ServerSettings settings, string key,
-        string userResolvable, SocketCommandContext context) where T : ServerSettings
+    public static async Task<SocketGuildUser> RemoveFromUserList<T>(Config settings, string key,
+        string userResolvable, SocketCommandContext context) where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from ServerSettings!");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
 
         var t = typeof(T);
 
@@ -746,7 +746,7 @@ public static class ConfigHelper
 
         t.GetProperty(key).SetValue(settings, list);
 
-        await FileHelper.SaveSettingsAsync(settings);
+        await FileHelper.SaveConfigAsync(settings);
         return user;
     }
 
@@ -759,11 +759,11 @@ public static class ConfigHelper
         return finalList;
     }
 
-    public static HashSet<SocketRole> GetRoleList<T>(ServerSettings settings, string key, SocketCommandContext context)
-        where T : ServerSettings
+    public static HashSet<SocketRole> GetRoleList<T>(Config settings, string key, SocketCommandContext context)
+        where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from ServerSettings!");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
 
         var t = typeof(T);
 
@@ -779,11 +779,11 @@ public static class ConfigHelper
         return RoleIdToRole(list, context);
     }
 
-    public static async Task<SocketRole> AddToRoleList<T>(ServerSettings settings, string key, string roleResolvable,
-        SocketCommandContext context) where T : ServerSettings
+    public static async Task<SocketRole> AddToRoleList<T>(Config settings, string key, string roleResolvable,
+        SocketCommandContext context) where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from ServerSettings!");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
 
         var t = typeof(T);
 
@@ -807,15 +807,15 @@ public static class ConfigHelper
 
         t.GetProperty(key).SetValue(settings, list);
 
-        await FileHelper.SaveSettingsAsync(settings);
+        await FileHelper.SaveConfigAsync(settings);
         return role;
     }
 
-    public static async Task<SocketRole> RemoveFromRoleList<T>(ServerSettings settings, string key,
-        string roleResolvable, SocketCommandContext context) where T : ServerSettings
+    public static async Task<SocketRole> RemoveFromRoleList<T>(Config settings, string key,
+        string roleResolvable, SocketCommandContext context) where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from ServerSettings!");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
 
         var t = typeof(T);
 
@@ -839,7 +839,7 @@ public static class ConfigHelper
 
         t.GetProperty(key).SetValue(settings, list);
 
-        await FileHelper.SaveSettingsAsync(settings);
+        await FileHelper.SaveConfigAsync(settings);
         return role;
     }
 
@@ -852,11 +852,11 @@ public static class ConfigHelper
         return finalList;
     }
 
-    public static HashSet<SocketGuildChannel> GetChannelList<T>(ServerSettings settings, string key,
-        SocketCommandContext context) where T : ServerSettings
+    public static HashSet<SocketGuildChannel> GetChannelList<T>(Config settings, string key,
+        SocketCommandContext context) where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from ServerSettings!");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
 
         var t = typeof(T);
 
@@ -872,11 +872,11 @@ public static class ConfigHelper
         return ChannelIdToChannel(list, context);
     }
 
-    public static async Task<SocketGuildChannel> AddToChannelList<T>(ServerSettings settings, string key,
-        string channelResolvable, SocketCommandContext context) where T : ServerSettings
+    public static async Task<SocketGuildChannel> AddToChannelList<T>(Config settings, string key,
+        string channelResolvable, SocketCommandContext context) where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from ServerSettings!");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
 
         var t = typeof(T);
 
@@ -900,15 +900,15 @@ public static class ConfigHelper
 
         t.GetProperty(key).SetValue(settings, list);
 
-        await FileHelper.SaveSettingsAsync(settings);
+        await FileHelper.SaveConfigAsync(settings);
         return channel;
     }
 
-    public static async Task<SocketGuildChannel> RemoveFromChannelList<T>(ServerSettings settings, string key,
-        string channelResolvable, SocketCommandContext context) where T : ServerSettings
+    public static async Task<SocketGuildChannel> RemoveFromChannelList<T>(Config settings, string key,
+        string channelResolvable, SocketCommandContext context) where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from ServerSettings!");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
 
         var t = typeof(T);
 
@@ -932,15 +932,15 @@ public static class ConfigHelper
 
         t.GetProperty(key).SetValue(settings, list);
 
-        await FileHelper.SaveSettingsAsync(settings);
+        await FileHelper.SaveConfigAsync(settings);
         return channel;
     }
 
-    public static Dictionary<string, string> GetStringDictionary<T>(ServerSettings settings, string key,
-        SocketCommandContext context) where T : ServerSettings
+    public static Dictionary<string, string> GetStringDictionary<T>(Config settings, string key,
+        SocketCommandContext context) where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from ServerSettings!");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
 
         var t = typeof(T);
 
@@ -954,11 +954,11 @@ public static class ConfigHelper
         return list;
     }
 
-    public static async Task<string> CreateStringDictionaryKey<T>(ServerSettings settings, string key,
-        string dictionaryKey, SocketCommandContext context) where T : ServerSettings
+    public static async Task<string> CreateStringDictionaryKey<T>(Config settings, string key,
+        string dictionaryKey, SocketCommandContext context) where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from ServerSettings!");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
 
         var t = typeof(T);
 
@@ -975,7 +975,7 @@ public static class ConfigHelper
 
             t.GetProperty(key).SetValue(settings, list);
 
-            await FileHelper.SaveSettingsAsync(settings);
+            await FileHelper.SaveConfigAsync(settings);
             return dictionaryKey;
         }
         catch (ArgumentException ex)
@@ -984,11 +984,11 @@ public static class ConfigHelper
         }
     }
 
-    public static async Task<string> RemoveStringDictionaryKey<T>(ServerSettings settings, string key,
-        string dictionaryKey, SocketCommandContext context) where T : ServerSettings
+    public static async Task<string> RemoveStringDictionaryKey<T>(Config settings, string key,
+        string dictionaryKey, SocketCommandContext context) where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from ServerSettings!");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
 
         var t = typeof(T);
 
@@ -1005,15 +1005,15 @@ public static class ConfigHelper
 
         t.GetProperty(key).SetValue(settings, list);
 
-        await FileHelper.SaveSettingsAsync(settings);
+        await FileHelper.SaveConfigAsync(settings);
         return dictionaryKey;
     }
 
-    public static string GetStringDictionaryValue<T>(ServerSettings settings, string key, string dictionaryKey,
-        SocketCommandContext context) where T : ServerSettings
+    public static string GetStringDictionaryValue<T>(Config settings, string key, string dictionaryKey,
+        SocketCommandContext context) where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from ServerSettings!");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
 
         var t = typeof(T);
 
@@ -1027,11 +1027,11 @@ public static class ConfigHelper
         return list[dictionaryKey];
     }
 
-    public static async Task<string> SetStringDictionaryValue<T>(ServerSettings settings, string key,
-        string dictionaryKey, string value, SocketCommandContext context) where T : ServerSettings
+    public static async Task<string> SetStringDictionaryValue<T>(Config settings, string key,
+        string dictionaryKey, string value, SocketCommandContext context) where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from ServerSettings!");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
 
         var t = typeof(T);
 
@@ -1046,15 +1046,15 @@ public static class ConfigHelper
 
         t.GetProperty(key).SetValue(settings, list);
 
-        await FileHelper.SaveSettingsAsync(settings);
+        await FileHelper.SaveConfigAsync(settings);
         return dictionaryKey;
     }
 
-    public static Dictionary<string, string?> GetNullableStringDictionary<T>(ServerSettings settings, string key,
-        SocketCommandContext context) where T : ServerSettings
+    public static Dictionary<string, string?> GetNullableStringDictionary<T>(Config settings, string key,
+        SocketCommandContext context) where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from ServerSettings!");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
 
         var t = typeof(T);
 
@@ -1068,11 +1068,11 @@ public static class ConfigHelper
         return list;
     }
 
-    public static async Task<string> CreateNullableStringDictionaryKey<T>(ServerSettings settings, string key,
-        string dictionaryKey, SocketCommandContext context) where T : ServerSettings
+    public static async Task<string> CreateNullableStringDictionaryKey<T>(Config settings, string key,
+        string dictionaryKey, SocketCommandContext context) where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from ServerSettings!");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
 
         var t = typeof(T);
 
@@ -1089,7 +1089,7 @@ public static class ConfigHelper
 
             t.GetProperty(key).SetValue(settings, list);
 
-            await FileHelper.SaveSettingsAsync(settings);
+            await FileHelper.SaveConfigAsync(settings);
             return dictionaryKey;
         }
         catch (ArgumentException ex)
@@ -1098,11 +1098,11 @@ public static class ConfigHelper
         }
     }
 
-    public static async Task<string> RemoveNullableStringDictionaryKey<T>(ServerSettings settings, string key,
-        string dictionaryKey, SocketCommandContext context) where T : ServerSettings
+    public static async Task<string> RemoveNullableStringDictionaryKey<T>(Config settings, string key,
+        string dictionaryKey, SocketCommandContext context) where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from ServerSettings!");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
 
         var t = typeof(T);
 
@@ -1119,15 +1119,15 @@ public static class ConfigHelper
 
         t.GetProperty(key).SetValue(settings, list);
 
-        await FileHelper.SaveSettingsAsync(settings);
+        await FileHelper.SaveConfigAsync(settings);
         return dictionaryKey;
     }
 
-    public static string? GetNullableStringDictionaryValue<T>(ServerSettings settings, string key, string dictionaryKey,
-        SocketCommandContext context) where T : ServerSettings
+    public static string? GetNullableStringDictionaryValue<T>(Config settings, string key, string dictionaryKey,
+        SocketCommandContext context) where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from ServerSettings!");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
 
         var t = typeof(T);
 
@@ -1141,11 +1141,11 @@ public static class ConfigHelper
         return list[dictionaryKey];
     }
 
-    public static async Task<string?> SetNullableStringDictionaryValue<T>(ServerSettings settings, string key,
-        string dictionaryKey, string? value, SocketCommandContext context) where T : ServerSettings
+    public static async Task<string?> SetNullableStringDictionaryValue<T>(Config settings, string key,
+        string dictionaryKey, string? value, SocketCommandContext context) where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from ServerSettings!");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
 
         var t = typeof(T);
 
@@ -1160,15 +1160,15 @@ public static class ConfigHelper
 
         t.GetProperty(key).SetValue(settings, list);
 
-        await FileHelper.SaveSettingsAsync(settings);
+        await FileHelper.SaveConfigAsync(settings);
         return value;
     }
 
-    public static Dictionary<string, bool> GetBooleanDictionary<T>(ServerSettings settings, string key,
-        SocketCommandContext context) where T : ServerSettings
+    public static Dictionary<string, bool> GetBooleanDictionary<T>(Config settings, string key,
+        SocketCommandContext context) where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from ServerSettings!");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
 
         var t = typeof(T);
 
@@ -1182,11 +1182,11 @@ public static class ConfigHelper
         return list;
     }
 
-    public static async Task<string> CreateBooleanDictionaryKey<T>(ServerSettings settings, string key,
-        string dictionaryKey, SocketCommandContext context) where T : ServerSettings
+    public static async Task<string> CreateBooleanDictionaryKey<T>(Config settings, string key,
+        string dictionaryKey, SocketCommandContext context) where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from ServerSettings!");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
 
         var t = typeof(T);
 
@@ -1203,7 +1203,7 @@ public static class ConfigHelper
 
             t.GetProperty(key).SetValue(settings, list);
 
-            await FileHelper.SaveSettingsAsync(settings);
+            await FileHelper.SaveConfigAsync(settings);
             return dictionaryKey;
         }
         catch (ArgumentException ex)
@@ -1212,11 +1212,11 @@ public static class ConfigHelper
         }
     }
 
-    public static async Task<string> RemoveBooleanDictionaryKey<T>(ServerSettings settings, string key,
-        string dictionaryKey, SocketCommandContext context) where T : ServerSettings
+    public static async Task<string> RemoveBooleanDictionaryKey<T>(Config settings, string key,
+        string dictionaryKey, SocketCommandContext context) where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from ServerSettings!");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
 
         var t = typeof(T);
 
@@ -1233,15 +1233,15 @@ public static class ConfigHelper
 
         t.GetProperty(key).SetValue(settings, list);
 
-        await FileHelper.SaveSettingsAsync(settings);
+        await FileHelper.SaveConfigAsync(settings);
         return dictionaryKey;
     }
 
-    public static bool GetBooleanDictionaryValue<T>(ServerSettings settings, string key, string dictionaryKey,
-        SocketCommandContext context) where T : ServerSettings
+    public static bool GetBooleanDictionaryValue<T>(Config settings, string key, string dictionaryKey,
+        SocketCommandContext context) where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from ServerSettings!");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
 
         var t = typeof(T);
 
@@ -1255,11 +1255,11 @@ public static class ConfigHelper
         return list[dictionaryKey];
     }
 
-    public static async Task<bool> SetBooleanDictionaryValue<T>(ServerSettings settings, string key,
-        string dictionaryKey, string value, SocketCommandContext context) where T : ServerSettings
+    public static async Task<bool> SetBooleanDictionaryValue<T>(Config settings, string key,
+        string dictionaryKey, string value, SocketCommandContext context) where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from ServerSettings!");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
 
         var t = typeof(T);
 
@@ -1294,15 +1294,15 @@ public static class ConfigHelper
 
         t.GetProperty(key).SetValue(settings, list);
 
-        await FileHelper.SaveSettingsAsync(settings);
+        await FileHelper.SaveConfigAsync(settings);
         return list[dictionaryKey];
     }
 
-    public static Dictionary<string, List<string>> GetStringListDictionary<T>(ServerSettings settings, string key,
-        SocketCommandContext context) where T : ServerSettings
+    public static Dictionary<string, List<string>> GetStringListDictionary<T>(Config settings, string key,
+        SocketCommandContext context) where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from ServerSettings!");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
 
         var t = typeof(T);
 
@@ -1316,11 +1316,11 @@ public static class ConfigHelper
         return list;
     }
 
-    public static async Task<string> CreateStringListDictionaryKey<T>(ServerSettings settings, string key,
-        string dictionaryKey, SocketCommandContext context) where T : ServerSettings
+    public static async Task<string> CreateStringListDictionaryKey<T>(Config settings, string key,
+        string dictionaryKey, SocketCommandContext context) where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from ServerSettings!");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
 
         var t = typeof(T);
 
@@ -1337,7 +1337,7 @@ public static class ConfigHelper
 
             t.GetProperty(key).SetValue(settings, list);
 
-            await FileHelper.SaveSettingsAsync(settings);
+            await FileHelper.SaveConfigAsync(settings);
             return dictionaryKey;
         }
         catch (ArgumentException ex)
@@ -1346,11 +1346,11 @@ public static class ConfigHelper
         }
     }
 
-    public static async Task<string> RemoveStringListDictionaryKey<T>(ServerSettings settings, string key,
-        string dictionaryKey, SocketCommandContext context) where T : ServerSettings
+    public static async Task<string> RemoveStringListDictionaryKey<T>(Config settings, string key,
+        string dictionaryKey, SocketCommandContext context) where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from ServerSettings!");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
 
         var t = typeof(T);
 
@@ -1367,15 +1367,15 @@ public static class ConfigHelper
 
         t.GetProperty(key).SetValue(settings, list);
 
-        await FileHelper.SaveSettingsAsync(settings);
+        await FileHelper.SaveConfigAsync(settings);
         return dictionaryKey;
     }
 
-    public static List<string> GetStringListDictionaryValue<T>(ServerSettings settings, string key,
-        string dictionaryKey, SocketCommandContext context) where T : ServerSettings
+    public static List<string> GetStringListDictionaryValue<T>(Config settings, string key,
+        string dictionaryKey, SocketCommandContext context) where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from ServerSettings!");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
 
         var t = typeof(T);
 
@@ -1389,11 +1389,11 @@ public static class ConfigHelper
         return list[dictionaryKey];
     }
 
-    public static async Task<string> AddToStringListDictionaryValue<T>(ServerSettings settings, string key,
-        string dictionaryKey, string value, SocketCommandContext context) where T : ServerSettings
+    public static async Task<string> AddToStringListDictionaryValue<T>(Config settings, string key,
+        string dictionaryKey, string value, SocketCommandContext context) where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from ServerSettings!");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
 
         var t = typeof(T);
 
@@ -1408,15 +1408,15 @@ public static class ConfigHelper
 
         t.GetProperty(key).SetValue(settings, list);
 
-        await FileHelper.SaveSettingsAsync(settings);
+        await FileHelper.SaveConfigAsync(settings);
         return value;
     }
 
-    public static async Task<string> RemoveFromStringListDictionaryValue<T>(ServerSettings settings, string key,
-        string dictionaryKey, string value, SocketCommandContext context) where T : ServerSettings
+    public static async Task<string> RemoveFromStringListDictionaryValue<T>(Config settings, string key,
+        string dictionaryKey, string value, SocketCommandContext context) where T : Config
     {
-        if (!DoesValueExist<ServerSettings>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from ServerSettings!");
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
 
         var t = typeof(T);
 
@@ -1433,7 +1433,7 @@ public static class ConfigHelper
 
         t.GetProperty(key).SetValue(settings, list);
 
-        await FileHelper.SaveSettingsAsync(settings);
+        await FileHelper.SaveConfigAsync(settings);
         return value;
     }
 }

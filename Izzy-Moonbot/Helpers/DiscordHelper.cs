@@ -31,7 +31,7 @@ public static class DiscordHelper
         return userList.Count < 1 ? 0 : userList.First().Id;
     }
 
-    public static string CheckAliasesAsync(string message, ServerSettings settings)
+    public static string CheckAliasesAsync(string message, Config config)
     {
         // TODO: Remove this
         var parsedMessage = message[1..].TrimStart();

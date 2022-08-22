@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.Rest;
+using Discord.WebSocket;
 using Izzy_Moonbot.Settings;
 
 namespace Izzy_Moonbot.Service;
@@ -13,7 +14,7 @@ public class FilterService
 {
     private readonly ModService _mod;
     private readonly ModLoggingService _modLog;
-    private readonly ServerSettings _settings;
+    private readonly Config _config;
 
     /*
      * The testString is a specific string that, while not in the actual filter list
@@ -29,11 +30,17 @@ public class FilterService
     };
 #endif
 
-    public FilterService(ServerSettings settings, ModService mod, ModLoggingService modLog)
+    public FilterService(Config config, ModService mod, ModLoggingService modLog)
     {
-        _settings = settings;
+        _config = config;
         _mod = mod;
         _modLog = modLog;
+    }
+    
+    public void RegisterEvents(DiscordSocketClient client)
+    {
+        client.MessageReceived += (message) => Task.Factory.StartNew(async () => { await ProcessMessage(message, client); });
+        client.MessageUpdated += (oldMessage, newMessage, channel) =>Task.Factory.StartNew(async () => { await ProcessMessageUpdate(oldMessage, newMessage, channel, client); });
     }
 
     private async Task LogFilterTrip(SocketCommandContext context, string word, string category,
@@ -58,21 +65,21 @@ public class FilterService
         if (actionsTaken.Contains("silence")) actions.Add(":mute: - **I've silenced the user**");
 
         var roleIds = context.Guild.GetUser(context.User.Id).Roles.Select(role => role.Id).ToList();
-        if (_settings.FilterBypassRoles.Overlaps(roleIds))
+        if (_config.FilterBypassRoles.Overlaps(roleIds))
         {
             actions.Clear();
             actions.Add(
                 ":information_source: - **I've done nothing as this user has a role which is in `FilterBypassRoles`.");
         }
 
-        if (_settings.SafeMode)
+        if (_config.SafeMode)
             embedBuilder.AddField("How do I want to respond? (`SafeMode` is enabled)",
                 string.Join(Environment.NewLine, actions));
         else
             embedBuilder.AddField("What have I done in response?", string.Join(Environment.NewLine, actions));
 
         await _modLog.CreateModLog(context.Guild)
-            .SetContent($"<@-&{_settings.ModRole}>")
+            .SetContent($"<@-&{_config.ModRole}>")
             .SetEmbed(embedBuilder.Build())
             .Send();
     }
@@ -83,16 +90,16 @@ public class FilterService
         try
         {
             //await context.Message.DeleteAsync();
-            if (!_settings.FilterResponseMessages.ContainsKey(category))
-                _settings.FilterResponseMessages[category] = null;
-            if (!_settings.FilterResponseSilence.ContainsKey(category))
-                _settings.FilterResponseSilence[category] = false;
+            if (!_config.FilterResponseMessages.ContainsKey(category))
+                _config.FilterResponseMessages[category] = null;
+            if (!_config.FilterResponseSilence.ContainsKey(category))
+                _config.FilterResponseSilence[category] = false;
 
-            var messageResponse = _settings.FilterResponseMessages[category];
-            var shouldSilence = _settings.FilterResponseSilence[category];
+            var messageResponse = _config.FilterResponseMessages[category];
+            var shouldSilence = _config.FilterResponseSilence[category];
 
             var roleIds = context.Guild.GetUser(context.User.Id).Roles.Select(role => role.Id).ToList();
-            if (_settings.FilterBypassRoles.Overlaps(roleIds))
+            if (_config.FilterBypassRoles.Overlaps(roleIds))
             {
                 messageResponse = null;
                 shouldSilence = false;
@@ -103,8 +110,8 @@ public class FilterService
 
             if (messageResponse != null)
             {
-                if (_settings.SafeMode)
-                    message = await context.Guild.GetTextChannel(_settings.LogChannel).SendMessageAsync(
+                if (_config.SafeMode)
+                    message = await context.Guild.GetTextChannel(_config.LogChannel).SendMessageAsync(
                         $"<@{context.User.Id}> {messageResponse}{Environment.NewLine}{Environment.NewLine}*I am posting this message here as safe mode is enabled.*");
                 else message = await context.Channel.SendMessageAsync($"<@{context.User.Id}> {messageResponse}");
                 actions.Add("message");
@@ -124,18 +131,27 @@ public class FilterService
             //await context.Message.DeleteAsync(); // Just in case
             var actions = new List<string>();
             await LogFilterTrip(context, word, category, actions, onEdit);
-            await context.Guild.GetTextChannel(_settings.ModChannel).SendMessageAsync(
+            await context.Guild.GetTextChannel(_config.ModChannel).SendMessageAsync(
                 ":warning: **I encountered a `KeyNotFoundException` while processing the above filter violation.**");
         }
     }
 
-    public async Task ProcessMessageUpdate(SocketCommandContext context)
+    public async Task ProcessMessageUpdate(Cacheable<IMessage, ulong> oldMessage, SocketMessage newMessage,
+        ISocketMessageChannel channel, DiscordSocketClient client)
     {
-        if (!_settings.FilterMonitorEdits) return;
-        var channelIds = context.Guild.TextChannels.Select(channel => channel.Id).ToList();
-        if (_settings.FilterIgnoredChannels.Overlaps(channelIds)) return;
+        if (!_config.FilterMonitorEdits) return;
+        
+        if (newMessage.Author is not SocketGuildUser user) return;
+        if (newMessage.Type != MessageType.Default && newMessage.Type !=
+            MessageType.Reply && newMessage.Type != MessageType.ThreadStarterMessage) return;
+        if(newMessage is not SocketUserMessage message) return;
 
-        foreach (var (category, words) in _settings.FilteredWords)
+        SocketCommandContext context = new SocketCommandContext(client, message);
+        
+        var channelIds = context.Guild.TextChannels.Select(channel => channel.Id).ToList();
+        if (_config.FilterIgnoredChannels.Overlaps(channelIds)) return;
+
+        foreach (var (category, words) in _config.FilteredWords)
         {
             var filteredWords = words.ToArray().ToList();
             var trip = false;
@@ -149,19 +165,26 @@ public class FilterService
                 if (context.Message.Content.Contains(word))
                 {
                     // Filter Trip!
-                    ProcessFilterTrip(context, word, category, true);
+                    await ProcessFilterTrip(context, word, category, true);
                     trip = true;
                 }
             }
         }
     }
 
-    public void ProcessMessage(SocketCommandContext context)
+    public async Task ProcessMessage(SocketMessage messageParam, DiscordSocketClient client)
     {
-        if (!_settings.FilterEnabled) return;
+        if (!_config.FilterEnabled) return;
+        
+        if (messageParam.Type != MessageType.Default && messageParam.Type != MessageType.Reply &&
+            messageParam.Type != MessageType.ThreadStarterMessage) return;
+        SocketUserMessage message = messageParam as SocketUserMessage;
+        int argPos = 0;
+        SocketCommandContext context = new SocketCommandContext(client, message);
+        
         var channelIds = context.Guild.TextChannels.Select(channel => channel.Id).ToList();
-        if (_settings.FilterIgnoredChannels.Overlaps(channelIds)) return;
-        foreach (var (category, words) in _settings.FilteredWords)
+        if (_config.FilterIgnoredChannels.Overlaps(channelIds)) return;
+        foreach (var (category, words) in _config.FilteredWords)
         {
             var filteredWords = words.ToArray().ToList();
             var trip = false;
@@ -176,7 +199,7 @@ public class FilterService
                 if (context.Message.Content.Contains(word))
                 {
                     // Filter Trip!
-                    ProcessFilterTrip(context, word, category);
+                    await ProcessFilterTrip(context, word, category);
                     trip = true;
                 }
             }

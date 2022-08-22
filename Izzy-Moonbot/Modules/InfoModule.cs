@@ -15,30 +15,12 @@ namespace Izzy_Moonbot.Modules;
 public class InfoModule : ModuleBase<SocketCommandContext>
 {
     private readonly CommandService _commands;
-    private readonly LoggingService _logger;
-    private readonly ModService _mod;
-    private readonly ModLoggingService _modLogging;
-    private readonly PressureService _pressureService;
-    private readonly RaidService _raid;
-    private readonly ScheduleService _scheduleService;
-    private readonly ServerSettings _settings;
-    private readonly Dictionary<ulong, User> _users;
-    private StateStorage _state;
+    private readonly Config _settings;
 
-    public InfoModule(LoggingService logger, StateStorage state, ModLoggingService modLogging, ServerSettings settings,
-        ModService mod, PressureService pressureService, CommandService commands, ScheduleService scheduleService,
-        Dictionary<ulong, User> users, RaidService raid)
+    public InfoModule(Config settings, CommandService commands)
     {
-        _logger = logger;
-        _state = state;
-        _modLogging = modLogging;
         _settings = settings;
-        _mod = mod;
-        _pressureService = pressureService;
         _commands = commands;
-        _scheduleService = scheduleService;
-        _users = users;
-        _raid = raid;
     }
 
     [Command("help")]

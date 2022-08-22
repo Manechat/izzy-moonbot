@@ -6,7 +6,7 @@ namespace Izzy_Moonbot.Settings;
 
 // Storage for Izzy's internal states.
 // This is used for volatile data that needs to persist across Izzy's various services and modules.
-public class StateStorage
+public class State
 {
     public int CurrentLargeJoinCount = 0;
     public RaidMode CurrentRaidMode = RaidMode.None;

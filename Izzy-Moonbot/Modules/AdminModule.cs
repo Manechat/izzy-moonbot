@@ -15,17 +15,17 @@ namespace Izzy_Moonbot.Modules;
 public class AdminModule : ModuleBase<SocketCommandContext>
 {
     private readonly LoggingService _logger;
-    private readonly ServerSettings _settings;
-    private readonly StateStorage _state;
+    private readonly Config _config;
+    private readonly State _state;
     private readonly Dictionary<ulong, User> _users;
 
-    public AdminModule(LoggingService logger, ServerSettings settings, Dictionary<ulong, User> users,
-        StateStorage state)
+    public AdminModule(LoggingService logger, Config config, Dictionary<ulong, User> users,
+        State state)
     {
         _logger = logger;
-        _settings = settings;
-        _users = users;
+        _config = config;
         _state = state;
+        _users = users;
     }
 
     [Command("panic")]
@@ -150,13 +150,13 @@ public class AdminModule : ModuleBase<SocketCommandContext>
     [Summary("Runs when someone mentions Izzy")]
     public async Task MentionCommandAsync()
     {
-        if (!_settings.MentionResponseEnabled) return; // Responding to mention is disabled.
-        if ((DateTimeOffset.UtcNow - _state.LastMentionResponse).TotalMinutes < _settings.MentionResponseCooldown)
+        if (!_config.MentionResponseEnabled) return; // Responding to mention is disabled.
+        if ((DateTimeOffset.UtcNow - _state.LastMentionResponse).TotalMinutes < _config.MentionResponseCooldown)
             return; // Still on cooldown.
 
         var random = new Random();
-        var index = random.Next(_settings.MentionResponses.Count);
-        var response = _settings.MentionResponses[index]; // Random response
+        var index = random.Next(_config.MentionResponses.Count);
+        var response = _config.MentionResponses[index]; // Random response
 
         _state.LastMentionResponse = DateTimeOffset.UtcNow;
 

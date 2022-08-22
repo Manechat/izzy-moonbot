@@ -1,8 +1,8 @@
 ﻿namespace Izzy_Moonbot.Describers;
 
-public class ServerSettingsItem
+public class ConfigItem
 {
-    public ServerSettingsItem(SettingsItemType type, string description, SettingsItemCategory category,
+    public ConfigItem(ConfigItemType type, string description, ConfigItemCategory category,
         bool nullable = false)
     {
         Description = description;
@@ -11,13 +11,13 @@ public class ServerSettingsItem
         Nullable = nullable;
     }
 
-    public SettingsItemType Type { get; }
+    public ConfigItemType Type { get; }
     public string Description { get; }
-    public SettingsItemCategory Category { get; }
+    public ConfigItemCategory Category { get; }
     public bool Nullable { get; }
 }
 
-public enum SettingsItemCategory
+public enum ConfigItemCategory
 {
     Core,
     Moderation,
@@ -28,7 +28,7 @@ public enum SettingsItemCategory
     Raid
 }
 
-public enum SettingsItemType
+public enum ConfigItemType
 {
     String,
     Char,

@@ -60,10 +60,10 @@ public static class FileHelper
         return filepath;
     }
 
-    public static async Task<ServerSettings> LoadSettingsAsync()
+    public static async Task<Config> LoadConfigAsync()
     {
-        var settings = new ServerSettings();
-        var filepath = SetUpFilepath(FilePathType.Root, "settings", "conf");
+        var settings = new Config();
+        var filepath = SetUpFilepath(FilePathType.Root, "config", "conf");
         if (!File.Exists(filepath))
         {
             var defaultFileContents = JsonConvert.SerializeObject(settings, Formatting.Indented);
@@ -72,15 +72,15 @@ public static class FileHelper
         else
         {
             var fileContents = await File.ReadAllTextAsync(filepath);
-            settings = JsonConvert.DeserializeObject<ServerSettings>(fileContents);
+            settings = JsonConvert.DeserializeObject<Config>(fileContents);
         }
 
         return settings;
     }
 
-    public static async Task SaveSettingsAsync(ServerSettings settings)
+    public static async Task SaveConfigAsync(Config settings)
     {
-        var filepath = SetUpFilepath(FilePathType.Root, "settings", "conf");
+        var filepath = SetUpFilepath(FilePathType.Root, "config", "conf");
         var fileContents = JsonConvert.SerializeObject(settings, Formatting.Indented);
         await File.WriteAllTextAsync(filepath, fileContents);
     }

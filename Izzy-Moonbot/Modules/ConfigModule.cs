@@ -14,14 +14,14 @@ namespace Izzy_Moonbot.Modules;
 [Summary("Module for managing Izzy's configuation")]
 public class ConfigModule : ModuleBase<SocketCommandContext>
 {
-    private readonly ServerSettings _settings;
-    private readonly ServerSettingsDescriber _settingsDescriber;
+    private readonly Config _config;
+    private readonly ConfigDescriber _configDescriber;
 
 
-    public ConfigModule(ServerSettings settings, ServerSettingsDescriber settingsDescriber)
+    public ConfigModule(Config config, ConfigDescriber configDescriber)
     {
-        _settings = settings;
-        _settingsDescriber = settingsDescriber;
+        _config = config;
+        _configDescriber = configDescriber;
     }
 
 # nullable enable
@@ -37,8 +37,8 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
         if (configItemKey == "")
         {
             await Context.Message.ReplyAsync($"Hii!! Here's now to use the config command!{Environment.NewLine}" +
-                                             $"Run `{_settings.Prefix}config <category>` to list the config items in a category.{Environment.NewLine}" +
-                                             $"Run `{_settings.Prefix}config <item>` to view information about an item.{Environment.NewLine}{Environment.NewLine}" +
+                                             $"Run `{_config.Prefix}config <category>` to list the config items in a category.{Environment.NewLine}" +
+                                             $"Run `{_config.Prefix}config <item>` to view information about an item.{Environment.NewLine}{Environment.NewLine}" +
                                              $"Here's a list of all possible categories.{Environment.NewLine}```{Environment.NewLine}" +
                                              $"core - Config items which dictate core settings (often global).{Environment.NewLine}" +
                                              $"moderation - Config items which dictate moderation settings.{Environment.NewLine}" +
@@ -51,18 +51,18 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
             return;
         }
 
-        var configItem = _settingsDescriber.GetItem(configItemKey);
+        var configItem = _configDescriber.GetItem(configItemKey);
 
         if (configItem == null)
         {
             // Config item not found, but could be a category.
-            var configCategory = _settingsDescriber.StringToCategory(configItemKey);
+            var configCategory = _configDescriber.StringToCategory(configItemKey);
             if (configCategory.HasValue)
             {
                 // it's not null we literally check above u stupid piece of code
                 var category = configCategory.Value;
 
-                var itemList = _settingsDescriber.GetSettableConfigItemsByCategory(category);
+                var itemList = _configDescriber.GetSettableConfigItemsByCategory(category);
 
                 if (itemList.Count > 10)
                 {
@@ -83,8 +83,8 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
 
                     string[] staticParts =
                     {
-                        $"Hii!! Here's a list of all the config items I could find in the {_settingsDescriber.CategoryToString(category)} category!",
-                        $"Run `{_settings.Prefix}config <item> to view information about an item!"
+                        $"Hii!! Here's a list of all the config items I could find in the {_configDescriber.CategoryToString(category)} category!",
+                        $"Run `{_config.Prefix}config <item> to view information about an item!"
                     };
 
                     var paginationMessage = new PaginationHelper(Context, pages.ToArray(), staticParts);
@@ -92,9 +92,9 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                 else
                 {
                     await ReplyAsync(
-                        $"Hii!! Here's a list of all the config items I could find in the {_settingsDescriber.CategoryToString(category)} category!" +
+                        $"Hii!! Here's a list of all the config items I could find in the {_configDescriber.CategoryToString(category)} category!" +
                         $"{Environment.NewLine}```{Environment.NewLine}{string.Join(Environment.NewLine, itemList)}{Environment.NewLine}```{Environment.NewLine}" +
-                        $"Run `{_settings.Prefix}config <item> to view information about an item!");
+                        $"Run `{_config.Prefix}config <item> to view information about an item!");
                 }
 
                 return;
@@ -112,67 +112,67 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
 
             switch (configItem.Type)
             {
-                case SettingsItemType.String:
-                case SettingsItemType.Char:
-                case SettingsItemType.Boolean:
-                case SettingsItemType.Integer:
-                case SettingsItemType.Double:
+                case ConfigItemType.String:
+                case ConfigItemType.Char:
+                case ConfigItemType.Boolean:
+                case ConfigItemType.Integer:
+                case ConfigItemType.Double:
                     await ReplyAsync(
-                        $"**{configItemKey}** - {_settingsDescriber.TypeToString(configItem.Type)} - {_settingsDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
+                        $"**{configItemKey}** - {_configDescriber.TypeToString(configItem.Type)} - {_configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
                         $"*{configItem.Description}*{Environment.NewLine}" +
-                        $"Current value: `{ConfigHelper.GetValue<ServerSettings>(_settings, configItemKey)}`{Environment.NewLine}" +
-                        $"Run `{_settings.Prefix}config {configItemKey} <value>` to set this value. {nullableString}",
+                        $"Current value: `{ConfigHelper.GetValue<Config>(_config, configItemKey)}`{Environment.NewLine}" +
+                        $"Run `{_config.Prefix}config {configItemKey} <value>` to set this value. {nullableString}",
                         allowedMentions: AllowedMentions.None);
                     break;
-                case SettingsItemType.User:
+                case ConfigItemType.User:
                     await ReplyAsync(
-                        $"**{configItemKey}** - {_settingsDescriber.TypeToString(configItem.Type)} - {_settingsDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
+                        $"**{configItemKey}** - {_configDescriber.TypeToString(configItem.Type)} - {_configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
                         $"*{configItem.Description}*{Environment.NewLine}" +
-                        $"Current value: <@{ConfigHelper.GetValue<ServerSettings>(_settings, configItemKey)}>{Environment.NewLine}" +
-                        $"Run `{_settings.Prefix}config {configItemKey} <value>` to set this value. {nullableString}",
+                        $"Current value: <@{ConfigHelper.GetValue<Config>(_config, configItemKey)}>{Environment.NewLine}" +
+                        $"Run `{_config.Prefix}config {configItemKey} <value>` to set this value. {nullableString}",
                         allowedMentions: AllowedMentions.None);
                     break;
-                case SettingsItemType.Role:
+                case ConfigItemType.Role:
                     await ReplyAsync(
-                        $"**{configItemKey}** - {_settingsDescriber.TypeToString(configItem.Type)} - {_settingsDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
+                        $"**{configItemKey}** - {_configDescriber.TypeToString(configItem.Type)} - {_configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
                         $"*{configItem.Description}*{Environment.NewLine}" +
-                        $"Current value: <@&{ConfigHelper.GetValue<ServerSettings>(_settings, configItemKey)}>{Environment.NewLine}" +
-                        $"Run `{_settings.Prefix}config {configItemKey} <value>` to set this value. {nullableString}",
+                        $"Current value: <@&{ConfigHelper.GetValue<Config>(_config, configItemKey)}>{Environment.NewLine}" +
+                        $"Run `{_config.Prefix}config {configItemKey} <value>` to set this value. {nullableString}",
                         allowedMentions: AllowedMentions.None);
                     break;
-                case SettingsItemType.Channel:
+                case ConfigItemType.Channel:
                     await ReplyAsync(
-                        $"**{configItemKey}** - {_settingsDescriber.TypeToString(configItem.Type)} - {_settingsDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
+                        $"**{configItemKey}** - {_configDescriber.TypeToString(configItem.Type)} - {_configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
                         $"*{configItem.Description}*{Environment.NewLine}" +
-                        $"Current value: <#{ConfigHelper.GetValue<ServerSettings>(_settings, configItemKey)}>{Environment.NewLine}" +
-                        $"Run `{_settings.Prefix}config {configItemKey} <value>` to set this value. {nullableString}",
+                        $"Current value: <#{ConfigHelper.GetValue<Config>(_config, configItemKey)}>{Environment.NewLine}" +
+                        $"Run `{_config.Prefix}config {configItemKey} <value>` to set this value. {nullableString}",
                         allowedMentions: AllowedMentions.None);
                     break;
-                case SettingsItemType.StringList:
-                case SettingsItemType.CharList:
-                case SettingsItemType.BooleanList:
-                case SettingsItemType.IntegerList:
-                case SettingsItemType.DoubleList:
-                case SettingsItemType.UserList:
-                case SettingsItemType.RoleList:
-                case SettingsItemType.ChannelList:
+                case ConfigItemType.StringList:
+                case ConfigItemType.CharList:
+                case ConfigItemType.BooleanList:
+                case ConfigItemType.IntegerList:
+                case ConfigItemType.DoubleList:
+                case ConfigItemType.UserList:
+                case ConfigItemType.RoleList:
+                case ConfigItemType.ChannelList:
                     await ReplyAsync(
-                        $"**{configItemKey}** - {_settingsDescriber.TypeToString(configItem.Type)} - {_settingsDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
+                        $"**{configItemKey}** - {_configDescriber.TypeToString(configItem.Type)} - {_configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
                         $"*{configItem.Description}*{Environment.NewLine}" +
-                        $"Run `{_settings.Prefix}config {configItemKey} list` to view the contents of this list.{Environment.NewLine}" +
-                        $"Run `{_settings.Prefix}config {configItemKey} add <value>` to add a value to this list. {nullableString}{Environment.NewLine}" +
-                        $"Run `{_settings.Prefix}config {configItemKey} remove <value>` to remove a value from this list. {nullableString}",
+                        $"Run `{_config.Prefix}config {configItemKey} list` to view the contents of this list.{Environment.NewLine}" +
+                        $"Run `{_config.Prefix}config {configItemKey} add <value>` to add a value to this list. {nullableString}{Environment.NewLine}" +
+                        $"Run `{_config.Prefix}config {configItemKey} remove <value>` to remove a value from this list. {nullableString}",
                         allowedMentions: AllowedMentions.None);
                     break;
-                case SettingsItemType.StringDictionary:
+                case ConfigItemType.StringDictionary:
                 //case SettingsItemType.CharDictionary: // Note: Implement when needed
-                case SettingsItemType.BooleanDictionary:
+                case ConfigItemType.BooleanDictionary:
                 //case SettingsItemType.IntegerDictionary: // Note: Implement when needed
                 //case SettingsItemType.DoubleDictionary: // Note: Implement when needed
                 //case SettingsItemType.UserDictionary: // Note: Implement when needed
                 //case SettingsItemType.RoleDictionary: // Note: Implement when needed
                 //case SettingsItemType.ChannelDictionary: // Note: Implement when needed
-                case SettingsItemType.StringListDictionary:
+                case ConfigItemType.StringListDictionary:
                     //case SettingsItemType.CharListDictionary: // Note: Implement when needed
                     //case SettingsItemType.BooleanListDictionary: // Note: Implement when needed
                     //case SettingsItemType.IntegerListDictionary: // Note: Implement when needed
@@ -181,12 +181,12 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                     //case SettingsItemType.RoleListDictionary: // Note: Implement when needed
                     //case SettingsItemType.ChannelListDictionary: // Note: Implement when needed
                     await ReplyAsync(
-                        $"**{configItemKey}** - {_settingsDescriber.TypeToString(configItem.Type)} - {_settingsDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
+                        $"**{configItemKey}** - {_configDescriber.TypeToString(configItem.Type)} - {_configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
                         $"*{configItem.Description}*{Environment.NewLine}" +
-                        $"Run `{_settings.Prefix}config {configItemKey} list` to view a list of keys in this map.{Environment.NewLine}" +
-                        $"Run `{_settings.Prefix}config {configItemKey} create <key>` to create a new key in this map.{Environment.NewLine}" +
-                        $"Run `{_settings.Prefix}config {configItemKey} delete <key>` to delete a key from this map.{Environment.NewLine}" +
-                        $"Run `{_settings.Prefix}config {configItemKey} <key>` to view information about a key in this map.",
+                        $"Run `{_config.Prefix}config {configItemKey} list` to view a list of keys in this map.{Environment.NewLine}" +
+                        $"Run `{_config.Prefix}config {configItemKey} create <key>` to create a new key in this map.{Environment.NewLine}" +
+                        $"Run `{_config.Prefix}config {configItemKey} delete <key>` to delete a key from this map.{Environment.NewLine}" +
+                        $"Run `{_config.Prefix}config {configItemKey} <key>` to view information about a key in this map.",
                         allowedMentions: AllowedMentions.None);
                     break;
                 default:
@@ -197,19 +197,19 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
         else
         {
             // value provided
-            if (_settingsDescriber.TypeIsValue(configItem.Type))
+            if (_configDescriber.TypeIsValue(configItem.Type))
             {
                 switch (configItem.Type)
                 {
-                    case SettingsItemType.String:
+                    case ConfigItemType.String:
                         if (configItem.Nullable && value == "<nothing>") value = null;
 
                         var resultString =
-                            await ConfigHelper.SetStringValue<ServerSettings>(_settings, configItemKey, value);
+                            await ConfigHelper.SetStringValue<Config>(_config, configItemKey, value);
                         await ReplyAsync($"I've set `{configItemKey}` to the following content: {resultString}",
                             allowedMentions: AllowedMentions.None);
                         break;
-                    case SettingsItemType.Char:
+                    case ConfigItemType.Char:
                         if (configItem.Nullable && value == "<nothing>") value = null;
 
                         try
@@ -223,7 +223,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             }
 
                             var resultChar =
-                                await ConfigHelper.SetCharValue<ServerSettings>(_settings, configItemKey, output);
+                                await ConfigHelper.SetCharValue<Config>(_config, configItemKey, output);
                             await ReplyAsync($"I've set `{configItemKey}` to the following content: {resultChar}",
                                 allowedMentions: AllowedMentions.None);
                         }
@@ -235,13 +235,13 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                         }
 
                         break;
-                    case SettingsItemType.Boolean:
+                    case ConfigItemType.Boolean:
                         if (configItem.Nullable && value == "<nothing>") value = null;
 
                         try
                         {
                             var resultBoolean =
-                                await ConfigHelper.SetBooleanValue<ServerSettings>(_settings, configItemKey, value);
+                                await ConfigHelper.SetBooleanValue<Config>(_config, configItemKey, value);
                             await ReplyAsync($"I've set `{configItemKey}` to the following content: {resultBoolean}",
                                 allowedMentions: AllowedMentions.None);
                         }
@@ -253,7 +253,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                         }
 
                         break;
-                    case SettingsItemType.Integer:
+                    case ConfigItemType.Integer:
                         if (configItem.Nullable && value == "<nothing>") value = null;
 
                         try
@@ -267,7 +267,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             }
 
                             var resultInteger =
-                                await ConfigHelper.SetIntValue<ServerSettings>(_settings, configItemKey, output);
+                                await ConfigHelper.SetIntValue<Config>(_config, configItemKey, output);
                             await ReplyAsync($"I've set `{configItemKey}` to the following content: {resultInteger}",
                                 allowedMentions: AllowedMentions.None);
                         }
@@ -279,7 +279,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                         }
 
                         break;
-                    case SettingsItemType.Double:
+                    case ConfigItemType.Double:
                         if (configItem.Nullable && value == "<nothing>") value = null;
 
                         try
@@ -293,7 +293,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             }
 
                             var resultDouble =
-                                await ConfigHelper.SetDoubleValue<ServerSettings>(_settings, configItemKey, output);
+                                await ConfigHelper.SetDoubleValue<Config>(_config, configItemKey, output);
                             await ReplyAsync($"I've set `{configItemKey}` to the following content: {resultDouble}",
                                 allowedMentions: AllowedMentions.None);
                         }
@@ -305,12 +305,12 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                         }
 
                         break;
-                    case SettingsItemType.User:
+                    case ConfigItemType.User:
                         if (configItem.Nullable && value == "<nothing>") value = null;
                         try
                         {
                             var result =
-                                await ConfigHelper.SetUserValue<ServerSettings>(_settings, configItemKey, value,
+                                await ConfigHelper.SetUserValue<Config>(_config, configItemKey, value,
                                     Context);
                             var response = "`null`";
                             if (result != null) response = $"<@{result.Id}>";
@@ -324,12 +324,12 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                         }
 
                         break;
-                    case SettingsItemType.Role:
+                    case ConfigItemType.Role:
                         if (configItem.Nullable && value == "<nothing>") value = null;
                         try
                         {
                             var result =
-                                await ConfigHelper.SetRoleValue<ServerSettings>(_settings, configItemKey, value,
+                                await ConfigHelper.SetRoleValue<Config>(_config, configItemKey, value,
                                     Context);
                             var response = "`null`";
                             if (result != null) response = $"<@&{result.Id}>";
@@ -344,12 +344,12 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                         }
 
                         break;
-                    case SettingsItemType.Channel:
+                    case ConfigItemType.Channel:
                         if (configItem.Nullable && value == "<nothing>") value = null;
                         try
                         {
                             var result =
-                                await ConfigHelper.SetChannelValue<ServerSettings>(_settings, configItemKey, value,
+                                await ConfigHelper.SetChannelValue<Config>(_config, configItemKey, value,
                                     Context);
                             var response = "`null`";
                             if (result != null) response = $"<#{result.Id}>";
@@ -369,7 +369,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                         break;
                 }
             }
-            else if (_settingsDescriber.TypeIsList(configItem.Type))
+            else if (_configDescriber.TypeIsList(configItem.Type))
             {
                 var action = value.Split(' ')[0].ToLower();
                 value = value.Replace(action + " ", "");
@@ -377,8 +377,8 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                 if (action == "list")
                     switch (configItem.Type)
                     {
-                        case SettingsItemType.StringList:
-                            var stringList = ConfigHelper.GetStringList<ServerSettings>(_settings, configItemKey);
+                        case ConfigItemType.StringList:
+                            var stringList = ConfigHelper.GetStringList<Config>(_config, configItemKey);
 
                             if (stringList == null)
                             {
@@ -419,8 +419,8 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             }
 
                             break;
-                        case SettingsItemType.CharList:
-                            var charList = ConfigHelper.GetCharList<ServerSettings>(_settings, configItemKey);
+                        case ConfigItemType.CharList:
+                            var charList = ConfigHelper.GetCharList<Config>(_config, configItemKey);
 
                             if (charList == null)
                             {
@@ -461,8 +461,8 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             }
 
                             break;
-                        case SettingsItemType.BooleanList:
-                            var booleanList = ConfigHelper.GetBooleanList<ServerSettings>(_settings, configItemKey);
+                        case ConfigItemType.BooleanList:
+                            var booleanList = ConfigHelper.GetBooleanList<Config>(_config, configItemKey);
 
                             if (booleanList == null)
                             {
@@ -503,8 +503,8 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             }
 
                             break;
-                        case SettingsItemType.IntegerList:
-                            var intList = ConfigHelper.GetIntList<ServerSettings>(_settings, configItemKey);
+                        case ConfigItemType.IntegerList:
+                            var intList = ConfigHelper.GetIntList<Config>(_config, configItemKey);
 
                             if (intList == null)
                             {
@@ -545,8 +545,8 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             }
 
                             break;
-                        case SettingsItemType.DoubleList:
-                            var doubleList = ConfigHelper.GetDoubleList<ServerSettings>(_settings, configItemKey);
+                        case ConfigItemType.DoubleList:
+                            var doubleList = ConfigHelper.GetDoubleList<Config>(_config, configItemKey);
 
                             if (doubleList == null)
                             {
@@ -587,8 +587,8 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             }
 
                             break;
-                        case SettingsItemType.UserList:
-                            var userList = ConfigHelper.GetUserList<ServerSettings>(_settings, configItemKey, Context);
+                        case ConfigItemType.UserList:
+                            var userList = ConfigHelper.GetUserList<Config>(_config, configItemKey, Context);
 
                             var userMentionList = new List<string>();
                             foreach (var user in userList) userMentionList.Add($"<@{user.Id}>");
@@ -626,8 +626,8 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             }
 
                             break;
-                        case SettingsItemType.RoleList:
-                            var roleList = ConfigHelper.GetRoleList<ServerSettings>(_settings, configItemKey, Context);
+                        case ConfigItemType.RoleList:
+                            var roleList = ConfigHelper.GetRoleList<Config>(_config, configItemKey, Context);
 
                             var roleMentionList = new List<string>();
                             foreach (var role in roleList) roleMentionList.Add(role.Mention);
@@ -666,9 +666,9 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             }
 
                             break;
-                        case SettingsItemType.ChannelList:
+                        case ConfigItemType.ChannelList:
                             var channelList =
-                                ConfigHelper.GetChannelList<ServerSettings>(_settings, configItemKey, Context);
+                                ConfigHelper.GetChannelList<Config>(_config, configItemKey, Context);
 
                             var channelMentionList = new List<string>();
                             foreach (var channel in channelList) channelMentionList.Add($"<#{channel.Id}>");
@@ -714,11 +714,11 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                 else if (action == "add")
                     switch (configItem.Type)
                     {
-                        case SettingsItemType.StringList:
+                        case ConfigItemType.StringList:
                             try
                             {
                                 var output =
-                                    await ConfigHelper.AddToStringList<ServerSettings>(_settings, configItemKey, value);
+                                    await ConfigHelper.AddToStringList<Config>(_config, configItemKey, value);
 
                                 await ReplyAsync(
                                     $"I added the following content to the `{configItemKey}` string list:{Environment.NewLine}```{Environment.NewLine}{output}{Environment.NewLine}```",
@@ -731,13 +731,13 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             }
 
                             break;
-                        case SettingsItemType.CharList:
+                        case ConfigItemType.CharList:
                             try
                             {
                                 if (!char.TryParse(value, out var charValue)) throw new FormatException();
 
                                 var output =
-                                    await ConfigHelper.AddToCharList<ServerSettings>(_settings, configItemKey,
+                                    await ConfigHelper.AddToCharList<Config>(_config, configItemKey,
                                         charValue);
 
                                 await ReplyAsync(
@@ -757,11 +757,11 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             }
 
                             break;
-                        case SettingsItemType.BooleanList:
+                        case ConfigItemType.BooleanList:
                             try
                             {
                                 var output =
-                                    await ConfigHelper.AddToBooleanList<ServerSettings>(_settings, configItemKey,
+                                    await ConfigHelper.AddToBooleanList<Config>(_config, configItemKey,
                                         value);
 
                                 await ReplyAsync(
@@ -781,13 +781,13 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             }
 
                             break;
-                        case SettingsItemType.IntegerList:
+                        case ConfigItemType.IntegerList:
                             try
                             {
                                 if (!int.TryParse(value, out var intValue)) throw new FormatException();
 
                                 var output =
-                                    await ConfigHelper.AddToIntList<ServerSettings>(_settings, configItemKey, intValue);
+                                    await ConfigHelper.AddToIntList<Config>(_config, configItemKey, intValue);
 
                                 await ReplyAsync(
                                     $"I added the following content to the `{configItemKey}` integer list:{Environment.NewLine}```{Environment.NewLine}{output}{Environment.NewLine}```",
@@ -806,13 +806,13 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             }
 
                             break;
-                        case SettingsItemType.DoubleList:
+                        case ConfigItemType.DoubleList:
                             try
                             {
                                 if (!double.TryParse(value, out var doubleValue)) throw new FormatException();
 
                                 var output =
-                                    await ConfigHelper.AddToDoubleList<ServerSettings>(_settings, configItemKey,
+                                    await ConfigHelper.AddToDoubleList<Config>(_config, configItemKey,
                                         doubleValue);
 
                                 await ReplyAsync(
@@ -832,11 +832,11 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             }
 
                             break;
-                        case SettingsItemType.UserList:
+                        case ConfigItemType.UserList:
                             try
                             {
                                 var output =
-                                    await ConfigHelper.AddToUserList<ServerSettings>(_settings, configItemKey, value,
+                                    await ConfigHelper.AddToUserList<Config>(_config, configItemKey, value,
                                         Context);
 
                                 await ReplyAsync(
@@ -860,11 +860,11 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             }
 
                             break;
-                        case SettingsItemType.RoleList:
+                        case ConfigItemType.RoleList:
                             try
                             {
                                 var output =
-                                    await ConfigHelper.AddToRoleList<ServerSettings>(_settings, configItemKey, value,
+                                    await ConfigHelper.AddToRoleList<Config>(_config, configItemKey, value,
                                         Context);
 
                                 await ReplyAsync(
@@ -888,11 +888,11 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             }
 
                             break;
-                        case SettingsItemType.ChannelList:
+                        case ConfigItemType.ChannelList:
                             try
                             {
                                 var output =
-                                    await ConfigHelper.AddToChannelList<ServerSettings>(_settings, configItemKey, value,
+                                    await ConfigHelper.AddToChannelList<Config>(_config, configItemKey, value,
                                         Context);
 
                                 await ReplyAsync(
@@ -923,11 +923,11 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                 else if (action == "remove")
                     switch (configItem.Type)
                     {
-                        case SettingsItemType.StringList:
+                        case ConfigItemType.StringList:
                             try
                             {
                                 var output =
-                                    await ConfigHelper.RemoveFromStringList<ServerSettings>(_settings, configItemKey,
+                                    await ConfigHelper.RemoveFromStringList<Config>(_config, configItemKey,
                                         value);
 
                                 await ReplyAsync(
@@ -946,13 +946,13 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             }
 
                             break;
-                        case SettingsItemType.CharList:
+                        case ConfigItemType.CharList:
                             try
                             {
                                 if (!char.TryParse(value, out var charValue)) throw new FormatException();
 
                                 var output =
-                                    await ConfigHelper.AddToCharList<ServerSettings>(_settings, configItemKey,
+                                    await ConfigHelper.AddToCharList<Config>(_config, configItemKey,
                                         charValue);
 
                                 await ReplyAsync(
@@ -977,11 +977,11 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             }
 
                             break;
-                        case SettingsItemType.BooleanList:
+                        case ConfigItemType.BooleanList:
                             try
                             {
                                 var output =
-                                    await ConfigHelper.RemoveFromBooleanList<ServerSettings>(_settings, configItemKey,
+                                    await ConfigHelper.RemoveFromBooleanList<Config>(_config, configItemKey,
                                         value);
 
                                 await ReplyAsync(
@@ -1006,13 +1006,13 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             }
 
                             break;
-                        case SettingsItemType.IntegerList:
+                        case ConfigItemType.IntegerList:
                             try
                             {
                                 if (!int.TryParse(value, out var intValue)) throw new FormatException();
 
                                 var output =
-                                    await ConfigHelper.RemoveFromIntList<ServerSettings>(_settings, configItemKey,
+                                    await ConfigHelper.RemoveFromIntList<Config>(_config, configItemKey,
                                         intValue);
 
                                 await ReplyAsync(
@@ -1037,13 +1037,13 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             }
 
                             break;
-                        case SettingsItemType.DoubleList:
+                        case ConfigItemType.DoubleList:
                             try
                             {
                                 if (!double.TryParse(value, out var doubleValue)) throw new FormatException();
 
                                 var output =
-                                    await ConfigHelper.RemoveFromDoubleList<ServerSettings>(_settings, configItemKey,
+                                    await ConfigHelper.RemoveFromDoubleList<Config>(_config, configItemKey,
                                         doubleValue);
 
                                 await ReplyAsync(
@@ -1068,11 +1068,11 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             }
 
                             break;
-                        case SettingsItemType.UserList:
+                        case ConfigItemType.UserList:
                             try
                             {
                                 var output =
-                                    await ConfigHelper.RemoveFromUserList<ServerSettings>(_settings, configItemKey,
+                                    await ConfigHelper.RemoveFromUserList<Config>(_config, configItemKey,
                                         value, Context);
 
                                 await ReplyAsync(
@@ -1096,11 +1096,11 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             }
 
                             break;
-                        case SettingsItemType.RoleList:
+                        case ConfigItemType.RoleList:
                             try
                             {
                                 var output =
-                                    await ConfigHelper.RemoveFromRoleList<ServerSettings>(_settings, configItemKey,
+                                    await ConfigHelper.RemoveFromRoleList<Config>(_config, configItemKey,
                                         value, Context);
 
                                 await ReplyAsync(
@@ -1124,11 +1124,11 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             }
 
                             break;
-                        case SettingsItemType.ChannelList:
+                        case ConfigItemType.ChannelList:
                             try
                             {
                                 var output =
-                                    await ConfigHelper.RemoveFromChannelList<ServerSettings>(_settings, configItemKey,
+                                    await ConfigHelper.RemoveFromChannelList<Config>(_config, configItemKey,
                                         value, Context);
 
                                 await ReplyAsync(
@@ -1157,7 +1157,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             break;
                     }
             }
-            else if (_settingsDescriber.TypeIsDictionaryValue(configItem.Type))
+            else if (_configDescriber.TypeIsDictionaryValue(configItem.Type))
             {
                 var action = value.Split(' ')[0].ToLower();
                 value = value.Replace(action + " ", "");
@@ -1166,17 +1166,17 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                 {
                     switch (configItem.Type)
                     {
-                        case SettingsItemType.StringDictionary:
+                        case ConfigItemType.StringDictionary:
                             try
                             {
                                 var keys = new List<string>();
                                 if (configItem.Nullable)
                                     keys = ConfigHelper
-                                        .GetNullableStringDictionary<ServerSettings>(_settings, configItemKey, Context)
+                                        .GetNullableStringDictionary<Config>(_config, configItemKey, Context)
                                         .Keys.ToList();
                                 else
                                     keys = ConfigHelper
-                                        .GetStringDictionary<ServerSettings>(_settings, configItemKey, Context).Keys
+                                        .GetStringDictionary<Config>(_config, configItemKey, Context).Keys
                                         .ToList();
 
                                 if (keys.Count > 10)
@@ -1221,11 +1221,11 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             }
 
                             break;
-                        case SettingsItemType.BooleanDictionary:
+                        case ConfigItemType.BooleanDictionary:
                             try
                             {
                                 var keys = ConfigHelper
-                                    .GetBooleanDictionary<ServerSettings>(_settings, configItemKey, Context).Keys
+                                    .GetBooleanDictionary<Config>(_config, configItemKey, Context).Keys
                                     .ToList();
 
                                 if (keys.Count > 10)
@@ -1279,14 +1279,14 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                 {
                     switch (configItem.Type)
                     {
-                        case SettingsItemType.StringDictionary:
+                        case ConfigItemType.StringDictionary:
                             try
                             {
                                 if (configItem.Nullable)
-                                    await ConfigHelper.CreateNullableStringDictionaryKey<ServerSettings>(_settings,
+                                    await ConfigHelper.CreateNullableStringDictionaryKey<Config>(_config,
                                         configItemKey, value, Context);
                                 else
-                                    await ConfigHelper.CreateStringDictionaryKey<ServerSettings>(_settings,
+                                    await ConfigHelper.CreateStringDictionaryKey<Config>(_config,
                                         configItemKey, value, Context);
 
                                 await ReplyAsync(
@@ -1304,10 +1304,10 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             }
 
                             break;
-                        case SettingsItemType.BooleanDictionary:
+                        case ConfigItemType.BooleanDictionary:
                             try
                             {
-                                await ConfigHelper.CreateBooleanDictionaryKey<ServerSettings>(_settings, configItemKey,
+                                await ConfigHelper.CreateBooleanDictionaryKey<Config>(_config, configItemKey,
                                     value, Context);
 
                                 await ReplyAsync(
@@ -1334,14 +1334,14 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                 {
                     switch (configItem.Type)
                     {
-                        case SettingsItemType.StringDictionary:
+                        case ConfigItemType.StringDictionary:
                             try
                             {
                                 if (configItem.Nullable)
-                                    await ConfigHelper.RemoveNullableStringDictionaryKey<ServerSettings>(_settings,
+                                    await ConfigHelper.RemoveNullableStringDictionaryKey<Config>(_config,
                                         configItemKey, value, Context);
                                 else
-                                    await ConfigHelper.RemoveStringDictionaryKey<ServerSettings>(_settings,
+                                    await ConfigHelper.RemoveStringDictionaryKey<Config>(_config,
                                         configItemKey, value, Context);
 
                                 await ReplyAsync(
@@ -1359,10 +1359,10 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             }
 
                             break;
-                        case SettingsItemType.BooleanDictionary:
+                        case ConfigItemType.BooleanDictionary:
                             try
                             {
-                                await ConfigHelper.RemoveBooleanDictionaryKey<ServerSettings>(_settings, configItemKey,
+                                await ConfigHelper.RemoveBooleanDictionaryKey<Config>(_config, configItemKey,
                                     value, Context);
 
                                 await ReplyAsync(
@@ -1396,18 +1396,18 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                     {
                         switch (configItem.Type)
                         {
-                            case SettingsItemType.StringDictionary:
+                            case ConfigItemType.StringDictionary:
                                 try
                                 {
                                     var contents = "";
 
                                     if (configItem.Nullable)
-                                        contents = ConfigHelper.GetNullableStringDictionaryValue<ServerSettings>(
-                                            _settings,
+                                        contents = ConfigHelper.GetNullableStringDictionaryValue<Config>(
+                                            _config,
                                             configItemKey, key, Context);
                                     else
-                                        contents = (string?)ConfigHelper.GetStringDictionaryValue<ServerSettings>(
-                                            _settings,
+                                        contents = (string?)ConfigHelper.GetStringDictionaryValue<Config>(
+                                            _config,
                                             configItemKey, key, Context);
 
                                     await ReplyAsync(
@@ -1425,10 +1425,10 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                 }
 
                                 break;
-                            case SettingsItemType.BooleanDictionary:
+                            case ConfigItemType.BooleanDictionary:
                                 try
                                 {
-                                    var contents = ConfigHelper.GetBooleanDictionaryValue<ServerSettings>(_settings,
+                                    var contents = ConfigHelper.GetBooleanDictionaryValue<Config>(_config,
                                         configItemKey, key, Context);
 
                                     await ReplyAsync(
@@ -1455,7 +1455,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                     {
                         switch (configItem.Type)
                         {
-                            case SettingsItemType.StringDictionary:
+                            case ConfigItemType.StringDictionary:
                                 try
                                 {
                                     if (configItem.Nullable)
@@ -1463,8 +1463,8 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                         if (value == "<nothing>") value = null;
 
                                         var result =
-                                            await ConfigHelper.SetNullableStringDictionaryValue<ServerSettings>(
-                                                _settings, configItemKey, key, value, Context);
+                                            await ConfigHelper.SetNullableStringDictionaryValue<Config>(
+                                                _config, configItemKey, key, value, Context);
 
                                         await Context.Message.ReplyAsync(
                                             $"I've set `{key}` to the following content: {result}",
@@ -1472,8 +1472,8 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                     }
                                     else
                                     {
-                                        var result = await ConfigHelper.SetStringDictionaryValue<ServerSettings>(
-                                            _settings, configItemKey, key, value, Context);
+                                        var result = await ConfigHelper.SetStringDictionaryValue<Config>(
+                                            _config, configItemKey, key, value, Context);
 
                                         await Context.Message.ReplyAsync(
                                             $"I've set `{key}` to the following content: {result}",
@@ -1492,11 +1492,11 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                 }
 
                                 break;
-                            case SettingsItemType.BooleanDictionary:
+                            case ConfigItemType.BooleanDictionary:
                                 try
                                 {
-                                    var result = await ConfigHelper.SetBooleanDictionaryValue<ServerSettings>(
-                                        _settings, configItemKey, key, value, Context);
+                                    var result = await ConfigHelper.SetBooleanDictionaryValue<Config>(
+                                        _config, configItemKey, key, value, Context);
 
                                     await Context.Message.ReplyAsync(
                                         $"I've set `{key}` to the following content: {result}",
@@ -1525,13 +1525,13 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                         if (!configItem.Nullable) nullableString = "";
 
                         await ReplyAsync($"**{key}** - Key in {configItemKey}{Environment.NewLine}" +
-                                         $"Run `{_settings.Prefix}config {configItemKey} {key} get` to get the value in this map key.{Environment.NewLine}" +
-                                         $"Run `{_settings.Prefix}config {configItemKey} {key} set <value>` to set the value for this map key{nullableString}.",
+                                         $"Run `{_config.Prefix}config {configItemKey} {key} get` to get the value in this map key.{Environment.NewLine}" +
+                                         $"Run `{_config.Prefix}config {configItemKey} {key} set <value>` to set the value for this map key{nullableString}.",
                             allowedMentions: AllowedMentions.None);
                     }
                 }
             }
-            else if (_settingsDescriber.TypeIsDictionaryList(configItem.Type))
+            else if (_configDescriber.TypeIsDictionaryList(configItem.Type))
             {
                 var action = value.Split(' ')[0].ToLower();
                 value = value.Replace(action + " ", "");
@@ -1540,11 +1540,11 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                 {
                     switch (configItem.Type)
                     {
-                        case SettingsItemType.StringListDictionary:
+                        case ConfigItemType.StringListDictionary:
                             try
                             {
                                 var keys = ConfigHelper
-                                    .GetStringListDictionary<ServerSettings>(_settings, configItemKey, Context).Keys
+                                    .GetStringListDictionary<Config>(_config, configItemKey, Context).Keys
                                     .ToList();
 
                                 if (keys.Count > 10)
@@ -1600,10 +1600,10 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                     // TODO: Creating keys in Dictionary Lists
                     switch (configItem.Type)
                     {
-                        case SettingsItemType.StringListDictionary:
+                        case ConfigItemType.StringListDictionary:
                             try
                             {
-                                await ConfigHelper.CreateStringListDictionaryKey<ServerSettings>(_settings,
+                                await ConfigHelper.CreateStringListDictionaryKey<Config>(_config,
                                     configItemKey, value, Context);
 
                                 await ReplyAsync(
@@ -1630,10 +1630,10 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                 {
                     switch (configItem.Type)
                     {
-                        case SettingsItemType.StringListDictionary:
+                        case ConfigItemType.StringListDictionary:
                             try
                             {
-                                await ConfigHelper.RemoveStringListDictionaryKey<ServerSettings>(_settings,
+                                await ConfigHelper.RemoveStringListDictionaryKey<Config>(_config,
                                     configItemKey, value, Context);
 
                                 await ReplyAsync(
@@ -1668,9 +1668,9 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                     {
                         switch (configItem.Type)
                         {
-                            case SettingsItemType.StringListDictionary:
+                            case ConfigItemType.StringListDictionary:
                                 var stringList =
-                                    ConfigHelper.GetStringListDictionaryValue<ServerSettings>(_settings, configItemKey,
+                                    ConfigHelper.GetStringListDictionaryValue<Config>(_config, configItemKey,
                                         key, Context);
 
                                 if (stringList == null)
@@ -1721,11 +1721,11 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                     {
                         switch (configItem.Type)
                         {
-                            case SettingsItemType.StringListDictionary:
+                            case ConfigItemType.StringListDictionary:
                                 try
                                 {
                                     var output =
-                                        await ConfigHelper.AddToStringListDictionaryValue<ServerSettings>(_settings,
+                                        await ConfigHelper.AddToStringListDictionaryValue<Config>(_config,
                                             configItemKey, key, value, Context);
 
                                     await ReplyAsync(
@@ -1749,12 +1749,12 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                     {
                         switch (configItem.Type)
                         {
-                            case SettingsItemType.StringListDictionary:
+                            case ConfigItemType.StringListDictionary:
                                 try
                                 {
                                     var output =
-                                        await ConfigHelper.RemoveFromStringListDictionaryValue<ServerSettings>(
-                                            _settings, configItemKey, key, value, Context);
+                                        await ConfigHelper.RemoveFromStringListDictionaryValue<Config>(
+                                            _config, configItemKey, key, value, Context);
 
                                     await ReplyAsync(
                                         $"I removed the following content from the `{key}` string list in the `{configItemKey}` map:{Environment.NewLine}```{Environment.NewLine}{output}{Environment.NewLine}```",
@@ -1779,9 +1779,9 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                         if (!configItem.Nullable) nullableString = "";
 
                         await ReplyAsync($"**{key}** - Key in {configItemKey}{Environment.NewLine}" +
-                                         $"Run `{_settings.Prefix}config {configItemKey} {key} list` to view a list of values in this map key.{Environment.NewLine}" +
-                                         $"Run `{_settings.Prefix}config {configItemKey} {key} add <value>` to add a value to this map key{nullableString}.{Environment.NewLine}" +
-                                         $"Run `{_settings.Prefix}config {configItemKey} {key} remove <value>` to remove a value from this map key{nullableString}.",
+                                         $"Run `{_config.Prefix}config {configItemKey} {key} list` to view a list of values in this map key.{Environment.NewLine}" +
+                                         $"Run `{_config.Prefix}config {configItemKey} {key} add <value>` to add a value to this map key{nullableString}.{Environment.NewLine}" +
+                                         $"Run `{_config.Prefix}config {configItemKey} {key} remove <value>` to remove a value from this map key{nullableString}.",
                             allowedMentions: AllowedMentions.None);
                     }
                 }

@@ -16,7 +16,7 @@ public class LoggingService
         _logger = logger;
     }
 
-    public async Task Log(string message, SocketCommandContext context, bool file = false,
+    public async Task Log(string message, SocketCommandContext context = null, bool file = false,
         LogLevel level = LogLevel.Information)
     {
         if (file) await AppendToFileAsync(message, context);

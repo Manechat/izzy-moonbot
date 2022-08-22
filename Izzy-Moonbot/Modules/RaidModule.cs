@@ -18,13 +18,13 @@ public class RaidModule : ModuleBase<SocketCommandContext>
     private readonly ModService _modService;
     private readonly RaidService _raidService;
     private readonly ScheduleService _scheduleService;
-    private readonly ServerSettings _settings;
-    private readonly StateStorage _state;
+    private readonly Config _config;
+    private readonly State _state;
 
-    public RaidModule(ServerSettings settings, RaidService raidService, StateStorage state,
+    public RaidModule(Config config, RaidService raidService, State state,
         ScheduleService scheduleService, ModService modService)
     {
-        _settings = settings;
+        _config = config;
         _raidService = raidService;
         _state = state;
         _scheduleService = scheduleService;
@@ -46,7 +46,7 @@ public class RaidModule : ModuleBase<SocketCommandContext>
 
         await _raidService.SilenceRecentJoins(Context);
         await ReplyAsync(
-            $"I've enabled autosilencing new members! I also autosilenced those who joined earlier than {_settings.RecentJoinDecay} seconds ago.");
+            $"I've enabled autosilencing new members! I also autosilenced those who joined earlier than {_config.RecentJoinDecay} seconds ago.");
     }
 
     [Command("assoff")]
@@ -66,7 +66,7 @@ public class RaidModule : ModuleBase<SocketCommandContext>
         var userList = await _raidService.EndRaid(Context);
 
         var stowawaysString =
-            $"{Environment.NewLine}These users were autosilenced. Please run `{_settings.Prefix}stowaways fix` while replying to this message to unsilence or `{_settings.Prefix}stowaways kick` while replying to this message to kick.{Environment.NewLine}{string.Join(", ", userList)}{Environment.NewLine}||!stowaway-usable!||";
+            $"{Environment.NewLine}These users were autosilenced. Please run `{_config.Prefix}stowaways fix` while replying to this message to unsilence or `{_config.Prefix}stowaways kick` while replying to this message to kick.{Environment.NewLine}{string.Join(", ", userList)}{Environment.NewLine}||!stowaway-usable!||";
         if (!userList.Any()) stowawaysString = "";
 
         await ReplyAsync($"Jinxie avoided! I'm returning to normal operation.{stowawaysString}");
@@ -82,12 +82,12 @@ public class RaidModule : ModuleBase<SocketCommandContext>
         if (task == "")
         {
             var fixOption =
-                $"`fix` - Unsilence stowaways and give them <@&{_settings.NewMemberRole}> for {_settings.NewMemberRoleDecay} minutes.";
-            if (_settings.NewMemberRole == null) fixOption = "`fix` - Unsilence stowaways.";
+                $"`fix` - Unsilence stowaways and give them <@&{_config.NewMemberRole}> for {_config.NewMemberRoleDecay} minutes.";
+            if (_config.NewMemberRole == null) fixOption = "`fix` - Unsilence stowaways.";
 
             await ReplyAsync(
                 $"`This command processes users who were autosilenced by a raid.{Environment.NewLine}" +
-                $"To use, run `{_settings.Prefix}stowaways <action>` while replying to a raid end message." +
+                $"To use, run `{_config.Prefix}stowaways <action>` while replying to a raid end message." +
                 $"`<action>` can be one of the following:{Environment.NewLine}" +
                 $"{fixOption}{Environment.NewLine}" +
                 "`kick` - Kick stowaways");
@@ -98,8 +98,8 @@ public class RaidModule : ModuleBase<SocketCommandContext>
         if (task != "fix" && task != "kick")
         {
             var fixOption =
-                $"`fix` - Unsilence stowaways and give them <@&{_settings.NewMemberRole}> for {_settings.NewMemberRoleDecay} minutes.";
-            if (_settings.NewMemberRole == null) fixOption = "`fix` - Unsilence stowaways.";
+                $"`fix` - Unsilence stowaways and give them <@&{_config.NewMemberRole}> for {_config.NewMemberRoleDecay} minutes.";
+            if (_config.NewMemberRole == null) fixOption = "`fix` - Unsilence stowaways.";
 
             await ReplyAsync(
                 $"`{task}` is not a valid action to take on stowaways. Please use one of the following{Environment.NewLine}" +
@@ -108,7 +108,7 @@ public class RaidModule : ModuleBase<SocketCommandContext>
             return;
         }
 
-        if (task == "fix" && _settings.MemberRole == null)
+        if (task == "fix" && _config.MemberRole == null)
         {
             await ReplyAsync(
                 $"`{task}` is not a valid action to take on stowaways at the current time as `MemberRole` is not set. Please set it before continuing.");
@@ -169,7 +169,7 @@ public class RaidModule : ModuleBase<SocketCommandContext>
             case "fix":
                 msgContent =
                     $"Giving {users.Count} users the Member and New Pony role ({unprocessable} users were unprocessable). Please wait... <a:rdloop:910875692785336351>";
-                if (_settings.NewMemberRole == null)
+                if (_config.NewMemberRole == null)
                     msgContent =
                         $"Giving {users.Count} users the Member role ({unprocessable} users were unprocessable). Please wait... <a:rdloop:910875692785336351>";
                 break;
@@ -181,36 +181,36 @@ public class RaidModule : ModuleBase<SocketCommandContext>
 
         var message = await ReplyAsync(msgContent);
 
-        _settings.BatchSendLogs = true;
+        _config.BatchSendLogs = true;
 
         switch (task)
         {
             case "fix":
                 var roles = new List<ulong>();
 
-                if (_settings.NewMemberRole != null) roles.Add((ulong)_settings.NewMemberRole);
+                if (_config.NewMemberRole != null) roles.Add((ulong)_config.NewMemberRole);
 
-                if (_settings.MemberRole != null) roles.Add((ulong)_settings.MemberRole);
+                if (_config.MemberRole != null) roles.Add((ulong)_config.MemberRole);
 
                 foreach (var socketGuildUser in users)
-                    if (_settings.NewMemberRole != null)
+                    if (_config.NewMemberRole != null)
                     {
                         var expiresString =
-                            $"{Environment.NewLine}New Member role expires in <t:{(DateTimeOffset.UtcNow + TimeSpan.FromMinutes(_settings.NewMemberRoleDecay)).ToUnixTimeSeconds()}:R>";
+                            $"{Environment.NewLine}New Member role expires in <t:{(DateTimeOffset.UtcNow + TimeSpan.FromMinutes(_config.NewMemberRoleDecay)).ToUnixTimeSeconds()}:R>";
 
                         var fields = new Dictionary<string, string>
                         {
-                            { "roleId", _settings.NewMemberRole.ToString() },
+                            { "roleId", _config.NewMemberRole.ToString() },
                             { "userId", socketGuildUser.Id.ToString() },
                             {
                                 "reason",
-                                $"{_settings.NewMemberRoleDecay} minutes (`NewMemberRoleDecay`) passed, user no longer a new pony."
+                                $"{_config.NewMemberRoleDecay} minutes (`NewMemberRoleDecay`) passed, user no longer a new pony."
                             }
                         };
                         var action =
                             new ScheduledTaskAction(ScheduledTaskActionType.RemoveRole, fields);
                         var scheduledTask = new ScheduledTask(DateTimeOffset.UtcNow,
-                            DateTimeOffset.UtcNow + TimeSpan.FromMinutes(_settings.NewMemberRoleDecay), action);
+                            DateTimeOffset.UtcNow + TimeSpan.FromMinutes(_config.NewMemberRoleDecay), action);
                         _scheduleService.CreateScheduledTask(scheduledTask, socketGuildUser.Guild);
                     }
 
