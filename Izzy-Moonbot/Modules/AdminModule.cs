@@ -51,7 +51,7 @@ public class AdminModule : ModuleBase<SocketCommandContext>
     )
     {
         if (scanType.ToLower() == "full")
-            Task.Factory.StartNew(async () =>
+            Task.Run(async () =>
             {
                 if (!Context.Guild.HasAllMembers) await Context.Guild.DownloadUsersAsync();
 

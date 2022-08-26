@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
@@ -229,6 +230,44 @@ public class DevModule : ModuleBase<SocketCommandContext>
                     .SetReason(
                         "This is a test of multiple users in 1 log.")
                     .Send();
+                break;
+            case "asyncSyncTesk":
+                Console.WriteLine("Application executing on thread {0}",
+                    Thread.CurrentThread.ManagedThreadId);
+                var asyncTask = Task.Run( () => {  Console.WriteLine("Task {0} (asyncTask) executing on Thread {1}",
+                        Task.CurrentId,
+                        Thread.CurrentThread.ManagedThreadId);
+                    long sum = 0;
+                    for (int ctr = 1; ctr <= 1000000; ctr++ )
+                        sum += ctr;
+                    return sum;
+                });
+                var syncTask = new Task<long>( () =>  { Console.WriteLine("Task {0} (syncTask) executing on Thread {1}",
+                        Task.CurrentId,
+                        Thread.CurrentThread.ManagedThreadId);
+                    long sum = 0;
+                    for (int ctr = 1; ctr <= 1000000; ctr++ )
+                        sum += ctr;
+                    return sum;
+                });
+                syncTask.RunSynchronously();
+                Console.WriteLine();
+                Console.WriteLine("Task {0} returned {1:N0}", syncTask.Id, syncTask.Result);
+                Console.WriteLine("Task {0} returned {1:N0}", asyncTask.Id, asyncTask.Result);
+                break;
+            case "overloadFilter":
+                var message = Context.Message as SocketMessage;
+                for (var i = 0; i < 10; i++)
+                {
+                    Task.Run(async () => await _filterService.ProcessMessage(message, Context.Client));
+                }
+                break;
+            case "overloadSpam":
+                var spamMessage = Context.Message as SocketMessage;
+                for (var i = 0; i < 10; i++)
+                {
+                    Task.Run(async () => await _pressureService.ProcessMessage(spamMessage, Context.Client));
+                }
                 break;
             default:
                 Context.Message.ReplyAsync("Unknown test.");

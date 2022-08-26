@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using Discord.Commands;
@@ -20,7 +21,7 @@ public class LoggingService
         LogLevel level = LogLevel.Information)
     {
         if (file) await AppendToFileAsync(message, context);
-
+        
         var logMessage = PrepareMessageForLogging(message, context);
         //_logger.LogInformation(logMessage, level);
         _logger.Log(level, logMessage);

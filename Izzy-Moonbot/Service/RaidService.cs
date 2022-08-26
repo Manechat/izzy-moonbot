@@ -35,7 +35,7 @@ public class RaidService
 
     public void RegisterEvents(DiscordSocketClient client)
     {
-        client.UserJoined += (member) => Task.Factory.StartNew(async () => { ProcessMemberJoin(member); });
+        client.UserJoined += (member) => Task.Run(async () => { await ProcessMemberJoin(member); });
     }
 
     public bool UserRecentlyJoined(ulong id)
@@ -358,7 +358,7 @@ public class RaidService
 
             await CheckForTrip(member.Guild);
 
-            Task.Factory.StartNew(async () =>
+            Task.Run(async () =>
             {
                 await Task.Delay(Convert.ToInt32(_config.SmallRaidTime * 1000));
                 _state.CurrentSmallJoinCount--;
@@ -367,7 +367,7 @@ public class RaidService
                     null, level: LogLevel.Debug);
             });
 
-            Task.Factory.StartNew(async () =>
+            Task.Run(async () =>
             {
                 await Task.Delay(Convert.ToInt32(_config.LargeRaidTime * 1000));
                 _state.CurrentLargeJoinCount--;
@@ -376,7 +376,7 @@ public class RaidService
                     null, level: LogLevel.Debug);
             });
 
-            Task.Factory.StartNew(async () =>
+            Task.Run(async () =>
             {
                 await Task.Delay(Convert.ToInt32(_config.RecentJoinDecay * 1000));
                 if (_state.CurrentRaidMode == RaidMode.None)
@@ -388,12 +388,12 @@ public class RaidService
                 }
             });
             if (_config.SmallRaidDecay != null)
-                Task.Factory.StartNew(async () =>
+                Task.Run(async () =>
                 {
                     await Task.Delay(Convert.ToInt32(_config.SmallRaidDecay * 60 * 1000));
                     if (_config.SmallRaidDecay == null) return; // Was disabled
                     if (_state.CurrentRaidMode != RaidMode.Small) return; // Not a small raid
-                    if (_state.CurrentSmallJoinCount >= _config.SmallRaidSize)
+                    if (_state.CurrentSmallJoinCount > 0)
                         return; // Small raid join count is still ongoing.
                     if (_state.ManualRaidSilence) return; // This raid was manually silenced. Don't decay.
 

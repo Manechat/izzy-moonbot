@@ -78,6 +78,12 @@ namespace Izzy_Moonbot
 
                 /*_client.UserJoined += HandleMemberJoin;
                 _client.UserLeft += HandleUserLeave;*/
+                
+                _userListener.RegisterEvents(_client);
+                
+                _pressureService.RegisterEvents(_client);
+                _raidService.RegisterEvents(_client);
+                _filterService.RegisterEvents(_client);
 
                 _client.LatencyUpdated += async (int old, int value) =>
                 {
@@ -109,12 +115,6 @@ namespace Izzy_Moonbot
         {
             _logger.LogTrace("Ready event called");
             _scheduleService.ResumeScheduledTasks(_client.Guilds.ToArray()[0]);
-            
-            _pressureService.RegisterEvents(_client);
-            _raidService.RegisterEvents(_client);
-            _filterService.RegisterEvents(_client);
-
-            _userListener.RegisterEvents(_client);
         }
 
         public async Task HandleMemberJoin(SocketGuildUser member)

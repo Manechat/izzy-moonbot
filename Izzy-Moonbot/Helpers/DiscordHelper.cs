@@ -1,12 +1,58 @@
 ﻿using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Discord;
 using Discord.Commands;
+using Discord.WebSocket;
+using HtmlAgilityPack;
 using Izzy_Moonbot.Settings;
 
 namespace Izzy_Moonbot.Helpers;
 
 public static class DiscordHelper
 {
+    public static bool IsProcessableMessage(SocketMessage msg)
+    {
+        if (msg.Type != MessageType.Default && msg.Type != MessageType.Reply &&
+            msg.Type != MessageType.ThreadStarterMessage) return false;
+        return true;
+    }
+
+    public static bool WouldUrlEmbed(string url)
+    {
+        // Construct list of known embeddable file types
+        var embeddableFileTypes = new[]
+        {
+            "\\.jpeg$", "\\.jpg$", "\\.gif$", "\\.png$", "\\.webp$", 
+            "\\.webm$", "\\.mkv$", "\\.flv$", "\\.ogg$", "\\.mov$", 
+            "\\.wmv$", "\\.mp4$", "\\.m4p$", "\\.m4v$", "\\.mpg$", 
+            "\\.mp2$", "\\.mpeg$", "\\.mpe$", "\\.mpv$", "\\.m4v$"
+        };
+        var fileTypeRegex = new Regex(string.Join("|", embeddableFileTypes), RegexOptions.IgnoreCase);
+        if (fileTypeRegex.IsMatch(url)) return true; // ends with a known embeddable file type, so always is true
+
+        if (url.Contains("twitter.com")) return true; // Twitter always embeds but does so in a really annoying way, so just assume always embed
+        
+        var web = new HtmlWeb();
+        var doc = web.Load(url);
+                
+        var metaNodes = doc.DocumentNode.SelectNodes("//meta");
+        
+        return metaNodes.Any(node =>
+        {
+            var propertiesToWatch = new[]
+            {
+                "og:title",
+                "og:description",
+                "description",
+                "og:image"
+            };
+                
+            if(node.Attributes["property"] != null) return propertiesToWatch.Contains(node.Attributes["property"].Value);
+            return false;
+        });
+    }
+    
     public static async Task<ulong> GetChannelIdIfAccessAsync(string channelName, SocketCommandContext context)
     {
         var id = ConvertChannelPingToId(channelName);

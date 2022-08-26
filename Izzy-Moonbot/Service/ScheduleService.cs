@@ -27,6 +27,8 @@ public class ScheduleService
     private readonly ModLoggingService _modLoggingService;
     private readonly List<ScheduledTask> _scheduledTasks;
 
+    private bool _alreadyInitiated = false;
+
     public ScheduleService(List<ScheduledTask> scheduledTasks, ModService mod, ModLoggingService modLoggingService,
         LoggingService logging)
     {
@@ -38,6 +40,8 @@ public class ScheduleService
 
     public void ResumeScheduledTasks(SocketGuild guild)
     {
+        if (_alreadyInitiated) return; // Don't allow double execution as this causes scheduled tasks to execute twice
+        _alreadyInitiated = true;
         _scheduledTasks.ToArray().ToList().ForEach(scheduledTask =>
         {
             // Work out if the task needs to execute now
@@ -52,7 +56,7 @@ public class ScheduleService
             else
             {
                 // Task does not need to execute now, but should have a Task set up on a seperate thread to trigger when needed.
-                Task.Factory.StartNew(async () =>
+                Task.Run(async () =>
                 {
                     await Task.Delay(Convert.ToInt32(scheduledTask.ExecuteAt.ToUnixTimeMilliseconds() -
                                                      DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()));
@@ -133,8 +137,7 @@ public class ScheduleService
             {
                 if (task.Action.Type == action.Type && task.Action.Fields == action.Fields) return true;
                 return false;
-            }))
-            return _scheduledTasks.Find(task =>
+            })) return _scheduledTasks.Find(task =>
             {
                 if (task.Action.Type == action.Type && task.Action.Fields == action.Fields) return true;
                 return false;
@@ -147,7 +150,7 @@ public class ScheduleService
         _scheduledTasks.Add(task);
         await FileHelper.SaveScheduleAsync(_scheduledTasks);
 
-        Task.Factory.StartNew(async () =>
+        Task.Run(async () =>
         {
             await Task.Delay(Convert.ToInt32(task.ExecuteAt.ToUnixTimeMilliseconds() -
                                              DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()));

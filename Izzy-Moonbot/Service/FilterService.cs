@@ -6,7 +6,9 @@ using Discord;
 using Discord.Commands;
 using Discord.Rest;
 using Discord.WebSocket;
+using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Settings;
+using Microsoft.Extensions.Logging;
 
 namespace Izzy_Moonbot.Service;
 
@@ -15,6 +17,7 @@ public class FilterService
     private readonly ModService _mod;
     private readonly ModLoggingService _modLog;
     private readonly Config _config;
+    private readonly LoggingService _logger;
 
     /*
      * The testString is a specific string that, while not in the actual filter list
@@ -30,17 +33,18 @@ public class FilterService
     };
 #endif
 
-    public FilterService(Config config, ModService mod, ModLoggingService modLog)
+    public FilterService(Config config, ModService mod, ModLoggingService modLog, LoggingService logger)
     {
         _config = config;
         _mod = mod;
         _modLog = modLog;
+        _logger = logger;
     }
     
     public void RegisterEvents(DiscordSocketClient client)
     {
-        client.MessageReceived += (message) => Task.Factory.StartNew(async () => { await ProcessMessage(message, client); });
-        client.MessageUpdated += (oldMessage, newMessage, channel) =>Task.Factory.StartNew(async () => { await ProcessMessageUpdate(oldMessage, newMessage, channel, client); });
+        client.MessageReceived += (message) => Task.Run(async () => { await ProcessMessage(message, client); });
+        client.MessageUpdated += (oldMessage, newMessage, channel) => Task.Run(async () => { await ProcessMessageUpdate(oldMessage, newMessage, channel, client); });
     }
 
     private async Task LogFilterTrip(SocketCommandContext context, string word, string category,
@@ -175,15 +179,11 @@ public class FilterService
     public async Task ProcessMessage(SocketMessage messageParam, DiscordSocketClient client)
     {
         if (!_config.FilterEnabled) return;
-        
-        if (messageParam.Type != MessageType.Default && messageParam.Type != MessageType.Reply &&
-            messageParam.Type != MessageType.ThreadStarterMessage) return;
-        SocketUserMessage message = messageParam as SocketUserMessage;
-        int argPos = 0;
+        if (!DiscordHelper.IsProcessableMessage(messageParam)) return; // Not processable
+        if (messageParam is not SocketUserMessage message) return; // Not processable
         SocketCommandContext context = new SocketCommandContext(client, message);
         
-        var channelIds = context.Guild.TextChannels.Select(channel => channel.Id).ToList();
-        if (_config.FilterIgnoredChannels.Overlaps(channelIds)) return;
+        if (_config.FilterIgnoredChannels.Contains(context.Channel.Id)) return;
         foreach (var (category, words) in _config.FilteredWords)
         {
             var filteredWords = words.ToArray().ToList();
