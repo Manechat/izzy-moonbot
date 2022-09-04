@@ -29,6 +29,7 @@ namespace Izzy_Moonbot
         private readonly ModLoggingService _modLog;
         private readonly ModService _modService;
         private readonly PressureService _pressureService;
+        private readonly SpamService _spamService;
         private readonly RaidService _raidService;
         private readonly ScheduleService _scheduleService;
         private readonly IServiceCollection _services;
@@ -42,7 +43,7 @@ namespace Izzy_Moonbot
         public Worker(ILogger<Worker> logger, ModLoggingService modLog, IServiceCollection services,
             PressureService pressureService, ModService modService, RaidService raidService,
             FilterService filterService, ScheduleService scheduleService, IOptions<DiscordSettings> discordSettings,
-            Config config, Dictionary<ulong, User> users, UserListener userListener)
+            Config config, Dictionary<ulong, User> users, UserListener userListener, SpamService spamService)
         {
             _logger = logger;
             _modLog = modLog;
@@ -57,6 +58,7 @@ namespace Izzy_Moonbot
             _config = config;
             _users = users;
             _userListener = userListener;
+            _spamService = spamService;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -81,7 +83,7 @@ namespace Izzy_Moonbot
                 
                 _userListener.RegisterEvents(_client);
                 
-                _pressureService.RegisterEvents(_client);
+                _spamService.RegisterEvents(_client);
                 _raidService.RegisterEvents(_client);
                 _filterService.RegisterEvents(_client);
 

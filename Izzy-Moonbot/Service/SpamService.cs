@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using HtmlAgilityPack;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Settings;
 using Microsoft.Extensions.Logging;
@@ -13,246 +14,266 @@ using Microsoft.Extensions.Logging;
 namespace Izzy_Moonbot.Service;
 
 /*
- * This service handles managing of user "pressure".
- * If the pressure goes too high, then the user is silenced until a mod unsilences them.
- * 
- * Other services or modules can hook into this to assign a high pressure on other incidents
- * (e.g. filter trip, tags, etc)
+ * This service handles anti-spam routines.
+ * The anti-spam works like this:
+ * - Each user has "pressure", this is a number based on several factors including but not limitied to:
+ *   - Message length
+ *   - Message attachments
+ *   - Whether their last message is the same as this one
+ * - This pressure decays by Config.SpamBasePressure every Config.SpamPressureDecay seconds
+ * - If a users pressure reaches or exceeds Config.SpamMaxPressure, the bot will automatically silence them and inform the mods of this action
+ * - Users will stay silenced until either banned, kicked, or unsilenced by the mods.
+ *
+ * Other modules/services are capable of reading and adding pressure to users. This can be useful for increasing pressure due to a filter violation.
+ * (however this is mainly implemented so that SpamModule can output the pressure of a user via command)
  */
-public class PressureService
+public class SpamService
 {
+    // Required services
     private readonly LoggingService _logger;
-    private readonly Regex _mention = new("<@&?[0-9]+>");
-
-    private readonly Regex _noEmbedUrl =
-        new("<{1}https?://(.+\\.)*(.+)\\.([A-z]+)(/?.+)*>{1}", RegexOptions.IgnoreCase);
-
-    private readonly string _testString = "=+i7B3s+#(-{×jn6Ga3F~lA:IZZY_PRESSURE_TEST:H4fgd3!#!";
-    private readonly Regex _url = new("https?://(.+\\.)*(.+)\\.([A-z]+)(/?.+)*", RegexOptions.IgnoreCase);
     private readonly ModService _mod;
-    private readonly ModLoggingService _modLog;
+    private readonly ModLoggingService _modLogger;
+    
+    // Configuation
     private readonly Config _config;
     private readonly Dictionary<ulong, User> _users;
-
-    public PressureService(LoggingService logger, ModLoggingService modLog, Config config, ModService mod,
-        Dictionary<ulong, User> users)
+    
+    // Utility parameters
+    private readonly Regex _mention = new("<@&?[0-9]+>");
+    private readonly Regex _url = new("https?://(.+\\.)*(.+)\\.([A-z]+)(/?.+)*", RegexOptions.IgnoreCase);
+    private readonly Regex _noUnfurlUrl = new("<{1}https?://(.+\\.)*(.+)\\.([A-z]+)(/?.+)*>{1}", RegexOptions.IgnoreCase);
+    #if DEBUG
+    /*
+     * The test string is a way to test the spam filter without actually spamming
+     * The test string is programmed to immediately set pressure to Config.SpamMaxPressure and is not defined if the bot is built with the Release flag.
+     */
+    private readonly string _testString = "=+i7B3s+#(-{×jn6Ga3F~lA:IZZY_PRESSURE_TEST:H4fgd3!#!";
+    #endif
+    
+    // Pull services from the service system
+    public SpamService(LoggingService logger, ModService mod, ModLoggingService modLogger, Config config, Dictionary<ulong, User> users)
     {
         _logger = logger;
-        _modLog = modLog;
-        _config = config;
         _mod = mod;
-        _users = users;
+        _modLogger = modLogger;
+        _config = config;
+        _users = users; 
     }
     
+    // Register required events
     public void RegisterEvents(DiscordSocketClient client)
     {
-        client.MessageReceived += (message) => Task.Factory.StartNew(async () => { await ProcessMessage(message, client); });
-        client.MessageUpdated += (oldMessage, newMessage, channel) =>Task.Factory.StartNew(async () => { await ProcessMessageUpdate(oldMessage, newMessage, channel, client); });
+        // Register MessageReceived event
+        client.MessageReceived += (message) => Task.Run(async () => { await MessageReceiveEvent(message, client); });
     }
 
     /// <summary>
-    ///     Get the pressure of a given user by their Discord id.
+    /// Get the last known pressure of a given user by their Discord id.
     /// </summary>
-    /// <param name="id">The Discord id of the user to get pressure for.</param>
-    /// <returns>A <c>double</c> of the pressure. If the result is <c>-1</c> then the user hasn't been processed yet.</returns>
-    public async Task<double> GetPressure(ulong id)
+    /// <param name="id">User ID</param>
+    /// <returns>The pressure of the user.</returns>
+    public double GetPressure(ulong id)
     {
-        // If that user hasn't been processed yet, just return -1.
-        if (!_users.ContainsKey(id)) return -1;
+        // Just return the user's pressure
+        return _users[id].Pressure;
+    }
 
-        var now = DateTime.UtcNow;
+    private async Task<double> GetAndDecayPressure(ulong id)
+    {
+        // Get current time, calculate pressure loss per second and time difference between now and last pressure task then calculate full pressure loss
+        var now = DateTimeOffset.UtcNow;
         var pressureLossPerSecond = _config.SpamBasePressure / _config.SpamPressureDecay;
         var pressure = _users[id].Pressure;
         var difference = now - _users[id].Timestamp;
-        var totalPressureLoss = difference.TotalSeconds * pressureLossPerSecond;
-        pressure -= totalPressureLoss;
-        if (pressure < 0) pressure = 0;
+        var pressureLoss = difference.TotalSeconds * pressureLossPerSecond;
 
+        // Execute pressure loss
+        pressure -= pressureLoss;
+        if (pressure <= 0) pressure = 0; // Pressure cannot be negative
+
+        // Save pressure loss
         _users[id].Pressure = pressure;
         _users[id].Timestamp = now;
         await FileHelper.SaveUsersAsync(_users);
 
+        // Return pressure
         return pressure;
     }
 
-    /// <summary>
-    ///     Get the pressure of a given user by their Discord id, without preforming pressure decay calculations.
-    /// </summary>
-    /// <param name="id">The Discord id of the user to get pressure for.</param>
-    /// <returns>A <c>double</c> of the pressure. If the result is <c>-1</c> then the user hasn't been processed yet.</returns>
-    public async Task<double> GetPressureWithoutModifying(ulong id)
-    {
-        // If that user hasn't been processed yet, just return -1.
-        if (!_users.ContainsKey(id)) return -1;
-
-        var pressure = _users[id].Pressure;
-
-        if (pressure < 0) pressure = 0;
-
-        return pressure;
-    }
-
-    /// <summary>
-    ///     Increase the pressure of a user by their Discord id.
-    /// </summary>
-    /// <param name="id">The Discord id of the user to increase pressure for.</param>
-    /// <param name="pressure">The pressure to add onto the current pressure.</param>
-    /// <returns>A <c>double</c> of the new pressure.</returns>
     public async Task<double> IncreasePressure(ulong id, double pressure)
     {
-        var now = DateTime.UtcNow;
-        var currentPressure = await GetPressure(id);
+        // Get current time and pressure (also execute pressure decay)
+        var now = DateTimeOffset.UtcNow;
+        var currentPressure = await GetAndDecayPressure(id);
+        
+        // Increase pressure
         currentPressure += pressure;
+
+        // Save user
         _users[id].Pressure = currentPressure;
         _users[id].Timestamp = now;
-
         await FileHelper.SaveUsersAsync(_users);
 
+        // Return new pressure
         return currentPressure;
     }
 
     private async Task ProcessPressure(ulong id, SocketUserMessage message, SocketGuildUser user,
         SocketCommandContext context)
     {
-        // This doesn't do much currently, but it will once we add image checks and the like
+        // Get the base pressure and create the pressureTracer
         var pressure = _config.SpamBasePressure;
-        var pressureTrace = $"{_config.SpamBasePressure} base, ";
+        var pressureTracer = new Dictionary<string, double>{ {"Base", _config.SpamBasePressure} };
+        
+        // Length pressure
+        pressure += _config.SpamLengthPressure * message.Content.Length;
+        pressureTracer.Add("Length", _config.SpamLengthPressure * message.Content.Length);
+        
+        // Line pressure
+        pressure += _config.SpamLengthPressure * (message.Content.Split("\n").Length - 1);
+        pressureTracer.Add("Lines", _config.SpamLengthPressure * (message.Content.Split("\n").Length - 1));
 
+        // Attachments, embeds, and stickers count as Image pressure
         if (message.Attachments.Count >= 1 || message.Embeds.Count >= 1 || message.Stickers.Count >= 1)
         {
-            // Image pressure.
+            // Register pressure increase and add increase to the pressure tracer
             pressure += _config.SpamImagePressure *
                         (message.Attachments.Count + message.Embeds.Count + message.Stickers.Count);
-            pressureTrace +=
-                $"{_config.SpamImagePressure * message.Attachments.Count} attachments, {_config.SpamImagePressure * message.Embeds.Count} embeds, {_config.SpamImagePressure * message.Stickers.Count} stickers, ";
+            pressureTracer.Add("Embeds", _config.SpamImagePressure *
+                               (message.Attachments.Count + message.Embeds.Count + message.Stickers.Count));
         }
 
-        if (_url.IsMatch(message.Content) && !_noEmbedUrl.IsMatch(message.Content) && message.Embeds.Count == 0)
+        // Check if there's at least one url in the message (and there's no embeds)
+        if (_url.IsMatch(message.Content) && message.Embeds.Count == 0)
         {
-            // No attempt to suppress embed made
-            pressure += _config.SpamImagePressure * _url.Matches(message.Content).Count;
-            pressureTrace += $"{_config.SpamImagePressure * _url.Matches(message.Content).Count} URLs, ";
+            // Because url pressure can occur multiple times, we store the pressure to add here
+            var pressureToAdd = 0.0;
+            
+            // Go through each "word" because the URL regex is funky
+            foreach (var content in message.Content.Split(" "))
+            {
+                // Filter out matches 
+                var matches = _url.Matches(content).ToList();
+                foreach (Match match in _noUnfurlUrl.Matches(content))
+                {
+                    // Check if url is in fact set to not unfurl
+                    var matchToRemove = matches.Find(urlMatch => match.Value.Contains(urlMatch.Value));
+                    // If not, just continue
+                    if(matchToRemove == null) continue;
+                    
+                    // If it is, remove the match.
+                    matches.Remove(matchToRemove);
+                }
+
+                // Go through each match
+                foreach (var match in matches)
+                {
+                    // Check if this URL will embed
+                    var willEmbed = DiscordHelper.WouldUrlEmbed(match.Value);
+                    await _logger.Log($"{match.Value} = {willEmbed}");
+                    
+                    // If it will, add Image pressure
+                    if (willEmbed) pressureToAdd += _config.SpamImagePressure;
+                }
+            }
+
+            // Check if the pressure we need to add is above 0 because no point adding 0 pressure
+            if (pressureToAdd > 0.0)
+            {
+                // It is, increase pressure and add pressure trace
+                pressure += pressureToAdd;
+                pressureTracer.Add("URLs", pressureToAdd);
+            }
         }
 
+        // Mention pressure
         if (_mention.IsMatch(message.Content))
         {
             pressure += _config.SpamPingPressure * _mention.Matches(message.Content).Count;
-            pressureTrace +=
-                $"{_config.SpamPingPressure * _mention.Matches(message.Content).Count} mentions, ";
+            pressureTracer.Add("Mention", _config.SpamPingPressure * _mention.Matches(message.Content).Count);
         }
 
+        // Repeat pressure
         if (message.Content.ToLower() == _users[id].PreviousMessage.ToLower())
         {
             pressure += _config.SpamRepeatPressure;
-            pressureTrace += $"{_config.SpamRepeatPressure} repeat, ";
+            pressureTracer.Add("Repeat", _config.SpamRepeatPressure);
         }
-
-        pressure += _config.SpamLengthPressure * message.Content.Length;
-        pressureTrace += $"{_config.SpamLengthPressure * message.Content.Length} length, ";
-
-        pressure += _config.SpamLinePressure * (message.Content.Replace("\r\n", "\n").Split("\n").Length - 1);
-        pressureTrace +=
-            $"{_config.SpamLinePressure * (message.Content.Replace("\r\n", "\n").Split("\n").Length - 1)} lines.";
-
+        
+        #if DEBUG
+        // Test string, only exists when built on Debug.
         if (message.Content == _testString)
         {
-            // Test string for pressure.
-            pressure = _config.SpamMaxPressure + 1;
-            pressureTrace = $"{_config.SpamMaxPressure + 1} teststring.";
+            pressure = _config.SpamMaxPressure;
+            pressureTracer = new Dictionary<string, double>() { { "Test string", _config.SpamMaxPressure } };
         }
-
+        #endif
+        
         var newPressure = await IncreasePressure(id, pressure);
 
-        _users[message.Author.Id].PreviousMessage = message.Content.ToLower();
-        FileHelper.SaveUsersAsync(_users);
-
-        await _logger.Log($"Pressure increased by {pressure} to {newPressure}/{_config.SpamMaxPressure}", context,
-            level: LogLevel.Debug);
-        await _logger.Log(pressureTrace, null, level: LogLevel.Trace);
+        await _logger.Log($"Pressure increase by {pressure} to {newPressure}/{_config.SpamMaxPressure}.{Environment.NewLine}                          Pressure trace: {string.Join(", ", pressureTracer)}", context, level: LogLevel.Debug);
 
         if (newPressure >= _config.SpamMaxPressure)
         {
-            var roleIds = user.Roles.Select(role => role.Id).ToList();
+            await _logger.Log("Spam pressure trip, checking whether user should be silenced or not...", context, level: LogLevel.Debug);
+            var roleIds = user.Roles.Select(roles => roles.Id).ToList();
             if (_config.SpamBypassRoles.Overlaps(roleIds))
             {
-                await _logger.Log("Spam pressure trip, user has role in SpamBypassRoles", context,
-                    level: LogLevel.Trace);
-                // Don't silence, but inform mods.
-                await _modLog.CreateActionLog(context.Guild)
-                    .AddTarget(message.Author as SocketGuildUser)
+                // User has a role which bypasses the punishment of spam trigger. Mention it in action log.
+                await _logger.Log("No silence, user has role(s) in Config.SpamBypassRoles", context, level: LogLevel.Debug);
+                
+                await _modLogger.CreateActionLog(context.Guild)
+                    .AddTarget(user)
                     .SetReason(
                         $"Exceeded pressure max ({newPressure}/{_config.SpamMaxPressure}) in <#{message.Channel.Id}>. Didn't silence as they have a role which bypasses punishment (`SpamBypassRoles`).")
                     .Send();
             }
             else
             {
-                await _logger.Log("Spam pressure trip, trying to bap", context, level: LogLevel.Trace);
-                // Silence user.
-                await _mod.SilenceUser(message.Author as SocketGuildUser, DateTimeOffset.Now, null,
-                    $"Exceeded pressure max ({newPressure}/{_config.SpamMaxPressure}) in <#{message.Channel.Id}>");
-                await _modLog.CreateModLog(context.Guild)
-                    .SetContent(
-                        $"<@{user.Id}> (`{user.Id}`) was silenced for exceeding pressure max ({newPressure}/{_config.SpamMaxPressure}) in <#{message.Channel.Id}>. Please investigate.{Environment.NewLine}" +
-                        $"Pressure breakdown: {pressureTrace}")
-                    .Send();
+                // User is not immune to spam punishments, process trip.
+                await _logger.Log("Silence, executing trip method.", context, level: LogLevel.Debug);
+                await ProcessTrip(id, newPressure, pressureTracer, message, user, context);
             }
         }
     }
 
-    private int GetStringDifference(string oldString, string newString)
+    private async Task ProcessTrip(ulong id, double pressure, Dictionary<string, double> pressureTracer, 
+        SocketUserMessage message, SocketGuildUser user, SocketCommandContext context)
     {
-        var differenceCount = 0;
+        // Silence user, this also logs the action.
+        await _mod.SilenceUser(user, DateTimeOffset.UtcNow, null, $"Exceeded pressure max ({pressure}/{_config.SpamMaxPressure}) in <#{message.Channel.Id}>");
 
-        for (var i = 0; i < oldString.Length; i++)
-            if (oldString[i] != newString[i])
-                differenceCount += 1;
-
-        return differenceCount;
+        await _modLogger.CreateModLog(context.Guild)
+            .SetContent(
+                $"<@{user.Id}> (`{user.Id}`) was silenced for exceeding pressure max ({pressure}/{_config.SpamMaxPressure}) in <#{message.Channel.Id}>. Please investigate.{Environment.NewLine}" +
+                $"Pressure breakdown: {PressureTraceToPonyReadable(pressureTracer)}")
+            .Send();
     }
 
-    public async Task ProcessMessageUpdate(Cacheable<IMessage, ulong> oldMessage, SocketMessage newMessage,
-        ISocketMessageChannel channel, DiscordSocketClient client)
+    private string PressureTraceToPonyReadable(Dictionary<string, double> pressureTracer)
     {
-        // Make sure user is from guild, message type is processable, and message is from user. if any fail, don't process;
-        if (newMessage.Author is not SocketGuildUser user) return;
-        if (newMessage.Type != MessageType.Default && newMessage.Type !=
-            MessageType.Reply && newMessage.Type != MessageType.ThreadStarterMessage) return;
-        if(newMessage is not SocketUserMessage message) return;
+        var output = new List<string>();
+        foreach (var (key, value) in pressureTracer)
+        {
+            output.Add($"{key}: {value}");
+        }
 
-        SocketCommandContext context = new SocketCommandContext(client, message);
-
-        IMessage oldMsg = await oldMessage.GetOrDownloadAsync();
-
-        if (_config.SpamMonitorEdits)
-            if (GetStringDifference(oldMsg.Content, newMessage.Content) >= _config.SpamEditReprocessThreshold)
-                // Reprocess
-                if (_config.SpamEnabled)
-                    await ProcessPressure(user.Id, message,
-                        user, context);
+        return string.Join(", ", output);
     }
 
-    private async Task ProcessMessage(SocketMessage messageParam, DiscordSocketClient client)
+    private async Task MessageReceiveEvent(SocketMessage messageParam, DiscordSocketClient client)
     {
-        if (messageParam.Type != MessageType.Default && messageParam.Type != MessageType.Reply &&
-            messageParam.Type != MessageType.ThreadStarterMessage) return;
-        SocketUserMessage message = messageParam as SocketUserMessage;
-        int argPos = 0;
-        SocketCommandContext context = new SocketCommandContext(client, message);
-        
+        if (!_config.SpamEnabled) return; // anti-spam is off
+        if (!DiscordHelper.IsInGuild(messageParam)) return; // Not in guild (in dm/group)
+        if (!DiscordHelper.IsProcessableMessage(messageParam)) return; // Not processable
+        if (messageParam is not SocketUserMessage message) return; // Not processable
+
+        var context = new SocketCommandContext(client, message);
         var guildUser = context.User as SocketGuildUser;
 
-        if (guildUser.Id == context.Client.CurrentUser.Id) return; // Don't process self lol
-        if (_config.SpamIgnoredChannels.Contains(context.Channel.Id)) return;
+        if (guildUser.Id == client.CurrentUser.Id) return; // Don't process the bot
+        if (_config.SpamIgnoredChannels.Contains(context.Channel.Id)) return; // Don't process ignored channels
 
-        var id = guildUser.Id;
-        if (!_users.ContainsKey(id)) _users.Add(id, new User());
-
-        _users[id].Username = $"{guildUser.Username}#{guildUser.Discriminator}";
-        if (!_users[id].Aliases.Contains(guildUser.Username)) _users[id].Aliases.Add(guildUser.Username);
-        if (guildUser.Nickname != null)
-            if (!_users[id].Aliases.Contains(guildUser.Nickname))
-                _users[id].Aliases.Add(guildUser.Nickname);
-
-        if (_config.SpamEnabled) await ProcessPressure(id, context.Message, guildUser, context);
+        await ProcessPressure(guildUser.Id, context.Message, guildUser, context);
     }
 }

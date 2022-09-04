@@ -70,6 +70,7 @@ public class Program
             services.AddSingleton<LoggingService>();
             services.AddSingleton<ModLoggingService>();
             services.AddSingleton<PressureService>();
+            services.AddSingleton<SpamService>();
             services.AddSingleton<ModService>();
             services.AddSingleton<RaidService>();
             services.AddSingleton<FilterService>();

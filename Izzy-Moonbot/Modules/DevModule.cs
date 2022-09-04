@@ -6,9 +6,11 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using Izzy_Moonbot.Attributes;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Service;
 using Izzy_Moonbot.Settings;
+using Microsoft.Extensions.Logging;
 
 namespace Izzy_Moonbot.Modules;
 
@@ -19,7 +21,7 @@ public class DevModule : ModuleBase<SocketCommandContext>
     private readonly LoggingService _loggingService;
     private readonly ModLoggingService _modLoggingService;
     private readonly ModService _modService;
-    private readonly PressureService _pressureService;
+    private readonly SpamService _pressureService;
     private readonly RaidService _raidService;
     private readonly ScheduleService _scheduleService;
     private readonly Config _config;
@@ -28,7 +30,7 @@ public class DevModule : ModuleBase<SocketCommandContext>
 
     public DevModule(Config config, Dictionary<ulong, User> users, FilterService filterService,
         LoggingService loggingService, ModLoggingService modLoggingService, ModService modService,
-        PressureService pressureService, RaidService raidService, ScheduleService scheduleService, State state)
+        SpamService pressureService, RaidService raidService, ScheduleService scheduleService, State state)
     {
         _config = config;
         _users = users;
@@ -63,7 +65,7 @@ public class DevModule : ModuleBase<SocketCommandContext>
                 break;
             case "pressure-hook":
                 Context.Message.ReplyAsync(
-                    $"**Test utility** - Pressure hookin test.{Environment.NewLine}*Other services or modules can hook into the pressure service to do specific things.*{Environment.NewLine}*An example of this is getting pressure for a user.*{Environment.NewLine}*Like, your current pressure is `{await _pressureService.GetPressure(Context.User.Id)}`*");
+                    $"**Test utility** - Pressure hookin test.{Environment.NewLine}*Other services or modules can hook into the pressure service to do specific things.*{Environment.NewLine}*An example of this is getting pressure for a user.*{Environment.NewLine}*Like, your current pressure is `{_pressureService.GetPressure(Context.User.Id)}`*");
                 break;
             case "dump-users-size":
                 Context.Message.ReplyAsync($"UserStore size: {_users.Count}");
@@ -262,12 +264,9 @@ public class DevModule : ModuleBase<SocketCommandContext>
                     Task.Run(async () => await _filterService.ProcessMessage(message, Context.Client));
                 }
                 break;
-            case "overloadSpam":
-                var spamMessage = Context.Message as SocketMessage;
-                for (var i = 0; i < 10; i++)
-                {
-                    Task.Run(async () => await _pressureService.ProcessMessage(spamMessage, Context.Client));
-                }
+            case "logTest":
+                var pressureTracer = new Dictionary<string, double>{ {"Base", _config.SpamBasePressure} };
+                await _loggingService.Log($"Pressure increase by 0 to 0/{_config.SpamMaxPressure}.{Environment.NewLine}                          Pressure trace: {string.Join(", ", pressureTracer)}", Context, level: LogLevel.Debug);
                 break;
             default:
                 Context.Message.ReplyAsync("Unknown test.");
@@ -296,6 +295,234 @@ public class DevModule : ModuleBase<SocketCommandContext>
                     $"Please provide a state to view the value of (`.state <state>`):{Environment.NewLine}```{Environment.NewLine}" +
                     string.Join(", ", stateKeys) +
                     $"{Environment.NewLine}```");
+            }
+        }
+
+        public static bool DoesStateExist<T>(string key) where T : State
+        {
+            var t = typeof(T);
+
+            if (t.GetProperty(key) == null) return false;
+            return true;
+        }
+    }
+    
+    [Summary("Submodule for viewing and modifying the internal scheduler of Izzy Moonbot")]
+    public class SchedulerSubmodule : ModuleBase<SocketCommandContext>
+    {
+        private readonly Config _config;
+        private readonly ScheduleService _schedule;
+
+        public SchedulerSubmodule(List<ScheduledTask> scheduledTasks, Config config, ScheduleService schedule)
+        {
+            _config = config;
+            _schedule = schedule;
+        }
+
+        [Command("schedule")]
+        [Summary("Manage schedule")]
+        [DevCommand]
+        public async Task ScheduleCommandAsync([Summary("Action")] string action = "", [Summary("[...]")][Remainder] string argsString = "")
+        {
+            if (action == "")
+            {
+                await ReplyAsync($"Invalid usage, please refer to proper usage below:{Environment.NewLine}" +
+                                 $"`{_config.Prefix}schedule info` - List general information regarding scheduled tasks.{Environment.NewLine}" +
+                                 $"`{_config.Prefix}schedule list` - List all scheduled tasks.{Environment.NewLine}" +
+                                 $"`{_config.Prefix}schedule get <id>` - Get scheduled task by ID.{Environment.NewLine}" +
+                                 $"`{_config.Prefix}schedule modify <id> <schedule task string>` - Modify scheduled task to new data.{Environment.NewLine}" +
+                                 $"`{_config.Prefix}schedule reschedule <id> <timestamp>` - Change execution time.{Environment.NewLine}" +
+                                 $"`{_config.Prefix}schedule delete <id>` - Delete scheduled task.{Environment.NewLine}" +
+                                 $"`{_config.Prefix}schedule create <timestamp> <action string>` - Create scheduled task.{Environment.NewLine}{Environment.NewLine}"+
+                                 $"*Please note that IDs are not persistent and will change as scheduled tasks are processed.*");
+            } else if (action.ToLower() == "info")
+            {
+                var removeRoles = _schedule.GetScheduledTasks().Where(task => task.Action.Type == ScheduledTaskActionType.RemoveRole);
+                var addRoles = _schedule.GetScheduledTasks().Where(task => task.Action.Type == ScheduledTaskActionType.AddRole);
+                var echo = _schedule.GetScheduledTasks().Where(task => task.Action.Type == ScheduledTaskActionType.Echo);
+                var unban = _schedule.GetScheduledTasks().Where(task => task.Action.Type == ScheduledTaskActionType.Unban);
+
+                await ReplyAsync(
+                    $"There are {_schedule.GetScheduledTasks().Count} scheduled tasks awaiting execution, of which:{Environment.NewLine}" +
+                    $"{addRoles.Count()} are adding roles,{Environment.NewLine}" +
+                    $"{removeRoles.Count()} are removing roles,{Environment.NewLine}" +
+                    $"{echo.Count()} are echoing messages, and{Environment.NewLine}" +
+                    $"{unban.Count()} are unbanning a user.");
+            } else if (action.ToLower() == "list")
+            {
+                var list = _schedule.GetScheduledTasks().Select((task, i) => $"{i}: ``{_schedule.actionToString(task.Action)}`` at <t:{task.ExecuteAt.ToUnixTimeSeconds()}:F>");
+
+                await ReplyAsync(
+                    $"List of scheduled tasks awaiting execution:{Environment.NewLine}{string.Join(Environment.NewLine, list)}");
+            } else if (action.ToLower() == "get")
+            {
+                if (!int.TryParse(argsString, out int scheduleId))
+                {
+                    await ReplyAsync(
+                        $"I was unable to process the provided id into an integer. Please provide an integer.");
+                    return;
+                }
+
+                if (_schedule.GetScheduledTasks().Count <= scheduleId)
+                {
+                    await ReplyAsync("ID not found.");
+                    return;
+                }
+
+                var scheduledTask = _schedule.GetScheduledTasks()[scheduleId];
+
+                await ReplyAsync($"Information about schedule task id {scheduleId}{Environment.NewLine}" +
+                                 $"Created at: <t:{scheduledTask.CreatedAt.ToUnixTimeSeconds()}:F>{Environment.NewLine}" +
+                                 $"Executes at: <t:{scheduledTask.ExecuteAt.ToUnixTimeSeconds()}:F>{Environment.NewLine}" +
+                                 $"Action: ``{_schedule.actionToString(scheduledTask.Action)}``");
+            } else if (action.ToLower() == "modify")
+            {
+                var args = argsString.Split(" ");
+
+                if (args.Length < 2)
+                {
+                    await ReplyAsync($"Invalid usage, please refer to proper usage below:{Environment.NewLine}" +
+                                     $"`{_config.Prefix}schedule modify <id> <schedule task string>` where...{Environment.NewLine}" +
+                                     $"`<id>` is the id of the scheduled task to edit, and{Environment.NewLine}" +
+                                     $"`<schedule task string>` is a scheduled action in string form.");
+                    return;
+                }
+                
+                if (!int.TryParse(args[0], out int scheduleId))
+                {
+                    await ReplyAsync(
+                        $"I was unable to process the provided id into an integer. Please provide an integer.");
+                    return;
+                }
+
+                if (_schedule.GetScheduledTasks().Count <= scheduleId)
+                {
+                    await ReplyAsync("ID not found.");
+                    return;
+                }
+
+                var scheduledTask = _schedule.GetScheduledTasks()[scheduleId];
+
+                try
+                {
+                    var scheduledAction = _schedule.stringToAction(string.Join(" ", args.Skip(1)));
+
+                    var newScheduledTask = _schedule.GetScheduledTasks()[scheduleId];
+                    newScheduledTask.Action = scheduledAction;
+
+                    await _schedule.ModifyScheduledTask(scheduledTask, newScheduledTask);
+                    await ReplyAsync("Operation complete.");
+                }
+                catch (FormatException)
+                {
+                    await ReplyAsync("That scheduled action string was malformed or invalid. Please try again.");
+                }
+            } else if (action.ToLower() == "reschedule")
+            {
+                var args = argsString.Split(" ");
+
+                if (args.Length < 2)
+                {
+                    await ReplyAsync($"Invalid usage, please refer to proper usage below:{Environment.NewLine}" +
+                                     $"`{_config.Prefix}schedule reschedule <id> <timestamp>` where...{Environment.NewLine}" +
+                                     $"`<id>` is the id of the scheduled task to reschedule, and{Environment.NewLine}" +
+                                     $"`<timestamp>` is a timestamp of when it should execute **in seconds**.");
+                    return;
+                }
+                
+                if (!int.TryParse(args[0], out int scheduleId))
+                {
+                    await ReplyAsync(
+                        $"I was unable to process the provided id into an integer. Please provide an integer.");
+                    return;
+                }
+
+                if (_schedule.GetScheduledTasks().Count <= scheduleId)
+                {
+                    await ReplyAsync("ID not found.");
+                    return;
+                }
+                
+                if (!long.TryParse(args[1], out long timestamp))
+                {
+                    await ReplyAsync(
+                        $"I was unable to process the provided timestamp into a datetime. Please provide a valid timestamp.");
+                    return;
+                }
+
+                var scheduledTask = _schedule.GetScheduledTasks()[scheduleId];
+
+                var scheduledExecute = DateTimeOffset.FromUnixTimeSeconds(timestamp);
+
+                var newScheduledTask = _schedule.GetScheduledTasks()[scheduleId];
+                newScheduledTask.ExecuteAt = scheduledExecute;
+
+                await _schedule.ModifyScheduledTask(scheduledTask, newScheduledTask);
+                await ReplyAsync("Operation complete.");
+            } else if (action.ToLower() == "delete")
+            {
+                var args = argsString.Split(" ");
+
+                if (args.Length < 1)
+                {
+                    await ReplyAsync($"Invalid usage, please refer to proper usage below:{Environment.NewLine}" +
+                                     $"`{_config.Prefix}schedule delete <id>` where...{Environment.NewLine}" +
+                                     $"`<id>` is the id of the scheduled task to delete");
+                    return;
+                }
+                
+                if (!int.TryParse(args[0], out int scheduleId))
+                {
+                    await ReplyAsync(
+                        $"I was unable to process the provided id into an integer. Please provide an integer.");
+                    return;
+                }
+
+                if (_schedule.GetScheduledTasks().Count <= scheduleId)
+                {
+                    await ReplyAsync("ID not found.");
+                    return;
+                }
+
+                var scheduledTask = _schedule.GetScheduledTasks()[scheduleId];
+
+                await _schedule.DeleteScheduledTask(scheduledTask);
+                
+                await ReplyAsync("Operation complete.");
+            } else if (action.ToLower() == "create")
+            {
+                var args = argsString.Split(" ");
+
+                if (args.Length < 2)
+                {
+                    await ReplyAsync($"Invalid usage, please refer to proper usage below:{Environment.NewLine}" +
+                                     $"`{_config.Prefix}schedule create <timestamp> <schedule task string>` where...{Environment.NewLine}" +
+                                     $"`<timestamp>` is the timestamp when this task should execute **in seconds**, and{Environment.NewLine}" +
+                                     $"`<schedule task string>` is a scheduled action in string form.");
+                    return;
+                }
+                
+                if (!long.TryParse(args[0], out long timestamp))
+                {
+                    await ReplyAsync(
+                        $"I was unable to process the provided timestamp into a datetime. Please provide a valid timestamp.");
+                    return;
+                }
+
+                try
+                {
+                    var scheduledAction = _schedule.stringToAction(string.Join(" ", args.Skip(1)));
+                    var scheduledExecute = DateTimeOffset.FromUnixTimeSeconds(timestamp);
+                    
+                    var scheduledTask = new ScheduledTask(DateTimeOffset.UtcNow, scheduledExecute, scheduledAction);
+
+                    await _schedule.CreateScheduledTask(scheduledTask, Context.Guild);
+                    await ReplyAsync("Operation complete.");
+                }
+                catch (FormatException)
+                {
+                    await ReplyAsync("That scheduled action string was malformed or invalid. Please try again.");
+                }
             }
         }
 

@@ -18,6 +18,13 @@ public static class DiscordHelper
         return true;
     }
 
+    public static bool IsInGuild(SocketMessage msg)
+    {
+        if (msg.Channel.GetChannelType() == ChannelType.DM ||
+            msg.Channel.GetChannelType() == ChannelType.Group) return false;
+        return true;
+    }
+
     public static bool WouldUrlEmbed(string url)
     {
         // Construct list of known embeddable file types

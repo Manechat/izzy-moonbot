@@ -179,10 +179,11 @@ public class FilterService
     public async Task ProcessMessage(SocketMessage messageParam, DiscordSocketClient client)
     {
         if (!_config.FilterEnabled) return;
+        if (!DiscordHelper.IsInGuild(messageParam)) return;
         if (!DiscordHelper.IsProcessableMessage(messageParam)) return; // Not processable
         if (messageParam is not SocketUserMessage message) return; // Not processable
         SocketCommandContext context = new SocketCommandContext(client, message);
-        
+
         if (_config.FilterIgnoredChannels.Contains(context.Channel.Id)) return;
         foreach (var (category, words) in _config.FilteredWords)
         {
