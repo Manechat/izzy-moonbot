@@ -169,11 +169,24 @@ public class SpamService
                 foreach (var match in matches)
                 {
                     // Check if this URL will embed
-                    var willEmbed = DiscordHelper.WouldUrlEmbed(match.Value);
-                    await _logger.Log($"{match.Value} = {willEmbed}");
-                    
-                    // If it will, add Image pressure
-                    if (willEmbed) pressureToAdd += _config.SpamImagePressure;
+                    try
+                    {
+                        var willEmbed = DiscordHelper.WouldUrlEmbed(match.Value);
+                        await _logger.Log($"{match.Value} = {willEmbed}");
+
+                        // If it will, add Image pressure
+                        if (willEmbed) pressureToAdd += _config.SpamImagePressure;
+                    }
+                    catch (Exception exception)
+                    {
+                        // Somewhere, something went wrong. Report the error but assume not embedding and continue.
+                        await _logger.Log($"Exception occured while processing whether a link has an embed. Assuming no embed.", level: LogLevel.Warning);
+                        await _logger.Log($"URL Trigger: {match.Value}", level: LogLevel.Warning);
+                        await _logger.Log($"Message: {exception.Message}", level: LogLevel.Warning);
+                        await _logger.Log($"Source: {exception.Source}", level: LogLevel.Warning);
+                        await _logger.Log($"Method: {exception.TargetSite}", level: LogLevel.Warning);
+                        await _logger.Log($"Stack Trace: {exception.StackTrace}", level: LogLevel.Warning);
+                    }
                 }
             }
 
@@ -267,6 +280,10 @@ public class SpamService
         if (!DiscordHelper.IsInGuild(messageParam)) return; // Not in guild (in dm/group)
         if (!DiscordHelper.IsProcessableMessage(messageParam)) return; // Not processable
         if (messageParam is not SocketUserMessage message) return; // Not processable
+        
+        if (_config.ThreadOnlyMode &&
+            (message.Channel.GetChannelType() != ChannelType.PublicThread &&
+             message.Channel.GetChannelType() != ChannelType.PrivateThread)) return; // Not a thread, in thread only mode
 
         var context = new SocketCommandContext(client, message);
         var guildUser = context.User as SocketGuildUser;

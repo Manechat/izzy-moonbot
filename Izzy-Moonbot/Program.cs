@@ -69,7 +69,6 @@ public class Program
             // Services
             services.AddSingleton<LoggingService>();
             services.AddSingleton<ModLoggingService>();
-            services.AddSingleton<PressureService>();
             services.AddSingleton<SpamService>();
             services.AddSingleton<ModService>();
             services.AddSingleton<RaidService>();

@@ -183,6 +183,10 @@ public class FilterService
         if (!DiscordHelper.IsProcessableMessage(messageParam)) return; // Not processable
         if (messageParam is not SocketUserMessage message) return; // Not processable
         SocketCommandContext context = new SocketCommandContext(client, message);
+        
+        if (_config.ThreadOnlyMode &&
+            (message.Channel.GetChannelType() != ChannelType.PublicThread &&
+             message.Channel.GetChannelType() != ChannelType.PrivateThread)) return; // Not a thread, in thread only mode
 
         if (_config.FilterIgnoredChannels.Contains(context.Channel.Id)) return;
         foreach (var (category, words) in _config.FilteredWords)

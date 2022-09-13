@@ -172,7 +172,20 @@ public class RaidService
                 if (member.JoinedAt.HasValue)
                 {
                     if (member.JoinedAt.Value.AddSeconds(_config.RecentJoinDecay) >= DateTimeOffset.Now)
+                    {
                         _state.RecentJoins.Remove(userId);
+                    }
+                    else
+                    {
+                        Task.Run(async () =>
+                        {
+                            await Task.Delay(Convert.ToInt32((member.JoinedAt.Value.AddSeconds(_config.RecentJoinDecay) - DateTimeOffset.Now) * 1000));
+                            await _log.Log(
+                                $"{member.DisplayName} ({member.Id}) no longer a recent join (after raid)",
+                                null);
+                            _state.RecentJoins.Remove(member.Id);
+                        });
+                    }
                 }
                 else
                 {
@@ -401,13 +414,13 @@ public class RaidService
                     await DecaySmallRaid(member.Guild);
                 });
             if (_config.LargeRaidDecay != null)
-                Task.Factory.StartNew(async () =>
+                Task.Run(async () =>
                 {
                     await Task.Delay(Convert.ToInt32(_config.LargeRaidDecay * 60 * 1000));
                     if (_config.SmallRaidDecay == null) return; // Was disabled
                     if (_state.CurrentRaidMode != RaidMode.Large) return; // Not a large raid
-                    if (_state.CurrentLargeJoinCount >= _config.LargeRaidSize)
-                        return; // Small raid join count is still ongoing.
+                    if (_state.CurrentLargeJoinCount > _config.SmallRaidSize)
+                        return; // Large raid join count is still ongoing.
 
                     await _log.Log("Decaying raid: Large -> Small", null, level: LogLevel.Debug);
                     await DecayLargeRaid(member.Guild);

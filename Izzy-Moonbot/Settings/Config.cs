@@ -9,6 +9,7 @@ public class Config
         // Core settings
         Prefix = '.';
         SafeMode = true;
+        ThreadOnlyMode = true;
         BatchSendLogs = false;
         BatchLogsSendRate = 10;
         IgnoredChannels = new HashSet<ulong>();
@@ -71,6 +72,7 @@ public class Config
     // Core settings
     public char Prefix { get; set; }
     public bool SafeMode { get; set; }
+    public bool ThreadOnlyMode { get; set; }
     public bool BatchSendLogs { get; set; }
     public double BatchLogsSendRate { get; set; }
     public HashSet<ulong> IgnoredChannels { get; set; }

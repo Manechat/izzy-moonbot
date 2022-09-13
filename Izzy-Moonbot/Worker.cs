@@ -28,7 +28,6 @@ namespace Izzy_Moonbot
         private readonly ILogger<Worker> _logger;
         private readonly ModLoggingService _modLog;
         private readonly ModService _modService;
-        private readonly PressureService _pressureService;
         private readonly SpamService _spamService;
         private readonly RaidService _raidService;
         private readonly ScheduleService _scheduleService;
@@ -40,14 +39,12 @@ namespace Izzy_Moonbot
         public bool hasProgrammingSocks = false;
         public int LaserCount = 10;
 
-        public Worker(ILogger<Worker> logger, ModLoggingService modLog, IServiceCollection services,
-            PressureService pressureService, ModService modService, RaidService raidService,
+        public Worker(ILogger<Worker> logger, ModLoggingService modLog, IServiceCollection services, ModService modService, RaidService raidService,
             FilterService filterService, ScheduleService scheduleService, IOptions<DiscordSettings> discordSettings,
             Config config, Dictionary<ulong, User> users, UserListener userListener, SpamService spamService)
         {
             _logger = logger;
             _modLog = modLog;
-            _pressureService = pressureService;
             _modService = modService;
             _raidService = raidService;
             _filterService = filterService;

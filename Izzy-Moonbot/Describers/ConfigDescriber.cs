@@ -18,6 +18,10 @@ public class ConfigDescriber
             new ConfigItem(ConfigItemType.Boolean,
                 "If set to true, I will not preform any moderation actions. This is best used when testing moderation functions in case of potentially broken code.",
                 ConfigItemCategory.Core));
+        _config.Add("ThreadOnlyMode",
+            new ConfigItem(ConfigItemType.Boolean,
+                "If set to true, I will not process any pressure, or check messages for filtered words for any channels which are not threads. This is used for gradual rollout of Izzy Moonbot.",
+                ConfigItemCategory.Core));
         _config.Add("BatchSendLogs",
             new ConfigItem(ConfigItemType.Boolean,
                 "If set to true, I will batch send mod/action logs instead of sending them immediately. This is managed automatically by the Raid service to prevent me from being ratelimited.",
