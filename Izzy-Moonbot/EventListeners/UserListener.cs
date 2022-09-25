@@ -66,13 +66,13 @@ public class UserListener
         string expiresString = "";
 
         await _logger.Log($"Processing roles for new user join", level: LogLevel.Debug);
-        if (_config.MemberRole != null && !(_config.AutoSilenceNewJoins || _users[member.Id].Silenced))
+        if (_config.GiveRolesOnJoin && _config.MemberRole != null && !(_config.AutoSilenceNewJoins || _users[member.Id].Silenced))
         {
             await _logger.Log($"Adding Config.MemberRole ({_config.MemberRole}) to new user", level: LogLevel.Debug);
             roles.Add((ulong)_config.MemberRole);
         }
 
-        if (_config.NewMemberRole != null && (!_config.AutoSilenceNewJoins || !_users[member.Id].Silenced))
+        if (_config.GiveRolesOnJoin && _config.NewMemberRole != null && (!_config.AutoSilenceNewJoins || !_users[member.Id].Silenced))
         {
             await _logger.Log($"Adding Config.NewMemberRole ({_config.NewMemberRole}) to new user", level: LogLevel.Debug);
             roles.Add((ulong)_config.NewMemberRole);
@@ -94,19 +94,23 @@ public class UserListener
             await _schedule.CreateScheduledTask(task, member.Guild);
             await _logger.Log($"Added scheduled task for new user", level: LogLevel.Debug);
         }
-
+        
         await _logger.Log($"Generating action reason", level: LogLevel.Debug);
-        if (roles.Count == 0) return; // What's the point of logging if Izzy doesn't do anything??
+        
         string autoSilence = $" (User autosilenced, `AutoSilenceNewJoins` is true.)";
-        if (!_config.AutoSilenceNewJoins) autoSilence = "";
-        if (_users[member.Id].Silenced)
-            autoSilence = 
-                ", silenced (attempted silence bypass)";
-        await _logger.Log($"Generated action reason, executing action", level: LogLevel.Debug);
+        
+        if (roles.Count != 0)
+        {
+            if (!_config.AutoSilenceNewJoins) autoSilence = "";
+            if (_users[member.Id].Silenced)
+                autoSilence = 
+                    ", silenced (attempted silence bypass)";
+            await _logger.Log($"Generated action reason, executing action", level: LogLevel.Debug);
 
-        await _mod.AddRoles(member, roles, DateTimeOffset.Now, 
-            $"New user join{autoSilence}.{expiresString}");
-        await _logger.Log($"Action executed, generating moderation log content", level: LogLevel.Debug);
+            await _mod.AddRoles(member, roles, DateTimeOffset.Now, 
+                $"New user join{autoSilence}.{expiresString}"); 
+            await _logger.Log($"Action executed, generating moderation log content", level: LogLevel.Debug);
+        }
 
         autoSilence = ", silenced (`AutoSilenceNewJoins` is on)";
         if (!_config.AutoSilenceNewJoins) autoSilence = "";

@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
+using Discord.Net;
 using Discord.Rest;
 using Discord.WebSocket;
 using Izzy_Moonbot.Attributes;
@@ -71,8 +72,12 @@ namespace Izzy_Moonbot
                 _client.Ready += ReadyEvent;
 
                 await _client.StartAsync();
-                //await _client.SetGameAsync($"Go away");
-                await _client.SetGameAsync($"MVP System Test - SafeMode Active");
+
+                if (_config.DiscordActivityName != null)
+                {
+                    await _client.SetGameAsync(_config.DiscordActivityName, type: (_config.DiscordActivityWatching ? ActivityType.Watching : ActivityType.Playing));
+                }
+
                 await InstallCommandsAsync();
 
                 /*_client.UserJoined += HandleMemberJoin;
@@ -87,6 +92,31 @@ namespace Izzy_Moonbot
                 _client.LatencyUpdated += async (int old, int value) =>
                 {
                     _logger.Log(LogLevel.Debug, $"Latency = {value}ms.");
+                    
+                    if (_config.DiscordActivityName != null)
+                    {
+                        if (_client.Activity.Name != _config.DiscordActivityName ||
+                            _client.Activity.Type != (_config.DiscordActivityWatching ? ActivityType.Watching : ActivityType.Playing)) 
+                            await _client.SetGameAsync(_config.DiscordActivityName, type: (_config.DiscordActivityWatching ? ActivityType.Watching : ActivityType.Playing));
+                    }
+                    else
+                    {
+                        if (_client.Activity.Name != "") 
+                            await _client.SetGameAsync("");
+                    }
+                };
+
+                _client.Disconnected += async (Exception ex) =>
+                {
+                    Task.Run(async () =>
+                    {
+                        await Task.Delay(5000);
+                        if (_client.ConnectionState == ConnectionState.Disconnected)
+                        {
+                            // Assume softlock, reboot
+                            Environment.Exit(254);
+                        }
+                    });
                 };
 
                 // Block this task until the program is closed.
@@ -114,6 +144,11 @@ namespace Izzy_Moonbot
         {
             _logger.LogTrace("Ready event called");
             _scheduleService.ResumeScheduledTasks(_client.Guilds.ToArray()[0]);
+            
+            foreach (var clientGuild in _client.Guilds)
+            {
+                await clientGuild.DownloadUsersAsync();
+            }
         }
 
         public async Task HandleMemberJoin(SocketGuildUser member)

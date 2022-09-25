@@ -44,6 +44,14 @@ public class ConfigDescriber
         _config.Add("MentionResponseCooldown",
             new ConfigItem(ConfigItemType.Double,
                 "How many seconds I should wait between responding to a mention", ConfigItemCategory.Core));
+        _config.Add("DiscordActivityName",
+            new ConfigItem(ConfigItemType.String,
+                "The content of my Discord status. Note: This takes time to set.",
+                ConfigItemCategory.Core, true));
+        _config.Add("DiscordActivityWatching",
+            new ConfigItem(ConfigItemType.Boolean,
+                "Whether my Discord status says 'Playing' (`false`) or 'Watching' (`true`). Note: This takes time to set.",
+                ConfigItemCategory.Core));
 
         // Mod settings
         _config.Add("ModRole",
@@ -58,6 +66,10 @@ public class ConfigDescriber
                 ConfigItemCategory.Moderation));
 
         // User based settings
+        _config.Add("GiveRolesOnJoin",
+            new ConfigItem(ConfigItemType.Boolean,
+                "Whether I'll give roles to users on join.",
+                ConfigItemCategory.User));
         _config.Add("MemberRole",
             new ConfigItem(ConfigItemType.Role,
                 "The role I apply to users when they join the server. This is also the role I remove when I silence a user. Set to nothing to disable.",

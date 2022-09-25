@@ -207,7 +207,7 @@ public class SpamService
         }
 
         // Repeat pressure
-        if (message.Content.ToLower() == _users[id].PreviousMessage.ToLower())
+        if (message.CleanContent.ToLower() == _users[id].PreviousMessage.ToLower())
         {
             pressure += _config.SpamRepeatPressure;
             pressureTracer.Add("Repeat", _config.SpamRepeatPressure);
@@ -221,6 +221,9 @@ public class SpamService
             pressureTracer = new Dictionary<string, double>() { { "Test string", _config.SpamMaxPressure } };
         }
         #endif
+
+        _users[id].PreviousMessage = context.Message.CleanContent;
+        await FileHelper.SaveUsersAsync(_users);
         
         var newPressure = await IncreasePressure(id, pressure);
 

@@ -23,7 +23,7 @@ public class Program
             loggerConfig = loggerConfig.MinimumLevel.Verbose();
         #else
             // Normal logging
-            loggerConfig = loggerConfig.MinimumLevel.Information();
+            loggerConfig = loggerConfig.MinimumLevel.Verbose();
         #endif
             
         Log.Logger = loggerConfig.CreateLogger();

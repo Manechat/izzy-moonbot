@@ -268,6 +268,9 @@ public class DevModule : ModuleBase<SocketCommandContext>
                 var pressureTracer = new Dictionary<string, double>{ {"Base", _config.SpamBasePressure} };
                 await _loggingService.Log($"Pressure increase by 0 to 0/{_config.SpamMaxPressure}.{Environment.NewLine}                          Pressure trace: {string.Join(", ", pressureTracer)}", Context, level: LogLevel.Debug);
                 break;
+            case "invitesDisabled":
+                await ReplyAsync("Invites disabled: " + Context.Guild.Features.HasFeature("INVITES_DISABLED"));
+                break;
             default:
                 Context.Message.ReplyAsync("Unknown test.");
                 break;

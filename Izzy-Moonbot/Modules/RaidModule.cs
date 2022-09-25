@@ -122,7 +122,7 @@ public class RaidModule : ModuleBase<SocketCommandContext>
         }
 
         if (Context.Message.ReferencedMessage.CleanContent.Split(Environment.NewLine).Length != 4 ||
-            !Context.Message.Content.EndsWith("||!stowaway-usable!||"))
+            !Context.Message.ReferencedMessage.Content.EndsWith("||!stowaway-usable!||"))
         {
             await ReplyAsync("I'm... not entirely sure if that's an actual raid end message...");
             return;

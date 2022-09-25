@@ -17,6 +17,8 @@ public class Config
         MentionResponseEnabled = false;
         MentionResponses = new List<string>();
         MentionResponseCooldown = 600;
+        DiscordActivityName = "you all soon";
+        DiscordActivityWatching = true;
 
         // Mod settings
         AllowedUsers = new HashSet<ulong>();
@@ -25,6 +27,7 @@ public class Config
         LogChannel = 0;
 
         // User based settings
+        GiveRolesOnJoin = true;
         MemberRole = 0;
         NewMemberRole = 0;
         NewMemberRoleDecay = 0;
@@ -80,6 +83,8 @@ public class Config
     public bool MentionResponseEnabled { get; set; }
     public List<string> MentionResponses { get; set; }
     public double MentionResponseCooldown { get; set; }
+    public string? DiscordActivityName { get; set; }
+    public bool DiscordActivityWatching { get; set; }
 
     // Moderation settings
     public HashSet<ulong> AllowedUsers { get; set; }
@@ -88,6 +93,7 @@ public class Config
     public ulong LogChannel { get; set; }
 
     // User based settings
+    public bool GiveRolesOnJoin { get; set; }
     public ulong? MemberRole { get; set; }
     public ulong? NewMemberRole { get; set; }
     public double NewMemberRoleDecay { get; set; }
