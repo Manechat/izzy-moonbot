@@ -37,7 +37,7 @@ namespace Izzy_Moonbot
         private readonly Dictionary<ulong, User> _users;
         private readonly UserListener _userListener;
         private DiscordSocketClient _client;
-        public bool hasProgrammingSocks = false;
+        public bool hasProgrammingSocks = true;
         public int LaserCount = 10;
 
         public Worker(ILogger<Worker> logger, ModLoggingService modLog, IServiceCollection services, ModService modService, RaidService raidService,
