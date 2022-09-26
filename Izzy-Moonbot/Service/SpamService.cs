@@ -72,11 +72,9 @@ public class SpamService
     /// </summary>
     /// <param name="id">User ID</param>
     /// <returns>The pressure of the user.</returns>
-    public double GetPressure(ulong id)
-    {
-        // Just return the user's pressure
-        return _users[id].Pressure;
-    }
+    public double GetPressure(ulong id) => _users[id].Pressure; // Just return the user's pressure
+
+    public List<PreviousMessageItem> GetPreviousMessages(ulong id) => _users[id].PreviousMessages; // Just return the user's previous messages
 
     private async Task<double> GetAndDecayPressure(ulong id)
     {
@@ -94,6 +92,21 @@ public class SpamService
         // Save pressure loss
         _users[id].Pressure = pressure;
         _users[id].Timestamp = now;
+        
+        // Remove out of date message cache.
+        // TODO: Move to it's own method.
+        var messages = _users[id].PreviousMessages.ToArray().ToList(); // .NET gets angry if we modify the iterator while iterating
+        
+        foreach (var previousMessageItem in messages)
+        {
+            if ((previousMessageItem.Timestamp.ToUniversalTime().ToUnixTimeMilliseconds() + (_config.SpamPressureDecay * 1000)) <=
+                DateTimeOffset.UtcNow.ToUnixTimeMilliseconds())
+            {
+                // Message is out of date, remove it
+                _users[id].PreviousMessages.Remove(previousMessageItem);
+            }
+        }
+        
         await FileHelper.SaveUsersAsync(_users);
 
         // Return pressure
@@ -223,6 +236,12 @@ public class SpamService
         #endif
 
         _users[id].PreviousMessage = context.Message.CleanContent;
+
+        var messageItem =
+            new PreviousMessageItem(message.Id, context.Channel.Id, context.Guild.Id, DateTimeOffset.UtcNow);
+        
+        _users[id].PreviousMessages.Add(messageItem);
+        
         await FileHelper.SaveUsersAsync(_users);
         
         var newPressure = await IncreasePressure(id, pressure);
@@ -258,6 +277,13 @@ public class SpamService
     {
         // Silence user, this also logs the action.
         await _mod.SilenceUser(user, DateTimeOffset.UtcNow, null, $"Exceeded pressure max ({pressure}/{_config.SpamMaxPressure}) in <#{message.Channel.Id}>");
+        
+        // Remove all messages considered part of spam.
+        foreach (var previousMessageItem in _users[id].PreviousMessages)
+        {
+            var previousMessage = await context.Guild.GetTextChannel(previousMessageItem.ChannelId).GetMessageAsync(previousMessageItem.Id);
+            await previousMessage.DeleteAsync();
+        }
 
         await _modLogger.CreateModLog(context.Guild)
             .SetContent(
