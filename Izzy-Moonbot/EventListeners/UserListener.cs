@@ -36,8 +36,9 @@ public class UserListener
 
     public void RegisterEvents(DiscordSocketClient client)
     {
-        client.UserJoined += (member) => Task.Factory.StartNew(async () => { await MemberJoinEvent(member); });
-        client.UserLeft += (guild, user) => Task.Factory.StartNew(async () => { await MemberLeaveEvent(guild, user); });
+        client.UserJoined += (member) => Task.Run(async () => { await MemberJoinEvent(member); });
+        client.UserLeft += (guild, user) => Task.Run(async () => { await MemberLeaveEvent(guild, user); });
+        client.GuildMemberUpdated += (oldMember, newMember) => Task.Run(async () => { await MemberUpdateEvent(oldMember, newMember); });
     }
 
     private async Task MemberJoinEvent(SocketGuildUser member)
@@ -213,5 +214,24 @@ public class UserListener
             .SetContent(output)
             .Send();
         await _logger.Log($"Moderation log sent", level: LogLevel.Debug);
+    }
+
+    private async Task MemberUpdateEvent(Cacheable<SocketGuildUser,ulong> oldUser, SocketGuildUser newUser)
+    {
+        if (_config.MemberRole == null) return;
+        if (_users[newUser.Id].Silenced &&
+            newUser.Roles.Select(role => role.Id).Contains((ulong)_config.MemberRole))
+        {
+            // Unsilenced, Remove the flag.
+            _users[newUser.Id].Silenced = false;
+            await FileHelper.SaveUsersAsync(_users);
+        }
+        if (!_users[newUser.Id].Silenced &&
+            !newUser.Roles.Select(role => role.Id).Contains((ulong)_config.MemberRole))
+        {
+            // Silenced, add the flag
+            _users[newUser.Id].Silenced = true;
+            await FileHelper.SaveUsersAsync(_users);
+        }
     }
 }
