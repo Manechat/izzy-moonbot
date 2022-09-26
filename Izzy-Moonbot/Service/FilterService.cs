@@ -65,7 +65,7 @@ public class FilterService
 
         if (actionsTaken.Contains("message"))
             actions.Add(
-                $":speech_balloon: - **I've sent a message in response [[Go to Message]]({message.GetJumpUrl()})**");
+                $":speech_balloon: - **I've sent a message in response**");
         if (actionsTaken.Contains("silence")) actions.Add(":mute: - **I've silenced the user**");
 
         var roleIds = context.Guild.GetUser(context.User.Id).Roles.Select(role => role.Id).ToList();
@@ -83,7 +83,7 @@ public class FilterService
             embedBuilder.AddField("What have I done in response?", string.Join(Environment.NewLine, actions));
 
         await _modLog.CreateModLog(context.Guild)
-            .SetContent($"<@-&{_config.ModRole}>")
+            .SetContent($"<@&{_config.ModRole}>")
             .SetEmbed(embedBuilder.Build())
             .Send();
     }
@@ -93,7 +93,7 @@ public class FilterService
     {
         try
         {
-            //await context.Message.DeleteAsync();
+            await context.Message.DeleteAsync();
             if (!_config.FilterResponseMessages.ContainsKey(category))
                 _config.FilterResponseMessages[category] = null;
             if (!_config.FilterResponseSilence.ContainsKey(category))
