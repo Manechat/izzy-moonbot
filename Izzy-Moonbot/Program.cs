@@ -60,6 +60,8 @@ public class Program
             services.AddSingleton(users);
             var scheduledTasks = FileHelper.LoadScheduleAsync().GetAwaiter().GetResult();
             services.AddSingleton(scheduledTasks);
+            var generalStorage = FileHelper.LoadGeneralStorageAsync().GetAwaiter().GetResult();
+            services.AddSingleton(generalStorage);
             var stateStorage = new State();
             services.AddSingleton(stateStorage);
 

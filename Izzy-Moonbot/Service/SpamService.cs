@@ -94,7 +94,7 @@ public class SpamService
         _users[id].Timestamp = now;
         
         // Remove out of date message cache.
-        // TODO: Move to it's own method.
+        // TODO: Move to it's own method. Not sure how to without saving the users file again...
         var messages = _users[id].PreviousMessages.ToArray().ToList(); // .NET gets angry if we modify the iterator while iterating
         
         foreach (var previousMessageItem in messages)

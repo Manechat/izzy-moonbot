@@ -134,6 +134,31 @@ public static class FileHelper
         var fileContents = JsonConvert.SerializeObject(scheduledTasks, Formatting.Indented);
         await File.WriteAllTextAsync(filepath, fileContents);
     }
+    
+    public static async Task<GeneralStorage> LoadGeneralStorageAsync()
+    {
+        var settings = new GeneralStorage();
+        var filepath = SetUpFilepath(FilePathType.Root, "general-storage", "conf");
+        if (!File.Exists(filepath))
+        {
+            var defaultFileContents = JsonConvert.SerializeObject(settings, Formatting.Indented);
+            await File.WriteAllTextAsync(filepath, defaultFileContents);
+        }
+        else
+        {
+            var fileContents = await File.ReadAllTextAsync(filepath);
+            settings = JsonConvert.DeserializeObject<GeneralStorage>(fileContents);
+        }
+
+        return settings;
+    }
+
+    public static async Task SaveGeneralStorageAsync(Config settings)
+    {
+        var filepath = SetUpFilepath(FilePathType.Root, "general-storage", "conf");
+        var fileContents = JsonConvert.SerializeObject(settings, Formatting.Indented);
+        await File.WriteAllTextAsync(filepath, fileContents);
+    }
 
     private static void CreateDirectoryIfNotExists(string path)
     {
