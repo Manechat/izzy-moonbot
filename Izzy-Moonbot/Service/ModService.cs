@@ -15,14 +15,12 @@ public class ModService
     private readonly Config _config;
     private readonly Dictionary<ulong, User> _users;
     private readonly ModLoggingService _modLog;
-    private readonly ScheduleService _schedule;
 
-    public ModService(Config config, Dictionary<ulong, User> users, ModLoggingService modLog, ScheduleService schedule)
+    public ModService(Config config, Dictionary<ulong, User> users, ModLoggingService modLog)
     {
         _config = config;
         _users = users;
         _modLog = modLog;
-        _schedule = schedule;
     }
 
     /*public async Task<string> GenerateSuggestedLog(ActionType action, SocketGuildUser target, DateTimeOffset time, DateTimeOffset? until, string reason)
@@ -143,73 +141,6 @@ public class ModService
         foreach (var socketGuildUser in users)
         {
             if (!_config.SafeMode) await socketGuildUser.AddRoleAsync(roleId);
-        }
-
-        await actionLog.Send();
-    }
-    
-    public async Task AddTempRole(SocketGuildUser user, ulong roleId, DateTimeOffset until, string? reason = null)
-    {
-        if (!_config.SafeMode)
-        {
-            await user.AddRoleAsync(roleId);
-            
-            Dictionary<string, string> fields = new Dictionary<string, string>
-            {
-                { "roleId", roleId.ToString() },
-                { "userId", user.Id.ToString() },
-                {
-                    "reason",
-                    "Temporary role has expired."
-                }
-            };
-            ScheduledTaskAction action = new ScheduledTaskAction(ScheduledTaskActionType.RemoveRole, fields);
-            ScheduledTask task = new ScheduledTask(DateTimeOffset.UtcNow, 
-                until, action);
-            await _schedule.CreateScheduledTask(task, user.Guild);
-        }
-
-        await _modLog.CreateActionLog(user.Guild)
-            .SetActionType(LogType.AddRoles)
-            .AddTarget(user)
-            .AddRole(roleId)
-            .SetTime(DateTimeOffset.UtcNow)
-            .SetUntilTime(until)
-            .SetReason(reason)
-            .Send();
-    }
-
-    public async Task AddTempRoleToUsers(IEnumerable<SocketGuildUser> users, ulong roleId, DateTimeOffset until, string? reason = null)
-    {
-        if (!users.Any()) throw new NullReferenceException("users must have users in them");
-        var actionLog = _modLog.CreateActionLog(users.First().Guild)
-            .SetActionType(LogType.AddRoles)
-            .AddTargets(users)
-            .AddRole(roleId)
-            .SetTime(DateTimeOffset.UtcNow)
-            .SetUntilTime(until)
-            .SetReason(reason);
-
-        foreach (var user in users)
-        {
-            if (!_config.SafeMode)
-            {
-                await user.AddRoleAsync(roleId);
-                
-                Dictionary<string, string> fields = new Dictionary<string, string>
-                {
-                    { "roleId", roleId.ToString() },
-                    { "userId", user.Id.ToString() },
-                    {
-                        "reason",
-                        "Temporary role has expired."
-                    }
-                };
-                ScheduledTaskAction action = new ScheduledTaskAction(ScheduledTaskActionType.RemoveRole, fields);
-                ScheduledTask task = new ScheduledTask(DateTimeOffset.UtcNow, 
-                    until, action);
-                await _schedule.CreateScheduledTask(task, user.Guild);
-            }
         }
 
         await actionLog.Send();
