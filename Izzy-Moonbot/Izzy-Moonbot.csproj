@@ -2,11 +2,11 @@
     <PropertyGroup>
         <UserSecretsId>dotnet-Izzy_Moonbot-C054BD3A-F4E3-4221-81C0-9AE116BDD30F</UserSecretsId>
         <RootNamespace>Izzy_Moonbot</RootNamespace>
-	    <Nullable>enable</Nullable>
-	    <TargetFramework>net6.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <TargetFramework>net6.0</TargetFramework>
     </PropertyGroup>
 
-   <ItemGroup>
+    <ItemGroup>
         <Compile Remove="BotSettings\**" />
         <Compile Remove="DevSettings\**" />
         <Content Remove="BotSettings\**" />
@@ -19,6 +19,7 @@
 
     <ItemGroup>
         <PackageReference Include="Discord.Net" Version="3.7.2" />
+        <PackageReference Include="HtmlAgilityPack" Version="1.11.43" />
         <PackageReference Include="Microsoft.Extensions.Hosting" Version="7.0.0-preview.5.22301.12" />
         <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="7.0.0-preview.5.22301.12" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.2-beta1" />
