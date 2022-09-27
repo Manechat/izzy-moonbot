@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Threading.Tasks;
+using Discord;
 using Discord.WebSocket;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Settings;
@@ -42,7 +44,7 @@ public class ModService
 
     public async Task KickUser(SocketGuildUser user, DateTimeOffset time, string? reason = null)
     {
-        //if (!_config.SafeMode) await target.KickAsync(reason);
+        if (!_config.SafeMode) await user.KickAsync(reason);
 
         await _modLog.CreateActionLog(user.Guild)
             .SetActionType(LogType.Kick)
@@ -60,18 +62,29 @@ public class ModService
             .SetTime(time)
             .SetReason(reason);
 
-        foreach (var user in users) actionLog.AddTarget(user);
-        //if (!_config.SafeMode) await target.KickAsync(reason);
+        foreach (var user in users)
+        {
+            if (!_config.SafeMode) await user.KickAsync(reason);
+            actionLog.AddTarget(user);
+        }
+
         await actionLog.Send();
     }
 
     public async Task SilenceUser(SocketGuildUser user, DateTimeOffset time, DateTimeOffset? until,
         string? reason = null)
     {
+        if (_config.MemberRole == null) throw new TargetException("MemberRole config value is null (not set)");
+        
         if (!_config.SafeMode)
         {
-            //await target.RemoveRoleAsync(_config.MemberRole);
+            await user.RemoveRoleAsync((ulong) _config.MemberRole);
 
+            if (until != null)
+            {
+                
+            }
+            
             _users[user.Id].Silenced = true;
             await FileHelper.SaveUsersAsync(_users);
         }
@@ -88,6 +101,8 @@ public class ModService
     public async Task SilenceUsers(List<SocketGuildUser> users, DateTimeOffset time, DateTimeOffset? until,
         string? reason = null)
     {
+        if (_config.MemberRole == null) throw new TargetException("MemberRole config value is null (not set)");
+        
         if (users.Count == 0) throw new NullReferenceException("users must have users in them");
         var actionLog = _modLog.CreateActionLog(users[0].Guild)
             .SetActionType(LogType.Silence)
@@ -100,7 +115,7 @@ public class ModService
             actionLog.AddTarget(user);
 
             if (_config.SafeMode) continue;
-            //await target.RemoveRoleAsync(_config.MemberRole);
+            await user.RemoveRoleAsync((ulong)_config.MemberRole);
 
             _users[user.Id].Silenced = true;
             await FileHelper.SaveUsersAsync(_users);
@@ -111,7 +126,7 @@ public class ModService
 
     public async Task AddRole(SocketGuildUser user, ulong roleId, DateTimeOffset time, string? reason = null)
     {
-        //if (!_config.SafeMode) await user.AddRoleAsync(roleId);
+        if (!_config.SafeMode) await user.AddRoleAsync(roleId);
 
         await _modLog.CreateActionLog(user.Guild)
             .SetActionType(LogType.AddRoles)
@@ -131,15 +146,17 @@ public class ModService
             .SetReason(reason);
 
         foreach (var socketGuildUser in users)
-            //if (!_config.SafeMode) await user.AddRoleAsync(roleId);
+        {
+            if (!_config.SafeMode) await socketGuildUser.AddRoleAsync(roleId);
             actionLog.AddTarget(socketGuildUser);
+        }
 
         await actionLog.Send();
     }
 
     public async Task RemoveRole(SocketGuildUser user, ulong roleId, DateTimeOffset time, string? reason = null)
     {
-        //if (!_config.SafeMode) await user.RemoveRoleAsync(roleId);
+        if (!_config.SafeMode) await user.RemoveRoleAsync(roleId);
 
         await _modLog.CreateActionLog(user.Guild)
             .SetActionType(LogType.RemoveRoles)
@@ -160,15 +177,17 @@ public class ModService
             .SetReason(reason);
 
         foreach (var socketGuildUser in users)
-            //if (!_config.SafeMode) await user.RemoveRoleAsync(roleId);
+        {
+            if (!_config.SafeMode) await socketGuildUser.RemoveRoleAsync(roleId);
             actionLog.AddTarget(socketGuildUser);
+        }
 
         await actionLog.Send();
     }
 
     public async Task AddRoles(SocketGuildUser user, List<ulong> roles, DateTimeOffset time, string? reason = null)
     {
-        //if (!_config.SafeMode) await user.AddRolesAsync(roles);
+        if (!_config.SafeMode) await user.AddRolesAsync(roles);
 
         await _modLog.CreateActionLog(user.Guild)
             .SetActionType(LogType.AddRoles)
@@ -189,15 +208,17 @@ public class ModService
             .SetReason(reason);
 
         foreach (var socketGuildUser in users)
-            //if (!_config.SafeMode) await user.AddRolesAsync(roleId);
+        {
+            if (!_config.SafeMode) await socketGuildUser.AddRolesAsync(roles);
             actionLog.AddTarget(socketGuildUser);
+        }
 
         await actionLog.Send();
     }
 
     public async Task RemoveRoles(SocketGuildUser user, List<ulong> roles, DateTimeOffset time, string? reason = null)
     {
-        //if (!_config.SafeMode) await user.RemoveRolesAsync(roles);
+        if (!_config.SafeMode) await user.RemoveRolesAsync(roles);
 
         await _modLog.CreateActionLog(user.Guild)
             .SetActionType(LogType.RemoveRoles)
@@ -218,8 +239,10 @@ public class ModService
             .SetReason(reason);
 
         foreach (var socketGuildUser in users)
-            //if (!_config.SafeMode) await user.RemoveRolesAsync(roleId);
+        {
+            if (!_config.SafeMode) await socketGuildUser.RemoveRolesAsync(roles);
             actionLog.AddTarget(socketGuildUser);
+        }
 
         await actionLog.Send();
     }
