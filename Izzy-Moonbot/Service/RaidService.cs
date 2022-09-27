@@ -120,6 +120,7 @@ public class RaidService
 
         _state.ManualRaidSilence = false;
 
+        // TODO: Use new GeneralStorage.Stowaways
         return userList.ToList();
     }
 
@@ -137,6 +138,7 @@ public class RaidService
             return $"<@{user.Id}>";
         });
 
+        // TODO: Use new GeneralStorage.Stowaways
         var stowawaysString =
             $"{Environment.NewLine}These users were autosilenced. Please run `{_config.Prefix}stowaways fix` while replying to this message to unsilence or `{_config.Prefix}stowaways kick` while replying to this message to kick.{Environment.NewLine}{string.Join(", ", userList)}{Environment.NewLine}||!stowaway-usable!||";
         if (!userList.Any()) stowawaysString = "";

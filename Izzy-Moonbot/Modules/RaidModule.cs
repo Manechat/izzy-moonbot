@@ -65,6 +65,7 @@ public class RaidModule : ModuleBase<SocketCommandContext>
 
         var userList = await _raidService.EndRaid(Context);
 
+        // TODO: Use new GeneralStorage.Stowaways
         var stowawaysString =
             $"{Environment.NewLine}These users were autosilenced. Please run `{_config.Prefix}stowaways fix` while replying to this message to unsilence or `{_config.Prefix}stowaways kick` while replying to this message to kick.{Environment.NewLine}{string.Join(", ", userList)}{Environment.NewLine}||!stowaway-usable!||";
         if (!userList.Any()) stowawaysString = "";
@@ -79,6 +80,7 @@ public class RaidModule : ModuleBase<SocketCommandContext>
     [DevCommand(Group = "Permissions")]
     public async Task StowawaysAsync([Summary("Test Identifier")] string task = "")
     {
+        // TODO: Use new GeneralStorage.Stowaways
         if (task == "")
         {
             var fixOption =
