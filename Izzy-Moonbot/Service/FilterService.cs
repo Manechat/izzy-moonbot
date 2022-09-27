@@ -123,8 +123,7 @@ public class FilterService
 
             if (shouldSilence)
             {
-                _mod.SilenceUser(context.Guild.GetUser(context.User.Id), DateTimeOffset.UtcNow, null,
-                    $"Filter violation ({category} category)");
+                _mod.SilenceUser(context.Guild.GetUser(context.User.Id), $"Filter violation ({category} category)");
                 actions.Add("silence");
             }
 

@@ -214,11 +214,11 @@ public class RaidModule : ModuleBase<SocketCommandContext>
                         _scheduleService.CreateScheduledTask(scheduledTask, socketGuildUser.Guild);
                     }
 
-                await _modService.AddRolesToUsers(users, roles, DateTimeOffset.Now, "Fixing stowaways");
+                await _modService.AddRolesToUsers(users, roles, "Fixing stowaways");
                 await ReplyAsync($"I've fixed {users.Count} stowaways.");
                 break;
             case "kick":
-                await _modService.KickUsers(users, DateTimeOffset.Now, "Kicking stowaways");
+                await _modService.KickUsers(users, "Kicking stowaways");
                 await ReplyAsync($"I've kicked {users.Count} stowaways.");
                 break;
         }

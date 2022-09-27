@@ -108,8 +108,7 @@ public class UserListener
                     ", silenced (attempted silence bypass)";
             await _logger.Log($"Generated action reason, executing action", level: LogLevel.Debug);
 
-            await _mod.AddRoles(member, roles, DateTimeOffset.Now, 
-                $"New user join{autoSilence}.{expiresString}"); 
+            await _mod.AddRoles(member, roles, $"New user join{autoSilence}.{expiresString}"); 
             await _logger.Log($"Action executed, generating moderation log content", level: LogLevel.Debug);
         }
 

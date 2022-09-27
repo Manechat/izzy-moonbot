@@ -165,10 +165,6 @@ public class ConfigDescriber
             new ConfigItem(ConfigItemType.Double,
                 "How long in seconds it takes for a user to lose `SpamBasePressure` from their pressure amount.",
                 ConfigItemCategory.Spam));
-        _config.Add("SilenceTimeout",
-            new ConfigItem(ConfigItemType.Double,
-                "How long it'll take, in seconds, for unsilence those I silence automatically as part of the spam service or the antiraid service.",
-                ConfigItemCategory.Spam, true));
 
         // Raid settings
         _config.Add("RaidProtectionEnabled",

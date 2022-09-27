@@ -86,7 +86,7 @@ public class ScheduleService
                     null,
                     level: LogLevel.Trace);
 
-                await _mod.RemoveRole(userToRemoveFrom, roleToRemove.Id, DateTimeOffset.Now, reasonForRemoval);
+                await _mod.RemoveRole(userToRemoveFrom, roleToRemove.Id, reasonForRemoval);
                 await _modLoggingService.CreateModLog(guild)
                     .SetContent(
                         $"Removed <@&{roleToRemove.Id}> from <@{userToRemoveFrom.Id}> (`{userToRemoveFrom.Id}`)")
@@ -104,7 +104,7 @@ public class ScheduleService
                     null,
                     level: LogLevel.Trace);
 
-                await _mod.RemoveRole(userToAddTo, roleToAdd.Id, DateTimeOffset.Now, reasonForAdding);
+                await _mod.RemoveRole(userToAddTo, roleToAdd.Id, reasonForAdding);
                 await _modLoggingService.CreateModLog(guild)
                     .SetContent(
                         $"Gave <@&{roleToAdd.Id}> to <@{userToAddTo.Id}> (`{userToAddTo.Id}`)")

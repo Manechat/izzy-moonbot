@@ -276,7 +276,7 @@ public class SpamService
         SocketUserMessage message, SocketGuildUser user, SocketCommandContext context)
     {
         // Silence user, this also logs the action.
-        await _mod.SilenceUser(user, DateTimeOffset.UtcNow, null, $"Exceeded pressure max ({pressure}/{_config.SpamMaxPressure}) in <#{message.Channel.Id}>");
+        await _mod.SilenceUser(user, $"Exceeded pressure max ({pressure}/{_config.SpamMaxPressure}) in <#{message.Channel.Id}>");
         
         // Remove all messages considered part of spam.
         foreach (var previousMessageItem in _users[id].PreviousMessages)

@@ -70,24 +70,7 @@ public class RaidService
             return member;
         }).Where(member => member != null).ToList();
 
-        DateTimeOffset? muteUntil = null;
-        if (_config.SilenceTimeout.HasValue)
-            muteUntil = DateTimeOffset.Now.AddSeconds(_config.SilenceTimeout.Value);
-
-        await _modService.SilenceUsers(recentJoins, DateTimeOffset.Now, muteUntil, "Suspected raider");
-
-        /*_state.RecentJoins.ForEach(async (userId) =>
-        {
-            SocketGuildUser member = context.Guild.GetUser(userId);
-
-            if (member != null)
-            {
-                DateTimeOffset? muteUntil = null;
-                if (_config.SilenceTimeout.HasValue) muteUntil = DateTimeOffset.Now.AddSeconds(_config.SilenceTimeout.Value);
-
-                await _modService.SilenceUser(member, DateTimeOffset.Now, muteUntil, "Suspected raider");
-            }
-        });*/
+        await _modService.SilenceUsers(recentJoins, "Suspected raider");
 
         _state.ManualRaidSilence = true;
 
@@ -281,11 +264,7 @@ public class RaidService
                 return member;
             }).Where(member => member != null).ToList();
 
-            DateTimeOffset? muteUntil = null;
-            if (_config.SilenceTimeout.HasValue)
-                muteUntil = DateTimeOffset.Now.AddSeconds(_config.SilenceTimeout.Value);
-
-            await _modService.SilenceUsers(recentJoins, DateTimeOffset.Now, muteUntil, "Suspected raider");
+            await _modService.SilenceUsers(recentJoins, "Suspected raider");
 
             _state.RecentJoins.ForEach(async userId =>
             {
@@ -304,14 +283,10 @@ public class RaidService
                     if (member.JoinedAt.HasValue) joinDate = $"<t:{member.JoinedAt.Value.ToUnixTimeSeconds()}:F>";
                     potentialRaiders.Add($"{member.Username}#{member.Discriminator} (joined: {joinDate})");
 
-                    /*if (member.Roles.Any(role => role.Id == _config.MemberRole))
+                    if (member.Roles.Any(role => role.Id == _config.MemberRole))
                     {
-                        DateTimeOffset? muteUntil = null;
-                        if (_config.SilenceTimeout.HasValue)
-                            muteUntil = DateTimeOffset.Now.AddSeconds(_config.SilenceTimeout.Value);
-
-                        await _modService.SilenceUser(member, DateTimeOffset.Now, muteUntil, "Suspected raider");
-                    }*/
+                        await _modService.SilenceUser(member, "Suspected raider");
+                    }
                 }
             });
 

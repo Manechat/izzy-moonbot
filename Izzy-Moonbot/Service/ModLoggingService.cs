@@ -123,6 +123,13 @@ public class ActionLogConstructor
         return this;
     }
 
+    public ActionLogConstructor AddTargets(IEnumerable<SocketGuildUser> targets)
+    {
+        if (_targets == null) _targets = new List<SocketGuildUser>();
+        _targets.AddRange(targets);
+        return this;
+    }
+
     public ActionLogConstructor SetTime(DateTimeOffset time)
     {
         _time = time;
@@ -148,7 +155,7 @@ public class ActionLogConstructor
         return this;
     }
 
-    public ActionLogConstructor AddRoles(List<ulong> roles)
+    public ActionLogConstructor AddRoles(IEnumerable<ulong> roles)
     {
         if (_roles == null) _roles = new List<ulong>();
         _roles.AddRange(roles);
