@@ -143,18 +143,17 @@ public class FilterService
     public async Task ProcessMessageUpdate(Cacheable<IMessage, ulong> oldMessage, SocketMessage newMessage,
         ISocketMessageChannel channel, DiscordSocketClient client)
     {
-        if (!_config.FilterMonitorEdits) return;
-        
-        if (newMessage.Author is not SocketGuildUser user) return;
-        if (newMessage.Type != MessageType.Default && newMessage.Type !=
-            MessageType.Reply && newMessage.Type != MessageType.ThreadStarterMessage) return;
-        if(newMessage is not SocketUserMessage message) return;
-
+        if (!_config.FilterEnabled || !_config.FilterMonitorEdits) return;
+        if (!DiscordHelper.IsInGuild(newMessage)) return;
+        if (!DiscordHelper.IsProcessableMessage(newMessage)) return; // Not processable
+        if (newMessage is not SocketUserMessage message) return; // Not processable
         SocketCommandContext context = new SocketCommandContext(client, message);
         
-        var channelIds = context.Guild.TextChannels.Select(channel => channel.Id).ToList();
-        if (_config.FilterIgnoredChannels.Overlaps(channelIds)) return;
+        if (_config.ThreadOnlyMode &&
+            (message.Channel.GetChannelType() != ChannelType.PublicThread &&
+             message.Channel.GetChannelType() != ChannelType.PrivateThread)) return; // Not a thread, in thread only mode
 
+        if (_config.FilterIgnoredChannels.Contains(context.Channel.Id)) return;
         foreach (var (category, words) in _config.FilteredWords)
         {
             var filteredWords = words.ToArray().ToList();
@@ -163,13 +162,14 @@ public class FilterService
             filteredWords.Add(_testString[0] + category + _testString[1]);
 #endif
 
+
             foreach (var word in filteredWords)
             {
                 if (trip) continue;
                 if (context.Message.Content.Contains(word))
                 {
                     // Filter Trip!
-                    await ProcessFilterTrip(context, word, category, true);
+                    await ProcessFilterTrip(context, word, category);
                     trip = true;
                 }
             }
