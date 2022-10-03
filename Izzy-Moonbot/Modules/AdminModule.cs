@@ -102,7 +102,7 @@ public class AdminModule : ModuleBase<SocketCommandContext>
                 await Context.Message.ReplyAsync(
                     $"Done! I discovered {Context.Guild.Users.Count} members, of which{Environment.NewLine}" +
                     $"{newUserCount} were unknown to me until now,{Environment.NewLine}" +
-                    $"{reloadUserCount} had out of date Username and Alias information,{Environment.NewLine}" +
+                    $"{reloadUserCount} had out of date information,{Environment.NewLine}" +
                     $"and {knownUserCount} didn't need to be updated.");
             });
     }
