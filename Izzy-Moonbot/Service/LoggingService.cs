@@ -1,68 +1,60 @@
-﻿namespace Izzy_Moonbot.Service
+﻿using System;
+using System.Diagnostics;
+using System.IO;
+using System.Threading.Tasks;
+using Discord.Commands;
+using Izzy_Moonbot.Helpers;
+using Microsoft.Extensions.Logging;
+
+namespace Izzy_Moonbot.Service;
+
+public class LoggingService
 {
-    using Discord.Commands;
-    using Izzy_Moonbot.Helpers;
-    using Microsoft.Extensions.Logging;
-    using System;
-    using System.IO;
-    using System.Threading.Tasks;
+    private readonly ILogger<Worker> _logger;
 
-    public class LoggingService
+    public LoggingService(ILogger<Worker> logger)
     {
-        private readonly ILogger<Worker> _logger;
+        _logger = logger;
+    }
 
-        public LoggingService(ILogger<Worker> logger)
+    public async Task Log(string message, SocketCommandContext context = null, bool file = false,
+        LogLevel level = LogLevel.Information)
+    {
+        if (file) await AppendToFileAsync(message, context);
+        
+        var logMessage = PrepareMessageForLogging(message, context);
+        //_logger.LogInformation(logMessage, level);
+        _logger.Log(level, logMessage);
+    }
+
+    private static string PrepareMessageForLogging(string message, SocketCommandContext context, bool fileEntry = false,
+        bool header = false)
+    {
+        var logMessage = "";
+        if (!header)
         {
-            _logger = logger;
+            //logMessage += $"[{DateTime.UtcNow:s}] ";
         }
 
-        public async Task Log(string message, SocketCommandContext context, bool file = false)
+        if (context != null)
         {
-            if (file)
-            {
-                await AppendToFileAsync(message, context);
-            }
-
-            var logMessage = PrepareMessageForLogging(message, context);
-            _logger.LogInformation(logMessage);
-        }
-
-        private static string PrepareMessageForLogging(string message, SocketCommandContext context, bool fileEntry = false, bool header = false)
-        {
-            var logMessage = "";
-            if (!header)
-            {
-                logMessage += $"[{DateTime.UtcNow:s}] ";
-            }
-
             if (context.IsPrivate)
             {
                 if (!fileEntry)
-                {
-                    logMessage += $"DM with @{context.User.Username}#{context.User.Discriminator} ({context.User.Id})";
-                }
+                    logMessage +=
+                        $"DM with @{context.User.Username}#{context.User.Discriminator} ({context.User.Id})";
 
-                if (!fileEntry && !header)
-                {
-                    logMessage += ", ";
-                }
+                if (!fileEntry && !header) logMessage += ", ";
 
-                if (!header)
-                {
-                    logMessage += message;
-                }
+                if (!header) logMessage += message;
             }
             else
             {
                 if (!fileEntry)
-                {
-                    logMessage += $"server: {context.Guild.Name} ({context.Guild.Id}) #{context.Channel.Name} ({context.Channel.Id})";
-                }
+                    logMessage +=
+                        $"server: {context.Guild.Name} ({context.Guild.Id}) #{context.Channel.Name} ({context.Channel.Id})";
 
-                if (!fileEntry && !header)
-                {
-                    logMessage += " ";
-                }
+                if (!fileEntry && !header) logMessage += " ";
 
                 if (!header)
                 {
@@ -70,25 +62,24 @@
                     logMessage += message;
                 }
             }
-
-            if (fileEntry || header)
-            {
-                logMessage += Environment.NewLine;
-            }
-
-            return logMessage;
         }
-
-        private static async Task AppendToFileAsync(string message, SocketCommandContext context)
+        else
         {
-            var filepath = FileHelper.SetUpFilepath(FilePathType.Channel, "<date>", "log", context);
-            if (!File.Exists(filepath))
-            {
-                await File.WriteAllTextAsync(filepath, PrepareMessageForLogging(message, context, false, true));
-            }
-
-            var logMessage = PrepareMessageForLogging(message, context, true);
-            await File.AppendAllTextAsync(filepath, logMessage);
+            logMessage += message;
         }
+
+        if (fileEntry || header) logMessage += Environment.NewLine;
+
+        return logMessage;
+    }
+
+    private static async Task AppendToFileAsync(string message, SocketCommandContext context)
+    {
+        var filepath = FileHelper.SetUpFilepath(FilePathType.Channel, "<date>", "log", context);
+        if (!File.Exists(filepath))
+            await File.WriteAllTextAsync(filepath, PrepareMessageForLogging(message, context, false, true));
+
+        var logMessage = PrepareMessageForLogging(message, context, true);
+        await File.AppendAllTextAsync(filepath, logMessage);
     }
 }
