@@ -41,9 +41,13 @@ public class MessageListener
             await _logger.Log($"User does not exist?", context, level: LogLevel.Warning);
             return;
         }
+
+        var changed = false;
         
         if (!_users.ContainsKey(user.Id))
         {
+            changed = true;
+            await _logger.Log($"User has no metadata, creating now...", context, level: LogLevel.Debug);
             var newUser = new User();
             newUser.Username = $"{user.Username}#{user.Discriminator}";
             newUser.Aliases.Add(user.Username);
@@ -52,24 +56,30 @@ public class MessageListener
         }
         else
         {
-            if (_users[user.Id].Username == "")
+            if (_users[user.Id].Username != $"{user.Username}#{user.Discriminator}")
             {
+                await _logger.Log($"User name/discriminator changed from {_users[user.Id].Username} to {user.Username}#{user.Discriminator}, updating...", context, level: LogLevel.Debug);
                 _users[user.Id].Username =
                     $"{user.Username}#{user.Discriminator}";
+                changed = true;
             }
 
             if (!_users[user.Id].Aliases.Contains(user.DisplayName))
             {
+                await _logger.Log($"User has new displayname, updating...", context, level: LogLevel.Debug);
                 _users[user.Id].Aliases.Add(user.DisplayName);
+                changed = true;
             }
 
             if (user.JoinedAt.HasValue &&
                 !_users[user.Id].Joins.Contains(user.JoinedAt.Value))
             {
+                await _logger.Log($"User's recent join not in joins list, updating....", context, level: LogLevel.Debug);
                 _users[user.Id].Joins.Add(user.JoinedAt.Value);
+                changed = true;
             }
         }
 
-        await FileHelper.SaveUsersAsync(_users);
+        if(changed) await FileHelper.SaveUsersAsync(_users);
     }
 }
