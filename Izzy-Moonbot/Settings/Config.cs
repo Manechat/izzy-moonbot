@@ -27,7 +27,7 @@ public class Config
         LogChannel = 0;
 
         // User based settings
-        GiveRolesOnJoin = true;
+        ManageNewUserRoles = true;
         MemberRole = 0;
         NewMemberRole = 0;
         NewMemberRoleDecay = 0;
@@ -92,7 +92,7 @@ public class Config
     public ulong LogChannel { get; set; }
 
     // User based settings
-    public bool GiveRolesOnJoin { get; set; }
+    public bool ManageNewUserRoles { get; set; }
     public ulong? MemberRole { get; set; }
     public ulong? NewMemberRole { get; set; }
     public double NewMemberRoleDecay { get; set; }

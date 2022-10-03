@@ -67,13 +67,13 @@ public class UserListener
         string expiresString = "";
 
         await _logger.Log($"Processing roles for new user join", level: LogLevel.Debug);
-        if (_config.GiveRolesOnJoin && _config.MemberRole != null && !(_config.AutoSilenceNewJoins || _users[member.Id].Silenced))
+        if (_config.ManageNewUserRoles && _config.MemberRole != null && !(_config.AutoSilenceNewJoins || _users[member.Id].Silenced))
         {
             await _logger.Log($"Adding Config.MemberRole ({_config.MemberRole}) to new user", level: LogLevel.Debug);
             roles.Add((ulong)_config.MemberRole);
         }
 
-        if (_config.GiveRolesOnJoin && _config.NewMemberRole != null && (!_config.AutoSilenceNewJoins || !_users[member.Id].Silenced))
+        if (_config.ManageNewUserRoles && _config.NewMemberRole != null && (!_config.AutoSilenceNewJoins || !_users[member.Id].Silenced))
         {
             await _logger.Log($"Adding Config.NewMemberRole ({_config.NewMemberRole}) to new user", level: LogLevel.Debug);
             roles.Add((ulong)_config.NewMemberRole);
