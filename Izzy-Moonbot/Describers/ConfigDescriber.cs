@@ -66,7 +66,7 @@ public class ConfigDescriber
                 ConfigItemCategory.Moderation));
 
         // User based settings
-        _config.Add("GiveRolesOnJoin",
+        _config.Add("ManageNewUserRoles",
             new ConfigItem(ConfigItemType.Boolean,
                 "Whether I'll give roles to users on join.",
                 ConfigItemCategory.User));
