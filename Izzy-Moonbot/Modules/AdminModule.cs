@@ -65,6 +65,7 @@ public class AdminModule : ModuleBase<SocketCommandContext>
                         var newUser = new User();
                         newUser.Username = $"{socketGuildUser.Username}#{socketGuildUser.Discriminator}";
                         newUser.Aliases.Add(socketGuildUser.Username);
+                        if(socketGuildUser.JoinedAt.HasValue) newUser.Joins.Add(socketGuildUser.JoinedAt.Value);
                         _users.Add(socketGuildUser.Id, newUser);
                         newUserCount += 1;
                     }
