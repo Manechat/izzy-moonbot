@@ -72,7 +72,7 @@ public class AdminModule : ModuleBase<SocketCommandContext>
                     else
                     {
                         var skip = false;
-                        if (_users[socketGuildUser.Id].Username == "")
+                        if (_users[socketGuildUser.Id].Username != $"{socketGuildUser.Username}#{socketGuildUser.Discriminator}")
                         {
                             _users[socketGuildUser.Id].Username =
                                 $"{socketGuildUser.Username}#{socketGuildUser.Discriminator}";
