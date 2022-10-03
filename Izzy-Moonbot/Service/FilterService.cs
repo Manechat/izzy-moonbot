@@ -61,19 +61,19 @@ public class FilterService
             .WithTimestamp(onEdit ? (DateTimeOffset)context.Message.EditedTimestamp : context.Message.Timestamp);
 
         var actions = new List<string>();
-        actions.Add(":x: - **I've deleted the offending message**");
+        actions.Add(":x: - **I've deleted the offending message.**");
 
         if (actionsTaken.Contains("message"))
             actions.Add(
-                $":speech_balloon: - **I've sent a message in response**");
-        if (actionsTaken.Contains("silence")) actions.Add(":mute: - **I've silenced the user**");
+                $":speech_balloon: - **I've sent a message in response.**");
+        if (actionsTaken.Contains("silence")) actions.Add(":mute: - **I've silenced the user.**");
 
         var roleIds = context.Guild.GetUser(context.User.Id).Roles.Select(role => role.Id).ToList();
         if (_config.FilterBypassRoles.Overlaps(roleIds))
         {
             actions.Clear();
             actions.Add(
-                ":information_source: - **I've done nothing as this user has a role which is in `FilterBypassRoles`.");
+                ":information_source: - **I've done nothing as this user has a role which is in `FilterBypassRoles`.**");
         }
 
         if (_config.SafeMode)
@@ -83,7 +83,7 @@ public class FilterService
             embedBuilder.AddField("What have I done in response?", string.Join(Environment.NewLine, actions));
 
         await _modLog.CreateModLog(context.Guild)
-            .SetContent($"<@&{_config.ModRole}>")
+            .SetContent($"<@&{_config.ModRole}> Filter Violation for <@{context.User.Id}>")
             .SetEmbed(embedBuilder.Build())
             .Send();
     }
