@@ -352,3 +352,7 @@ MigrationBackup/
 # local bot settings files
 botsettings/
 devsettings/
+
+# User Secrets
+appsettings.json
+./Izzy-Moonbot/appsettings.json
