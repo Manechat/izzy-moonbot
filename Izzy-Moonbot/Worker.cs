@@ -36,13 +36,14 @@ namespace Izzy_Moonbot
         private readonly Config _config;
         private readonly Dictionary<ulong, User> _users;
         private readonly UserListener _userListener;
+        private readonly MessageListener _messageListener;
         private DiscordSocketClient _client;
         public bool hasProgrammingSocks = true;
         public int LaserCount = 10;
 
         public Worker(ILogger<Worker> logger, ModLoggingService modLog, IServiceCollection services, ModService modService, RaidService raidService,
             FilterService filterService, ScheduleService scheduleService, IOptions<DiscordSettings> discordSettings,
-            Config config, Dictionary<ulong, User> users, UserListener userListener, SpamService spamService)
+            Config config, Dictionary<ulong, User> users, UserListener userListener, SpamService spamService, MessageListener messageListener)
         {
             _logger = logger;
             _modLog = modLog;
@@ -57,6 +58,7 @@ namespace Izzy_Moonbot
             _users = users;
             _userListener = userListener;
             _spamService = spamService;
+            _messageListener = messageListener;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -81,6 +83,7 @@ namespace Izzy_Moonbot
                 await InstallCommandsAsync();
                 
                 _userListener.RegisterEvents(_client);
+                _messageListener.RegisterEvents(_client);
                 
                 _spamService.RegisterEvents(_client);
                 _raidService.RegisterEvents(_client);
