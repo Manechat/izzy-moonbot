@@ -80,6 +80,7 @@ public class Program
             
             // EventListeners
             services.AddSingleton<UserListener>();
+            services.AddSingleton<MessageListener>();
             
             // Misc
             services.AddTransient<IDateTimeService, DateTimeService>();
