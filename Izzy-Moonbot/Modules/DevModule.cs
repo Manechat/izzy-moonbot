@@ -46,6 +46,7 @@ public class DevModule : ModuleBase<SocketCommandContext>
 
     [Command("test")]
     [Summary("Unit tests for Izzy Moonbow")]
+    [DevCommand]
     public async Task TestCommandAsync([Summary("Test Identifier")] string testId = "",
         [Remainder] [Summary("Test arguments")]
         string argString = "")
