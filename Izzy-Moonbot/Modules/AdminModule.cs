@@ -196,10 +196,18 @@ public class AdminModule : ModuleBase<SocketCommandContext>
                 }
             }
 
-            var stowawayStringList = stowawayList.Select(user => $"<@{user.Id}>");
+            if (stowawayList.Count == 0)
+            {
+                // There's no stowaways
+                await ReplyAsync("I didn't find any stowaways.");
+            }
+            else
+            {
+                var stowawayStringList = stowawayList.Select(user => $"<@{user.Id}>");
 
-            await ReplyAsync(
-                $"I found these following stowaways:{Environment.NewLine}{string.Join(", ", stowawayStringList)}");
+                await ReplyAsync(
+                    $"I found these following stowaways:{Environment.NewLine}{string.Join(", ", stowawayStringList)}");
+            }
         });
     }
 }
