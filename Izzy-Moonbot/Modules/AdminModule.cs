@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
+using Discord.WebSocket;
 using Izzy_Moonbot.Attributes;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Service;
@@ -162,5 +163,43 @@ public class AdminModule : ModuleBase<SocketCommandContext>
         _state.LastMentionResponse = DateTimeOffset.UtcNow;
 
         await ReplyAsync($"{response}");
+    }
+
+    [Command("stowaways")]
+    [Summary("List users who do not have the member role.")]
+    [RequireContext(ContextType.Guild)]
+    [ModCommand(Group = "Permissions")]
+    [DevCommand(Group = "Permissions")]
+    public async Task StowawaysCommandAsync()
+    {
+        if (_config.MemberRole == null)
+        {
+            await ReplyAsync(
+                "I'm unable to detect stowaways because the `MemberRole` config value is set to nothing.");
+            return;
+        }
+            
+        await Task.Run(async () =>
+        {
+            if (!Context.Guild.HasAllMembers) await Context.Guild.DownloadUsersAsync();
+
+            var stowawayList = new HashSet<SocketGuildUser>();
+            
+            await foreach (var socketGuildUser in Context.Guild.Users.ToAsyncEnumerable())
+            {
+                if (socketGuildUser.IsBot) continue; // Bots aren't stowaways
+
+                if (!socketGuildUser.Roles.Select(role => role.Id).Contains((ulong)_config.MemberRole))
+                {
+                    // Doesn't have member role, add to stowaway list.
+                    stowawayList.Add(socketGuildUser);
+                }
+            }
+
+            var stowawayStringList = stowawayList.Select(user => $"<@{user.Id}>");
+
+            await ReplyAsync(
+                $"I found these following stowaways:{Environment.NewLine}{string.Join(", ", stowawayStringList)}");
+        });
     }
 }
