@@ -327,6 +327,7 @@ public class DevModule : ModuleBase<SocketCommandContext>
         [DevCommand]
         public async Task ScheduleCommandAsync([Summary("Action")] string action = "", [Summary("[...]")][Remainder] string argsString = "")
         {
+            // TODO: Reprogram this command to be much more user-friendly. [REQUIRES: TimeHelper]
             if (action == "")
             {
                 await ReplyAsync($"Invalid usage, please refer to proper usage below:{Environment.NewLine}" +
@@ -334,7 +335,8 @@ public class DevModule : ModuleBase<SocketCommandContext>
                                  $"`{_config.Prefix}schedule list` - List all scheduled tasks.{Environment.NewLine}" +
                                  $"`{_config.Prefix}schedule get <id>` - Get scheduled task by ID.{Environment.NewLine}" +
                                  $"`{_config.Prefix}schedule modify <id> <schedule task string>` - Modify scheduled task to new data.{Environment.NewLine}" +
-                                 $"`{_config.Prefix}schedule reschedule <id> <timestamp>` - Change execution time.{Environment.NewLine}" +
+                                 $"`{_config.Prefix}schedule reschedule <id> <timestamp>` - Change next execution time.{Environment.NewLine}" +
+                                 $"`{_config.Prefix}schedule repeat <id> <true/false>` - Change whether this task repeats or not.{Environment.NewLine}" +
                                  $"`{_config.Prefix}schedule delete <id>` - Delete scheduled task.{Environment.NewLine}" +
                                  $"`{_config.Prefix}schedule create <timestamp> <action string>` - Create scheduled task.{Environment.NewLine}{Environment.NewLine}"+
                                  $"*Please note that IDs are not persistent and will change as scheduled tasks are processed.*");
