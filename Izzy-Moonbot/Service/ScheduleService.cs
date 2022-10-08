@@ -51,7 +51,8 @@ public class ScheduleService
                 _logging.Log("Executing following task due to immediate on startup", null,
                     level: LogLevel.Trace);
                 ExecuteTask(scheduledTask.Action, guild);
-                DeleteScheduledTask(scheduledTask);
+                
+                DeleteScheduledTaskOrRepeat(scheduledTask);
             }
             else
             {
@@ -64,7 +65,7 @@ public class ScheduleService
                     _logging.Log("Executing following task due to time passing after restart", null,
                         level: LogLevel.Trace);
                     await ExecuteTask(scheduledTask.Action, guild);
-                    await DeleteScheduledTask(scheduledTask);
+                    await DeleteScheduledTaskOrRepeat(scheduledTask);
                 });
             }
         });
@@ -158,7 +159,7 @@ public class ScheduleService
             _logging.Log("Executing following task due to time passing", null,
                 level: LogLevel.Trace);
             ExecuteTask(task.Action, guild);
-            DeleteScheduledTask(task);
+            DeleteScheduledTaskOrRepeat(task);
         });
 
         return task;
@@ -170,6 +171,41 @@ public class ScheduleService
         if (result == null) return null;
         await FileHelper.SaveScheduleAsync(_scheduledTasks);
         return task;
+    }
+
+    private async Task<ScheduledTask> DeleteScheduledTaskOrRepeat(ScheduledTask task)
+    {
+        // Calls DeleteScheduledTask if scheduled task doesn't repeat,
+        // Else changes ExecuteAt to be the current time + difference between LastExecutedAt/CreatedAt and ExecuteAt.
+        if (task.Repeatable)
+        {
+            // Modify task to allow repeatability.
+            var taskIndex = _scheduledTasks.FindIndex(scheduledTask => scheduledTask.Id == task.Id);
+            
+            // Get LastExecutedAt, or CreatedAt if former is null as well as the execution time.
+            var creationAt = task.LastExecutedAt ?? task.CreatedAt;
+            var executeAt = task.ExecuteAt;
+            
+            // Get the offset.
+            var repeatEvery = executeAt - creationAt;
+            
+            // Get the timestamp of next execution.
+            var nextExecuteAt = DateTimeOffset.UtcNow + repeatEvery;
+            
+            // Set previous execution time and new execution time
+            task.LastExecutedAt = executeAt;
+            task.ExecuteAt = nextExecuteAt;
+            
+            // Update the task and save
+            _scheduledTasks[taskIndex] = task;
+            await FileHelper.SaveScheduleAsync(_scheduledTasks);
+            
+            // Return the new task
+            return task;
+        }
+
+        // Just delete
+        return await DeleteScheduledTask(task);
     }
 
     public async Task<ScheduledTask> ModifyScheduledTask(ScheduledTask originalTask, ScheduledTask newTask)
