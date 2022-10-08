@@ -7,11 +7,13 @@ public class ScheduledTask
 {
     public ScheduledTask(DateTimeOffset createdAt, DateTimeOffset executeAt, ScheduledTaskAction action)
     {
+        Id = Guid.NewGuid().ToString();
         CreatedAt = createdAt;
         ExecuteAt = executeAt;
         Action = action;
     }
 
+    public string Id { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset ExecuteAt { get; set; }
     public ScheduledTaskAction Action { get; set; }
