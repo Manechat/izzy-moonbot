@@ -16,7 +16,7 @@ public static class TimeHelper
 
         var relativeMonths = new[]
         {
-            "years", "year", "months", "month", "days", "day", "weeks", "week", "days", "day", "hours", "hour"
+            "years", "year", "months", "month", "days", "day", "weeks", "week", "days", "day", "hours", "hour", "minutes", "minute", "seconds", "second"
         };
 
         var absoluteMonths = new[]
