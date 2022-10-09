@@ -279,7 +279,7 @@ public class DevModule : ModuleBase<SocketCommandContext>
                     var time = TimeHelper.Convert(timestring);
 
                     await ReplyAsync($"Successfully converted {timestring} to a DateTimeOffset.{Environment.NewLine}" +
-                                     $"DateTime: {time.Time.ToString()}{Environment.NewLine}" +
+                                     $"DateTime: <t:{time.Time.ToUnixTimeSeconds()}:F> (<t:{time.Time.ToUnixTimeSeconds()}:R>){Environment.NewLine}" +
                                      $"Repeats: {(time.Repeats ? "yes" : "no")}{Environment.NewLine}" +
                                      $"Repeats every: {time.RepeatType ?? "Doesn't repeat"}");
                 }

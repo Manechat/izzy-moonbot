@@ -11,7 +11,7 @@ public static class TimeHelper
     public static TimeHelperResponse Convert(string input)
     {
         var timeFormatRegex = new Regex(
-            "^(?<query1>every |in |on |)(?<weekday>monday|tuesday|wednesday|thursday|friday|saturday|sunday|mon|tue|wed|thu|fri|sat|sun|)(?<query2>(?<date>a|\\d\\d|\\d|\\d\\dst|\\dst|\\d\\dnd|\\dnd|\\d\\drd|\\drd|\\d\\dth|\\dth) | at )(?<month>years|year|months|month|days|day|weeks|week|days|day|hours|hour|minutes|minute|seconds|second|january|february|march|april|june|july|august|september|october|november|december|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|)(?<year> \\d\\d| \\d\\d\\d\\d|)(?<query3> at |)(?<time>\\d\\d:\\d\\d|\\d:\\d\\d|\\d\\d|\\d|\\dpm|\\d:\\d\\dpm|\\d\\d:\\d\\dpm|\\d\\dpm|\\dam|\\d:\\d\\dam|\\d\\dam|\\d\\d:\\d\\dam|)$",
+            "^(?<query1>every |in |on |on the |at |)(?<weekday>monday|tuesday|wednesday|thursday|friday|saturday|sunday|mon|tue|wed|thu|fri|sat|sun|)(?<query2>(?<date>a |\\d\\d |\\d |\\d\\dst |\\dst |\\d\\dnd |\\dnd |\\d\\drd |\\drd |\\d\\dth |\\dth |)| at )(of )?(?<month>years|year|months|month|days|day|weeks|week|days|day|hours|hour|minutes|minute|seconds|second|january|february|march|april|june|july|august|september|october|november|december|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|)(?<year> \\d\\d| \\d\\d\\d\\d|)(?<query3> at |)(?<time>\\d\\d:\\d\\d|\\d:\\d\\d|\\d\\d|\\d|\\dpm|\\d:\\d\\dpm|\\d\\d:\\d\\dpm|\\d\\dpm|\\dam|\\d:\\d\\dam|\\d\\dam|\\d\\d:\\d\\dam|)$",
             RegexOptions.IgnoreCase);
 
         var relativeMonths = new[]
@@ -44,101 +44,146 @@ public static class TimeHelper
                 if (query1.Value.Trim().ToLower() == "in")
                 {
                     // Relative time
-                    if(!date.Success || !month.Success) throw new FormatException("BAD_FORMAT: The provided string doesn't match any possible date format.");
-                    if(!relativeMonths.Contains(month.Value.Trim().ToLower())) throw new FormatException("UNKNOWN_RELATIVE_MONTH: The provided relative month isn't a relative month.");
-                    return ConvertRelative(date.Value, month.Value);
+                    if (date.Value.Trim().ToLower() == "" || month.Value.Trim().ToLower() == "")
+                        throw new FormatException(
+                            "BAD_FORMAT: The provided string doesn't match any possible date format.");
+                    if (!relativeMonths.Contains(month.Value.Trim().ToLower()))
+                        throw new FormatException(
+                            "UNKNOWN_RELATIVE_MONTH: The provided relative month isn't a relative month.");
+                    return ConvertRelative(date.Value.Trim().ToLower(), month.Value.Trim().ToLower());
                 }
-                if (query1.Value.Trim().ToLower() == "on")
+
+                if (query1.Value.Trim().ToLower() == "on" || query1.Value.Trim().ToLower() == "on the")
                 {
                     // Absolute time, but can be exact date or relative to week
-                    if (weekday.Success &&
-                        (query2.Success && query2.Value.Trim().ToLower() == "at") &&
-                        time.Success)
+                    if (weekday.Value.Trim().ToLower() != "" &&
+                        query3.Value.Trim().ToLower() == "at" &&
+                        time.Value.Trim().ToLower() != "")
                     {
                         // Most likely a weekly 
                         return ConvertWeekRelative(weekday.Value.Trim().ToLower(), time.Value.Trim().ToLower());
                     }
+
                     if (
-                        date.Success &&
-                        query3.Success && query3.Value.Trim().ToLower() == "at" &&
-                        time.Success
+                        date.Value.Trim().ToLower() != "" &&
+                        query3.Value.Trim().ToLower() == "at" &&
+                        time.Value.Trim().ToLower() != ""
                     )
                     {
-                        if(!absoluteMonths.Contains(month.Value.Trim().ToLower())) throw new FormatException("UNKNOWN_ABSOLUTE_MONTH: The provided month isn't a month.");
+                        if (!absoluteMonths.Contains(month.Value.Trim().ToLower()))
+                            throw new FormatException("UNKNOWN_ABSOLUTE_MONTH: The provided month isn't a month.");
 
-                        return ConvertAbsolute(date.Value.Trim().ToLower(), month.Value.Trim().ToLower(), year.Success ? year.Value.Trim().ToLower() : DateTimeOffset.UtcNow.Year.ToString(), time.Value.Trim().ToLower());
+                        return ConvertAbsolute(date.Value.Trim().ToLower(), month.Value.Trim().ToLower(),
+                            year.Value.Trim().ToLower() != ""
+                                ? year.Value.Trim().ToLower()
+                                : DateTimeOffset.UtcNow.Year.ToString(), time.Value.Trim().ToLower());
                     }
+                    
+                    throw new FormatException("UNKNOWN_QUERY: The provided string doesn't match any possible date format.");
+                }
+
+                if (query1.Value.Trim().ToLower() == "at")
+                {
+                    // Accurate time, relative date
+                    if (time.Value.Trim().ToLower() == "")
+                        throw new FormatException(
+                            "BAD_FORMAT: The provided string doesn't match any possible date format.");
+                    return ConvertTimeRelative(time.Value.Trim().ToLower());
                 }
                 if (query1.Value.Trim().ToLower() == "every")
                 {
                     if (
-                        date.Success && month.Success &&
+                        month.Value.Trim().ToLower() != "" &&
                         relativeMonths.Contains(month.Value.Trim().ToLower()) &&
-                        !query3.Success && !time.Success
-                    )
+                        query3.Value.Trim().ToLower() == "" && time.Value.Trim().ToLower() == ""
+                        )
                         return ConvertRepeatingRelative(date.Value.Trim().ToLower(), month.Value.Trim().ToLower());
-                    
-                    if (weekday.Success &&
-                        (query2.Success && query2.Value.Trim().ToLower() == "at") &&
-                        time.Success)
+
+                    if (
+                        weekday.Value.Trim().ToLower() != "" &&
+                        query3.Value.Trim().ToLower() == "at" &&
+                        time.Value.Trim().ToLower() != ""
+                        )
                         return ConvertRepeatingWeekRelative(weekday.Value.Trim().ToLower(),
                             time.Value.Trim().ToLower());
+
+                    if (
+                        time.Value.Trim().ToLower() != "" &&
+                        month.Value.Trim().ToLower() == "day" &&
+                        query3.Value.Trim().ToLower() == "at" &&
+                        weekday.Value.Trim().ToLower() == "" &&
+                        date.Value.Trim().ToLower() == ""
+                    )
+                        return ConvertRepeatingTimeRelative(time.Value.Trim().ToLower());
                     
                     if (
-                        date.Success &&
+                        date.Value.Trim().ToLower() != "" &&
                         absoluteMonths.Contains(month.Value.Trim().ToLower()) &&
-                        query3.Success && query3.Value.Trim().ToLower() == "at" &&
-                        time.Success
-                    )
+                        query3.Value.Trim().ToLower() == "at" &&
+                        time.Value.Trim().ToLower() != ""
+                        )
                         return ConvertRepeatingAbsolute(date.Value.Trim().ToLower(), month.Value.Trim().ToLower(),
                             time.Value.Trim().ToLower());
+                    
+                    throw new FormatException("UNKNOWN_QUERY: The provided string doesn't match any possible date format.");
                 }
                 
+                // We must judge from what we've been given to work out what to expect
+                /*
+                     * Relative:
+                     *      query2 and date match
+                     *      month is "years|year|months|month|days|day|weeks|week|days|day|hours|hour|minutes|minute|seconds|second"
+                     *      rest unset
+                     *
+                     * Relative week:
+                     *      weekday is set
+                     *      query2 is "at"
+                     *      time is set
+                     *      rest unset
+                     *
+                     * Absolute:
+                     *      query2 and date match
+                     *      month is "january|february|march|april|june|july|august|september|october|november|december|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec"
+                     *      query3 is "at"
+                     *      time is set
+                     *      rest unset
+                     */
+
+                if (
+                    date.Value.Trim().ToLower() != "" && month.Value.Trim().ToLower() != "" &&
+                    relativeMonths.Contains(month.Value.Trim().ToLower()) &&
+                    query3.Value.Trim().ToLower() == "" && time.Value.Trim().ToLower() == ""
+                )
+                    return ConvertRelative(date.Value.Trim().ToLower(), month.Value.Trim().ToLower());
+
+                if (weekday.Value.Trim().ToLower() != "" &&
+                    query3.Value.Trim().ToLower() == "at" &&
+                    time.Value.Trim().ToLower() != ""
+                    )
+                    return ConvertWeekRelative(weekday.Value.Trim().ToLower(), time.Value.Trim().ToLower());
+
+                if (
+                    time.Value.Trim().ToLower() != "" &&
+                    weekday.Value.Trim().ToLower() == "" &&
+                    date.Value.Trim().ToLower() == ""
+                )
+                    return ConvertTimeRelative(time.Value.Trim().ToLower());
+                
+                if (
+                    date.Value.Trim().ToLower() != "" &&
+                    absoluteMonths.Contains(month.Value.Trim().ToLower()) &&
+                    query3.Value.Trim().ToLower() == "at" &&
+                    time.Value.Trim().ToLower() != ""
+                )
+                    return ConvertAbsolute(date.Value.Trim().ToLower(), month.Value.Trim().ToLower(),
+                        year.Value.Trim().ToLower() != ""
+                            ? year.Value.Trim().ToLower()
+                            : DateTimeOffset.UtcNow.Year.ToString(),
+                        time.Value.Trim().ToLower());
+
                 throw new FormatException("UNKNOWN_QUERY: The provided string doesn't match any possible date format.");
             }
-            // We must judge from what we've been given to work out what to expect
-            /*
-                 * Relative:
-                 *      query2 and date match
-                 *      month is "years|year|months|month|days|day|weeks|week|days|day|hours|hour|minutes|minute|seconds|second"
-                 *      rest unset
-                 *
-                 * Relative week:
-                 *      weekday is set
-                 *      query2 is "at"
-                 *      time is set
-                 *      rest unset
-                 *
-                 * Absolute:
-                 *      query2 and date match
-                 *      month is "january|february|march|april|june|july|august|september|october|november|december|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec"
-                 *      query3 is "at"
-                 *      time is set
-                 *      rest unset
-                 */
 
-            if (
-                date.Success && month.Success &&
-                relativeMonths.Contains(month.Value.Trim().ToLower()) &&
-                !query3.Success && !time.Success
-            )
-                return ConvertRelative(date.Value.Trim().ToLower(), month.Value.Trim().ToLower());
-                
-            if (weekday.Success &&
-                (query2.Success && query2.Value.Trim().ToLower() == "at") &&
-                time.Success)
-                return ConvertWeekRelative(weekday.Value.Trim().ToLower(), time.Value.Trim().ToLower());
-                
-            if (
-                date.Success &&
-                absoluteMonths.Contains(month.Value.Trim().ToLower()) &&
-                query3.Success && query3.Value.Trim().ToLower() == "at" &&
-                time.Success
-            )
-                return ConvertAbsolute(date.Value.Trim().ToLower(), month.Value.Trim().ToLower(),
-                    year.Success ? year.Value.Trim().ToLower() : DateTimeOffset.UtcNow.Year.ToString(),
-                    time.Value.Trim().ToLower());
-            
             throw new FormatException("NO_REGEX_MATCH: The provided string doesn't match any possible date format.");
         }
 
@@ -225,10 +270,22 @@ public static class TimeHelper
         var hourInt = convertedTime[0];
         var minuteInt = convertedTime[1];
 
-        dateTime = dateTime.AddHours(hourInt);
-        dateTime = dateTime.AddMinutes(minuteInt);
+        var outputDateTime = new DateTimeOffset(dateTime.Year, dateTime.Month,
+            dateTime.Day, hourInt, minuteInt, 0, TimeSpan.Zero);
         
-        return new TimeHelperResponse(dateTime, false, null);
+        return new TimeHelperResponse(outputDateTime, false, null);
+    }
+
+    private static TimeHelperResponse ConvertTimeRelative(string time)
+    {
+        var convertedTime = ConvertTime(time);
+        var hourInt = convertedTime[0];
+        var minuteInt = convertedTime[1];
+
+        var outputDateTime = new DateTimeOffset(DateTimeOffset.UtcNow.Year, DateTimeOffset.UtcNow.Month,
+            DateTimeOffset.UtcNow.Day, hourInt, minuteInt, 0, TimeSpan.Zero);
+        
+        return new TimeHelperResponse(outputDateTime, false, null);
     }
 
     private static TimeHelperResponse ConvertAbsolute(string date, string month, string year, string time)
@@ -287,12 +344,12 @@ public static class TimeHelper
         var convertedTime = ConvertTime(time);
         var hourInt = convertedTime[0];
         var minuteInt = convertedTime[1];
-
+        
         if (yearInt == 0) throw new FormatException("YEAR_INVALID: Year is invalid.");
         if (dateInt == 0) throw new FormatException("DAY_INVALID: Day is invalid.");
 
         var dateTime = new DateTimeOffset(yearInt, monthInt, dateInt, hourInt, minuteInt, 0, TimeSpan.Zero);
-
+        
         return new TimeHelperResponse(dateTime, false, null);
     }
 
@@ -312,18 +369,23 @@ public static class TimeHelper
             var minute = match.Groups["minute"];
             var period = match.Groups["period"];
 
-            if(!hour.Success)
+            if(hour.Value.Trim().ToLower() == "")
                 throw new FormatException("HOUR_MISSING: The time provided doesn't have an hour.");
 
             if (!int.TryParse(hour.Value.Trim().ToLower(), out hourInt))
                 throw new FormatException("HOUR_NOT_INT: The hour should be an integer.");
             
-            if (period.Success && period.Value.Trim().ToLower() == "pm")
+            if (period.Value.Trim().ToLower() == "pm" && (hourInt >= 1 && hourInt <= 11))
             {
                 hourInt += 12;
             }
+            
+            if (hourInt == 12 && period.Value.Trim().ToLower() == "am")
+            {
+                hourInt = 0;
+            }
 
-            if (minute.Success)
+            if (minute.Value.Trim().ToLower() != "")
             {
                 if (!int.TryParse(minute.Value.Trim().ToLower(), out minuteInt))
                     throw new FormatException("MINUTE_NOT_INT: The minute should be an integer.");
@@ -341,7 +403,7 @@ public static class TimeHelper
     
     private static TimeHelperResponse ConvertRepeatingRelative(string date, string month)
     {
-        var dateInt = date == "a" ? 1 : 0;
+        var dateInt = date == "" ? 1 : 0;
         if (dateInt == 0)
         {
             if (!int.TryParse(date, out dateInt))
@@ -419,10 +481,22 @@ public static class TimeHelper
         var hourInt = convertedTime[0];
         var minuteInt = convertedTime[1];
 
-        dateTime = dateTime.AddHours(hourInt);
-        dateTime = dateTime.AddMinutes(minuteInt);
+        var outputDateTime = new DateTimeOffset(dateTime.Year, dateTime.Month,
+            dateTime.Day, hourInt, minuteInt, 0, TimeSpan.Zero);
+
+        return new TimeHelperResponse(outputDateTime, true, "weekly");
+    }
+    
+    private static TimeHelperResponse ConvertRepeatingTimeRelative(string time)
+    {
+        var convertedTime = ConvertTime(time);
+        var hourInt = convertedTime[0];
+        var minuteInt = convertedTime[1];
+
+        var outputDateTime = new DateTimeOffset(DateTimeOffset.UtcNow.Year, DateTimeOffset.UtcNow.Month,
+            DateTimeOffset.UtcNow.Day, hourInt, minuteInt, 0, TimeSpan.Zero);
         
-        return new TimeHelperResponse(dateTime, true, "weekly");
+        return new TimeHelperResponse(outputDateTime, true, "daily");
     }
 
     private static TimeHelperResponse ConvertRepeatingAbsolute(string date, string month, string time)
