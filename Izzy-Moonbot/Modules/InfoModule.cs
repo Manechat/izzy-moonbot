@@ -46,18 +46,21 @@ public class InfoModule : ModuleBase<SocketCommandContext>
             }
 
             await ReplyAsync(
-                $"Hii! Here's a list of all modules!{Environment.NewLine}```{Environment.NewLine}{string.Join(Environment.NewLine, moduleList)}{Environment.NewLine}```Run `{prefix}help <module>` for commands in that module.");
+                $"Hii! Here's a list of all modules!{Environment.NewLine}```{Environment.NewLine}{string.Join(Environment.NewLine, moduleList)}{Environment.NewLine}```Run `{prefix}help <module>` for commands in that module (note: `Module` and `Submodule` can be omitted).");
         }
         else
         {
-            if (_commands.Commands.Any(command => command.Name == item))
+            if (_commands.Commands.Any(command => command.Name.ToLower() == item.ToLower()))
             {
                 // It's a command!
                 var commandInfo = _commands.Commands.Single<CommandInfo>(command => command.Name == item);
                 var ponyReadable = $"**{prefix}{commandInfo.Name}** - {commandInfo.Summary}{Environment.NewLine}";
-                if (commandInfo.Preconditions.Any(attribute => attribute is ModCommandAttribute))
+                if (commandInfo.Preconditions.Any(attribute => attribute is ModCommandAttribute) &&
+                    commandInfo.Preconditions.Any(attribute => attribute is DevCommandAttribute))
+                    ponyReadable += $"ℹ  *This is a moderator and developer only command.*{Environment.NewLine}";
+                else if (commandInfo.Preconditions.Any(attribute => attribute is ModCommandAttribute))
                     ponyReadable += $"ℹ  *This is a moderator only command.*{Environment.NewLine}";
-                if (commandInfo.Preconditions.Any(attribute => attribute is DevCommandAttribute))
+                else if (commandInfo.Preconditions.Any(attribute => attribute is DevCommandAttribute))
                     ponyReadable += $"ℹ  *This is a developer only command.*{Environment.NewLine}";
 
                 ponyReadable += $"```{Environment.NewLine}";
@@ -73,9 +76,14 @@ public class InfoModule : ModuleBase<SocketCommandContext>
             else
             {
                 // Module.
-                if (_commands.Modules.Any(module => module.Name == item))
+                if (_commands.Modules.Any(module =>
+                    {
+                        return module.Name.ToLower() == item.ToLower() ||
+                               module.Name.ToLower() == item.ToLower() + "module" ||
+                               module.Name.ToLower() == item.ToLower() + "submodule";
+                    }))
                 {
-                    // It's a command!
+                    // It's a module!
                     var moduleInfo = _commands.Modules.Single<ModuleInfo>(module => module.Name == item);
 
                     var commands = moduleInfo.Commands.Select<CommandInfo, string>(command =>
@@ -102,7 +110,7 @@ public class InfoModule : ModuleBase<SocketCommandContext>
 
                         string[] staticParts =
                         {
-                            $"**List of commands in {item}.",
+                            $"**List of commands in {moduleInfo.Name}.",
                             ""
                         };
 
@@ -111,7 +119,7 @@ public class InfoModule : ModuleBase<SocketCommandContext>
                     else
                     {
                         await ReplyAsync(
-                            $"**List of commands in {item}**{Environment.NewLine}```{Environment.NewLine}{string.Join(Environment.NewLine, commands)}{Environment.NewLine}```");
+                            $"**List of commands in {moduleInfo.Name}**{Environment.NewLine}```{Environment.NewLine}{string.Join(Environment.NewLine, commands)}{Environment.NewLine}```");
                     }
                 }
             }
