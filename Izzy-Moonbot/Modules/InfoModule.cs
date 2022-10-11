@@ -53,7 +53,7 @@ public class InfoModule : ModuleBase<SocketCommandContext>
             if (_commands.Commands.Any(command => command.Name.ToLower() == item.ToLower()))
             {
                 // It's a command!
-                var commandInfo = _commands.Commands.Single<CommandInfo>(command => command.Name == item);
+                var commandInfo = _commands.Commands.Single<CommandInfo>(command => command.Name.ToLower() == item.ToLower());
                 var ponyReadable = $"**{prefix}{commandInfo.Name}** - {commandInfo.Summary}{Environment.NewLine}";
                 if (commandInfo.Preconditions.Any(attribute => attribute is ModCommandAttribute) &&
                     commandInfo.Preconditions.Any(attribute => attribute is DevCommandAttribute))
@@ -77,19 +77,20 @@ public class InfoModule : ModuleBase<SocketCommandContext>
             {
                 // Module.
                 if (_commands.Modules.Any(module =>
-                    {
-                        return module.Name.ToLower() == item.ToLower() ||
+                    {return module.Name.ToLower() == item.ToLower() ||
                                module.Name.ToLower() == item.ToLower() + "module" ||
                                module.Name.ToLower() == item.ToLower() + "submodule";
                     }))
                 {
                     // It's a module!
-                    var moduleInfo = _commands.Modules.Single<ModuleInfo>(module => module.Name == item);
+                    var moduleInfo = _commands.Modules.Single<ModuleInfo>(module => 
+                        module.Name.ToLower() == item.ToLower() ||
+                        module.Name.ToLower() == item.ToLower() + "module" ||
+                        module.Name.ToLower() == item.ToLower() + "submodule");
 
-                    var commands = moduleInfo.Commands.Select<CommandInfo, string>(command =>
-                    {
-                        return $"{prefix}{command.Name} - {command.Summary}";
-                    }).ToList();
+                    var commands = moduleInfo.Commands.Select<CommandInfo, string>(command => 
+                        $"{prefix}{command.Name} - {command.Summary}"
+                    ).ToList();
 
                     if (commands.Count > 10)
                     {
@@ -120,9 +121,12 @@ public class InfoModule : ModuleBase<SocketCommandContext>
                     {
                         await ReplyAsync(
                             $"**List of commands in {moduleInfo.Name}**{Environment.NewLine}```{Environment.NewLine}{string.Join(Environment.NewLine, commands)}{Environment.NewLine}```");
+                        return;
                     }
                 }
             }
+
+            await ReplyAsync($"Sorry, I was unable to find \"{item}\" as either a command, or a module/submodule.");
         }
     }
 
