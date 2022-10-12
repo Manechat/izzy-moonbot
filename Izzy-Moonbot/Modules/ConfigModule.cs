@@ -84,7 +84,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                     string[] staticParts =
                     {
                         $"Hii!! Here's a list of all the config items I could find in the {_configDescriber.CategoryToString(category)} category!",
-                        $"Run `{_config.Prefix}config <item> to view information about an item!"
+                        $"Run `{_config.Prefix}config <item> to view information about an item! Please note that config items are *case sensitive*."
                     };
 
                     var paginationMessage = new PaginationHelper(Context, pages.ToArray(), staticParts);
@@ -94,7 +94,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                     await ReplyAsync(
                         $"Hii!! Here's a list of all the config items I could find in the {_configDescriber.CategoryToString(category)} category!" +
                         $"{Environment.NewLine}```{Environment.NewLine}{string.Join(Environment.NewLine, itemList)}{Environment.NewLine}```{Environment.NewLine}" +
-                        $"Run `{_config.Prefix}config <item> to view information about an item!");
+                        $"Run `{_config.Prefix}config <item>` to view information about an item! Please note that config items are *case sensitive*.");
                 }
 
                 return;
