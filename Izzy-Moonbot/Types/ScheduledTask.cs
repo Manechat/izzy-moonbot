@@ -13,7 +13,7 @@ public class ScheduledTask
         LastExecutedAt = null;
         ExecuteAt = executeAt;
         Action = action;
-        Repeatable = repeatable;
+        RepeatType = ScheduledTaskRepeatType.None;
     }
 
     public string Id { get; set; }
@@ -21,7 +21,7 @@ public class ScheduledTask
     public DateTimeOffset? LastExecutedAt { get; set; }
     public DateTimeOffset ExecuteAt { get; set; }
     public ScheduledTaskAction Action { get; set; }
-    public bool Repeatable { get; set; }
+    public ScheduledTaskRepeatType RepeatType { get; set; }
 }
 
 public class ScheduledTaskAction
@@ -42,4 +42,13 @@ public enum ScheduledTaskActionType
     AddRole,
     Unban,
     Echo
+}
+
+public enum ScheduledTaskRepeatType
+{
+    None,
+    Relative,
+    Daily,
+    Weekly,
+    Yearly
 }
