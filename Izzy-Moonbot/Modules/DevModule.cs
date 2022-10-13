@@ -316,6 +316,34 @@ public class DevModule : ModuleBase<SocketCommandContext>
                     await ReplyAsync($"Exception: {exception.Message}");
                 }
                 break;
+            case "repeat-scheduled-misty":
+                var timein = string.Join(" ", args);
+                try
+                {
+                    var time = TimeHelper.Convert(timein);
+
+                    var repeatType = time.RepeatType switch
+                    {
+                        "relative" => ScheduledTaskRepeatType.Relative,
+                        "daily" => ScheduledTaskRepeatType.Daily,
+                        "weekly" => ScheduledTaskRepeatType.Weekly,
+                        "yearly" => ScheduledTaskRepeatType.Yearly,
+                        _ => ScheduledTaskRepeatType.None
+                    };
+
+                    var repeataction = _scheduleService.stringToAction(
+                        $"echo in {Context.Channel.Id} content misty");
+                    var repeattask = new ScheduledTask(DateTimeOffset.UtcNow,
+                        time.Time, repeataction, repeatType);
+                    await _scheduleService.CreateScheduledTask(repeattask, Context.Guild);
+                    await Context.Message.ReplyAsync("Created repeating scheduled task.");
+                    break;
+                }
+                catch (FormatException exception)
+                {
+                    await ReplyAsync($"Exception: {exception.Message}");
+                }
+                break;
             default:
                 Context.Message.ReplyAsync("Unknown test.");
                 break;
