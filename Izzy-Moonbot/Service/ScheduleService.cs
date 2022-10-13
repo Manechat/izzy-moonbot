@@ -52,7 +52,7 @@ public class ScheduleService
                     level: LogLevel.Trace);
                 ExecuteTask(scheduledTask.Action, guild);
                 
-                DeleteScheduledTaskOrRepeat(scheduledTask);
+                DeleteScheduledTaskOrRepeat(scheduledTask, guild);
             }
             else
             {
@@ -65,7 +65,7 @@ public class ScheduleService
                     _logging.Log("Executing following task due to time passing after restart", null,
                         level: LogLevel.Trace);
                     await ExecuteTask(scheduledTask.Action, guild);
-                    await DeleteScheduledTaskOrRepeat(scheduledTask);
+                    await DeleteScheduledTaskOrRepeat(scheduledTask, guild);
                 });
             }
         });
@@ -82,7 +82,7 @@ public class ScheduleService
                 string reasonForRemoval = null;
                 if (action.Fields.ContainsKey("reason")) reasonForRemoval = action.Fields["reason"];
 
-                _logging.Log(
+                await _logging.Log(
                     $"Removing {roleToRemove.Name} ({roleToRemove.Id}) from {userToRemoveFrom.Username}#{userToRemoveFrom.Discriminator} ({userToRemoveFrom.Id})",
                     null,
                     level: LogLevel.Trace);
@@ -100,7 +100,7 @@ public class ScheduleService
                 string reasonForAdding = null;
                 if (action.Fields.ContainsKey("reason")) reasonForAdding = action.Fields["reason"];
 
-                _logging.Log(
+                await _logging.Log(
                     $"Adding {roleToAdd.Name} ({roleToAdd.Id}) from {userToAddTo.Username}#{userToAddTo.Discriminator} ({userToAddTo.Id})",
                     null,
                     level: LogLevel.Trace);
@@ -120,7 +120,7 @@ public class ScheduleService
                 var contentToEcho = action.Fields["content"];
                 Console.WriteLine(
                     $"#{channelToEchoTo.Name} ({channelToEchoTo.Id}) Scheduled Echo: {contentToEcho}");
-                channelToEchoTo.SendMessageAsync(contentToEcho);
+                await channelToEchoTo.SendMessageAsync(contentToEcho);
                 break;
             default:
                 throw new NotSupportedException($"{action.Type} is currently not supported.");
@@ -156,10 +156,10 @@ public class ScheduleService
             await Task.Delay(Convert.ToInt32(task.ExecuteAt.ToUnixTimeMilliseconds() -
                                              DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()));
             if (!_scheduledTasks.Contains(task)) return;
-            _logging.Log("Executing following task due to time passing", null,
+            await _logging.Log("Executing following task due to time passing", null,
                 level: LogLevel.Trace);
-            ExecuteTask(task.Action, guild);
-            DeleteScheduledTaskOrRepeat(task);
+            await ExecuteTask(task.Action, guild);
+            await DeleteScheduledTaskOrRepeat(task, guild);
         });
 
         return task;
@@ -173,11 +173,11 @@ public class ScheduleService
         return task;
     }
 
-    private async Task<ScheduledTask> DeleteScheduledTaskOrRepeat(ScheduledTask task)
+    private async Task<ScheduledTask> DeleteScheduledTaskOrRepeat(ScheduledTask task, SocketGuild guild)
     {
         // Calls DeleteScheduledTask if scheduled task doesn't repeat,
         // Else changes ExecuteAt to be the current time + difference between LastExecutedAt/CreatedAt and ExecuteAt.
-        if (task.Repeatable)
+        if (task.RepeatType != ScheduledTaskRepeatType.None)
         {
             // Modify task to allow repeatability.
             var taskIndex = _scheduledTasks.FindIndex(scheduledTask => scheduledTask.Id == task.Id);
@@ -185,20 +185,52 @@ public class ScheduleService
             // Get LastExecutedAt, or CreatedAt if former is null as well as the execution time.
             var creationAt = task.LastExecutedAt ?? task.CreatedAt;
             var executeAt = task.ExecuteAt;
+
+            // RepeatType is checked against null above.
+            switch (task.RepeatType)
+            {
+                case ScheduledTaskRepeatType.Relative:
+                    // Get the offset.
+                    var repeatEvery = executeAt - creationAt;
             
-            // Get the offset.
-            var repeatEvery = executeAt - creationAt;
+                    // Get the timestamp of next execution.
+                    var nextExecuteAt = DateTimeOffset.UtcNow + repeatEvery;
             
-            // Get the timestamp of next execution.
-            var nextExecuteAt = DateTimeOffset.UtcNow + repeatEvery;
-            
-            // Set previous execution time and new execution time
-            task.LastExecutedAt = executeAt;
-            task.ExecuteAt = nextExecuteAt;
-            
+                    // Set previous execution time and new execution time
+                    task.LastExecutedAt = executeAt;
+                    task.ExecuteAt = nextExecuteAt;
+                    break;
+                case ScheduledTaskRepeatType.Daily:
+                    // Just add a single day to the execute at time lol
+                    task.LastExecutedAt = executeAt;
+                    task.ExecuteAt = executeAt.AddDays(1);
+                    break;
+                case ScheduledTaskRepeatType.Weekly:
+                    // Add 7 days to the execute at time
+                    task.LastExecutedAt = executeAt;
+                    task.ExecuteAt = executeAt.AddDays(7);
+                    break;
+                case ScheduledTaskRepeatType.Yearly:
+                    // Add a year to the execute at time
+                    task.LastExecutedAt = executeAt;
+                    task.ExecuteAt = executeAt.AddYears(1);
+                    break;
+            }
+
             // Update the task and save
             _scheduledTasks[taskIndex] = task;
             await FileHelper.SaveScheduleAsync(_scheduledTasks);
+            
+            Task.Run(async () =>
+            {
+                await Task.Delay(Convert.ToInt32(task.ExecuteAt.ToUnixTimeMilliseconds() -
+                                                 DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()));
+                if (!_scheduledTasks.Contains(_scheduledTasks[taskIndex])) return;
+                await _logging.Log("Executing following task due to time passing", null,
+                    level: LogLevel.Trace);
+                await ExecuteTask(_scheduledTasks[taskIndex].Action, guild);
+                await DeleteScheduledTaskOrRepeat(_scheduledTasks[taskIndex], guild);
+            });
             
             // Return the new task
             return task;

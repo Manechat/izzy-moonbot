@@ -6,14 +6,14 @@ namespace Izzy_Moonbot.Settings;
 public class ScheduledTask
 {
     public ScheduledTask(DateTimeOffset createdAt, DateTimeOffset executeAt, ScheduledTaskAction action,
-        bool repeatable = false)
+        ScheduledTaskRepeatType repeatType = ScheduledTaskRepeatType.None)
     {
         Id = Guid.NewGuid().ToString();
         CreatedAt = createdAt;
         LastExecutedAt = null;
         ExecuteAt = executeAt;
         Action = action;
-        RepeatType = ScheduledTaskRepeatType.None;
+        RepeatType = repeatType;
     }
 
     public string Id { get; set; }
