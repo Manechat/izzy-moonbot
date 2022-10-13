@@ -77,7 +77,7 @@ public class RaidService
         await FileHelper.SaveConfigAsync(_config);
     }
 
-    public async Task<List<string>> EndRaid(SocketCommandContext context)
+    public async Task EndRaid(SocketCommandContext context)
     {
         _state.CurrentRaidMode = RaidMode.None;
 
@@ -86,14 +86,7 @@ public class RaidService
 
         await FileHelper.SaveConfigAsync(_config);
 
-        var userList = _state.RecentJoins.Select(userId =>
-        {
-            var user = context.Guild.GetUser(userId);
-            if (user == null) return $"Unknown user (`{userId}`)";
-            return $"<@{user.Id}>";
-        });
-
-        _state.RecentJoins.ForEach(userId =>
+        _state.RecentJoins.ForEach(async userId =>
         {
             var member = context.Guild.GetUser(userId);
 
@@ -102,7 +95,23 @@ public class RaidService
                 if (member.JoinedAt.HasValue)
                 {
                     if (member.JoinedAt.Value.AddSeconds(_config.RecentJoinDecay) >= DateTimeOffset.Now)
+                    {
+                        await _log.Log(
+                            $"{member.DisplayName} ({member.Id}) no longer a recent join (immediate after raid)",
+                            null);
                         _state.RecentJoins.Remove(userId);
+                    }
+                    else
+                    {
+                        Task.Run(async () =>
+                        {
+                            await Task.Delay(Convert.ToInt32((member.JoinedAt.Value.AddSeconds(_config.RecentJoinDecay) - DateTimeOffset.Now) * 1000));
+                            await _log.Log(
+                                $"{member.DisplayName} ({member.Id}) no longer a recent join (after raid)",
+                                null);
+                            _state.RecentJoins.Remove(member.Id);
+                        });
+                    }
                 }
                 else
                 {
@@ -119,9 +128,6 @@ public class RaidService
         });
 
         _state.ManualRaidSilence = false;
-
-        // TODO: Use new GeneralStorage.Stowaways
-        return userList.ToList();
     }
 
     private async Task DecaySmallRaid(SocketGuild guild)
@@ -131,24 +137,12 @@ public class RaidService
         _config.AutoSilenceNewJoins = false;
         _config.BatchSendLogs = false;
 
-        var userList = _state.RecentJoins.Select(userId =>
-        {
-            var user = guild.GetUser(userId);
-            if (user == null) return $"Unknown user (`{userId}`)";
-            return $"<@{user.Id}>";
-        });
-
-        // TODO: Use new GeneralStorage.Stowaways
-        var stowawaysString =
-            $"{Environment.NewLine}These users were autosilenced. Please run `{_config.Prefix}stowaways fix` while replying to this message to unsilence or `{_config.Prefix}stowaways kick` while replying to this message to kick.{Environment.NewLine}{string.Join(", ", userList)}{Environment.NewLine}||!stowaway-usable!||";
-        if (!userList.Any()) stowawaysString = "";
-
         await _modLog.CreateModLog(guild)
             .SetContent(
-                $"The raid has ended. I've disabled raid defences and cleared my internal cache of all recent joins.{stowawaysString}")
+                $"The raid has ended. I've disabled raid defences and cleared my internal cache of all recent joins.")
             .Send();
 
-        _state.RecentJoins.ForEach(userId =>
+        _state.RecentJoins.ForEach(async userId =>
         {
             var member = guild.GetUser(userId);
 
@@ -158,6 +152,9 @@ public class RaidService
                 {
                     if (member.JoinedAt.Value.AddSeconds(_config.RecentJoinDecay) >= DateTimeOffset.Now)
                     {
+                        await _log.Log(
+                            $"{member.DisplayName} ({member.Id}) no longer a recent join (immediate after raid)",
+                            null);
                         _state.RecentJoins.Remove(userId);
                     }
                     else

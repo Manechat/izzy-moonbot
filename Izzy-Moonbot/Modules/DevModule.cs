@@ -46,6 +46,7 @@ public class DevModule : ModuleBase<SocketCommandContext>
 
     [Command("test")]
     [Summary("Unit tests for Izzy Moonbow")]
+    [DevCommand]
     public async Task TestCommandAsync([Summary("Test Identifier")] string testId = "",
         [Remainder] [Summary("Test arguments")]
         string argString = "")
@@ -270,6 +271,22 @@ public class DevModule : ModuleBase<SocketCommandContext>
                 break;
             case "invitesDisabled":
                 await ReplyAsync("Invites disabled: " + Context.Guild.Features.HasFeature("INVITES_DISABLED"));
+                break;
+            case "timehelper":
+                var timestring = string.Join(" ", args);
+                try
+                {
+                    var time = TimeHelper.Convert(timestring);
+
+                    await ReplyAsync($"Successfully converted {timestring} to a DateTimeOffset.{Environment.NewLine}" +
+                                     $"DateTime: <t:{time.Time.ToUnixTimeSeconds()}:F> (<t:{time.Time.ToUnixTimeSeconds()}:R>){Environment.NewLine}" +
+                                     $"Repeats: {(time.Repeats ? "yes" : "no")}{Environment.NewLine}" +
+                                     $"Repeats every: {time.RepeatType ?? "Doesn't repeat"}");
+                }
+                catch (FormatException exception)
+                {
+                    await ReplyAsync($"Exception: {exception.Message}");
+                }
                 break;
             default:
                 Context.Message.ReplyAsync("Unknown test.");
