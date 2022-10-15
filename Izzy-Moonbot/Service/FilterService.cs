@@ -83,7 +83,7 @@ public class FilterService
             embedBuilder.AddField("What have I done in response?", string.Join(Environment.NewLine, actions));
 
         await _modLog.CreateModLog(context.Guild)
-            .SetContent($"<@&{_config.ModRole}> Filter Violation for <@{context.User.Id}>")
+            .SetContent($"{(_config.FilterBypassRoles.Overlaps(roleIds) ? "" : $"<@&{_config.ModRole}>")} Filter Violation for <@{context.User.Id}>")
             .SetEmbed(embedBuilder.Build())
             .Send();
     }
@@ -131,7 +131,7 @@ public class FilterService
         }
         catch (KeyNotFoundException ex)
         {
-            //await context.Message.DeleteAsync(); // Just in case
+            await context.Message.DeleteAsync(); // Just in case
             var actions = new List<string>();
             await LogFilterTrip(context, word, category, actions, onEdit);
             await context.Guild.GetTextChannel(_config.ModChannel).SendMessageAsync(
@@ -142,6 +142,8 @@ public class FilterService
     public async Task ProcessMessageUpdate(Cacheable<IMessage, ulong> oldMessage, SocketMessage newMessage,
         ISocketMessageChannel channel, DiscordSocketClient client)
     {
+        if (newMessage.Author.Id == client.CurrentUser.Id) return; // Don't process self.
+        
         if (!_config.FilterEnabled || !_config.FilterMonitorEdits) return;
         if (!DiscordHelper.IsInGuild(newMessage)) return;
         if (!DiscordHelper.IsProcessableMessage(newMessage)) return; // Not processable
@@ -177,6 +179,8 @@ public class FilterService
 
     public async Task ProcessMessage(SocketMessage messageParam, DiscordSocketClient client)
     {
+        if (messageParam.Author.Id == client.CurrentUser.Id) return; // Don't process self.
+        
         if (!_config.FilterEnabled) return;
         if (!DiscordHelper.IsInGuild(messageParam)) return;
         if (!DiscordHelper.IsProcessableMessage(messageParam)) return; // Not processable
