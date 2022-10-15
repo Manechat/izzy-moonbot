@@ -37,6 +37,7 @@ public class Config
         FilterMonitorEdits = true;
         FilterIgnoredChannels = new HashSet<ulong>();
         FilterBypassRoles = new HashSet<ulong>();
+        FilterDevBypass = true;
         FilteredWords = new Dictionary<string, List<string>>();
         FilterResponseDelete = new Dictionary<string, bool>();
         FilterResponseMessages = new Dictionary<string, string?>();
@@ -46,8 +47,9 @@ public class Config
         SpamEnabled = true;
         SpamMonitorEdits = true;
         SpamEditReprocessThreshold = 10;
-        FilterBypassRoles = new HashSet<ulong>();
+        SpamBypassRoles = new HashSet<ulong>();
         SpamIgnoredChannels = new HashSet<ulong>();
+        SpamDevBypass = true;
         SpamBasePressure = 10.0;
         SpamImagePressure = 8.3;
         SpamLengthPressure = 0.00625;
@@ -102,6 +104,7 @@ public class Config
     public bool FilterMonitorEdits { get; set; }
     public HashSet<ulong> FilterIgnoredChannels { get; set; }
     public HashSet<ulong> FilterBypassRoles { get; set; }
+    public bool FilterDevBypass { get; set; }
     public Dictionary<string, List<string>> FilteredWords { get; set; }
     public Dictionary<string, bool> FilterResponseDelete { get; set; }
     public Dictionary<string, string?> FilterResponseMessages { get; set; }
@@ -113,6 +116,7 @@ public class Config
     public int SpamEditReprocessThreshold { get; set; }
     public HashSet<ulong> SpamBypassRoles { get; set; }
     public HashSet<ulong> SpamIgnoredChannels { get; set; }
+    public bool SpamDevBypass { get; set; }
     public double SpamBasePressure { get; set; }
     public double SpamImagePressure { get; set; }
     public double SpamLengthPressure { get; set; }
