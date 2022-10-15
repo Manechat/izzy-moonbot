@@ -37,6 +37,7 @@ public class SpamService
     
     // Configuation
     private readonly Config _config;
+    private readonly DiscordSettings _discordSettings;
     private readonly Dictionary<ulong, User> _users;
     
     // Utility parameters
@@ -52,13 +53,14 @@ public class SpamService
     #endif
     
     // Pull services from the service system
-    public SpamService(LoggingService logger, ModService mod, ModLoggingService modLogger, Config config, Dictionary<ulong, User> users)
+    public SpamService(LoggingService logger, ModService mod, ModLoggingService modLogger, Config config, Dictionary<ulong, User> users, DiscordSettings discordSettings)
     {
         _logger = logger;
         _mod = mod;
         _modLogger = modLogger;
         _config = config;
-        _users = users; 
+        _users = users;
+        _discordSettings = discordSettings;
     }
     
     // Register required events
@@ -253,7 +255,8 @@ public class SpamService
         {
             await _logger.Log("Spam pressure trip, checking whether user should be silenced or not...", context, level: LogLevel.Debug);
             var roleIds = user.Roles.Select(roles => roles.Id).ToList();
-            if (_config.SpamBypassRoles.Overlaps(roleIds))
+            if (_config.SpamBypassRoles.Overlaps(roleIds) || 
+                (_discordSettings.DevUsers.Contains(user.Id) && _config.SpamDevBypass))
             {
                 // User has a role which bypasses the punishment of spam trigger. Mention it in action log.
                 await _logger.Log("No silence, user has role(s) in Config.SpamBypassRoles", context, level: LogLevel.Debug);

@@ -97,7 +97,11 @@ public class ConfigDescriber
                 ConfigItemCategory.Filter));
         _config.Add("FilterBypassRoles",
             new ConfigItem(ConfigItemType.RoleList,
-                "The list of roles I will not take action against when I detect a slur. Please note that I __will still check for filter violations for roles in this value__. I just won't try to delete the message or silence the user..",
+                "The list of roles I will not take action against when I detect a slur. Please note that I __will still check for filter violations for roles in this value__. I just won't try to delete the message or silence the user.",
+                ConfigItemCategory.Filter));
+        _config.Add("FilterDevBypass",
+            new ConfigItem(ConfigItemType.Boolean,
+                "Whether I will not take action against my developers when I detect a slur. Please note that I __will still check for filter violations for developers__. I just won't try to delete the message or silence the user.",
                 ConfigItemCategory.Filter));
         _config.Add("FilteredWords",
             new ConfigItem(ConfigItemType.StringListDictionary,
@@ -135,6 +139,10 @@ public class ConfigDescriber
         _config.Add("SpamIgnoredChannels",
             new ConfigItem(ConfigItemType.ChannelList,
                 "The channels I will not process pressure for. Best used for channels where spam is allowed.",
+                ConfigItemCategory.Spam));
+        _config.Add("SpamDevBypass",
+            new ConfigItem(ConfigItemType.RoleList,
+                "Whether I will not silence my developers if they exceed `SpamMaxPressure`. Please note that I __will still process pressure for developers__, I just won't silence them and I'll just log that it occured.",
                 ConfigItemCategory.Spam));
         _config.Add("SpamBasePressure",
             new ConfigItem(ConfigItemType.Double,
