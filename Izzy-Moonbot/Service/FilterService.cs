@@ -83,7 +83,7 @@ public class FilterService
             embedBuilder.AddField("What have I done in response?", string.Join(Environment.NewLine, actions));
 
         await _modLog.CreateModLog(context.Guild)
-            .SetContent($"<@&{_config.ModRole}> Filter Violation for <@{context.User.Id}>")
+            .SetContent($"{(_config.FilterBypassRoles.Overlaps(roleIds) ? "" : $"<@&{_config.ModRole}>")} Filter Violation for <@{context.User.Id}>")
             .SetEmbed(embedBuilder.Build())
             .Send();
     }
@@ -131,7 +131,7 @@ public class FilterService
         }
         catch (KeyNotFoundException ex)
         {
-            //await context.Message.DeleteAsync(); // Just in case
+            await context.Message.DeleteAsync(); // Just in case
             var actions = new List<string>();
             await LogFilterTrip(context, word, category, actions, onEdit);
             await context.Guild.GetTextChannel(_config.ModChannel).SendMessageAsync(
