@@ -91,9 +91,13 @@ public class FilterService
     private async Task ProcessFilterTrip(SocketCommandContext context, string word, string category,
         bool onEdit = false)
     {
+        var roleIds = context.Guild.GetUser(context.User.Id).Roles.Select(role => role.Id).ToList();
+            
+        if(!_config.FilterBypassRoles.Overlaps(roleIds)) 
+            await context.Message.DeleteAsync();
+        
         try
         {
-            await context.Message.DeleteAsync();
             if (!_config.FilterResponseMessages.ContainsKey(category))
                 _config.FilterResponseMessages[category] = null;
             if (!_config.FilterResponseSilence.ContainsKey(category))
@@ -101,8 +105,7 @@ public class FilterService
 
             var messageResponse = _config.FilterResponseMessages[category];
             var shouldSilence = _config.FilterResponseSilence[category];
-
-            var roleIds = context.Guild.GetUser(context.User.Id).Roles.Select(role => role.Id).ToList();
+            
             if (_config.FilterBypassRoles.Overlaps(roleIds))
             {
                 messageResponse = null;
@@ -131,7 +134,6 @@ public class FilterService
         }
         catch (KeyNotFoundException ex)
         {
-            await context.Message.DeleteAsync(); // Just in case
             var actions = new List<string>();
             await LogFilterTrip(context, word, category, actions, onEdit);
             await context.Guild.GetTextChannel(_config.ModChannel).SendMessageAsync(
