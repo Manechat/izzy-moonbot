@@ -6,11 +6,24 @@ using Discord.Commands;
 using Discord.WebSocket;
 using HtmlAgilityPack;
 using Izzy_Moonbot.Settings;
+using Microsoft.Extensions.Configuration;
 
 namespace Izzy_Moonbot.Helpers;
 
 public static class DiscordHelper
 {
+    public static bool IsDev(ulong user)
+    {
+        var config = new ConfigurationBuilder()
+            .AddJsonFile("appsettings.json")
+            .Build();
+
+        var section = config.GetSection(nameof(DiscordSettings));
+        var settings = section.Get<DiscordSettings>();
+
+        return settings.DevUsers.Any(userId => userId == user);
+    }
+    
     public static bool IsProcessableMessage(SocketMessage msg)
     {
         if (msg.Type != MessageType.Default && msg.Type != MessageType.Reply &&
