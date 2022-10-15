@@ -142,6 +142,8 @@ public class FilterService
     public async Task ProcessMessageUpdate(Cacheable<IMessage, ulong> oldMessage, SocketMessage newMessage,
         ISocketMessageChannel channel, DiscordSocketClient client)
     {
+        if (newMessage.Author.Id == client.CurrentUser.Id) return; // Don't process self.
+        
         if (!_config.FilterEnabled || !_config.FilterMonitorEdits) return;
         if (!DiscordHelper.IsInGuild(newMessage)) return;
         if (!DiscordHelper.IsProcessableMessage(newMessage)) return; // Not processable
@@ -177,6 +179,8 @@ public class FilterService
 
     public async Task ProcessMessage(SocketMessage messageParam, DiscordSocketClient client)
     {
+        if (messageParam.Author.Id == client.CurrentUser.Id) return; // Don't process self.
+        
         if (!_config.FilterEnabled) return;
         if (!DiscordHelper.IsInGuild(messageParam)) return;
         if (!DiscordHelper.IsProcessableMessage(messageParam)) return; // Not processable
