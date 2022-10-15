@@ -17,7 +17,6 @@ public class FilterService
     private readonly ModService _mod;
     private readonly ModLoggingService _modLog;
     private readonly Config _config;
-    private readonly DiscordSettings _discordSettings;
     private readonly LoggingService _logger;
 
     /*
@@ -34,13 +33,12 @@ public class FilterService
     };
 #endif
 
-    public FilterService(Config config, ModService mod, ModLoggingService modLog, LoggingService logger, DiscordSettings discordSettings)
+    public FilterService(Config config, ModService mod, ModLoggingService modLog, LoggingService logger)
     {
         _config = config;
         _mod = mod;
         _modLog = modLog;
         _logger = logger;
-        _discordSettings = discordSettings;
     }
     
     public void RegisterEvents(DiscordSocketClient client)
@@ -72,7 +70,7 @@ public class FilterService
 
         var roleIds = context.Guild.GetUser(context.User.Id).Roles.Select(role => role.Id).ToList();
         if (_config.FilterBypassRoles.Overlaps(roleIds) || 
-            (_discordSettings.DevUsers.Contains(context.User.Id) && _config.FilterDevBypass))
+            (DiscordHelper.IsDev(context.User.Id) && _config.FilterDevBypass))
         {
             actions.Clear();
             actions.Add(
@@ -86,7 +84,7 @@ public class FilterService
             embedBuilder.AddField("What have I done in response?", string.Join(Environment.NewLine, actions));
 
         await _modLog.CreateModLog(context.Guild)
-            .SetContent($"{(_config.FilterBypassRoles.Overlaps(roleIds) || (_discordSettings.DevUsers.Contains(context.User.Id) && _config.FilterDevBypass) ? "" : $"<@&{_config.ModRole}>")} Filter Violation for <@{context.User.Id}>")
+            .SetContent($"{(_config.FilterBypassRoles.Overlaps(roleIds) || (DiscordHelper.IsDev(context.User.Id) && _config.FilterDevBypass) ? "" : $"<@&{_config.ModRole}>")} Filter Violation for <@{context.User.Id}>")
             .SetEmbed(embedBuilder.Build())
             .Send();
     }
