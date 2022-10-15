@@ -314,7 +314,7 @@ public class SpamService
 
         await _modLogger.CreateModLog(context.Guild)
             .SetContent(
-                $"<@{user.Id}> (`{user.Id}`) was silenced for exceeding pressure max ({pressure}/{_config.SpamMaxPressure}) in <#{message.Channel.Id}>. Please investigate.{Environment.NewLine}" +
+                $"<@{user.Id}> (`{user.Id}`) was silenced for exceeding pressure max ({pressure}/{_config.SpamMaxPressure}) in <#{message.Channel.Id}>. Please investigate <@${_config.ModRole}>.{Environment.NewLine}" +
                 $"Pressure breakdown: {PressureTraceToPonyReadable(pressureTracer)}{Environment.NewLine}" +
                 $"{(alreadyDeletedMessages != 0 ? $"I was unable to delete {alreadyDeletedMessages} messages from this user, please double check whether their messages have been deleted." : "")}")
             .Send();
