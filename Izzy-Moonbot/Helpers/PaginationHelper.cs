@@ -17,7 +17,6 @@ public class PaginationHelper
 
     private readonly bool _useCodeBlock;
     private ulong _authorId;
-    private Task _cancelTask;
     private bool _easterEgg;
     private IUserMessage _message;
     public DateTime ExpiresAt;
@@ -60,13 +59,16 @@ public class PaginationHelper
             components: builder.Build(), allowedMentions: _allowedMentions, options: _options);
 
         _client.ButtonExecuted += ButtonEvent;
+        _client.MessageDeleted += MessageDeletedEvent;
 
         RedrawPagination();
 
-        await Task.Factory.StartNew(() =>
+        await Task.Run(() =>
         {
             Thread.Sleep(5 * 60 * 1000 + 1); // Sleep for 5 minutes
 
+            if (_message == null) return;
+            
             _client.ButtonExecuted -= ButtonEvent; // Remove the event listener
 
             RedrawPagination();
@@ -75,6 +77,8 @@ public class PaginationHelper
 
     private async void RedrawPagination()
     {
+        if (_message == null) return;
+        
         var expireMessage = "";
         if (ExpiresAt <= DateTime.UtcNow) expireMessage = "ℹ **This paginated message has expired.**";
 
@@ -129,7 +133,7 @@ public class PaginationHelper
 
     private async Task ButtonEvent(SocketMessageComponent component)
     {
-        if (component.User.Id == _client.CurrentUser.Id) return;
+        if (component.User.Id != _authorId) return;
         if (component.Message.Id != _message.Id) return;
 
         switch (component.Data.CustomId)
@@ -157,5 +161,17 @@ public class PaginationHelper
         }
 
         await component.DeferAsync();
+    }
+
+    private async Task MessageDeletedEvent(Cacheable<IMessage, ulong> message,
+        Cacheable<IMessageChannel, ulong> channel)
+    {
+        if (_message.Id == message.Id)
+        {
+            _client.ButtonExecuted -= ButtonEvent;
+            _client.MessageDeleted -= MessageDeletedEvent;
+
+            _message = null;
+        }
     }
 }
