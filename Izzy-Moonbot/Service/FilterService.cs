@@ -107,7 +107,8 @@ public class FilterService
             var messageResponse = _config.FilterResponseMessages[category];
             var shouldSilence = _config.FilterResponseSilence[category];
             
-            if (_config.FilterBypassRoles.Overlaps(roleIds))
+            if (_config.FilterBypassRoles.Overlaps(roleIds) || 
+                (DiscordHelper.IsDev(context.User.Id) && _config.FilterDevBypass))
             {
                 messageResponse = null;
                 shouldSilence = false;
