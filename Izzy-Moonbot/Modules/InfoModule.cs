@@ -47,7 +47,7 @@ public class InfoModule : ModuleBase<SocketCommandContext>
             }
 
             await ReplyAsync(
-                $"Hii! Here's a list of all command categories!{Environment.NewLine}```{Environment.NewLine}{string.Join(Environment.NewLine, moduleList)}{Environment.NewLine}```Run `{prefix}help <category>` for commands in that category.");
+                $"Hii! Here's a list of all command categories!{Environment.NewLine}```{Environment.NewLine}{string.Join(Environment.NewLine, moduleList)}{Environment.NewLine}```Run `{prefix}help <category>` for commands in that category.{Environment.NewLine}ℹ  **See also: `{prefix}config`. Run `{prefix}help config` for more information.**");
         }
         else
         {
