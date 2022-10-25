@@ -26,7 +26,7 @@ public class InfoModule : ModuleBase<SocketCommandContext>
     [Command("help")]
     [Summary("Lists all commands")]
     public async Task HelpCommandAsync(
-        [Remainder] [Summary("The command/module you want to look at.")] string item = "")
+        [Remainder] [Summary("The command/category you want to look at.")] string item = "")
     {
         var prefix = _settings.Prefix;
 
@@ -38,15 +38,15 @@ public class InfoModule : ModuleBase<SocketCommandContext>
             foreach (var module in _commands.Modules)
             {
                 if (module.IsSubmodule) continue;
-                var moduleInfo = $"{module.Name} - {module.Summary}";
+                var moduleInfo = $"{module.Name.Replace("Module", "")} - {module.Summary}";
                 foreach (var submodule in module.Submodules)
-                    moduleInfo += $"{Environment.NewLine}    {submodule.Name} - {submodule.Summary}";
+                    moduleInfo += $"{Environment.NewLine}    {submodule.Name.Replace("Submodule", "")} - {submodule.Summary}";
 
                 moduleList.Add(moduleInfo);
             }
 
             await ReplyAsync(
-                $"Hii! Here's a list of all modules!{Environment.NewLine}```{Environment.NewLine}{string.Join(Environment.NewLine, moduleList)}{Environment.NewLine}```Run `{prefix}help <module>` for commands in that module (note: `Module` and `Submodule` can be omitted).");
+                $"Hii! Here's a list of all command categories!{Environment.NewLine}```{Environment.NewLine}{string.Join(Environment.NewLine, moduleList)}{Environment.NewLine}```Run `{prefix}help <category>` for commands in that category.");
         }
         else
         {
@@ -111,8 +111,8 @@ public class InfoModule : ModuleBase<SocketCommandContext>
 
                         string[] staticParts =
                         {
-                            $"**List of commands in {moduleInfo.Name}.",
-                            ""
+                            $"**List of commands in {moduleInfo.Name.Replace("Module", "").Replace("Submodule", "")}.",
+                            $"Run `{prefix}help <command>` for help regarding a specific command."
                         };
 
                         var paginationMessage = new PaginationHelper(Context, pages.ToArray(), staticParts);
@@ -120,13 +120,13 @@ public class InfoModule : ModuleBase<SocketCommandContext>
                     else
                     {
                         await ReplyAsync(
-                            $"**List of commands in {moduleInfo.Name}**{Environment.NewLine}```{Environment.NewLine}{string.Join(Environment.NewLine, commands)}{Environment.NewLine}```");
+                            $"**List of commands in {moduleInfo.Name.Replace("Module", "").Replace("Submodule", "")}**{Environment.NewLine}```{Environment.NewLine}{string.Join(Environment.NewLine, commands)}{Environment.NewLine}```{Environment.NewLine}Run `{prefix}help <command>` for help regarding a specific command.");
                         return;
                     }
                 }
             }
 
-            await ReplyAsync($"Sorry, I was unable to find \"{item}\" as either a command, or a module/submodule.");
+            await ReplyAsync($"Sorry, I was unable to find \"{item}\" as either a command, or a category.");
         }
     }
 
