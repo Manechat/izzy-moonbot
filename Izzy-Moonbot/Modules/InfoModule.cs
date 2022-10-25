@@ -95,7 +95,7 @@ public class InfoModule : ModuleBase<SocketCommandContext>
                         module.Name.ToLower() == item.ToLower() + "submodule");
 
                     var commands = moduleInfo.Commands.Select<CommandInfo, string>(command => 
-                        $"`{prefix}{command.Name}` - {command.Summary}"
+                        $"{prefix}{command.Name} - {command.Summary}"
                     ).ToList();
 
                     if (commands.Count > 10)

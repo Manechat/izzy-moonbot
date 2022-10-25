@@ -85,7 +85,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                     string[] staticParts =
                     {
                         $"Hii!! Here's a list of all the config items I could find in the {_configDescriber.CategoryToString(category)} category!",
-                        $"Run `{_config.Prefix}config <item> to view information about an item! Please note that config items are *case sensitive*."
+                        $"Run `{_config.Prefix}config <item>` to view information about an item! Please note that config items are *case sensitive*."
                     };
 
                     var paginationMessage = new PaginationHelper(Context, pages.ToArray(), staticParts);
