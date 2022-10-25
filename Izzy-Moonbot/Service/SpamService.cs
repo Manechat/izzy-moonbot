@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
+using Discord.Net;
 using Discord.WebSocket;
 using HtmlAgilityPack;
 using Izzy_Moonbot.Helpers;
@@ -57,7 +58,7 @@ public class SpamService
         _mod = mod;
         _modLogger = modLogger;
         _config = config;
-        _users = users; 
+        _users = users;
     }
     
     // Register required events
@@ -252,7 +253,8 @@ public class SpamService
         {
             await _logger.Log("Spam pressure trip, checking whether user should be silenced or not...", context, level: LogLevel.Debug);
             var roleIds = user.Roles.Select(roles => roles.Id).ToList();
-            if (_config.SpamBypassRoles.Overlaps(roleIds))
+            if (_config.SpamBypassRoles.Overlaps(roleIds) || 
+                (DiscordHelper.IsDev(user.Id) && _config.SpamDevBypass))
             {
                 // User has a role which bypasses the punishment of spam trigger. Mention it in action log.
                 await _logger.Log("No silence, user has role(s) in Config.SpamBypassRoles", context, level: LogLevel.Debug);
@@ -277,18 +279,45 @@ public class SpamService
     {
         // Silence user, this also logs the action.
         await _mod.SilenceUser(user, $"Exceeded pressure max ({pressure}/{_config.SpamMaxPressure}) in <#{message.Channel.Id}>");
+
+        var alreadyDeletedMessages = 0;
         
         // Remove all messages considered part of spam.
         foreach (var previousMessageItem in _users[id].PreviousMessages)
         {
-            var previousMessage = await context.Guild.GetTextChannel(previousMessageItem.ChannelId).GetMessageAsync(previousMessageItem.Id);
-            await previousMessage.DeleteAsync();
+            try
+            {
+                var previousMessage = await context.Guild.GetTextChannel(previousMessageItem.ChannelId)
+                    .GetMessageAsync(previousMessageItem.Id);
+                await previousMessage.DeleteAsync();
+            }
+            catch (HttpException exception)
+            {
+                if (exception.DiscordCode == DiscordErrorCode.UnknownMessage)
+                {
+                    // Message already deleted
+                    alreadyDeletedMessages++;
+                }
+            }
+            catch (Exception ex)
+            {
+                // Something funky is going on here
+                await _logger.Log($"Exception occured while trying to delete message, assuming deleted.", level: LogLevel.Warning);
+                await _logger.Log($"Message ID: {previousMessageItem.Id}", level: LogLevel.Warning);
+                await _logger.Log($"Message: {ex.Message}", level: LogLevel.Warning);
+                await _logger.Log($"Source: {ex.Source}", level: LogLevel.Warning);
+                await _logger.Log($"Method: {ex.TargetSite}", level: LogLevel.Warning);
+                await _logger.Log($"Stack Trace: {ex.StackTrace}", level: LogLevel.Warning);
+
+                alreadyDeletedMessages++;
+            }
         }
 
         await _modLogger.CreateModLog(context.Guild)
             .SetContent(
-                $"<@{user.Id}> (`{user.Id}`) was silenced for exceeding pressure max ({pressure}/{_config.SpamMaxPressure}) in <#{message.Channel.Id}>. Please investigate.{Environment.NewLine}" +
-                $"Pressure breakdown: {PressureTraceToPonyReadable(pressureTracer)}")
+                $"<@{user.Id}> (`{user.Id}`) was silenced for exceeding pressure max ({pressure}/{_config.SpamMaxPressure}) in <#{message.Channel.Id}>. Please investigate <@&{_config.ModRole}>.{Environment.NewLine}" +
+                $"Pressure breakdown: {PressureTraceToPonyReadable(pressureTracer)}{Environment.NewLine}" +
+                $"{(alreadyDeletedMessages != 0 ? $"I was unable to delete {alreadyDeletedMessages} messages from this user, please double check whether their messages have been deleted." : "")}")
             .Send();
     }
 

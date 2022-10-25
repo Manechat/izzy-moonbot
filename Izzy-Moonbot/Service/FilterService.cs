@@ -69,7 +69,8 @@ public class FilterService
         if (actionsTaken.Contains("silence")) actions.Add(":mute: - **I've silenced the user.**");
 
         var roleIds = context.Guild.GetUser(context.User.Id).Roles.Select(role => role.Id).ToList();
-        if (_config.FilterBypassRoles.Overlaps(roleIds))
+        if (_config.FilterBypassRoles.Overlaps(roleIds) || 
+            (DiscordHelper.IsDev(context.User.Id) && _config.FilterDevBypass))
         {
             actions.Clear();
             actions.Add(
@@ -83,7 +84,7 @@ public class FilterService
             embedBuilder.AddField("What have I done in response?", string.Join(Environment.NewLine, actions));
 
         await _modLog.CreateModLog(context.Guild)
-            .SetContent($"<@&{_config.ModRole}> Filter Violation for <@{context.User.Id}>")
+            .SetContent($"{(_config.FilterBypassRoles.Overlaps(roleIds) || (DiscordHelper.IsDev(context.User.Id) && _config.FilterDevBypass) ? "" : $"<@&{_config.ModRole}>")} Filter Violation for <@{context.User.Id}>")
             .SetEmbed(embedBuilder.Build())
             .Send();
     }
@@ -91,9 +92,13 @@ public class FilterService
     private async Task ProcessFilterTrip(SocketCommandContext context, string word, string category,
         bool onEdit = false)
     {
+        var roleIds = context.Guild.GetUser(context.User.Id).Roles.Select(role => role.Id).ToList();
+            
+        if(!_config.FilterBypassRoles.Overlaps(roleIds)) 
+            await context.Message.DeleteAsync();
+        
         try
         {
-            await context.Message.DeleteAsync();
             if (!_config.FilterResponseMessages.ContainsKey(category))
                 _config.FilterResponseMessages[category] = null;
             if (!_config.FilterResponseSilence.ContainsKey(category))
@@ -101,9 +106,9 @@ public class FilterService
 
             var messageResponse = _config.FilterResponseMessages[category];
             var shouldSilence = _config.FilterResponseSilence[category];
-
-            var roleIds = context.Guild.GetUser(context.User.Id).Roles.Select(role => role.Id).ToList();
-            if (_config.FilterBypassRoles.Overlaps(roleIds))
+            
+            if (_config.FilterBypassRoles.Overlaps(roleIds) || 
+                (DiscordHelper.IsDev(context.User.Id) && _config.FilterDevBypass))
             {
                 messageResponse = null;
                 shouldSilence = false;
@@ -131,7 +136,6 @@ public class FilterService
         }
         catch (KeyNotFoundException ex)
         {
-            //await context.Message.DeleteAsync(); // Just in case
             var actions = new List<string>();
             await LogFilterTrip(context, word, category, actions, onEdit);
             await context.Guild.GetTextChannel(_config.ModChannel).SendMessageAsync(
@@ -142,6 +146,8 @@ public class FilterService
     public async Task ProcessMessageUpdate(Cacheable<IMessage, ulong> oldMessage, SocketMessage newMessage,
         ISocketMessageChannel channel, DiscordSocketClient client)
     {
+        if (newMessage.Author.Id == client.CurrentUser.Id) return; // Don't process self.
+        
         if (!_config.FilterEnabled || !_config.FilterMonitorEdits) return;
         if (!DiscordHelper.IsInGuild(newMessage)) return;
         if (!DiscordHelper.IsProcessableMessage(newMessage)) return; // Not processable
@@ -177,6 +183,8 @@ public class FilterService
 
     public async Task ProcessMessage(SocketMessage messageParam, DiscordSocketClient client)
     {
+        if (messageParam.Author.Id == client.CurrentUser.Id) return; // Don't process self.
+        
         if (!_config.FilterEnabled) return;
         if (!DiscordHelper.IsInGuild(messageParam)) return;
         if (!DiscordHelper.IsProcessableMessage(messageParam)) return; // Not processable

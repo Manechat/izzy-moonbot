@@ -288,6 +288,62 @@ public class DevModule : ModuleBase<SocketCommandContext>
                     await ReplyAsync($"Exception: {exception.Message}");
                 }
                 break;
+            case "repeat-scheduled":
+                var timeinput = string.Join(" ", args);
+                try
+                {
+                    var time = TimeHelper.Convert(timeinput);
+
+                    var repeatType = time.RepeatType switch
+                    {
+                        "relative" => ScheduledTaskRepeatType.Relative,
+                        "daily" => ScheduledTaskRepeatType.Daily,
+                        "weekly" => ScheduledTaskRepeatType.Weekly,
+                        "yearly" => ScheduledTaskRepeatType.Yearly,
+                        _ => ScheduledTaskRepeatType.None
+                    };
+
+                    var repeataction = _scheduleService.stringToAction(
+                        $"echo in {Context.Channel.Id} content Hello! I'm a repeating task occuring `{timeinput}`!");
+                    var repeattask = new ScheduledTask(DateTimeOffset.UtcNow,
+                        time.Time, repeataction, repeatType);
+                    await _scheduleService.CreateScheduledTask(repeattask, Context.Guild);
+                    await Context.Message.ReplyAsync("Created repeating scheduled task.");
+                    break;
+                }
+                catch (FormatException exception)
+                {
+                    await ReplyAsync($"Exception: {exception.Message}");
+                }
+                break;
+            case "repeat-scheduled-misty":
+                var timein = string.Join(" ", args);
+                try
+                {
+                    var time = TimeHelper.Convert(timein);
+
+                    var repeatType = time.RepeatType switch
+                    {
+                        "relative" => ScheduledTaskRepeatType.Relative,
+                        "daily" => ScheduledTaskRepeatType.Daily,
+                        "weekly" => ScheduledTaskRepeatType.Weekly,
+                        "yearly" => ScheduledTaskRepeatType.Yearly,
+                        _ => ScheduledTaskRepeatType.None
+                    };
+
+                    var repeataction = _scheduleService.stringToAction(
+                        $"echo in {Context.Channel.Id} content misty");
+                    var repeattask = new ScheduledTask(DateTimeOffset.UtcNow,
+                        time.Time, repeataction, repeatType);
+                    await _scheduleService.CreateScheduledTask(repeattask, Context.Guild);
+                    await Context.Message.ReplyAsync("Created repeating scheduled task.");
+                    break;
+                }
+                catch (FormatException exception)
+                {
+                    await ReplyAsync($"Exception: {exception.Message}");
+                }
+                break;
             default:
                 Context.Message.ReplyAsync("Unknown test.");
                 break;
@@ -344,6 +400,7 @@ public class DevModule : ModuleBase<SocketCommandContext>
         [DevCommand]
         public async Task ScheduleCommandAsync([Summary("Action")] string action = "", [Summary("[...]")][Remainder] string argsString = "")
         {
+            // TODO: Reprogram this command to be much more user-friendly. [REQUIRES: TimeHelper]
             if (action == "")
             {
                 await ReplyAsync($"Invalid usage, please refer to proper usage below:{Environment.NewLine}" +
@@ -351,7 +408,8 @@ public class DevModule : ModuleBase<SocketCommandContext>
                                  $"`{_config.Prefix}schedule list` - List all scheduled tasks.{Environment.NewLine}" +
                                  $"`{_config.Prefix}schedule get <id>` - Get scheduled task by ID.{Environment.NewLine}" +
                                  $"`{_config.Prefix}schedule modify <id> <schedule task string>` - Modify scheduled task to new data.{Environment.NewLine}" +
-                                 $"`{_config.Prefix}schedule reschedule <id> <timestamp>` - Change execution time.{Environment.NewLine}" +
+                                 $"`{_config.Prefix}schedule reschedule <id> <timestamp>` - Change next execution time.{Environment.NewLine}" +
+                                 $"`{_config.Prefix}schedule repeat <id> <true/false>` - Change whether this task repeats or not.{Environment.NewLine}" +
                                  $"`{_config.Prefix}schedule delete <id>` - Delete scheduled task.{Environment.NewLine}" +
                                  $"`{_config.Prefix}schedule create <timestamp> <action string>` - Create scheduled task.{Environment.NewLine}{Environment.NewLine}"+
                                  $"*Please note that IDs are not persistent and will change as scheduled tasks are processed.*");
