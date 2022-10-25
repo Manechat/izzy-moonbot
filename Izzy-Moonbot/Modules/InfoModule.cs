@@ -11,7 +11,7 @@ using Izzy_Moonbot.Settings;
 
 namespace Izzy_Moonbot.Modules;
 
-[Summary("Module for providing information")]
+[Summary("Basic information related commands.")]
 public class InfoModule : ModuleBase<SocketCommandContext>
 {
     private readonly CommandService _commands;

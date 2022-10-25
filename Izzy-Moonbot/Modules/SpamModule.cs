@@ -10,7 +10,7 @@ using Izzy_Moonbot.Settings;
 
 namespace Izzy_Moonbot.Modules;
 
-[Summary("Module for interacting with the spam prevention services.")]
+[Summary("Anti-spam related commands.")]
 public class SpamModule : ModuleBase<SocketCommandContext>
 {
     private readonly SpamService _spamService;

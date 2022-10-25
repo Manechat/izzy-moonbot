@@ -11,7 +11,7 @@ using Izzy_Moonbot.Settings;
 
 namespace Izzy_Moonbot.Modules;
 
-[Summary("Module for managing Izzy's configuation")]
+[Summary("Configuration management related commands.")]
 public class ConfigModule : ModuleBase<SocketCommandContext>
 {
     private readonly Config _config;
