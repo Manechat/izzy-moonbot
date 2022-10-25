@@ -46,7 +46,8 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                              $"user - Config items regarding users.{Environment.NewLine}" +
                                              $"filter - Config items regarding the filter.{Environment.NewLine}" +
                                              $"spam - Config items regarding spam pressure.{Environment.NewLine}" +
-                                             $"raid - Config items regarding antiraid.{Environment.NewLine}```");
+                                             $"raid - Config items regarding antiraid.{Environment.NewLine}```{Environment.NewLine}{Environment.NewLine}" +
+                                             $"ℹ  **See also: `{_config.Prefix}help`. Run `{_config.Prefix}help` for more information.**");
 
             return;
         }
