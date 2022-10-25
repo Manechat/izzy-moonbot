@@ -38,6 +38,7 @@ public class InfoModule : ModuleBase<SocketCommandContext>
             foreach (var module in _commands.Modules)
             {
                 if (module.IsSubmodule) continue;
+                if (module.Name == "DevModule") continue; // Hide dev module
                 var moduleInfo = $"{module.Name.Replace("Module", "")} - {module.Summary}";
                 foreach (var submodule in module.Submodules)
                     moduleInfo += $"{Environment.NewLine}    {submodule.Name.Replace("Submodule", "")} - {submodule.Summary}";
