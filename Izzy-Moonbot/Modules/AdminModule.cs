@@ -12,7 +12,7 @@ using Izzy_Moonbot.Settings;
 
 namespace Izzy_Moonbot.Modules;
 
-[Summary("Module for managing admin functions")]
+[Summary("Administration / Moderation related commands.")]
 public class AdminModule : ModuleBase<SocketCommandContext>
 {
     private readonly LoggingService _logger;

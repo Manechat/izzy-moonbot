@@ -12,7 +12,7 @@ using Izzy_Moonbot.Settings;
 
 namespace Izzy_Moonbot.Modules;
 
-[Summary("Module for interacting with the antiraid services.")]
+[Summary("Anti-raid related commands.")]
 public class RaidModule : ModuleBase<SocketCommandContext>
 {
     private readonly ModService _modService;

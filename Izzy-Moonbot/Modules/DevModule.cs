@@ -44,6 +44,62 @@ public class DevModule : ModuleBase<SocketCommandContext>
         _state = state;
     }
 
+    [NamedArgumentType]
+    public class TypeTestArguments
+    {
+        public bool? boolean { get; set; }
+        public char? character { get; set; }
+        public byte? nom { get; set; }
+        public short? pipp { get; set; }
+        public int? integer { get; set; }
+        public long? starlight { get; set; }
+        public double? rainboom { get; set; }
+        public string? single { get; set; }
+        public string? multiword { get; set; }
+        public TestEnum? how { get; set; }
+        public DateTimeOffset? time { get; set; }
+        public SocketTextChannel? channel { get; set; }
+        public SocketGuildUser? user { get; set; }
+        public SocketUserMessage? message { get; set; }
+        public SocketRole? role { get; set; }
+    }
+
+    [Command("typetest")]
+    [Summary("Type testing")]
+    [DevCommand]
+    public async Task TypeTestCommandAsync(TypeTestArguments tests)
+    {
+        var testsCompleted = new Dictionary<string, string?>();
+
+        if (tests.boolean.HasValue) testsCompleted.Add("bool", tests.boolean.Value.ToString());
+        if (tests.character.HasValue) testsCompleted.Add("char", tests.character.Value.ToString());
+        if (tests.nom.HasValue) testsCompleted.Add("byte", tests.nom.Value.ToString());
+        if (tests.pipp.HasValue) testsCompleted.Add("short", tests.pipp.Value.ToString());
+        if (tests.integer.HasValue) testsCompleted.Add("int", tests.integer.Value.ToString());
+        if (tests.starlight.HasValue) testsCompleted.Add("long", tests.starlight.Value.ToString());
+        if (tests.rainboom.HasValue) testsCompleted.Add("double", tests.rainboom.Value.ToString());
+        if (tests.single != null) testsCompleted.Add("string (single)", tests.single);
+        if (tests.multiword != null) testsCompleted.Add("string (multiple)", tests.multiword);
+        if (tests.how.HasValue) testsCompleted.Add("enum", tests.how.Value.ToString());
+        if (tests.time.HasValue) testsCompleted.Add("datetimeoffset", tests.time.Value.ToString());
+        if (tests.channel != null) testsCompleted.Add("channel", tests.channel.Name);
+        if (tests.user != null) testsCompleted.Add("user", tests.user.DisplayName);
+        if (tests.message != null) testsCompleted.Add("message", tests.message.GetJumpUrl());
+        if (tests.role != null) testsCompleted.Add("role", tests.role.Name);
+
+        var resultToPrint = testsCompleted.Select(pair => $"{pair.Key}: {pair.Value}");
+        
+        await ReplyAsync($"Type testing results: {Environment.NewLine}" +
+                         $"{String.Join(Environment.NewLine, resultToPrint)}");
+    }
+
+    public enum TestEnum
+    {
+        Hello,
+        Goodbye,
+        None
+    }
+
     [Command("test")]
     [Summary("Unit tests for Izzy Moonbow")]
     [DevCommand]

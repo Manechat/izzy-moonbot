@@ -11,7 +11,7 @@ using Izzy_Moonbot.Settings;
 
 namespace Izzy_Moonbot.Modules;
 
-[Summary("Module for managing Izzy's configuation")]
+[Summary("Configuration management related commands.")]
 public class ConfigModule : ModuleBase<SocketCommandContext>
 {
     private readonly Config _config;
@@ -46,7 +46,8 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                              $"user - Config items regarding users.{Environment.NewLine}" +
                                              $"filter - Config items regarding the filter.{Environment.NewLine}" +
                                              $"spam - Config items regarding spam pressure.{Environment.NewLine}" +
-                                             $"raid - Config items regarding antiraid.{Environment.NewLine}```");
+                                             $"raid - Config items regarding antiraid.{Environment.NewLine}```{Environment.NewLine}{Environment.NewLine}" +
+                                             $"ℹ  **See also: `{_config.Prefix}help`. Run `{_config.Prefix}help` for more information.**");
 
             return;
         }
@@ -84,7 +85,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                     string[] staticParts =
                     {
                         $"Hii!! Here's a list of all the config items I could find in the {_configDescriber.CategoryToString(category)} category!",
-                        $"Run `{_config.Prefix}config <item> to view information about an item! Please note that config items are *case sensitive*."
+                        $"Run `{_config.Prefix}config <item>` to view information about an item! Please note that config items are *case sensitive*."
                     };
 
                     var paginationMessage = new PaginationHelper(Context, pages.ToArray(), staticParts);
