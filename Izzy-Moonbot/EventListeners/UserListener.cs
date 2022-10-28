@@ -156,7 +156,7 @@ public class UserListener
             await _mod.AddRoles(member, _users[member.Id].RolesToReapplyOnRejoin,
                 "Roles reapplied due to having them before leaving.");
 
-        var rolesAutoappliedString = $", Roles reapplied: {string.Join(", ", rolesAutoapplied)}";
+        var rolesAutoappliedString = $", Roles reapplied in `RolesToReapplyOnRejoin`: {string.Join(", ", rolesAutoapplied)}";
 
         if (rolesAutoapplied.Count == 0) rolesAutoappliedString = "";
         
