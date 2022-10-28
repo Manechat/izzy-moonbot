@@ -83,6 +83,8 @@ public class Program
             
             // Misc
             services.AddTransient<IDateTimeService, DateTimeService>();
+            var modLog = FileHelper.LoadModLogAsync().GetAwaiter().GetResult();
+            services.AddSingleton(modLog);
 
             services.AddHostedService<Worker>();
         });

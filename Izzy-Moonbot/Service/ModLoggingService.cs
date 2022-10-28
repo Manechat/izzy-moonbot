@@ -25,23 +25,12 @@ public class ModLoggingService
     {
         return new ModLogConstructor(_config, guild, _batchLogger);
     }
-
-    public ActionLogConstructor CreateActionLog(SocketGuild guild)
-    {
-        return new ActionLogConstructor(_config, guild, _batchLogger);
-    }
 }
 
 public class ModLog
 {
     public SocketTextChannel Channel;
     public string Content;
-    public Embed Embed;
-}
-
-public class ActionLog
-{
-    public SocketTextChannel Channel;
     public Embed Embed;
 }
 
@@ -85,198 +74,8 @@ public class ModLogConstructor
     }
 }
 
-public class ActionLogConstructor
-{
-    private readonly BatchLogger _batchLogger;
-    private readonly SocketGuild _guild;
-    private readonly Config _config;
-
-    private LogType _actionType = LogType.Notice;
-    private List<string>? _changeLog;
-
-    private readonly ActionLog _log = new();
-    private string _reason = "No reason provided.";
-    private List<ulong>? _roles;
-    private List<SocketGuildUser>? _targets;
-    private DateTimeOffset _time = DateTimeOffset.Now;
-    private DateTimeOffset? _until;
-
-    public ActionLogConstructor(Config config, SocketGuild guild, BatchLogger batchLogger)
-    {
-        _config = config;
-        _guild = guild;
-        _batchLogger = batchLogger;
-
-        _log.Channel = _guild.GetTextChannel(_config.LogChannel);
-    }
-
-    public ActionLogConstructor SetActionType(LogType type)
-    {
-        _actionType = type;
-        return this;
-    }
-
-    public ActionLogConstructor AddTarget(SocketGuildUser target)
-    {
-        if (_targets == null) _targets = new List<SocketGuildUser>();
-        _targets.Add(target);
-        return this;
-    }
-
-    public ActionLogConstructor AddTargets(IEnumerable<SocketGuildUser> targets)
-    {
-        if (_targets == null) _targets = new List<SocketGuildUser>();
-        _targets.AddRange(targets);
-        return this;
-    }
-
-    public ActionLogConstructor SetTime(DateTimeOffset time)
-    {
-        _time = time;
-        return this;
-    }
-
-    public ActionLogConstructor SetUntilTime(DateTimeOffset? time)
-    {
-        _until = time;
-        return this;
-    }
-
-    public ActionLogConstructor SetReason(string reason)
-    {
-        _reason = reason;
-        return this;
-    }
-
-    public ActionLogConstructor AddRole(ulong role)
-    {
-        if (_roles == null) _roles = new List<ulong>();
-        _roles.Add(role);
-        return this;
-    }
-
-    public ActionLogConstructor AddRoles(IEnumerable<ulong> roles)
-    {
-        if (_roles == null) _roles = new List<ulong>();
-        _roles.AddRange(roles);
-        return this;
-    }
-
-    public async Task Send()
-    {
-        var embedBuilder = new EmbedBuilder();
-
-        if (_config.SafeMode)
-            embedBuilder.WithDescription(
-                "ℹ **This was an automated action Izzy Moonbot would have taken outside of `SafeMode`.**");
-        else embedBuilder.WithDescription("ℹ **This was an automated action Izzy Moonbot took.**");
-
-        if (_targets != null)
-        {
-            if (_targets.Count == 1)
-            {
-                embedBuilder.AddField("User", $"<@{_targets[0].Id}> (`{_targets[0].Id}`)", true);
-            }
-            else
-            {
-                var users = _targets.Select(target => $"<@{target.Id}> (`{target.Id}`)");
-                embedBuilder.AddField("Users", string.Join(", ", users));
-            }
-        }
-
-        embedBuilder.AddField("Action", GetLogTypeName(_actionType), true);
-        embedBuilder.AddField("Occured At", $"<t:{_time.ToUnixTimeSeconds()}:F>", true);
-        if (_until != null) embedBuilder.AddField("Ends At", $"<t:{_until.Value.ToUnixTimeSeconds()}:F>", true);
-        if (_roles != null) embedBuilder.AddField("Roles", string.Join(", ", _roles.Select(role => $"<@&{role}>")));
-        if (_changeLog != null)
-        {
-            embedBuilder.AddField("From", _changeLog[0]);
-            embedBuilder.AddField("To", _changeLog[1]);
-        }
-
-        embedBuilder.AddField("Reason", _reason);
-
-        embedBuilder.WithColor(GetLogColor(_actionType));
-
-        _log.Embed = embedBuilder.Build();
-
-        Console.WriteLine(_config.BatchSendLogs);
-
-        if (_config.BatchSendLogs)
-            _batchLogger.AddActionLog(_log);
-        else
-            await _log.Channel.SendMessageAsync(embed: _log.Embed);
-    }
-
-    private string GetLogTypeName(LogType action)
-    {
-        var output = "";
-        switch (action)
-        {
-            case LogType.Notice:
-                output = "Notice";
-                break;
-            case LogType.AddRoles:
-                output = "Roles added";
-                break;
-            case LogType.RemoveRoles:
-                output = "Roles removed";
-                break;
-            case LogType.Silence:
-                output = "Silence";
-                break;
-            case LogType.Kick:
-                output = "Kick";
-                break;
-            case LogType.Ban:
-                output = "Ban";
-                break;
-            case LogType.Unban:
-                output = "Unban";
-                break;
-            default:
-                output = "what";
-                break;
-        }
-
-        return output;
-    }
-
-    private Color GetLogColor(LogType action)
-    {
-        var output = 0x000000;
-        switch (action)
-        {
-            case LogType.Notice:
-            case LogType.AddRoles:
-            case LogType.RemoveRoles:
-                output = 0x002920;
-                break;
-            case LogType.Silence:
-                output = 0xffbb00;
-                break;
-            case LogType.Kick:
-                output = 0xff8800;
-                break;
-            case LogType.Ban:
-                output = 0xaa0000;
-                break;
-            case LogType.Unban:
-                output = 0x00ff00;
-                break;
-            default:
-                output = 0x000000;
-                break;
-        }
-
-        return new Color((uint)output);
-    }
-}
-
 public class BatchLogger
 {
-    private readonly List<ActionLog> _actionLogs = new();
-
     private readonly List<ModLog> _modLogs = new();
     private readonly Config _config;
 
@@ -290,11 +89,6 @@ public class BatchLogger
     public void AddModLog(ModLog log)
     {
         _modLogs.Add(log);
-    }
-
-    public void AddActionLog(ActionLog log)
-    {
-        _actionLogs.Add(log);
     }
 
     private void RefreshBatchInterval()
@@ -317,33 +111,15 @@ public class BatchLogger
                 modLogContent.Add(modLog.Content);
             }
 
-            foreach (var actionLog in _actionLogs)
-            {
-                actionLogChannel = actionLog.Channel;
-                actionLogEmbeds.Add(actionLog.Embed);
-            }
-
             if (modLogChannel != null)
                 await modLogChannel.SendMessageAsync(string.Join($"{Environment.NewLine}", modLogContent),
                     embeds: modLogEmbeds.ToArray());
 
             if (actionLogChannel != null) await actionLogChannel.SendMessageAsync(embeds: actionLogEmbeds.ToArray());
 
-            _actionLogs.Clear();
             _modLogs.Clear();
 
             RefreshBatchInterval();
         });
     }
-}
-
-public enum LogType
-{
-    Notice,
-    AddRoles,
-    RemoveRoles,
-    Silence,
-    Kick,
-    Ban,
-    Unban
 }

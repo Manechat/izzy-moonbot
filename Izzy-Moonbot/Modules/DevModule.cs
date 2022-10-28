@@ -156,37 +156,6 @@ public class DevModule : ModuleBase<SocketCommandContext>
                     $"{Environment.NewLine}```Your faithful Bot,{Environment.NewLine}Izzy Moonbot");
 
                 break;
-            case "immediate-log":
-                await _modLoggingService.CreateActionLog(Context.Guild)
-                    .SetActionType(LogType.Notice)
-                    .SetReason(
-                        $"This is a test of the new ModLoggingService.{Environment.NewLine}This should log immediatly.{Environment.NewLine}Run the `batch-log` test to test batch logging.")
-                    .Send();
-                break;
-            case "batch-log":
-                _config.BatchSendLogs = true;
-                await FileHelper.SaveConfigAsync(_config);
-                await _modLoggingService.CreateActionLog(Context.Guild)
-                    .SetActionType(LogType.Notice)
-                    .SetReason(
-                        $"This is a test of the new ModLoggingService.{Environment.NewLine}This should log in batch with several Mod log types.{Environment.NewLine}Run the `immediate-log` test to test immediate logging.")
-                    .Send();
-                await _modLoggingService.CreateModLog(Context.Guild)
-                    .SetContent("Mod log #1")
-                    .Send();
-                await _modLoggingService.CreateModLog(Context.Guild)
-                    .SetContent("Mod log #2")
-                    .Send();
-                await _modLoggingService.CreateModLog(Context.Guild)
-                    .SetContent("Mod log #3")
-                    .Send();
-                await _modLoggingService.CreateModLog(Context.Guild)
-                    .SetContent("Mod log #4")
-                    .Send();
-                await _modLoggingService.CreateModLog(Context.Guild)
-                    .SetContent("Mod log #5")
-                    .Send();
-                break;
             case "import-filter":
                 var toFilter = Context.Message.ReferencedMessage.CleanContent.Split(Environment.NewLine).AsEnumerable();
                 if (args[1] == "no") toFilter = toFilter.Skip(1);
@@ -267,28 +236,6 @@ public class DevModule : ModuleBase<SocketCommandContext>
             case "state":
                 _state.CurrentSmallJoinCount++;
                 await ReplyAsync($"At {_state.CurrentSmallJoinCount}.");
-                break;
-            case "kicklog":
-                await _modLoggingService.CreateActionLog(Context.Guild)
-                    .SetActionType(LogType.Kick)
-                    .AddTarget(Context.User as SocketGuildUser)
-                    .SetTime(DateTimeOffset.Now)
-                    .SetReason(
-                        "This is a test of the kick log type.")
-                    .Send();
-                break;
-            case "multiuser":
-                await _modLoggingService.CreateActionLog(Context.Guild)
-                    .SetActionType(LogType.Notice)
-                    .AddTarget(Context.User as SocketGuildUser)
-                    .AddTarget(Context.User as SocketGuildUser)
-                    .AddTarget(Context.User as SocketGuildUser)
-                    .AddTarget(Context.User as SocketGuildUser)
-                    .AddTarget(Context.User as SocketGuildUser)
-                    .SetTime(DateTimeOffset.Now)
-                    .SetReason(
-                        "This is a test of multiple users in 1 log.")
-                    .Send();
                 break;
             case "asyncSyncTesk":
                 Console.WriteLine("Application executing on thread {0}",

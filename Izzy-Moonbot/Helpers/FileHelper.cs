@@ -159,6 +159,31 @@ public static class FileHelper
         var fileContents = JsonConvert.SerializeObject(settings, Formatting.Indented);
         await File.WriteAllTextAsync(filepath, fileContents);
     }
+    
+    public static async Task<string> LoadModLogAsync()
+    {
+        var modLog = "";
+        var filepath = SetUpFilepath(FilePathType.Root, "moderation", "log");
+        if (!File.Exists(filepath))
+        {
+            var defaultFileContents = JsonConvert.SerializeObject(modLog, Formatting.Indented);
+            await File.WriteAllTextAsync(filepath, defaultFileContents);
+        }
+        else
+        {
+            var fileContents = await File.ReadAllTextAsync(filepath);
+            modLog = JsonConvert.DeserializeObject<string>(fileContents);
+        }
+
+        return modLog;
+    }
+
+    public static async Task SaveModLogAsync(string modLog)
+    {
+        var filepath = SetUpFilepath(FilePathType.Root, "moderation", "log");
+        var fileContents = JsonConvert.SerializeObject(modLog, Formatting.Indented);
+        await File.WriteAllTextAsync(filepath, fileContents);
+    }
 
     private static void CreateDirectoryIfNotExists(string path)
     {

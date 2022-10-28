@@ -259,11 +259,7 @@ public class SpamService
                 // User has a role which bypasses the punishment of spam trigger. Mention it in action log.
                 await _logger.Log("No silence, user has role(s) in Config.SpamBypassRoles", context, level: LogLevel.Debug);
                 
-                await _modLogger.CreateActionLog(context.Guild)
-                    .AddTarget(user)
-                    .SetReason(
-                        $"Exceeded pressure max ({newPressure}/{_config.SpamMaxPressure}) in <#{message.Channel.Id}>. Didn't silence as they have a role which bypasses punishment (`SpamBypassRoles`).")
-                    .Send();
+                // TODO: Change to mod log message.
             }
             else
             {
