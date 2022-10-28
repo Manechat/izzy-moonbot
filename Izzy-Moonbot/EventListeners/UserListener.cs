@@ -152,7 +152,8 @@ public class UserListener
             if(shouldAdd) rolesAutoapplied.Add($"<@&{roleId}>");
         }
 
-        await _mod.AddRoles(member, _users[member.Id].RolesToReapplyOnRejoin,
+        if(_users[member.Id].RolesToReapplyOnRejoin.Count != 0) 
+            await _mod.AddRoles(member, _users[member.Id].RolesToReapplyOnRejoin,
                 "Roles reapplied due to having them before leaving.");
 
         var rolesAutoappliedString = $", Roles reapplied: {string.Join(", ", rolesAutoapplied)}";
