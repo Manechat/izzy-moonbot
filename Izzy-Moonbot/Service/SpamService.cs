@@ -265,6 +265,7 @@ public class SpamService
                 
                 var embedBuilder = new EmbedBuilder()
                     .WithTitle(":warning: Spam detected")
+                    .WithDescription("No action was taken against this user as they have a role which bypasses punishment (`SpamBypassRoles`)")
                     .WithColor(3355443)
                     .AddField("User", $"<@{context.User.Id}> (`{context.User.Id}`)", true)
                     .AddField("Channel", $"<#{context.Channel.Id}>", true)
