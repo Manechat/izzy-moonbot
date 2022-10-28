@@ -286,14 +286,6 @@ public class UserListener
                 _users[newUser.Id].Aliases.Add(newUser.DisplayName);
                 changed = true;
             }
-
-            if (newUser.JoinedAt.HasValue &&
-                !_users[newUser.Id].Joins.Contains(newUser.JoinedAt.Value))
-            {
-                await _logger.Log($"{newUser.Username}#{newUser.Discriminator} ({newUser.Id})'s recent join not in joins list, updating....", null, level: LogLevel.Debug);
-                _users[newUser.Id].Joins.Add(newUser.JoinedAt.Value);
-                changed = true;
-            }
         }
         
         if (_config.MemberRole != null)
