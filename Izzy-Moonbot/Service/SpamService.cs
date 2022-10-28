@@ -244,6 +244,8 @@ public class SpamService
         _users[id].PreviousMessages.Add(messageItem);
         
         await FileHelper.SaveUsersAsync(_users);
+
+        var oldPressure = _users[id].Pressure * 1; // seperate it from the thingy
         
         var newPressure = await IncreasePressure(id, pressure);
 
@@ -258,6 +260,8 @@ public class SpamService
             {
                 // User has a role which bypasses the punishment of spam trigger. Mention it in action log.
                 await _logger.Log("No silence, user has role(s) in Config.SpamBypassRoles", context, level: LogLevel.Debug);
+
+                if (oldPressure >= _config.SpamMaxPressure) return;
                 
                 var embedBuilder = new EmbedBuilder()
                     .WithTitle(":warning: Spam detected")
@@ -281,13 +285,13 @@ public class SpamService
             {
                 // User is not immune to spam punishments, process trip.
                 await _logger.Log("Silence, executing trip method.", context, level: LogLevel.Debug);
-                await ProcessTrip(id, newPressure, pressureTracer, message, user, context);
+                await ProcessTrip(id, newPressure, pressureTracer, message, user, context, (oldPressure >= _config.SpamMaxPressure));
             }
         }
     }
 
     private async Task ProcessTrip(ulong id, double pressure, Dictionary<string, double> pressureTracer, 
-        SocketUserMessage message, SocketGuildUser user, SocketCommandContext context)
+        SocketUserMessage message, SocketGuildUser user, SocketCommandContext context, bool alreadyAlerted = false)
     {
         // Silence user, this also logs the action.
         await _mod.SilenceUser(user, $"Exceeded pressure max ({pressure}/{_config.SpamMaxPressure}) in <#{message.Channel.Id}>");
@@ -324,6 +328,8 @@ public class SpamService
                 alreadyDeletedMessages++;
             }
         }
+
+        if (alreadyAlerted) return;
         
         var embedBuilder = new EmbedBuilder()
             .WithTitle(":warning: Spam detected")
