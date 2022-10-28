@@ -83,9 +83,20 @@ public class FilterService
         else
             embedBuilder.AddField("What have I done in response?", string.Join(Environment.NewLine, actions));
 
-        await _modLog.CreateModLog(context.Guild)
+        var fileLogResponse = "Delete";
+        if (actionsTaken.Contains("message")) fileLogResponse += ", Send Message";
+        if (actionsTaken.Contains("silence")) fileLogResponse += ", Silence user";
+
+        if (_config.FilterBypassRoles.Overlaps(roleIds) ||
+            (DiscordHelper.IsDev(context.User.Id) && _config.FilterDevBypass)) fileLogResponse = "Nothing";
+
+            await _modLog.CreateModLog(context.Guild)
             .SetContent($"{(_config.FilterBypassRoles.Overlaps(roleIds) || (DiscordHelper.IsDev(context.User.Id) && _config.FilterDevBypass) ? "" : $"<@&{_config.ModRole}>")} Filter Violation for <@{context.User.Id}>")
             .SetEmbed(embedBuilder.Build())
+            .SetFileLogContent($"Filter violation by {context.User.Username}#{context.User.Discriminator} ({context.Guild.GetUser(context.User.Id).DisplayName}) (`{context.User.Id}`) in #{context.Channel.Name} (`{context.Channel.Id}`){Environment.NewLine}" +
+                               $"Category: {category}{Environment.NewLine}" +
+                               $"Trigger: {context.Message.CleanContent.Replace(word, $"[[{word}]]")}{Environment.NewLine}" +
+                               $"Response: {fileLogResponse}")
             .Send();
     }
 
@@ -149,6 +160,7 @@ public class FilterService
         if (newMessage.Author.Id == client.CurrentUser.Id) return; // Don't process self.
         
         if (!_config.FilterEnabled || !_config.FilterMonitorEdits) return;
+        if (newMessage.Author.IsBot) return; // Don't listen to bots
         if (!DiscordHelper.IsInGuild(newMessage)) return;
         if (!DiscordHelper.IsProcessableMessage(newMessage)) return; // Not processable
         if (newMessage is not SocketUserMessage message) return; // Not processable
@@ -186,6 +198,7 @@ public class FilterService
         if (messageParam.Author.Id == client.CurrentUser.Id) return; // Don't process self.
         
         if (!_config.FilterEnabled) return;
+        if (messageParam.Author.IsBot) return; // Don't listen to bots
         if (!DiscordHelper.IsInGuild(messageParam)) return;
         if (!DiscordHelper.IsProcessableMessage(messageParam)) return; // Not processable
         if (messageParam is not SocketUserMessage message) return; // Not processable

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
@@ -72,6 +73,13 @@ namespace Izzy_Moonbot
                 _client.Ready += ReadyEvent;
 
                 await _client.StartAsync();
+                
+                var filepath = FileHelper.SetUpFilepath(FilePathType.Root, "moderation", "log");
+                
+                if (!File.Exists(filepath))
+                    await File.WriteAllTextAsync(filepath, $"----------= {DateTimeOffset.UtcNow:F} =----------{Environment.NewLine}", stoppingToken);
+                
+                await File.AppendAllTextAsync(filepath, $"----------= {DateTimeOffset.UtcNow:F} =----------{Environment.NewLine}", stoppingToken);
 
                 if (_config.DiscordActivityName != null)
                 {
@@ -107,11 +115,21 @@ namespace Izzy_Moonbot
                 {
                     Task.Run(async () =>
                     {
-                        await Task.Delay(5000);
-                        if (_client.ConnectionState == ConnectionState.Disconnected)
+                        await Task.Delay(5000, stoppingToken);
+                        if (_client.ConnectionState is ConnectionState.Disconnected or ConnectionState.Disconnecting)
                         {
                             // Assume softlock, reboot
                             Environment.Exit(254);
+                        }
+
+                        if (_client.ConnectionState == ConnectionState.Connecting)
+                        {
+                            await Task.Delay(5000, stoppingToken);
+                            if (_client.ConnectionState is ConnectionState.Disconnected or ConnectionState.Disconnecting or ConnectionState.Connecting)
+                            {
+                                // Assume softlock, reboot
+                                Environment.Exit(254);
+                            }
                         }
                     });
                 };
@@ -146,6 +164,131 @@ namespace Izzy_Moonbot
             {
                 await clientGuild.DownloadUsersAsync();
             }
+
+            ResyncUsers();
+        }
+
+        private void ResyncUsers()
+        {
+            Task.Run(async () =>
+            {
+                var guild = _client.Guilds.Single(guild => guild.Id == 98609319519453184);
+                if (!guild.HasAllMembers) await guild.DownloadUsersAsync();
+
+                var newUserCount = 0;
+                var reloadUserCount = 0;
+                var knownUserCount = 0;
+
+                await foreach (var socketGuildUser in guild.Users.ToAsyncEnumerable())
+                {
+                    var skip = false;
+                    if (!_users.ContainsKey(socketGuildUser.Id))
+                    {
+                        var newUser = new User();
+                        newUser.Username = $"{socketGuildUser.Username}#{socketGuildUser.Discriminator}";
+                        newUser.Aliases.Add(socketGuildUser.Username);
+                        if (socketGuildUser.JoinedAt.HasValue) newUser.Joins.Add(socketGuildUser.JoinedAt.Value);
+                        _users.Add(socketGuildUser.Id, newUser);
+                        newUserCount += 1;
+                        skip = true;
+                    }
+                    else
+                    {
+                        if (_users[socketGuildUser.Id].Username !=
+                            $"{socketGuildUser.Username}#{socketGuildUser.Discriminator}")
+                        {
+                            _users[socketGuildUser.Id].Username =
+                                $"{socketGuildUser.Username}#{socketGuildUser.Discriminator}";
+                            if (!skip) reloadUserCount += 1;
+                            skip = true;
+                        }
+
+                        if (!_users[socketGuildUser.Id].Aliases.Contains(socketGuildUser.DisplayName))
+                        {
+                            _users[socketGuildUser.Id].Aliases.Add(socketGuildUser.DisplayName);
+                            if (!skip) reloadUserCount += 1;
+                            skip = true;
+                        }
+
+                        if (socketGuildUser.JoinedAt.HasValue &&
+                            !_users[socketGuildUser.Id].Joins.Contains(socketGuildUser.JoinedAt.Value))
+                        {
+                            _users[socketGuildUser.Id].Joins.Add(socketGuildUser.JoinedAt.Value);
+                            if (!skip) reloadUserCount += 1;
+                            skip = true;
+                        }
+
+                        if (_config.MemberRole != null)
+                        {
+                            if (_users[socketGuildUser.Id].Silenced &&
+                                socketGuildUser.Roles.Select(role => role.Id).Contains((ulong)_config.MemberRole))
+                            {
+                                // Unsilenced, Remove the flag.
+                                _users[socketGuildUser.Id].Silenced = false;
+                                if (!skip) reloadUserCount += 1;
+                                skip = true;
+                            }
+
+                            if (!_users[socketGuildUser.Id].Silenced &&
+                                !socketGuildUser.Roles.Select(role => role.Id).Contains((ulong)_config.MemberRole))
+                            {
+                                // Silenced, add the flag
+                                _users[socketGuildUser.Id].Silenced = true;
+                                if (!skip) reloadUserCount += 1;
+                                skip = true;
+                            }
+                        }
+
+                        foreach (var roleId in _config.RolesToReapplyOnRejoin)
+                        {
+                            if (!_users[socketGuildUser.Id].RolesToReapplyOnRejoin.Contains(roleId) &&
+                                socketGuildUser.Roles.Select(role => role.Id).Contains(roleId))
+                            {
+                                _users[socketGuildUser.Id].RolesToReapplyOnRejoin.Add(roleId);
+                                if (!skip) reloadUserCount += 1;
+                                skip = true;
+                            }
+
+                            if (_users[socketGuildUser.Id].RolesToReapplyOnRejoin.Contains(roleId) &&
+                                !socketGuildUser.Roles.Select(role => role.Id).Contains(roleId))
+                            {
+                                _users[socketGuildUser.Id].RolesToReapplyOnRejoin.Remove(roleId);
+                                if (!skip) reloadUserCount += 1;
+                                skip = true;
+                            }
+                        }
+
+                        foreach (var roleId in _users[socketGuildUser.Id].RolesToReapplyOnRejoin)
+                        {
+                            if (!socketGuildUser.Guild.Roles.Select(role => role.Id).Contains(roleId))
+                            {
+                                _users[socketGuildUser.Id].RolesToReapplyOnRejoin.Remove(roleId);
+                                _config.RolesToReapplyOnRejoin.Remove(roleId);
+                                await FileHelper.SaveConfigAsync(_config);
+                                if (!skip) reloadUserCount += 1;
+                                skip = true;
+                            }
+                            else
+                            {
+
+                                if (!_config.RolesToReapplyOnRejoin.Contains(roleId))
+                                {
+                                    _users[socketGuildUser.Id].RolesToReapplyOnRejoin.Remove(roleId);
+                                    if (!skip) reloadUserCount += 1;
+                                    skip = true;
+                                }
+                            }
+                        }
+
+                        if (!skip) knownUserCount += 1;
+                    }
+                }
+
+                await FileHelper.SaveUsersAsync(_users);
+
+                _logger.LogInformation(
+                    $"Resynced users. {guild.Users.Count} users found, {newUserCount} unknown, {reloadUserCount} required update, {knownUserCount} up to date.");
+            });
         }
 
         private async Task HandleCommandAsync(SocketMessage messageParam)

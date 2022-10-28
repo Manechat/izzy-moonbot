@@ -244,6 +244,8 @@ public class SpamService
         _users[id].PreviousMessages.Add(messageItem);
         
         await FileHelper.SaveUsersAsync(_users);
+
+        var oldPressure = _users[id].Pressure * 1; // seperate it from the thingy
         
         var newPressure = await IncreasePressure(id, pressure);
 
@@ -258,24 +260,39 @@ public class SpamService
             {
                 // User has a role which bypasses the punishment of spam trigger. Mention it in action log.
                 await _logger.Log("No silence, user has role(s) in Config.SpamBypassRoles", context, level: LogLevel.Debug);
+
+                if (oldPressure >= _config.SpamMaxPressure) return;
                 
-                await _modLogger.CreateActionLog(context.Guild)
-                    .AddTarget(user)
-                    .SetReason(
-                        $"Exceeded pressure max ({newPressure}/{_config.SpamMaxPressure}) in <#{message.Channel.Id}>. Didn't silence as they have a role which bypasses punishment (`SpamBypassRoles`).")
+                var embedBuilder = new EmbedBuilder()
+                    .WithTitle(":warning: Spam detected")
+                    .WithDescription("No action was taken against this user as they have a role which bypasses punishment (`SpamBypassRoles`)")
+                    .WithColor(3355443)
+                    .AddField("User", $"<@{context.User.Id}> (`{context.User.Id}`)", true)
+                    .AddField("Channel", $"<#{context.Channel.Id}>", true)
+                    .AddField("Pressure reached", $"{pressure}/{_config.SpamMaxPressure}")
+                    .AddField("Pressure breakdown of last message", $"{PressureTraceToPonyReadable(pressureTracer)}")
+                    .WithTimestamp(context.Message.Timestamp);
+
+                await _modLogger.CreateModLog(context.Guild)
+                    .SetContent($"Spam detected by <@{user.Id}>")
+                    .SetEmbed(embedBuilder.Build())
+                    .SetFileLogContent(
+                        $"{user.Username}#{user.Discriminator} ({user.DisplayName}) (`{user.Id}`) exceeded pressure max ({pressure}/{_config.SpamMaxPressure}) in #{message.Channel.Name} (`{message.Channel.Id}`).{Environment.NewLine}" +
+                        $"Pressure breakdown: {PressureTraceToPonyReadable(pressureTracer)}{Environment.NewLine}" +
+                        $"Did nothing: User has a role which bypasses punishment or has dev bypass.") 
                     .Send();
             }
             else
             {
                 // User is not immune to spam punishments, process trip.
                 await _logger.Log("Silence, executing trip method.", context, level: LogLevel.Debug);
-                await ProcessTrip(id, newPressure, pressureTracer, message, user, context);
+                await ProcessTrip(id, newPressure, pressureTracer, message, user, context, (oldPressure >= _config.SpamMaxPressure));
             }
         }
     }
 
     private async Task ProcessTrip(ulong id, double pressure, Dictionary<string, double> pressureTracer, 
-        SocketUserMessage message, SocketGuildUser user, SocketCommandContext context)
+        SocketUserMessage message, SocketGuildUser user, SocketCommandContext context, bool alreadyAlerted = false)
     {
         // Silence user, this also logs the action.
         await _mod.SilenceUser(user, $"Exceeded pressure max ({pressure}/{_config.SpamMaxPressure}) in <#{message.Channel.Id}>");
@@ -313,9 +330,26 @@ public class SpamService
             }
         }
 
+        if (alreadyAlerted) return;
+        
+        var embedBuilder = new EmbedBuilder()
+            .WithTitle(":warning: Spam detected")
+            .WithColor(16776960)
+            .AddField("User", $"<@{context.User.Id}> (`{context.User.Id}`)", true)
+            .AddField("Channel", $"<#{context.Channel.Id}>", true)
+            .AddField("Pressure reached", $"{pressure}/{_config.SpamMaxPressure}")
+            .AddField("Pressure breakdown of last message", $"{PressureTraceToPonyReadable(pressureTracer)}")
+            .WithTimestamp(context.Message.Timestamp);
+
+        if (alreadyDeletedMessages != 0)
+            embedBuilder.WithDescription(
+                $":information_source: **I was unable to delete {alreadyDeletedMessages} messages by this user. Please double check that these messages have been deleted.**");
+
         await _modLogger.CreateModLog(context.Guild)
-            .SetContent(
-                $"<@{user.Id}> (`{user.Id}`) was silenced for exceeding pressure max ({pressure}/{_config.SpamMaxPressure}) in <#{message.Channel.Id}>. Please investigate <@&{_config.ModRole}>.{Environment.NewLine}" +
+            .SetContent($"<@&{_config.ModRole}> Spam detected by <@{user.Id}>")
+            .SetEmbed(embedBuilder.Build())
+            .SetFileLogContent(
+                $"{user.Username}#{user.Discriminator} ({user.DisplayName}) (`{user.Id}`) was silenced for exceeding pressure max ({pressure}/{_config.SpamMaxPressure}) in #{message.Channel.Name} (`{message.Channel.Id}`).{Environment.NewLine}" +
                 $"Pressure breakdown: {PressureTraceToPonyReadable(pressureTracer)}{Environment.NewLine}" +
                 $"{(alreadyDeletedMessages != 0 ? $"I was unable to delete {alreadyDeletedMessages} messages from this user, please double check whether their messages have been deleted." : "")}")
             .Send();
@@ -335,6 +369,7 @@ public class SpamService
     private async Task MessageReceiveEvent(SocketMessage messageParam, DiscordSocketClient client)
     {
         if (!_config.SpamEnabled) return; // anti-spam is off
+        if (messageParam.Author.IsBot) return; // Don't listen to bots
         if (!DiscordHelper.IsInGuild(messageParam)) return; // Not in guild (in dm/group)
         if (!DiscordHelper.IsProcessableMessage(messageParam)) return; // Not processable
         if (messageParam is not SocketUserMessage message) return; // Not processable

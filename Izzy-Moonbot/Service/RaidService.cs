@@ -140,6 +140,7 @@ public class RaidService
         await _modLog.CreateModLog(guild)
             .SetContent(
                 $"The raid has ended. I've disabled raid defences and cleared my internal cache of all recent joins.")
+            .SetFileLogContent("The raid has ended. I've disabled raid defences and cleared my internal cache of all recent joins.")
             .Send();
 
         _state.RecentJoins.ForEach(async userId =>
@@ -198,6 +199,7 @@ public class RaidService
         if (!_state.ManualRaidSilence) manualRaidActive = "";
         await _modLog.CreateModLog(guild)
             .SetContent($"The raid has deescalated. I'm lowering the raid level down to Small. {manualRaidActive}")
+            .SetFileLogContent($"The raid has deescalated. I'm lowering the raid level down to Small. {manualRaidActive}")
             .Send();
 
         await FileHelper.SaveConfigAsync(_config);
@@ -242,6 +244,8 @@ public class RaidService
                     $"`{_config.Prefix}assoff` - Disable automatically silencing new joins and resets the raid level back to 'no raid'. This will **not** unsilence those considered part of the raid.{Environment.NewLine}" +
                     $"`{_config.Prefix}getraid` - Returns a list of those who are considered part of the raid by Izzy. (those who joined {_config.RecentJoinDecay} (`RecentJoinDecay`) seconds before the raid began).{Environment.NewLine}" +
                     $"`{_config.Prefix}banraid` - Bans everyone considered to be part of the raid. **This should be a last measure if Izzy becomes ratelimited while trying to deal with the raid. Use `getraid` to see who would be banned.**")
+                .SetFileLogContent($"Bing-bong! Possible raid detected! ({_config.SmallRaidSize} (`SmallRaidSize`) users joined within {_config.SmallRaidTime} (`SmallRaidTime`) seconds.){Environment.NewLine}" +
+                                   $"{string.Join($"{Environment.NewLine}", potentialRaiders)}{Environment.NewLine}")
                 .Send();
 
             _state.CurrentRaidMode = RaidMode.Small;
@@ -300,6 +304,9 @@ public class RaidService
                         $"`{_config.Prefix}assoff` - Disable automatically silencing new joins and resets the raid level back to 'no raid'.. This will **not** unsilence those considered part of the raid.{Environment.NewLine}" +
                         $"`{_config.Prefix}getraid` - Returns a list of those who are considered part of the raid by Izzy. (those who joined within {_config.RecentJoinDecay} (`RecentJoinDecay`) seconds).{Environment.NewLine}" +
                         $"`{_config.Prefix}banraid` - Bans everyone considered to be part of the raid. **This should be a last measure if Izzy becomes ratelimited while trying to deal with the raid. Use `getraid` to see who would be banned.**")
+                    .SetFileLogContent($"Bing-bong! Raid detected! ({_config.LargeRaidSize} (`LargeRaidSize`) users joined within {_config.LargeRaidTime} (`LargeRaidTime`) seconds.){Environment.NewLine}" +
+                                       $"I have automatically silenced all the members below members and enabled autosilencing users on join.{Environment.NewLine}" +
+                                       $"{string.Join($"{Environment.NewLine}", potentialRaiders)}{Environment.NewLine}")
                     .Send();
             }
             else
@@ -308,11 +315,13 @@ public class RaidService
                     await _modLog.CreateModLog(guild)
                         .SetContent(
                             $"<@-&{_config.ModRole}> **The current raid has escalated. Silencing new joins has already been enabled manually.** ({_config.LargeRaidSize} (`LargeRaidSize`) users joined within {_config.LargeRaidTime} (`LargeRaidTime`) seconds.)")
+                        .SetFileLogContent($"The current raid has escalated. Silencing new joins has already been enabled manually. ({_config.LargeRaidSize} (`LargeRaidSize`) users joined within {_config.LargeRaidTime} (`LargeRaidTime`) seconds.)")
                         .Send();
                 else
                     await _modLog.CreateModLog(guild)
                         .SetContent(
                             $"<@-&{_config.ModRole}> **The current raid has escalated and I have automatically enabled silencing new joins and I've silenced those considered part of the raid.** ({_config.LargeRaidSize} (`LargeRaidSize`) users joined within {_config.LargeRaidTime} (`LargeRaidTime`) seconds.)")
+                        .SetFileLogContent($"The current raid has escalated and I have automatically enabled silencing new joins and I've silenced those considered part of the raid. ({_config.LargeRaidSize} (`LargeRaidSize`) users joined within {_config.LargeRaidTime} (`LargeRaidTime`) seconds.)")
                         .Send();
             }
 
