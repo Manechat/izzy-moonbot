@@ -120,7 +120,6 @@ public class UserListener
         string joinedBefore = $", Joined {_users[member.Id].Joins.Count - 1} times before";
         if (_users[member.Id].Joins.Count <= 1) joinedBefore = "";
 
-        
         var rolesAutoapplied = new List<string>();
 
         foreach (var roleId in _users[member.Id].RolesToReapplyOnRejoin)
@@ -153,11 +152,8 @@ public class UserListener
             if(shouldAdd) rolesAutoapplied.Add($"<@&{roleId}>");
         }
 
-        if (_config.ManageNewUserRoles)
-        {
-            await _mod.AddRoles(member, _users[member.Id].RolesToReapplyOnRejoin,
+        await _mod.AddRoles(member, _users[member.Id].RolesToReapplyOnRejoin,
                 "Roles reapplied due to having them before leaving.");
-        }
 
         var rolesAutoappliedString = $", Roles reapplied: {string.Join(", ", rolesAutoapplied)}";
 
