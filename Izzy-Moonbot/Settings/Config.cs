@@ -31,6 +31,7 @@ public class Config
         MemberRole = 0;
         NewMemberRole = 0;
         NewMemberRoleDecay = 0;
+        RolesToReapplyOnRejoin = new HashSet<ulong>();
 
         // Filter Settings
         FilterEnabled = true;
@@ -98,6 +99,7 @@ public class Config
     public ulong? MemberRole { get; set; }
     public ulong? NewMemberRole { get; set; }
     public double NewMemberRoleDecay { get; set; }
+    public HashSet<ulong> RolesToReapplyOnRejoin { get; set; }
 
     // Filter settings
     public bool FilterEnabled { get; set; }
