@@ -120,17 +120,43 @@ public class UserListener
         string joinedBefore = $", Joined {_users[member.Id].Joins.Count - 1} times before";
         if (_users[member.Id].Joins.Count <= 1) joinedBefore = "";
 
-        if (_config.ManageNewUserRoles)
-        {
-            await _mod.AddRoles(member, _users[member.Id].RolesToReapplyOnRejoin,
-                "Roles reapplied due to having them before leaving.");
-        }
-
+        
         var rolesAutoapplied = new List<string>();
 
         foreach (var roleId in _users[member.Id].RolesToReapplyOnRejoin)
         {
-            rolesAutoapplied.Add($"<@&{roleId}>");
+            var shouldAdd = true;
+            
+            if (!member.Guild.Roles.Select(role => role.Id).Contains(roleId))
+            {
+                await _logger.Log(
+                    $"{member.Username}#{member.Discriminator} ({member.Id}) had role which would of reapplied on join but no longer exists, role id {roleId}");
+                _users[member.Id].RolesToReapplyOnRejoin.Remove(roleId);
+                _config.RolesToReapplyOnRejoin.Remove(roleId);
+                await FileHelper.SaveConfigAsync(_config);
+                await FileHelper.SaveUsersAsync(_users);
+                shouldAdd = false;
+            }
+            else
+            {
+
+                if (!_config.RolesToReapplyOnRejoin.Contains(roleId))
+                {
+                    await _logger.Log(
+                        $"{member.Username}#{member.Discriminator} ({member.Id}) has role which will no longer reapply on join, role {member.Guild.Roles.Single(role => role.Id == roleId).Name} ({roleId})");
+                    _users[member.Id].RolesToReapplyOnRejoin.Remove(roleId);
+                    await FileHelper.SaveUsersAsync(_users);
+                    shouldAdd = false;
+                }
+            }
+            
+            if(shouldAdd) rolesAutoapplied.Add($"<@&{roleId}>");
+        }
+
+        if (_config.ManageNewUserRoles)
+        {
+            await _mod.AddRoles(member, _users[member.Id].RolesToReapplyOnRejoin,
+                "Roles reapplied due to having them before leaving.");
         }
 
         var rolesAutoappliedString = $", Roles reapplied: {string.Join(", ", rolesAutoapplied)}";
