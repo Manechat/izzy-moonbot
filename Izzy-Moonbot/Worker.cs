@@ -77,9 +77,9 @@ namespace Izzy_Moonbot
                 var filepath = FileHelper.SetUpFilepath(FilePathType.Root, "moderation", "log");
                 
                 if (!File.Exists(filepath))
-                    await File.WriteAllTextAsync(filepath, $"----------= {DateTimeOffset.UtcNow:g} =----------{Environment.NewLine}", stoppingToken);
+                    await File.WriteAllTextAsync(filepath, $"----------= {DateTimeOffset.UtcNow:F} =----------{Environment.NewLine}", stoppingToken);
                 
-                await File.AppendAllTextAsync(filepath, $"----------= {DateTimeOffset.UtcNow:g} =----------{Environment.NewLine}", stoppingToken);
+                await File.AppendAllTextAsync(filepath, $"----------= {DateTimeOffset.UtcNow:F} =----------{Environment.NewLine}", stoppingToken);
 
                 if (_config.DiscordActivityName != null)
                 {

@@ -277,7 +277,7 @@ public class SpamService
                     .SetContent($"Spam detected by <@{user.Id}>")
                     .SetEmbed(embedBuilder.Build())
                     .SetFileLogContent(
-                        $"{user.Username}#{user.Discriminator} ({user.DisplayName}) (`{user.Id}`) exceeded pressure max ({pressure}/{_config.SpamMaxPressure}) in <#{message.Channel.Id}>.{Environment.NewLine}" +
+                        $"{user.Username}#{user.Discriminator} ({user.DisplayName}) (`{user.Id}`) exceeded pressure max ({pressure}/{_config.SpamMaxPressure}) in #{message.Channel.Name} (`{message.Channel.Id}`).{Environment.NewLine}" +
                         $"Pressure breakdown: {PressureTraceToPonyReadable(pressureTracer)}{Environment.NewLine}" +
                         $"Did nothing: User has a role which bypasses punishment or has dev bypass.") 
                     .Send();
@@ -349,7 +349,7 @@ public class SpamService
             .SetContent($"<@&{_config.ModRole}> Spam detected by <@{user.Id}>")
             .SetEmbed(embedBuilder.Build())
             .SetFileLogContent(
-                $"{user.Username}#{user.Discriminator} ({user.DisplayName}) (`{user.Id}`) was silenced for exceeding pressure max ({pressure}/{_config.SpamMaxPressure}) in <#{message.Channel.Id}>.{Environment.NewLine}" +
+                $"{user.Username}#{user.Discriminator} ({user.DisplayName}) (`{user.Id}`) was silenced for exceeding pressure max ({pressure}/{_config.SpamMaxPressure}) in #{message.Channel.Name} (`{message.Channel.Id}`).{Environment.NewLine}" +
                 $"Pressure breakdown: {PressureTraceToPonyReadable(pressureTracer)}{Environment.NewLine}" +
                 $"{(alreadyDeletedMessages != 0 ? $"I was unable to delete {alreadyDeletedMessages} messages from this user, please double check whether their messages have been deleted." : "")}")
             .Send();

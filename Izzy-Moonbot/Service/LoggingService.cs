@@ -28,7 +28,7 @@ public class LoggingService
         var logMessage = "";
         if (header)
         {
-            logMessage += $"[{DateTime.UtcNow:g}] ";
+            logMessage += $"[{DateTime.UtcNow:O}] ";
         }
 
         if (context != null)

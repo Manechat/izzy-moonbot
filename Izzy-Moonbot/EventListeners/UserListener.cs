@@ -211,6 +211,8 @@ public class UserListener
         await _logger.Log($"Constructing moderation log content", level: LogLevel.Debug);
         var output = 
             $"Leave: {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined <t:{_users[user.Id].Joins.Last().ToUnixTimeSeconds()}:R>";
+        var fileOutput = 
+            $"Leave: {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined {_users[user.Id].Joins.Last():O}";
 
         var banAuditLogEntries = wasBanned as RestAuditLogEntry[] ?? wasBanned.ToArray();
         if (banAuditLogEntries.Any(audit => audit != null))
@@ -220,6 +222,8 @@ public class UserListener
             await _logger.Log($"Fetched, user was banned by {audit.User.Username}#{audit.User.Discriminator} ({audit.User.Id}) for \"{audit.Reason}\"", level: LogLevel.Debug);
             output =
                 $"Leave (Ban): {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined <t:{_users[user.Id].Joins.Last().ToUnixTimeSeconds()}:R>, \"{audit.Reason}\" by {audit.User.Username}#{audit.User.Discriminator} ({guild.GetUser(audit.User.Id).DisplayName})";
+            fileOutput =
+                $"Leave (Ban): {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined {_users[user.Id].Joins.Last():O}, \"{audit.Reason}\" by {audit.User.Username}#{audit.User.Discriminator} ({guild.GetUser(audit.User.Id).DisplayName})";
         }
 
         var kickAuditLogEntries = wasKicked as RestAuditLogEntry[] ?? wasKicked.ToArray();
@@ -230,6 +234,8 @@ public class UserListener
             await _logger.Log($"Fetched, user was kicked by {audit.User.Username}#{audit.User.Discriminator} ({audit.User.Id}) for \"{audit.Reason}\"", level: LogLevel.Debug);
             output =
                 $"Leave (Kick): {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined <t:{_users[user.Id].Joins.Last().ToUnixTimeSeconds()}:R>, \"{audit.Reason}\" by {audit.User.Username}#{audit.User.Discriminator} ({guild.GetUser(audit.User.Id).DisplayName})";
+            fileOutput =
+                $"Leave (Kick): {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined {_users[user.Id].Joins.Last():O}, \"{audit.Reason}\" by {audit.User.Username}#{audit.User.Discriminator} ({guild.GetUser(audit.User.Id).DisplayName})";
         }
         await _logger.Log($"Finished constructing moderation log content", level: LogLevel.Debug);
 
@@ -253,7 +259,7 @@ public class UserListener
         await _logger.Log($"Sending moderation log", level: LogLevel.Debug);
         await _modLogger.CreateModLog(guild)
             .SetContent(output)
-            .SetFileLogContent(output)
+            .SetFileLogContent(fileOutput)
             .Send();
         await _logger.Log($"Moderation log sent", level: LogLevel.Debug);
     }

@@ -81,7 +81,7 @@ public class ModLogConstructor
         var filepath = FileHelper.SetUpFilepath(FilePathType.Root, "moderation", "log");
                 
         if (!File.Exists(filepath))
-            await File.WriteAllTextAsync(filepath, $"----------= {DateTimeOffset.UtcNow:g} =----------{Environment.NewLine}");
+            await File.WriteAllTextAsync(filepath, $"----------= {DateTimeOffset.UtcNow:F} =----------{Environment.NewLine}");
                 
         await File.AppendAllTextAsync(filepath, modLogFileContent);
 
