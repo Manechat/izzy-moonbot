@@ -369,6 +369,7 @@ public class SpamService
     private async Task MessageReceiveEvent(SocketMessage messageParam, DiscordSocketClient client)
     {
         if (!_config.SpamEnabled) return; // anti-spam is off
+        if (messageParam.Author.IsBot) return; // Don't listen to bots
         if (!DiscordHelper.IsInGuild(messageParam)) return; // Not in guild (in dm/group)
         if (!DiscordHelper.IsProcessableMessage(messageParam)) return; // Not processable
         if (messageParam is not SocketUserMessage message) return; // Not processable

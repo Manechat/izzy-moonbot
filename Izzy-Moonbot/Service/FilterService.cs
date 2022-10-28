@@ -160,6 +160,7 @@ public class FilterService
         if (newMessage.Author.Id == client.CurrentUser.Id) return; // Don't process self.
         
         if (!_config.FilterEnabled || !_config.FilterMonitorEdits) return;
+        if (newMessage.Author.IsBot) return; // Don't listen to bots
         if (!DiscordHelper.IsInGuild(newMessage)) return;
         if (!DiscordHelper.IsProcessableMessage(newMessage)) return; // Not processable
         if (newMessage is not SocketUserMessage message) return; // Not processable
@@ -197,6 +198,7 @@ public class FilterService
         if (messageParam.Author.Id == client.CurrentUser.Id) return; // Don't process self.
         
         if (!_config.FilterEnabled) return;
+        if (messageParam.Author.IsBot) return; // Don't listen to bots
         if (!DiscordHelper.IsInGuild(messageParam)) return;
         if (!DiscordHelper.IsProcessableMessage(messageParam)) return; // Not processable
         if (messageParam is not SocketUserMessage message) return; // Not processable
