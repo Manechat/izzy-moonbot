@@ -164,7 +164,7 @@ public class UserListener
         
         await _modLogger.CreateModLog(member.Guild)
             .SetContent($"Join: <@{member.Id}> (`{member.Id}`), created <t:{member.CreatedAt.ToUnixTimeSeconds()}:R>{autoSilence}{joinedBefore}{rolesAutoappliedString}")
-            .SetFileLogContent($"Join: <@{member.Id}> (`{member.Id}`), created <t:{member.CreatedAt.ToUnixTimeSeconds()}:R>{autoSilence}{joinedBefore}{rolesAutoappliedString}")
+            .SetFileLogContent($"Join: {member.Username}#{member.Discriminator} (`{member.Id}`), created {member.CreatedAt:O}{autoSilence}{joinedBefore}{rolesAutoappliedString}")
             .Send();
         await _logger.Log($"Log posted", level: LogLevel.Debug);
     }
