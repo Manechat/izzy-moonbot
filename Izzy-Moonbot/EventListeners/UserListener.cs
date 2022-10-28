@@ -119,10 +119,28 @@ public class UserListener
                 ", silenced (attempted silence bypass)";
         string joinedBefore = $", Joined {_users[member.Id].Joins.Count - 1} times before";
         if (_users[member.Id].Joins.Count <= 1) joinedBefore = "";
+
+        if (_config.ManageNewUserRoles)
+        {
+            await _mod.AddRoles(member, _users[member.Id].RolesToReapplyOnRejoin,
+                "Roles reapplied due to having them before leaving.");
+        }
+
+        var rolesAutoapplied = new List<string>();
+
+        foreach (var roleId in _users[member.Id].RolesToReapplyOnRejoin)
+        {
+            rolesAutoapplied.Add($"<@&{roleId}>");
+        }
+
+        var rolesAutoappliedString = $", Roles reapplied: {string.Join(", ", rolesAutoapplied)}";
+
+        if (rolesAutoapplied.Count == 0) rolesAutoappliedString = "";
+        
         await _logger.Log($"Generated moderation log content, posting log", level: LogLevel.Debug);
         
         await _modLogger.CreateModLog(member.Guild)
-            .SetContent($"Join: <@{member.Id}> (`{member.Id}`), created <t:{member.CreatedAt.ToUnixTimeSeconds()}:R>{autoSilence}{joinedBefore}")
+            .SetContent($"Join: <@{member.Id}> (`{member.Id}`), created <t:{member.CreatedAt.ToUnixTimeSeconds()}:R>{autoSilence}{joinedBefore}{rolesAutoappliedString}")
             .Send();
         await _logger.Log($"Log posted", level: LogLevel.Debug);
     }
