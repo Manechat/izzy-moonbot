@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
@@ -72,6 +73,13 @@ namespace Izzy_Moonbot
                 _client.Ready += ReadyEvent;
 
                 await _client.StartAsync();
+                
+                var filepath = FileHelper.SetUpFilepath(FilePathType.Root, "moderation", "log");
+                
+                if (!File.Exists(filepath))
+                    await File.WriteAllTextAsync(filepath, $"----------= {DateTimeOffset.UtcNow:g} =----------{Environment.NewLine}", stoppingToken);
+                
+                await File.AppendAllTextAsync(filepath, $"----------= {DateTimeOffset.UtcNow:g} =----------{Environment.NewLine}", stoppingToken);
 
                 if (_config.DiscordActivityName != null)
                 {
@@ -107,11 +115,21 @@ namespace Izzy_Moonbot
                 {
                     Task.Run(async () =>
                     {
-                        await Task.Delay(5000);
-                        if (_client.ConnectionState == ConnectionState.Disconnected)
+                        await Task.Delay(5000, stoppingToken);
+                        if (_client.ConnectionState is ConnectionState.Disconnected or ConnectionState.Disconnecting)
                         {
                             // Assume softlock, reboot
                             Environment.Exit(254);
+                        }
+
+                        if (_client.ConnectionState == ConnectionState.Connecting)
+                        {
+                            await Task.Delay(5000, stoppingToken);
+                            if (_client.ConnectionState is ConnectionState.Disconnected or ConnectionState.Disconnecting or ConnectionState.Connecting)
+                            {
+                                // Assume softlock, reboot
+                                Environment.Exit(254);
+                            }
                         }
                     });
                 };

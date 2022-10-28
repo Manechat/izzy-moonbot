@@ -83,9 +83,20 @@ public class FilterService
         else
             embedBuilder.AddField("What have I done in response?", string.Join(Environment.NewLine, actions));
 
-        await _modLog.CreateModLog(context.Guild)
+        var fileLogResponse = "Delete";
+        if (actionsTaken.Contains("message")) fileLogResponse += ", Send Message";
+        if (actionsTaken.Contains("silence")) fileLogResponse += ", Silence user";
+
+        if (_config.FilterBypassRoles.Overlaps(roleIds) ||
+            (DiscordHelper.IsDev(context.User.Id) && _config.FilterDevBypass)) fileLogResponse = "Nothing";
+
+            await _modLog.CreateModLog(context.Guild)
             .SetContent($"{(_config.FilterBypassRoles.Overlaps(roleIds) || (DiscordHelper.IsDev(context.User.Id) && _config.FilterDevBypass) ? "" : $"<@&{_config.ModRole}>")} Filter Violation for <@{context.User.Id}>")
             .SetEmbed(embedBuilder.Build())
+            .SetFileLogContent($"Filter violation by {context.User.Username}#{context.User.Discriminator} ({context.Guild.GetUser(context.User.Id).DisplayName}){Environment.NewLine}" +
+                               $"Category: {category}{Environment.NewLine}" +
+                               $"Trigger: {context.Message.CleanContent.Replace(word, $"[[{word}]]")}{Environment.NewLine}" +
+                               $"Response: {fileLogResponse}")
             .Send();
     }
 

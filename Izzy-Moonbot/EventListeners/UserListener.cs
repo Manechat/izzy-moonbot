@@ -164,6 +164,7 @@ public class UserListener
         
         await _modLogger.CreateModLog(member.Guild)
             .SetContent($"Join: <@{member.Id}> (`{member.Id}`), created <t:{member.CreatedAt.ToUnixTimeSeconds()}:R>{autoSilence}{joinedBefore}{rolesAutoappliedString}")
+            .SetFileLogContent($"Join: <@{member.Id}> (`{member.Id}`), created <t:{member.CreatedAt.ToUnixTimeSeconds()}:R>{autoSilence}{joinedBefore}{rolesAutoappliedString}")
             .Send();
         await _logger.Log($"Log posted", level: LogLevel.Debug);
     }
@@ -252,6 +253,7 @@ public class UserListener
         await _logger.Log($"Sending moderation log", level: LogLevel.Debug);
         await _modLogger.CreateModLog(guild)
             .SetContent(output)
+            .SetFileLogContent(output)
             .Send();
         await _logger.Log($"Moderation log sent", level: LogLevel.Debug);
     }

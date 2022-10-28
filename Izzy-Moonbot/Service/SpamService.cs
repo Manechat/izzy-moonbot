@@ -259,7 +259,23 @@ public class SpamService
                 // User has a role which bypasses the punishment of spam trigger. Mention it in action log.
                 await _logger.Log("No silence, user has role(s) in Config.SpamBypassRoles", context, level: LogLevel.Debug);
                 
-                // TODO: Change to mod log message.
+                var embedBuilder = new EmbedBuilder()
+                    .WithTitle(":warning: Spam detected")
+                    .WithColor(3355443)
+                    .AddField("User", $"<@{context.User.Id}> (`{context.User.Id}`)", true)
+                    .AddField("Channel", $"<#{context.Channel.Id}>", true)
+                    .AddField("Pressure reached", $"{pressure}/{_config.SpamMaxPressure}")
+                    .AddField("Pressure breakdown of last message", $"{PressureTraceToPonyReadable(pressureTracer)}")
+                    .WithTimestamp(context.Message.Timestamp);
+
+                await _modLogger.CreateModLog(context.Guild)
+                    .SetContent($"Spam detected by <@{user.Id}>")
+                    .SetEmbed(embedBuilder.Build())
+                    .SetFileLogContent(
+                        $"{user.Username}#{user.Discriminator} ({user.DisplayName}) (`{user.Id}`) exceeded pressure max ({pressure}/{_config.SpamMaxPressure}) in <#{message.Channel.Id}>.{Environment.NewLine}" +
+                        $"Pressure breakdown: {PressureTraceToPonyReadable(pressureTracer)}{Environment.NewLine}" +
+                        $"Did nothing: User has a role which bypasses punishment or has dev bypass.") 
+                    .Send();
             }
             else
             {
@@ -308,10 +324,25 @@ public class SpamService
                 alreadyDeletedMessages++;
             }
         }
+        
+        var embedBuilder = new EmbedBuilder()
+            .WithTitle(":warning: Spam detected")
+            .WithColor(16776960)
+            .AddField("User", $"<@{context.User.Id}> (`{context.User.Id}`)", true)
+            .AddField("Channel", $"<#{context.Channel.Id}>", true)
+            .AddField("Pressure reached", $"{pressure}/{_config.SpamMaxPressure}")
+            .AddField("Pressure breakdown of last message", $"{PressureTraceToPonyReadable(pressureTracer)}")
+            .WithTimestamp(context.Message.Timestamp);
+
+        if (alreadyDeletedMessages != 0)
+            embedBuilder.WithDescription(
+                $":information_source: **I was unable to delete {alreadyDeletedMessages} messages by this user. Please double check that these messages have been deleted.**");
 
         await _modLogger.CreateModLog(context.Guild)
-            .SetContent(
-                $"<@{user.Id}> (`{user.Id}`) was silenced for exceeding pressure max ({pressure}/{_config.SpamMaxPressure}) in <#{message.Channel.Id}>. Please investigate <@&{_config.ModRole}>.{Environment.NewLine}" +
+            .SetContent($"<@&{_config.ModRole}> Spam detected by <@{user.Id}>")
+            .SetEmbed(embedBuilder.Build())
+            .SetFileLogContent(
+                $"{user.Username}#{user.Discriminator} ({user.DisplayName}) (`{user.Id}`) was silenced for exceeding pressure max ({pressure}/{_config.SpamMaxPressure}) in <#{message.Channel.Id}>.{Environment.NewLine}" +
                 $"Pressure breakdown: {PressureTraceToPonyReadable(pressureTracer)}{Environment.NewLine}" +
                 $"{(alreadyDeletedMessages != 0 ? $"I was unable to delete {alreadyDeletedMessages} messages from this user, please double check whether their messages have been deleted." : "")}")
             .Send();

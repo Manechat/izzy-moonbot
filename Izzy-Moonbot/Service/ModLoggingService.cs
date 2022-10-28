@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
+using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Settings;
 
 namespace Izzy_Moonbot.Service;
@@ -32,6 +34,7 @@ public class ModLog
     public SocketTextChannel Channel;
     public string Content;
     public Embed Embed;
+    public string FileLogContent;
 }
 
 public class ModLogConstructor
@@ -63,9 +66,24 @@ public class ModLogConstructor
         return this;
     }
 
+    public ModLogConstructor SetFileLogContent(string content)
+    {
+        _log.FileLogContent = content;
+        return this;
+    }
+
     public async Task Send()
     {
         if (_log.Content == null) throw new InvalidOperationException("A moderation log cannot have no content");
+        
+        // Log to file
+        var modLogFileContent = LoggingService.PrepareMessageForLogging(_log.FileLogContent, null, true);
+        var filepath = FileHelper.SetUpFilepath(FilePathType.Root, "moderation", "log");
+                
+        if (!File.Exists(filepath))
+            await File.WriteAllTextAsync(filepath, $"----------= {DateTimeOffset.UtcNow:g} =----------{Environment.NewLine}");
+                
+        await File.AppendAllTextAsync(filepath, modLogFileContent);
 
         if (_config.BatchSendLogs)
             _batchLogger.AddModLog(_log);
@@ -102,7 +120,6 @@ public class BatchLogger
 
             var modLogContent = new List<string>();
             var modLogEmbeds = new List<Embed>();
-            var actionLogEmbeds = new List<Embed>();
 
             foreach (var modLog in _modLogs)
             {
@@ -114,9 +131,7 @@ public class BatchLogger
             if (modLogChannel != null)
                 await modLogChannel.SendMessageAsync(string.Join($"{Environment.NewLine}", modLogContent),
                     embeds: modLogEmbeds.ToArray());
-
-            if (actionLogChannel != null) await actionLogChannel.SendMessageAsync(embeds: actionLogEmbeds.ToArray());
-
+            
             _modLogs.Clear();
 
             RefreshBatchInterval();
