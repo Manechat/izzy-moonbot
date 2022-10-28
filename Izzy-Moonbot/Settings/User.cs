@@ -17,6 +17,7 @@ public class User
         PreviousMessage = "";
         PreviousMessages = new List<PreviousMessageItem>();
         Silenced = false;
+        RolesToReapplyOnRejoin = new HashSet<ulong>();
     }
 
     public string Username { get; set; }
@@ -28,6 +29,7 @@ public class User
     public string PreviousMessage { get; set; }
     public List<PreviousMessageItem> PreviousMessages { get; set; }
     public bool Silenced { get; set; }
+    public HashSet<ulong> RolesToReapplyOnRejoin { get; set; }
 }
 
 public class PreviousMessageItem

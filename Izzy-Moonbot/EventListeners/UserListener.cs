@@ -119,10 +119,51 @@ public class UserListener
                 ", silenced (attempted silence bypass)";
         string joinedBefore = $", Joined {_users[member.Id].Joins.Count - 1} times before";
         if (_users[member.Id].Joins.Count <= 1) joinedBefore = "";
+
+        var rolesAutoapplied = new List<string>();
+
+        foreach (var roleId in _users[member.Id].RolesToReapplyOnRejoin)
+        {
+            var shouldAdd = true;
+            
+            if (!member.Guild.Roles.Select(role => role.Id).Contains(roleId))
+            {
+                await _logger.Log(
+                    $"{member.Username}#{member.Discriminator} ({member.Id}) had role which would of reapplied on join but no longer exists, role id {roleId}");
+                _users[member.Id].RolesToReapplyOnRejoin.Remove(roleId);
+                _config.RolesToReapplyOnRejoin.Remove(roleId);
+                await FileHelper.SaveConfigAsync(_config);
+                await FileHelper.SaveUsersAsync(_users);
+                shouldAdd = false;
+            }
+            else
+            {
+
+                if (!_config.RolesToReapplyOnRejoin.Contains(roleId))
+                {
+                    await _logger.Log(
+                        $"{member.Username}#{member.Discriminator} ({member.Id}) has role which will no longer reapply on join, role {member.Guild.Roles.Single(role => role.Id == roleId).Name} ({roleId})");
+                    _users[member.Id].RolesToReapplyOnRejoin.Remove(roleId);
+                    await FileHelper.SaveUsersAsync(_users);
+                    shouldAdd = false;
+                }
+            }
+            
+            if(shouldAdd) rolesAutoapplied.Add($"<@&{roleId}>");
+        }
+
+        if(_users[member.Id].RolesToReapplyOnRejoin.Count != 0) 
+            await _mod.AddRoles(member, _users[member.Id].RolesToReapplyOnRejoin,
+                "Roles reapplied due to having them before leaving.");
+
+        var rolesAutoappliedString = $", Roles reapplied: {string.Join(", ", rolesAutoapplied)}";
+
+        if (rolesAutoapplied.Count == 0) rolesAutoappliedString = "";
+        
         await _logger.Log($"Generated moderation log content, posting log", level: LogLevel.Debug);
         
         await _modLogger.CreateModLog(member.Guild)
-            .SetContent($"Join: <@{member.Id}> (`{member.Id}`), created <t:{member.CreatedAt.ToUnixTimeSeconds()}:R>{autoSilence}{joinedBefore}")
+            .SetContent($"Join: <@{member.Id}> (`{member.Id}`), created <t:{member.CreatedAt.ToUnixTimeSeconds()}:R>{autoSilence}{joinedBefore}{rolesAutoappliedString}")
             .Send();
         await _logger.Log($"Log posted", level: LogLevel.Debug);
     }
@@ -217,20 +258,104 @@ public class UserListener
 
     private async Task MemberUpdateEvent(Cacheable<SocketGuildUser,ulong> oldUser, SocketGuildUser newUser)
     {
-        if (_config.MemberRole == null) return;
-        if (_users[newUser.Id].Silenced &&
-            newUser.Roles.Select(role => role.Id).Contains((ulong)_config.MemberRole))
+        var changed = false;
+        
+        if (!_users.ContainsKey(newUser.Id))
         {
-            // Unsilenced, Remove the flag.
-            _users[newUser.Id].Silenced = false;
-            await FileHelper.SaveUsersAsync(_users);
+            changed = true;
+            await _logger.Log($"{newUser.Username}#{newUser.Discriminator} ({newUser.Id}) has no metadata, creating now...", null, level: LogLevel.Debug);
+            var newUserData = new User();
+            newUserData.Username = $"{newUser.Username}#{newUser.Discriminator}";
+            newUserData.Aliases.Add(newUser.Username);
+            if(newUser.JoinedAt.HasValue) newUserData.Joins.Add(newUser.JoinedAt.Value);
+            _users.Add(newUser.Id, newUserData);
         }
-        if (!_users[newUser.Id].Silenced &&
-            !newUser.Roles.Select(role => role.Id).Contains((ulong)_config.MemberRole))
+        else
         {
-            // Silenced, add the flag
-            _users[newUser.Id].Silenced = true;
-            await FileHelper.SaveUsersAsync(_users);
+            if (_users[newUser.Id].Username != $"{newUser.Username}#{newUser.Discriminator}")
+            {
+                await _logger.Log($"User name/discriminator changed from {_users[newUser.Id].Username} to {newUser.Username}#{newUser.Discriminator}, updating...", null, level: LogLevel.Debug);
+                _users[newUser.Id].Username =
+                    $"{newUser.Username}#{newUser.Discriminator}";
+                changed = true;
+            }
+
+            if (!_users[newUser.Id].Aliases.Contains(newUser.DisplayName))
+            {
+                await _logger.Log($"{newUser.Username}#{newUser.Discriminator} ({newUser.Id}) has new displayname, updating...", null, level: LogLevel.Debug);
+                _users[newUser.Id].Aliases.Add(newUser.DisplayName);
+                changed = true;
+            }
         }
+        
+        if (_config.MemberRole != null)
+        {
+            if (_users[newUser.Id].Silenced &&
+                newUser.Roles.Select(role => role.Id).Contains((ulong)_config.MemberRole))
+            {
+                // Unsilenced, Remove the flag.
+                await _logger.Log(
+                    $"{newUser.Username}#{newUser.Discriminator} ({newUser.Id}) unsilenced, removing silence flag...");
+                _users[newUser.Id].Silenced = false;
+                changed = true;
+            }
+
+            if (!_users[newUser.Id].Silenced &&
+                !newUser.Roles.Select(role => role.Id).Contains((ulong)_config.MemberRole))
+            {
+                // Silenced, add the flag
+                await _logger.Log(
+                    $"{newUser.Username}#{newUser.Discriminator} ({newUser.Id}) silenced, adding silence flag...");
+                _users[newUser.Id].Silenced = true;
+                changed = true;
+            }
+        }
+
+        foreach (var roleId in _config.RolesToReapplyOnRejoin)
+        {
+            if (!_users[newUser.Id].RolesToReapplyOnRejoin.Contains(roleId) &&
+                newUser.Roles.Select(role => role.Id).Contains(roleId))
+            {
+                await _logger.Log(
+                    $"{newUser.Username}#{newUser.Discriminator} ({newUser.Id}) gained role which will reapply on join, role {newUser.Roles.Single(role => role.Id == roleId).Name} ({roleId})");
+                _users[newUser.Id].RolesToReapplyOnRejoin.Add(roleId);
+                changed = true;
+            }
+
+            if (_users[newUser.Id].RolesToReapplyOnRejoin.Contains(roleId) &&
+                !newUser.Roles.Select(role => role.Id).Contains(roleId))
+            {
+                await _logger.Log(
+                    $"{newUser.Username}#{newUser.Discriminator} ({newUser.Id}) lost role which would reapply on join, role {newUser.Guild.Roles.Single(role => role.Id == roleId).Name} ({roleId})");
+                _users[newUser.Id].RolesToReapplyOnRejoin.Remove(roleId);
+                changed = true;
+            }
+        }
+        
+        foreach (var roleId in _users[newUser.Id].RolesToReapplyOnRejoin)
+        {
+            if (!newUser.Guild.Roles.Select(role => role.Id).Contains(roleId))
+            {
+                await _logger.Log(
+                    $"{newUser.Username}#{newUser.Discriminator} ({newUser.Id}) had role which would of reapplied on join but no longer exists, role id {roleId}");
+                _users[newUser.Id].RolesToReapplyOnRejoin.Remove(roleId);
+                _config.RolesToReapplyOnRejoin.Remove(roleId);
+                await FileHelper.SaveConfigAsync(_config);
+                changed = true;       
+            }
+            else
+            {
+
+                if (!_config.RolesToReapplyOnRejoin.Contains(roleId))
+                {
+                    await _logger.Log(
+                        $"{newUser.Username}#{newUser.Discriminator} ({newUser.Id}) has role which will no longer reapply on join, role {newUser.Guild.Roles.Single(role => role.Id == roleId).Name} ({roleId})");
+                    _users[newUser.Id].RolesToReapplyOnRejoin.Remove(roleId);
+                    changed = true;
+                }
+            }
+        }
+
+        if(changed) await FileHelper.SaveUsersAsync(_users);
     }
 }

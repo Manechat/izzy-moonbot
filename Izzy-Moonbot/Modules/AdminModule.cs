@@ -61,30 +61,33 @@ public class AdminModule : ModuleBase<SocketCommandContext>
                 var knownUserCount = 0;
 
                 await foreach (var socketGuildUser in Context.Guild.Users.ToAsyncEnumerable())
+                {
+                    var skip = false;
                     if (!_users.ContainsKey(socketGuildUser.Id))
                     {
                         var newUser = new User();
                         newUser.Username = $"{socketGuildUser.Username}#{socketGuildUser.Discriminator}";
                         newUser.Aliases.Add(socketGuildUser.Username);
-                        if(socketGuildUser.JoinedAt.HasValue) newUser.Joins.Add(socketGuildUser.JoinedAt.Value);
+                        if (socketGuildUser.JoinedAt.HasValue) newUser.Joins.Add(socketGuildUser.JoinedAt.Value);
                         _users.Add(socketGuildUser.Id, newUser);
                         newUserCount += 1;
+                        skip = true;
                     }
                     else
                     {
-                        var skip = false;
-                        if (_users[socketGuildUser.Id].Username != $"{socketGuildUser.Username}#{socketGuildUser.Discriminator}")
+                        if (_users[socketGuildUser.Id].Username !=
+                            $"{socketGuildUser.Username}#{socketGuildUser.Discriminator}")
                         {
                             _users[socketGuildUser.Id].Username =
                                 $"{socketGuildUser.Username}#{socketGuildUser.Discriminator}";
-                            reloadUserCount += 1;
+                            if (!skip) reloadUserCount += 1;
                             skip = true;
                         }
 
                         if (!_users[socketGuildUser.Id].Aliases.Contains(socketGuildUser.DisplayName))
                         {
                             _users[socketGuildUser.Id].Aliases.Add(socketGuildUser.DisplayName);
-                            reloadUserCount += 1;
+                            if (!skip) reloadUserCount += 1;
                             skip = true;
                         }
 
@@ -92,12 +95,75 @@ public class AdminModule : ModuleBase<SocketCommandContext>
                             !_users[socketGuildUser.Id].Joins.Contains(socketGuildUser.JoinedAt.Value))
                         {
                             _users[socketGuildUser.Id].Joins.Add(socketGuildUser.JoinedAt.Value);
-                            reloadUserCount += 1;
+                            if (!skip) reloadUserCount += 1;
                             skip = true;
+                        }
+
+                        if (_config.MemberRole != null)
+                        {
+                            if (_users[socketGuildUser.Id].Silenced &&
+                                socketGuildUser.Roles.Select(role => role.Id).Contains((ulong)_config.MemberRole))
+                            {
+                                // Unsilenced, Remove the flag.
+                                _users[socketGuildUser.Id].Silenced = false;
+                                if (!skip) reloadUserCount += 1;
+                                skip = true;
+                            }
+
+                            if (!_users[socketGuildUser.Id].Silenced &&
+                                !socketGuildUser.Roles.Select(role => role.Id).Contains((ulong)_config.MemberRole))
+                            {
+                                // Silenced, add the flag
+                                _users[socketGuildUser.Id].Silenced = true;
+                                if (!skip) reloadUserCount += 1;
+                                skip = true;
+                            }
+                        }
+
+                        foreach (var roleId in _config.RolesToReapplyOnRejoin)
+                        {
+                            if (!_users[socketGuildUser.Id].RolesToReapplyOnRejoin.Contains(roleId) &&
+                                socketGuildUser.Roles.Select(role => role.Id).Contains(roleId))
+                            {
+                                _users[socketGuildUser.Id].RolesToReapplyOnRejoin.Add(roleId);
+                                if (!skip) reloadUserCount += 1;
+                                skip = true;
+                            }
+
+                            if (_users[socketGuildUser.Id].RolesToReapplyOnRejoin.Contains(roleId) &&
+                                !socketGuildUser.Roles.Select(role => role.Id).Contains(roleId))
+                            {
+                                _users[socketGuildUser.Id].RolesToReapplyOnRejoin.Remove(roleId);
+                                if (!skip) reloadUserCount += 1;
+                                skip = true;
+                            }
+                        }
+
+                        foreach (var roleId in _users[socketGuildUser.Id].RolesToReapplyOnRejoin)
+                        {
+                            if (!socketGuildUser.Guild.Roles.Select(role => role.Id).Contains(roleId))
+                            {
+                                _users[socketGuildUser.Id].RolesToReapplyOnRejoin.Remove(roleId);
+                                _config.RolesToReapplyOnRejoin.Remove(roleId);
+                                await FileHelper.SaveConfigAsync(_config);
+                                if (!skip) reloadUserCount += 1;
+                                skip = true;
+                            }
+                            else
+                            {
+
+                                if (!_config.RolesToReapplyOnRejoin.Contains(roleId))
+                                {
+                                    _users[socketGuildUser.Id].RolesToReapplyOnRejoin.Remove(roleId);
+                                    if (!skip) reloadUserCount += 1;
+                                    skip = true;
+                                }
+                            }
                         }
 
                         if (!skip) knownUserCount += 1;
                     }
+                }
 
                 await FileHelper.SaveUsersAsync(_users);
 

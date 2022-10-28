@@ -82,6 +82,10 @@ public class ConfigDescriber
             new ConfigItem(ConfigItemType.Double,
                 "The amount of minutes I'll wait before removing `NewMemberRole` from a user.",
                 ConfigItemCategory.User));
+        _config.Add("RolesToReapplyOnRejoin",
+            new ConfigItem(ConfigItemType.RoleList,
+                "The roles I'll reapply to a user when they join **if they had that role when they left**.",
+                ConfigItemCategory.User));
 
 
         // Filter settings
