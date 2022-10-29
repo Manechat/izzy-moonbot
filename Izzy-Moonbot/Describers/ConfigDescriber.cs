@@ -177,6 +177,10 @@ public class ConfigDescriber
             new ConfigItem(ConfigItemType.Double,
                 "How long in seconds it takes for a user to lose `SpamBasePressure` from their pressure amount.",
                 ConfigItemCategory.Spam));
+        _config.Add("SpamMessageDeleteLookback",
+            new ConfigItem(ConfigItemType.Double,
+                "How far back, in seconds, should I look back for deleting a user's messages when they trip anti-spam.",
+                ConfigItemCategory.Spam, true));
 
         // Raid settings
         _config.Add("RaidProtectionEnabled",

@@ -100,7 +100,7 @@ public class SpamService
         
         foreach (var previousMessageItem in messages)
         {
-            if ((previousMessageItem.Timestamp.ToUniversalTime().ToUnixTimeMilliseconds() + (_config.SpamPressureDecay * 1000)) <=
+            if ((previousMessageItem.Timestamp.ToUniversalTime().ToUnixTimeMilliseconds() + (_config.SpamMessageDeleteLookback * 1000)) <=
                 DateTimeOffset.UtcNow.ToUnixTimeMilliseconds())
             {
                 // Message is out of date, remove it
