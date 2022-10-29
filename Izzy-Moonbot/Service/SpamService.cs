@@ -269,7 +269,7 @@ public class SpamService
                     .WithColor(3355443)
                     .AddField("User", $"<@{context.User.Id}> (`{context.User.Id}`)", true)
                     .AddField("Channel", $"<#{context.Channel.Id}>", true)
-                    .AddField("Pressure reached", $"{pressure}/{_config.SpamMaxPressure}")
+                    .AddField("Pressure reached", $"{newPressure}/{_config.SpamMaxPressure}")
                     .AddField("Pressure breakdown of last message", $"{PressureTraceToPonyReadable(pressureTracer)}")
                     .WithTimestamp(context.Message.Timestamp);
 
@@ -277,7 +277,7 @@ public class SpamService
                     .SetContent($"Spam detected by <@{user.Id}>")
                     .SetEmbed(embedBuilder.Build())
                     .SetFileLogContent(
-                        $"{user.Username}#{user.Discriminator} ({user.DisplayName}) (`{user.Id}`) exceeded pressure max ({pressure}/{_config.SpamMaxPressure}) in #{message.Channel.Name} (`{message.Channel.Id}`).{Environment.NewLine}" +
+                        $"{user.Username}#{user.Discriminator} ({user.DisplayName}) (`{user.Id}`) exceeded pressure max ({newPressure}/{_config.SpamMaxPressure}) in #{message.Channel.Name} (`{message.Channel.Id}`).{Environment.NewLine}" +
                         $"Pressure breakdown: {PressureTraceToPonyReadable(pressureTracer)}{Environment.NewLine}" +
                         $"Did nothing: User has a role which bypasses punishment or has dev bypass.") 
                     .Send();
