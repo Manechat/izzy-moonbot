@@ -80,6 +80,7 @@ public class InfoModule : ModuleBase<SocketCommandContext>
                 ponyReadable += $"```";
 
                 await ReplyAsync(ponyReadable);
+                return;
             }
             else
             {
@@ -122,11 +123,12 @@ public class InfoModule : ModuleBase<SocketCommandContext>
                         };
 
                         var paginationMessage = new PaginationHelper(Context, pages.ToArray(), staticParts);
+                        return;
                     }
                     else
                     {
                         await ReplyAsync(
-                            $"Hii! Here's a list of all the config items I could find in the {moduleInfo.Name.Replace("Module", "").Replace("Submodule", "")} category!{Environment.NewLine}" +
+                            $"Hii! Here's a list of all the commands I could find in the {moduleInfo.Name.Replace("Module", "").Replace("Submodule", "")} category!{Environment.NewLine}" +
                             $"```{Environment.NewLine}{string.Join(Environment.NewLine, commands)}{Environment.NewLine}```{Environment.NewLine}" +
                             $"Run `{prefix}help <command>` for help regarding a specific command!");
                         return;
