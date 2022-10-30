@@ -59,6 +59,7 @@ public class Config
         SpamRepeatPressure = 10.0;
         SpamMaxPressure = 60.0;
         SpamPressureDecay = 2.5;
+        SpamMessageDeleteLookback = 60;
 
         // Raid settings
         RaidProtectionEnabled = true;
@@ -127,6 +128,7 @@ public class Config
     public double SpamRepeatPressure { get; set; }
     public double SpamMaxPressure { get; set; }
     public double SpamPressureDecay { get; set; }
+    public double? SpamMessageDeleteLookback { get; set; }
 
     // Raid settings
     public bool RaidProtectionEnabled { get; set; }
