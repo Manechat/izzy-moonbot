@@ -214,6 +214,38 @@ public class AdminModule : ModuleBase<SocketCommandContext>
         await ReplyAsync($"{channelName} {message}");
     }
 
+    [Command("userinfo")]
+    [Summary("Get information about a user")]
+    [ModCommand]
+    [DevCommand]
+    public async Task UserInfoCommandAsync(
+        [Remainder][Summary("The user to get information about")] string user = "")
+    {
+        if (user == "") user = Context.User.Id.ToString(); // Set to user ID to target self.
+        
+        var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(user, Context);
+        var member = Context.Guild.GetUser(userId);
+
+        var output = $"```{Environment.NewLine}";
+        output += $"User: <@{member.Id}> (`{member.Id}`){Environment.NewLine}";
+        output += $"Names: {string.Join(", ", _users[member.Id].Aliases)}{Environment.NewLine}";
+        output += $"Roles: {string.Join(", ", member.Roles.Select(role => role.Name))}{Environment.NewLine}";
+        output += $"History: ";
+        output += $"Created <t:{member.CreatedAt.ToUnixTimeSeconds()}:F>";
+        if (member.JoinedAt.HasValue)
+        {
+            output +=
+                $", joined <t:{member.JoinedAt.Value.ToUnixTimeSeconds()}:F>";
+        }
+
+        output += $", last seen <t:{_users[member.Id].Timestamp.ToUnixTimeSeconds()}:R>{Environment.NewLine}";
+        output += $"Avatar(s): {Environment.NewLine}";
+        output += $"    Guild: {member.GetGuildAvatarUrl() ?? "No guild avatar found."}";
+        output += $"    Global: {member.GetAvatarUrl() ?? "No global avatar found."}";
+
+        await ReplyAsync(output);
+    }
+
     [Command("<mention>")]
     [Summary("Runs when someone mentions Izzy")]
     public async Task MentionCommandAsync()
