@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -103,6 +104,45 @@ public class QuoteService
         }
 
         throw new NullReferenceException("That alias does not exist.");
+    }
+
+    /// <summary>
+    /// Adds an alias to a user.
+    /// </summary>
+    /// <param name="alias">The alias to add.</param>
+    /// <param name="user">The user to map it to.</param>
+    /// <exception cref="DuplicateNameException">If the alias already exists.</exception>
+    public async Task AddAlias(string alias, IUser user)
+    {
+        if (_quoteStorage.Aliases.ContainsKey(alias)) throw new DuplicateNameException("This alias already exists.");
+        
+        _quoteStorage.Aliases.Add(alias, user.Id.ToString());
+        
+        await FileHelper.SaveQuoteStorageAsync(_quoteStorage);
+    }
+    
+    /// <summary>
+    /// Adds an alias to a category.
+    /// </summary>
+    /// <param name="alias">The alias to add.</param>
+    /// <param name="category">The user to map it to.</param>
+    /// <exception cref="DuplicateNameException">If the alias already exists.</exception>
+    public async Task AddAlias(string alias, string category)
+    {
+        if (_quoteStorage.Aliases.ContainsKey(alias)) throw new DuplicateNameException("This alias already exists.");
+        
+        _quoteStorage.Aliases.Add(alias, category);
+        
+        await FileHelper.SaveQuoteStorageAsync(_quoteStorage);
+    }
+    
+    public async Task RemoveAlias(string alias)
+    {
+        if (!_quoteStorage.Aliases.ContainsKey(alias)) throw new NullReferenceException("This alias doesn't exist.");
+        
+        _quoteStorage.Aliases.Remove(alias);
+        
+        await FileHelper.SaveQuoteStorageAsync(_quoteStorage);
     }
     
     /// <summary>

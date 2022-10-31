@@ -299,7 +299,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                     string[] staticParts =
                     {
                         $"Here's a list of users/categories of quotes I've found.",
-                        $"Run `{_config.Prefix}quote [user/category]` to get a random quote from that user/category if specified.{Environment.NewLine}" +
+                        $"Run `{_config.Prefix}quote <user/category>` to get a random quote from that user/category if specified.{Environment.NewLine}" +
                         $"Run `{_config.Prefix}quote` for a random quote from a random user/category."
                     };
 
@@ -350,7 +350,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                             {
                                 $"Here's all the quotes I could find for **{user.Username}#{user.Discriminator}**.",
                                 $"Run `{_config.Prefix}quote <user/category> <number>` to get a specific quote.{Environment.NewLine}" +
-                                $"Run `{_config.Prefix}quote <user/category>` to get a random quote from that user/category if specified.{Environment.NewLine}" +
+                                $"Run `{_config.Prefix}quote <user/category>` to get a random quote from that user/category.{Environment.NewLine}" +
                                 $"Run `{_config.Prefix}quote` for a random quote from a random user/category."
                             };
 
@@ -361,7 +361,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                         await ReplyAsync($"Here's all the quotes I could find for **{user.Username}#{user.Discriminator}**.{Environment.NewLine}```{Environment.NewLine}" +
                                          $"{string.Join(Environment.NewLine, quotes)}{Environment.NewLine}```{Environment.NewLine}" +
                                          $"Run `{_config.Prefix}quote <user/category> <number>` to get a specific quote.{Environment.NewLine}" +
-                                         $"Run `{_config.Prefix}quote [user/category]` to get a random quote from that user/category if specified.{Environment.NewLine}" +
+                                         $"Run `{_config.Prefix}quote <user/category>` to get a random quote from that user/category.{Environment.NewLine}" +
                                          $"Run `{_config.Prefix}quote` for a random quote from a random user/category.");
                         return;
                     }
@@ -401,7 +401,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                             {
                                 $"Here's all the quotes I could find in **{category}**.",
                                 $"Run `{_config.Prefix}quote <user/category> <number>` to get a specific quote.{Environment.NewLine}" +
-                                $"Run `{_config.Prefix}quote <user/category>` to get a random quote from that user/category if specified.{Environment.NewLine}" +
+                                $"Run `{_config.Prefix}quote <user/category>` to get a random quote from that user/category.{Environment.NewLine}" +
                                 $"Run `{_config.Prefix}quote` for a random quote from a random user/category."
                             };
 
@@ -412,7 +412,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                         await ReplyAsync($"Here's all the quotes I could find in **{category}**.{Environment.NewLine}```{Environment.NewLine}" +
                                          $"{string.Join(Environment.NewLine, quotes)}{Environment.NewLine}```{Environment.NewLine}" +
                                          $"Run `{_config.Prefix}quote <user/category> <number>` to get a specific quote.{Environment.NewLine}" +
-                                         $"Run `{_config.Prefix}quote [user/category]` to get a random quote from that user/category if specified.{Environment.NewLine}" +
+                                         $"Run `{_config.Prefix}quote <user/category>` to get a random quote from that user/category.{Environment.NewLine}" +
                                          $"Run `{_config.Prefix}quote` for a random quote from a random user/category.");
                         return;
                 }
@@ -453,7 +453,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                             {
                                 $"Here's all the quotes I could find in **{search}**.",
                                 $"Run `{_config.Prefix}quote <user/category> <number>` to get a specific quote.{Environment.NewLine}" +
-                                $"Run `{_config.Prefix}quote <user/category>` to get a random quote from that user/category if specified.{Environment.NewLine}" +
+                                $"Run `{_config.Prefix}quote <user/category>` to get a random quote from that user/category.{Environment.NewLine}" +
                                 $"Run `{_config.Prefix}quote` for a random quote from a random user/category."
                             };
 
@@ -464,7 +464,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                         await ReplyAsync($"Here's all the quotes I could find in **{search}**.{Environment.NewLine}```{Environment.NewLine}" +
                                          $"{string.Join(Environment.NewLine, quotes)}{Environment.NewLine}```{Environment.NewLine}" +
                                          $"Run `{_config.Prefix}quote <user/category> <number>` to get a specific quote.{Environment.NewLine}" +
-                                         $"Run `{_config.Prefix}quote [user/category]` to get a random quote from that user/category if specified.{Environment.NewLine}" +
+                                         $"Run `{_config.Prefix}quote <user/category>` to get a random quote from that user/category.{Environment.NewLine}" +
                                          $"Run `{_config.Prefix}quote` for a random quote from a random user/category.");
                         return;
                 } 
@@ -623,7 +623,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                     var newAliasUserQuote = await _quoteService.RemoveQuote(quoteUser, number-1);
 
                     await ReplyAsync(
-                        $"Removed quote number {number+1} from **{quoteUser.Username}#{quoteUser.Discriminator}**.");
+                        $"Removed quote number {number} from **{quoteUser.Username}#{quoteUser.Discriminator}**.");
                     return;
                 }
                 var quoteCategory = _quoteService.ProcessAlias(user, Context.Guild);
@@ -631,7 +631,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                 var newAliasCategoryQuote = await _quoteService.RemoveQuote(quoteCategory, number-1);
 
                 await ReplyAsync(
-                    $"Removed quote number {number+1} from **{newAliasCategoryQuote.Name}**.");
+                    $"Removed quote number {number} from **{newAliasCategoryQuote.Name}**.");
                 return;
             }
 
@@ -642,7 +642,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                 var newCategoryQuote = await _quoteService.RemoveQuote(user, number-1);
 
                 await ReplyAsync(
-                    $"Removed quote number {number+1} from **{newCategoryQuote.Name}**.");
+                    $"Removed quote number {number} from **{newCategoryQuote.Name}**.");
                 return;
             }
                 
@@ -660,8 +660,72 @@ public class MiscModule : ModuleBase<SocketCommandContext>
             var newUserQuote = await _quoteService.RemoveQuote(member, number-1);
 
             await ReplyAsync(
-                $"Removed quote number {number+1} from **{newUserQuote.Name}**.");
+                $"Removed quote number {number} from **{newUserQuote.Name}**.");
             return;
+        }
+        
+        [Command("quotealias")]
+        [Summary(
+            "Manage quote aliases.")]
+        [ModCommand(Group="Permission")]
+        [DevCommand(Group="Permission")]
+        public async Task QuoteAliasCommandAsync(
+            [Summary("The operation to complete (get/set/delete).")] string operation,
+            [Summary("The alias name.")] string alias,
+            [Summary("The user/category to set the alias to.")] string target = "")
+        {
+            if (operation.ToLower() == "get")
+            {
+                if (_quoteService.AliasExists(alias))
+                {
+                    if (_quoteService.AliasRefersTo(alias, Context.Guild) == "user")
+                    {
+                        var user = _quoteService.ProcessAlias(alias, Context.Guild);
+
+                        await ReplyAsync(
+                            $"Quote alias **{alias}** maps to user **{user.Username}#{user.Discriminator}**.");
+                    }
+                    else
+                    {
+                        var category = _quoteService.ProcessAlias(alias, Context.Guild);
+
+                        await ReplyAsync(
+                            $"Quote alias **{alias}** maps to category **{category}**.");
+                    }
+                }
+            } else if (operation.ToLower() == "set")
+            {
+                if (target == "")
+                {
+                    await ReplyAsync("You need to provide a user or category name to set the alias to.");
+                    return;
+                }
+                
+                var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(target, Context);
+                var member = Context.Guild.GetUser(userId);
+
+                if (member == null)
+                {
+                    // Category
+                    await _quoteService.AddAlias(alias, target);
+
+                    await ReplyAsync($"Added alias **{alias}** to map to category **{target}**.");
+                }
+                
+                await _quoteService.AddAlias(alias, member);
+
+                await ReplyAsync($"Added alias **{alias}** to map to user **{target}**.");
+            } else if (operation.ToLower() == "delete")
+            {
+                await _quoteService.RemoveAlias(alias);
+
+                await ReplyAsync($"Remove alias **{alias}**.");
+            }
+            else
+            {
+                await ReplyAsync(
+                    "Sorry, I don't understand what you want me to do. Please refer to `.help quotealias`.");
+            }
         }
     }
 }
