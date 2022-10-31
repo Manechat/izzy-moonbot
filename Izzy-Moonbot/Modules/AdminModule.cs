@@ -247,7 +247,7 @@ public class AdminModule : ModuleBase<SocketCommandContext>
 
         output += $", last seen <t:{_users[member.Id].Timestamp.ToUnixTimeSeconds()}:R>{Environment.NewLine}";
         output += $"**Avatar(s):** {Environment.NewLine}";
-        output += $"    Guild: {member.GetGuildAvatarUrl() ?? "No guild avatar found."}{Environment.NewLine}";
+        output += $"    Server: {member.GetGuildAvatarUrl() ?? "No server avatar found."}{Environment.NewLine}";
         output += $"    Global: {member.GetAvatarUrl() ?? "No global avatar found."}";
 
         await ReplyAsync(output, allowedMentions: AllowedMentions.None);
