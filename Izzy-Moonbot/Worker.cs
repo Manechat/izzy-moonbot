@@ -353,7 +353,14 @@ namespace Izzy_Moonbot
 
                 if (!hasBotsAllowedAttribute && context.User.IsBot) return;
 
-                await _commands.ExecuteAsync(context, parsedMessage, _services.BuildServiceProvider());
+                var result = await _commands.ExecuteAsync(context, parsedMessage, _services.BuildServiceProvider());
+                if (result.Error == CommandError.ParseFailed &&
+                    result.ErrorReason.StartsWith("Failed to parse "))
+                {
+                    await context.Channel.SendMessageAsync(
+                        $"Sorry, I was unable to process that command because when I tried to parse a value into an {result.ErrorReason.Split(" ")[3]} but failed." +
+                        $"Please run `.help {commandToExec.Name}` for usage information about this command.");
+                }
             }
         }
 
