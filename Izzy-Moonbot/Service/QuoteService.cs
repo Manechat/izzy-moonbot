@@ -165,10 +165,18 @@ public class QuoteService
         var quotes = _quoteStorage.Quotes[name];
 
         if (quotes.Count <= id) throw new IndexOutOfRangeException("That quote ID does not exist.");
+
+        var quoteName = name;
+        if (ulong.TryParse(name, out var userId))
+        {
+            // It's a user, but since we're technically looking for a category, this user likely left.
+            // Check to see if Izzy knows about them, if she does, set quote name to username, else just mention them.
+            quoteName = _users.ContainsKey(userId) ? _users[userId].Username : $"<@{userId}>";
+        }
         
         var quoteContent = quotes[id];
 
-        return new Quote(id, name, quoteContent);
+        return new Quote(id, quoteName, quoteContent);
     }
 
     /// <summary>
@@ -204,9 +212,17 @@ public class QuoteService
         if (!_quoteStorage.Quotes.ContainsKey(name))
             throw new NullReferenceException("That category does not have any quotes.");
         
+        var quoteName = name;
+        if (ulong.TryParse(name, out var userId))
+        {
+            // It's a user, but since we're technically looking for a category, this user likely left.
+            // Check to see if Izzy knows about them, if she does, set quote name to username, else just mention them.
+            quoteName = _users.ContainsKey(userId) ? _users[userId].Username : $"<@{userId}>";
+        }
+        
         var quotes = _quoteStorage.Quotes[name].Select(quoteContent =>
         {
-            return new Quote(_quoteStorage.Quotes[name].IndexOf(quoteContent), name, quoteContent);
+            return new Quote(_quoteStorage.Quotes[name].IndexOf(quoteContent), quoteName, quoteContent);
         }).ToArray();
 
         return quotes;
@@ -281,9 +297,18 @@ public class QuoteService
 
         Random rnd = new Random();
         var quoteId = rnd.Next(quotes.Count);
+        
+        var quoteName = name;
+        if (ulong.TryParse(name, out var userId))
+        {
+            // It's a user, but since we're technically looking for a category, this user likely left.
+            // Check to see if Izzy knows about them, if she does, set quote name to username, else just mention them.
+            quoteName = _users.ContainsKey(userId) ? _users[userId].Username : $"<@{userId}>";
+        }
+        
         var quoteContent = quotes[quoteId];
 
-        return new Quote(quoteId, name, quoteContent);
+        return new Quote(quoteId, quoteName, quoteContent);
     }
 
     /// <summary>
