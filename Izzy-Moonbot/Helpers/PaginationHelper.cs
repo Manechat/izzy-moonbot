@@ -54,7 +54,7 @@ public class PaginationHelper
             .WithButton(customId: "goto-end", emote: Emoji.Parse(":track_next:"), disabled: false);
 
 
-        _message = await context.Message.ReplyAsync(
+        _message = await context.Channel.SendMessageAsync(
             $"{_staticParts[0]}{Environment.NewLine}{Environment.NewLine}<a:rdloop:910875692785336351> Pagination is loading. Please wait...{Environment.NewLine}{Environment.NewLine}{_staticParts[1]}",
             components: builder.Build(), allowedMentions: _allowedMentions, options: _options);
 
