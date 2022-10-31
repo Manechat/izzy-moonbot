@@ -172,8 +172,6 @@ namespace Izzy_Moonbot
         {
             Task.Run(async () =>
             {
-                _config.BatchSendLogs = true;
-                
                 var guild = _client.Guilds.Single(guild => guild.Id == 98609319519453184);
                 if (!guild.HasAllMembers) await guild.DownloadUsersAsync();
 
@@ -326,8 +324,6 @@ namespace Izzy_Moonbot
                                            string.Join(", ", stowawayStringFileList))
                         .Send();
                 }
-                
-                _config.BatchSendLogs = false;
             });
         }
 
