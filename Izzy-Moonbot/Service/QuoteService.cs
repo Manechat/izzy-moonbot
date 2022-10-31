@@ -124,7 +124,38 @@ public class QuoteService
     {
         return _quoteStorage.Quotes.ContainsKey(name);
     }
-    
+
+    public string[] GetKeyList(SocketGuild guild)
+    {
+        return _quoteStorage.Quotes.Keys.ToArray().Select(key =>
+        {
+            var aliasText = "";
+            if (_quoteStorage.Aliases.ContainsValue(key))
+            {
+                var aliases = _quoteStorage.Aliases.Where(alias => alias.Value == key).Select(alias => alias.Key);
+                aliasText = $"(aliases: {string.Join(", ", aliases)})";
+            }
+            
+            if (ulong.TryParse(key, out var id))
+            {
+                // Potential user
+                var potentialUser = guild.GetUser(id);
+
+                if (potentialUser == null)
+                {
+                    return _users.ContainsKey(id) ? $"{id} ({_users[id].Username}) {aliasText}" : $"{id} {aliasText}";
+                }
+
+                return
+                    $"{potentialUser.DisplayName} ({potentialUser.Username}#{potentialUser.Discriminator}) {aliasText}";
+            }
+
+            // Category
+            
+            return $"{key} {aliasText}";
+        }).ToArray();
+    }
+
     /// <summary>
     /// Get a quote by a valid Discord user and a quote id.
     /// </summary>
