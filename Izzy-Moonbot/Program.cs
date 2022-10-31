@@ -78,6 +78,7 @@ public class Program
             services.AddSingleton<RaidService>();
             services.AddSingleton<FilterService>();
             services.AddSingleton<ScheduleService>();
+            services.AddSingleton<QuoteService>();
             services.AddSingleton(services);
             
             // EventListeners
