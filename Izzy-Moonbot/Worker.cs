@@ -190,12 +190,8 @@ namespace Izzy_Moonbot
                         if (socketGuildUser.JoinedAt.HasValue) newUser.Joins.Add(socketGuildUser.JoinedAt.Value);
                         _users.Add(socketGuildUser.Id, newUser);
                         
-                        // Process new member roles if allowed to
-                        if (_config.ManageNewUserRoles)
-                        {
-                            // We can process this member join. let's do so then.
-                            _userListener.MemberJoinEvent(socketGuildUser, true);
-                        }
+                        // Process new member
+                        _userListener.MemberJoinEvent(socketGuildUser, true);
                         
                         newUserCount += 1;
                         skip = true;
@@ -361,12 +357,8 @@ namespace Izzy_Moonbot
                     bool validCommand = false;
                     foreach (var command in _commands.Commands)
                     {
-                        if (command.Name != parsedMessage.Split(" ")[0])
-                        {
-                            continue;
-                        }
-
-                        if (!command.Aliases.Contains(parsedMessage.Split(" ")[0]))
+                        if (command.Name != parsedMessage.Split(" ")[0] && 
+                            !command.Aliases.Contains(parsedMessage.Split(" ")[0]))
                         {
                             continue;
                         }

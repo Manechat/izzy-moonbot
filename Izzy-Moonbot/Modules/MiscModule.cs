@@ -513,7 +513,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                             {
                                 $"Here's all the quotes I could find for **{member.DisplayName}**.",
                                 $"Run `{_config.Prefix}quote <user/category> <number>` to get a specific quote.{Environment.NewLine}" +
-                                $"Run `{_config.Prefix}quote <user/category>` to get a random quote from that user/category if specified.{Environment.NewLine}" +
+                                $"Run `{_config.Prefix}quote <user/category>` to get a random quote from that user/category.{Environment.NewLine}" +
                                 $"Run `{_config.Prefix}quote` for a random quote from a random user/category."
                             };
 
@@ -524,7 +524,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                         await ReplyAsync($"Here's all the quotes I could find for **{member.DisplayName}**.{Environment.NewLine}```{Environment.NewLine}" +
                                          $"{string.Join(Environment.NewLine, quotes)}{Environment.NewLine}```{Environment.NewLine}" +
                                          $"Run `{_config.Prefix}quote <user/category> <number>` to get a specific quote.{Environment.NewLine}" +
-                                         $"Run `{_config.Prefix}quote [user/category]` to get a random quote from that user/category if specified.{Environment.NewLine}" +
+                                         $"Run `{_config.Prefix}quote <user/category>` to get a random quote from that user/category.{Environment.NewLine}" +
                                          $"Run `{_config.Prefix}quote` for a random quote from a random user/category.");
                         return;
             } 
@@ -711,7 +711,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                 var aliases = _quoteService.GetAliasKeyList();
 
                 await ReplyAsync(
-                    $"Here's all the aliases I could find**.{Environment.NewLine}```{Environment.NewLine}" +
+                    $"Here's all the aliases I could find.{Environment.NewLine}```{Environment.NewLine}" +
                     $"{string.Join(", ", aliases)}{Environment.NewLine}```{Environment.NewLine}" +
                     $"Run `{_config.Prefix}quotealias get <alias>` to find out what an alias maps to.{Environment.NewLine}" +
                     $"Run `{_config.Prefix}quotealias set/add <alias> <user/category>` to create a new alias.{Environment.NewLine}" +
@@ -736,7 +736,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                     }
                     else
                     {
-                        var category = _quoteService.ProcessAlias(alias, Context.Guild);
+                        var category = _quoteService.ProcessAlias(alias);
 
                         await ReplyAsync(
                             $"Quote alias **{alias}** maps to category **{category}**.");
