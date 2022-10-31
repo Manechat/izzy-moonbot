@@ -22,6 +22,43 @@ public class QuoteService
     }
 
     /// <summary>
+    /// Check whether an alias exists or not.
+    /// </summary>
+    /// <param name="alias">The alias to check.</param>
+    /// <returns>Whether the alias exists or not.</returns>
+    public bool AliasExists(string alias)
+    {
+        return _quoteStorage.Aliases.ContainsKey(alias);
+    }
+
+    /// <summary>
+    /// Work out what the alias refers to.
+    /// </summary>
+    /// <param name="alias">The alias to check.</param>
+    /// <param name="guild">The guild to check for the user in.</param>
+    /// <returns>"user" if the alias refers to a user, "category" if not.</returns>
+    /// <exception cref="NullReferenceException">If the alias doesn't exist.</exception>
+    public string AliasRefersTo(string alias, SocketGuild guild)
+    {
+        if (_quoteStorage.Aliases.ContainsKey(alias))
+        {
+            var value = _quoteStorage.Aliases[alias];
+
+            if (ulong.TryParse(value, out var id))
+            {
+                var potentialUser = guild.GetUser(id);
+                if (potentialUser == null) return "category";
+
+                return "user";
+            }
+
+            return "category";
+        }
+
+        throw new NullReferenceException("That alias does not exist.");
+    }
+
+    /// <summary>
     /// Process an alias into a IUser.
     /// </summary>
     /// <param name="alias">The alias to process.</param>
