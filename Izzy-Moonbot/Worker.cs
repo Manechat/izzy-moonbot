@@ -172,6 +172,8 @@ namespace Izzy_Moonbot
         {
             Task.Run(async () =>
             {
+                _config.BatchSendLogs = true;
+                
                 var guild = _client.Guilds.Single(guild => guild.Id == 98609319519453184);
                 if (!guild.HasAllMembers) await guild.DownloadUsersAsync();
 
@@ -189,6 +191,14 @@ namespace Izzy_Moonbot
                         newUser.Aliases.Add(socketGuildUser.Username);
                         if (socketGuildUser.JoinedAt.HasValue) newUser.Joins.Add(socketGuildUser.JoinedAt.Value);
                         _users.Add(socketGuildUser.Id, newUser);
+                        
+                        // Process new member roles if allowed to
+                        if (_config.ManageNewUserRoles)
+                        {
+                            // We can process this member join. let's do so then.
+                            _userListener.MemberJoinEvent(socketGuildUser, true);
+                        }
+                        
                         newUserCount += 1;
                         skip = true;
                     }
@@ -288,6 +298,36 @@ namespace Izzy_Moonbot
 
                 _logger.LogInformation(
                     $"Resynced users. {guild.Users.Count} users found, {newUserCount} unknown, {reloadUserCount} required update, {knownUserCount} up to date.");
+                
+                // Get stowaways
+                var stowawayList = new HashSet<SocketGuildUser>();
+        
+                await foreach (var socketGuildUser in guild.Users.ToAsyncEnumerable())
+                {
+                    if (socketGuildUser.IsBot) continue; // Bots aren't stowaways
+                    if (socketGuildUser.Roles.Select(role => role.Id).Contains(_config.ModRole)) continue; // Mods aren't stowaways
+
+                    if (!socketGuildUser.Roles.Select(role => role.Id).Contains((ulong)_config.MemberRole))
+                    {
+                        // Doesn't have member role, add to stowaway list.
+                        stowawayList.Add(socketGuildUser);
+                    }
+                }
+
+                if (stowawayList.Count != 0)
+                {
+                    var stowawayStringList = stowawayList.Select(user => $"<@{user.Id}>");
+                    var stowawayStringFileList = stowawayList.Select(user => $"{user.Username}#{user.Discriminator}");
+                    
+                    await _modLog.CreateModLog(guild)
+                        .SetContent($"I found these stowaways after I rebooted, cannot tell if they're new users:{Environment.NewLine}" +
+                                    string.Join(", ", stowawayStringList))
+                        .SetFileLogContent($"I found these stowaways after I rebooted, cannot tell if they're new users:{Environment.NewLine}" +
+                                           string.Join(", ", stowawayStringFileList))
+                        .Send();
+                }
+                
+                _config.BatchSendLogs = false;
             });
         }
 
