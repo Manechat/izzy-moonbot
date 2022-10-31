@@ -749,26 +749,35 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                     await ReplyAsync("You need to provide an alias to create.");
                     return;
                 }
+
                 if (target == "")
                 {
                     await ReplyAsync("You need to provide a user or category name to set the alias to.");
                     return;
                 }
-                
-                var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(target, Context);
-                var member = Context.Guild.GetUser(userId);
 
-                if (member == null)
+                if (_quoteService.CategoryExists(target))
                 {
-                    // Category
                     await _quoteService.AddAlias(alias, target);
-
+                    
                     await ReplyAsync($"Added alias **{alias}** to map to category **{target}**.");
                 }
-                
-                await _quoteService.AddAlias(alias, member);
+                else
+                {
+                    var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(target, Context);
+                    var member = Context.Guild.GetUser(userId);
 
-                await ReplyAsync($"Added alias **{alias}** to map to user **{target}**.");
+                    if (member == null)
+                    {
+                        // Category
+                        await ReplyAsync($"I couldn't find a user or category with the target you provided.");
+                        return;
+                    }
+
+                    await _quoteService.AddAlias(alias, member);
+
+                    await ReplyAsync($"Added alias **{alias}** to map to user **{target}**.");
+                }
             } else if (operation.ToLower() == "delete" || operation.ToLower() == "remove")
             {
                 if (alias == "")
