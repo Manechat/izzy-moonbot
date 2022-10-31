@@ -35,6 +35,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
         [Command("quote")]
         [Summary("Get a quote, either randomly, from a specific user, or a specific quote.")]
         [Alias("q")]
+        [BotsAllowed]
         public async Task QuoteCommandAsync(
             [Summary("A user (or quote category) to search for.")]
             string search = "",

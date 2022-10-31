@@ -371,18 +371,10 @@ namespace Izzy_Moonbot
                 }
 
                 // Check for BotsAllowed attribute
-                bool hasBotsAllowedAttribute = false;
                 SearchResult searchResult = _commands.Search(parsedMessage);
                 CommandInfo commandToExec = searchResult.Commands[0].Command;
 
-                foreach (var attribute in commandToExec.Attributes)
-                {
-                    if (attribute == null) continue;
-                    if (!(attribute is BotsAllowedAttribute)) continue;
-
-                    hasBotsAllowedAttribute = true;
-                    break;
-                }
+                var hasBotsAllowedAttribute = commandToExec.Preconditions.Where(attribute => attribute != null).OfType<BotsAllowedAttribute>().Any();
 
                 if (!hasBotsAllowedAttribute && context.User.IsBot) return;
 
