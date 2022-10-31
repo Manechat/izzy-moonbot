@@ -51,10 +51,10 @@ public class QuoteService
     }
     
     /// <summary>
-    /// Process an alias into a non-user name.
+    /// Process an alias into a category name.
     /// </summary>
     /// <param name="alias">The alias to process.</param>
-    /// <returns>The non-user name this alias refers to.</returns>
+    /// <returns>The category name this alias refers to.</returns>
     /// <exception cref="NullReferenceException">If the alias doesn't exist.</exception>
     public string ProcessAlias(string alias)
     {
@@ -79,11 +79,11 @@ public class QuoteService
     }
 
     /// <summary>
-    /// Check if a non-user has quotes.
+    /// Check if a category exists.
     /// </summary>
-    /// <param name="name">The name to check.</param>
-    /// <returns>Whether the non-user has quotes or not.</returns>
-    public bool HasQuotes(string name)
+    /// <param name="name">The category name to check.</param>
+    /// <returns>Whether the category exists or not.</returns>
+    public bool CategoryExists(string name)
     {
         return _quoteStorage.Quotes.ContainsKey(name);
     }
@@ -113,17 +113,17 @@ public class QuoteService
     }
     
     /// <summary>
-    /// Get a quote by a non-user name and a quote id.
+    /// Get a quote in a category by a quote id.
     /// </summary>
-    /// <param name="name">The non-user name to get the quote of.</param>
+    /// <param name="name">The category name to get the quote of.</param>
     /// <param name="id">The quote id to get.</param>
     /// <returns>A Quote containing the quote information.</returns>
-    /// <exception cref="NullReferenceException">If the non-user doesn't have any quotes.</exception>
-    /// <exception cref="IndexOutOfRangeException">If the id provided is larger than the amount of quotes the non-user has.</exception>
+    /// <exception cref="NullReferenceException">If the category doesn't have any quotes.</exception>
+    /// <exception cref="IndexOutOfRangeException">If the id provided is larger than the amount of quotes the category contains.</exception>
     public Quote GetQuote(string name, int id)
     {
         if (!_quoteStorage.Quotes.ContainsKey(name))
-            throw new NullReferenceException("That non-user does not have any quotes.");
+            throw new NullReferenceException("That category does not have any quotes.");
         
         var quotes = _quoteStorage.Quotes[name];
 
@@ -157,15 +157,15 @@ public class QuoteService
     }
     
     /// <summary>
-    /// Get a list of quotes from a non-user name.
+    /// Get a list of quotes from a category.
     /// </summary>
-    /// <param name="name">The non-user name to get the quotes of.</param>
-    /// <returns>An array of Quotes that this non-user has.</returns>
-    /// <exception cref="NullReferenceException">If the non-user doesn't have any quotes.</exception>
+    /// <param name="name">The category name to get the quotes of.</param>
+    /// <returns>An array of Quotes that this category contains.</returns>
+    /// <exception cref="NullReferenceException">If the category doesn't have any quotes.</exception>
     public Quote[] GetQuotes(string name)
     {
         if (!_quoteStorage.Quotes.ContainsKey(name))
-            throw new NullReferenceException("That non-user does not have any quotes.");
+            throw new NullReferenceException("That category does not have any quotes.");
         
         var quotes = _quoteStorage.Quotes[name].Select(quoteContent =>
         {
@@ -176,7 +176,7 @@ public class QuoteService
     }
 
     /// <summary>
-    /// Gets a random quote from a random user/non-user.
+    /// Gets a random quote from a random user/category.
     /// </summary>
     /// <param name="guild">The guild to get the user from, for name fetching purposes.</param>
     /// <returns>A Quote containing the quote information.</returns>
@@ -230,15 +230,15 @@ public class QuoteService
     }
     
     /// <summary>
-    /// Get a random quote by a non-user string.
+    /// Get a random quote in a category.
     /// </summary>
-    /// <param name="name">The non-user name to get the quote of.</param>
+    /// <param name="name">The category name to get the quote of.</param>
     /// <returns>A Quote containing the quote information.</returns>
-    /// <exception cref="NullReferenceException">If the non-user doesn't have any quotes.</exception>
+    /// <exception cref="NullReferenceException">If the category doesn't have any quotes.</exception>
     public Quote GetRandomQuote(string name)
     {
         if (!_quoteStorage.Quotes.ContainsKey(name))
-            throw new NullReferenceException("That non-user does not have any quotes.");
+            throw new NullReferenceException("That category does not have any quotes.");
         
         var quotes = _quoteStorage.Quotes[name];
 
@@ -272,9 +272,9 @@ public class QuoteService
     }
     
     /// <summary>
-    /// Add a quote to a non-user.
+    /// Add a quote to a category.
     /// </summary>
-    /// <param name="name">The non-user name to add the quote to.</param>
+    /// <param name="name">The category name to add the quote to.</param>
     /// <param name="content">The content of the quote.</param>
     /// <returns>The newly created Quote.</returns>
     public async Task<Quote> AddQuote(string name, string content)
@@ -324,17 +324,17 @@ public class QuoteService
     }
     
     /// <summary>
-    /// Remove a quote from a non-user.
+    /// Remove a quote from a category.
     /// </summary>
-    /// <param name="name">The non-user name to remove the quote from.</param>
+    /// <param name="name">The category name to remove the quote from.</param>
     /// <param name="id">The id of the quote to remove.</param>
     /// <returns>The Quote that was removed.</returns>
-    /// <exception cref="NullReferenceException">If the non-user doesn't have any quotes.</exception>
+    /// <exception cref="NullReferenceException">If the category doesn't have any quotes.</exception>
     /// <exception cref="IndexOutOfRangeException">If the quote id provided doesn't exist.</exception>
     public async Task<Quote> RemoveQuote(string name, int id)
     {
         if (!_quoteStorage.Quotes.ContainsKey(name))
-            throw new NullReferenceException("That non-user does not have any quotes.");
+            throw new NullReferenceException("That category does not have any quotes.");
         
         var quotes = _quoteStorage.Quotes[name];
 
@@ -368,14 +368,14 @@ public class QuoteService
     }
     
     /// <summary>
-    /// Remove all quote from a non-user.
+    /// Remove all quote from a category.
     /// </summary>
-    /// <param name="name">The non-user name to remove the quotes from.</param>
-    /// <exception cref="NullReferenceException">If the non-user doesn't have any quotes.</exception>
+    /// <param name="name">The category name to remove the quotes from.</param>
+    /// <exception cref="NullReferenceException">If the category doesn't have any quotes.</exception>
     public async Task RemoveQuotes(string name)
     {
         if (!_quoteStorage.Quotes.ContainsKey(name))
-            throw new NullReferenceException("That non-user does not have any quotes.");
+            throw new NullReferenceException("That category does not have any quotes.");
         
         _quoteStorage.Quotes.Remove(name);
         
