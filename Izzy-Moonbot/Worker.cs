@@ -366,6 +366,11 @@ namespace Izzy_Moonbot
                             continue;
                         }
 
+                        if (!command.Aliases.Contains(parsedMessage.Split(" ")[0]))
+                        {
+                            continue;
+                        }
+
                         validCommand = true;
                         break;
                     }
