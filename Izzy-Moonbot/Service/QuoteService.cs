@@ -144,6 +144,11 @@ public class QuoteService
         
         await FileHelper.SaveQuoteStorageAsync(_quoteStorage);
     }
+
+    public string[] GetAliasKeyList()
+    {
+        return _quoteStorage.Aliases.Keys.ToArray();
+    }
     
     /// <summary>
     /// Check if a user has quotes.

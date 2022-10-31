@@ -541,9 +541,21 @@ public class MiscModule : ModuleBase<SocketCommandContext>
         [ModCommand(Group="Permission")]
         [DevCommand(Group="Permission")]
         public async Task AddQuoteCommandAsync(
-            [Summary("The user/category to add the quote to.")] string user,
-            [Remainder] [Summary("The quote content.")] string content)
+            [Summary("The user/category to add the quote to.")] string user = "",
+            [Remainder] [Summary("The quote content.")] string content = "")
         {
+            if (user == "")
+            {
+                await ReplyAsync("You need to tell me the user/category you want to add the quote to.");
+                return;
+            }
+
+            if (content == "")
+            {
+                await ReplyAsync("You need to provide content to add.");
+                return;
+            }
+            
             // Check for aliases
             if (_quoteService.AliasExists(user))
             {
@@ -610,9 +622,21 @@ public class MiscModule : ModuleBase<SocketCommandContext>
         [DevCommand(Group="Permission")]
         [Alias("deletequote", "rmquote", "delquote")]
         public async Task RemoveQuoteCommandAsync(
-            [Summary("The user/category to remove the quote from.")] string user,
-            [Summary("The quote number to remove.")] int number)
+            [Summary("The user/category to remove the quote from.")] string user = "",
+            [Summary("The quote number to remove.")] int? number = null)
         {
+            if (user == "")
+            {
+                await ReplyAsync("You need to tell me the user/category you want to remove the quote from.");
+                return;
+            }
+
+            if (number == null)
+            {
+                await ReplyAsync("You need to tell me the quote number to remove.");
+                return;
+            }
+
             // Check for aliases
             if (_quoteService.AliasExists(user))
             {
@@ -620,18 +644,18 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                 {
                     var quoteUser = _quoteService.ProcessAlias(user, Context.Guild);
 
-                    var newAliasUserQuote = await _quoteService.RemoveQuote(quoteUser, number-1);
+                    var newAliasUserQuote = await _quoteService.RemoveQuote(quoteUser, number.Value-1);
 
                     await ReplyAsync(
-                        $"Removed quote number {number} from **{quoteUser.Username}#{quoteUser.Discriminator}**.");
+                        $"Removed quote number {number.Value} from **{quoteUser.Username}#{quoteUser.Discriminator}**.");
                     return;
                 }
                 var quoteCategory = _quoteService.ProcessAlias(user, Context.Guild);
                     
-                var newAliasCategoryQuote = await _quoteService.RemoveQuote(quoteCategory, number-1);
+                var newAliasCategoryQuote = await _quoteService.RemoveQuote(quoteCategory, number.Value-1);
 
                 await ReplyAsync(
-                    $"Removed quote number {number} from **{newAliasCategoryQuote.Name}**.");
+                    $"Removed quote number {number.Value} from **{newAliasCategoryQuote.Name}**.");
                 return;
             }
 
@@ -639,10 +663,10 @@ public class MiscModule : ModuleBase<SocketCommandContext>
             if (_quoteService.CategoryExists(user))
             {
                 // Category exists, add new quote to it.
-                var newCategoryQuote = await _quoteService.RemoveQuote(user, number-1);
+                var newCategoryQuote = await _quoteService.RemoveQuote(user, number.Value-1);
 
                 await ReplyAsync(
-                    $"Removed quote number {number} from **{newCategoryQuote.Name}**.");
+                    $"Removed quote number {number.Value} from **{newCategoryQuote.Name}**.");
                 return;
             }
                 
@@ -657,10 +681,10 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                 return;
             }
                 
-            var newUserQuote = await _quoteService.RemoveQuote(member, number-1);
+            var newUserQuote = await _quoteService.RemoveQuote(member, number.Value-1);
 
             await ReplyAsync(
-                $"Removed quote number {number} from **{newUserQuote.Name}**.");
+                $"Removed quote number {number.Value} from **{newUserQuote.Name}**.");
             return;
         }
         
@@ -670,12 +694,37 @@ public class MiscModule : ModuleBase<SocketCommandContext>
         [ModCommand(Group="Permission")]
         [DevCommand(Group="Permission")]
         public async Task QuoteAliasCommandAsync(
-            [Summary("The operation to complete (get/set/delete).")] string operation,
-            [Summary("The alias name.")] string alias,
+            [Summary("The operation to complete (get/list/set/delete).")] string operation = "",
+            [Summary("The alias name.")] string alias = "",
             [Summary("The user/category to set the alias to.")] string target = "")
         {
-            if (operation.ToLower() == "get")
+            if (operation == "")
             {
+                await ReplyAsync($"Hiya! This is how to use the quote alias command!{Environment.NewLine}" +
+                                 $"`{_config.Prefix}quotealias get <alias>` - Work out what an alias maps to.{Environment.NewLine}" +
+                                 $"`{_config.Prefix}quotealias list` - List all aliases.{Environment.NewLine}" +
+                                 $"`{_config.Prefix}quotealias set/add <alias> <user/category>` - Creates an alias.{Environment.NewLine}" +
+                                 $"`{_config.Prefix}quotealias delete/remove <alias>` - Deletes an alias.");
+            }
+            else if (operation.ToLower() == "list")
+            {
+                var aliases = _quoteService.GetAliasKeyList();
+
+                await ReplyAsync(
+                    $"Here's all the aliases I could find**.{Environment.NewLine}```{Environment.NewLine}" +
+                    $"{string.Join(", ", aliases)}{Environment.NewLine}```{Environment.NewLine}" +
+                    $"Run `{_config.Prefix}quotealias get <alias>` to find out what an alias maps to.{Environment.NewLine}" +
+                    $"Run `{_config.Prefix}quotealias set/add <alias> <user/category>` to create a new alias.{Environment.NewLine}" +
+                    $"Run `{_config.Prefix}quotealias delete/remove <alias>` to delete an alias.");
+            }
+            else if (operation.ToLower() == "get")
+            {
+                if (alias == "")
+                {
+                    await ReplyAsync("Uhhh... I can't get an alias if you haven't told me what alias you want...");
+                    return;
+                }
+                
                 if (_quoteService.AliasExists(alias))
                 {
                     if (_quoteService.AliasRefersTo(alias, Context.Guild) == "user")
@@ -693,8 +742,13 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                             $"Quote alias **{alias}** maps to category **{category}**.");
                     }
                 }
-            } else if (operation.ToLower() == "set")
+            } else if (operation.ToLower() == "set" || operation.ToLower() == "add")
             {
+                if (alias == "")
+                {
+                    await ReplyAsync("You need to provide an alias to create.");
+                    return;
+                }
                 if (target == "")
                 {
                     await ReplyAsync("You need to provide a user or category name to set the alias to.");
@@ -715,8 +769,13 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                 await _quoteService.AddAlias(alias, member);
 
                 await ReplyAsync($"Added alias **{alias}** to map to user **{target}**.");
-            } else if (operation.ToLower() == "delete")
+            } else if (operation.ToLower() == "delete" || operation.ToLower() == "remove")
             {
+                if (alias == "")
+                {
+                    await ReplyAsync("Uhhh... I can't delete an alias if you haven't told me what alias you want to delete...");
+                    return;
+                }
                 await _quoteService.RemoveAlias(alias);
 
                 await ReplyAsync($"Remove alias **{alias}**.");
@@ -724,7 +783,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
             else
             {
                 await ReplyAsync(
-                    "Sorry, I don't understand what you want me to do. Please refer to `.help quotealias`.");
+                    "Sorry, I don't understand what you want me to do.");
             }
         }
     }
