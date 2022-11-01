@@ -386,6 +386,16 @@ namespace Izzy_Moonbot
                         $"Sorry, I was unable to process that command because when I tried to parse a value into an {result.ErrorReason.Split(" ")[3]} but failed." +
                         $"Please run `.help {commandToExec.Name}` for usage information about this command.");
                 }
+
+                if (result.Error == CommandError.Exception)
+                {
+                    await context.Channel.SendMessageAsync(
+                        $"Sorry, something went wrong while processing that command.");
+                    
+                    _logger.LogError($"An exception occured while processing a command: {Environment.NewLine}" +
+                                     $"Command: {parsedMessage}" +
+                                     $"Exception: {result.ErrorReason}");
+                }
             }
         }
 
