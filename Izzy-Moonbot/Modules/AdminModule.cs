@@ -293,6 +293,7 @@ public class AdminModule : ModuleBase<SocketCommandContext>
             await foreach (var socketGuildUser in Context.Guild.Users.ToAsyncEnumerable())
             {
                 if (socketGuildUser.IsBot) continue; // Bots aren't stowaways
+                if (socketGuildUser.Roles.Select(role => role.Id).Contains(_config.ModRole)) continue; // Mods aren't stowaways
 
                 if (!socketGuildUser.Roles.Select(role => role.Id).Contains((ulong)_config.MemberRole))
                 {

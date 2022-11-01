@@ -64,6 +64,8 @@ public class Program
             services.AddSingleton(generalStorage);
             var stateStorage = new State();
             services.AddSingleton(stateStorage);
+            var quoteStorage = FileHelper.LoadQuoteStorageAsync().GetAwaiter().GetResult();
+            services.AddSingleton(quoteStorage);
 
             // Describers
             services.AddSingleton<ConfigDescriber>();
@@ -76,6 +78,7 @@ public class Program
             services.AddSingleton<RaidService>();
             services.AddSingleton<FilterService>();
             services.AddSingleton<ScheduleService>();
+            services.AddSingleton<QuoteService>();
             services.AddSingleton(services);
             
             // EventListeners

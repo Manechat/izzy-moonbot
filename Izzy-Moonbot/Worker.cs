@@ -189,6 +189,10 @@ namespace Izzy_Moonbot
                         newUser.Aliases.Add(socketGuildUser.Username);
                         if (socketGuildUser.JoinedAt.HasValue) newUser.Joins.Add(socketGuildUser.JoinedAt.Value);
                         _users.Add(socketGuildUser.Id, newUser);
+                        
+                        // Process new member
+                        _userListener.MemberJoinEvent(socketGuildUser, true);
+                        
                         newUserCount += 1;
                         skip = true;
                     }
@@ -288,6 +292,34 @@ namespace Izzy_Moonbot
 
                 _logger.LogInformation(
                     $"Resynced users. {guild.Users.Count} users found, {newUserCount} unknown, {reloadUserCount} required update, {knownUserCount} up to date.");
+                
+                // Get stowaways
+                var stowawayList = new HashSet<SocketGuildUser>();
+        
+                await foreach (var socketGuildUser in guild.Users.ToAsyncEnumerable())
+                {
+                    if (socketGuildUser.IsBot) continue; // Bots aren't stowaways
+                    if (socketGuildUser.Roles.Select(role => role.Id).Contains(_config.ModRole)) continue; // Mods aren't stowaways
+
+                    if (!socketGuildUser.Roles.Select(role => role.Id).Contains((ulong)_config.MemberRole))
+                    {
+                        // Doesn't have member role, add to stowaway list.
+                        stowawayList.Add(socketGuildUser);
+                    }
+                }
+
+                if (stowawayList.Count != 0)
+                {
+                    var stowawayStringList = stowawayList.Select(user => $"<@{user.Id}>");
+                    var stowawayStringFileList = stowawayList.Select(user => $"{user.Username}#{user.Discriminator}");
+                    
+                    await _modLog.CreateModLog(guild)
+                        .SetContent($"I found these stowaways after I rebooted, cannot tell if they're new users:{Environment.NewLine}" +
+                                    string.Join(", ", stowawayStringList))
+                        .SetFileLogContent($"I found these stowaways after I rebooted, cannot tell if they're new users:{Environment.NewLine}" +
+                                           string.Join(", ", stowawayStringFileList))
+                        .Send();
+                }
             });
         }
 
@@ -325,7 +357,8 @@ namespace Izzy_Moonbot
                     bool validCommand = false;
                     foreach (var command in _commands.Commands)
                     {
-                        if (command.Name != parsedMessage.Split(" ")[0])
+                        if (command.Name != parsedMessage.Split(" ")[0] && 
+                            !command.Aliases.Contains(parsedMessage.Split(" ")[0]))
                         {
                             continue;
                         }
@@ -338,22 +371,21 @@ namespace Izzy_Moonbot
                 }
 
                 // Check for BotsAllowed attribute
-                bool hasBotsAllowedAttribute = false;
                 SearchResult searchResult = _commands.Search(parsedMessage);
                 CommandInfo commandToExec = searchResult.Commands[0].Command;
 
-                foreach (var attribute in commandToExec.Attributes)
-                {
-                    if (attribute == null) continue;
-                    if (!(attribute is BotsAllowedAttribute)) continue;
-
-                    hasBotsAllowedAttribute = true;
-                    break;
-                }
+                var hasBotsAllowedAttribute = commandToExec.Preconditions.Where(attribute => attribute != null).OfType<BotsAllowedAttribute>().Any();
 
                 if (!hasBotsAllowedAttribute && context.User.IsBot) return;
 
-                await _commands.ExecuteAsync(context, parsedMessage, _services.BuildServiceProvider());
+                var result = await _commands.ExecuteAsync(context, parsedMessage, _services.BuildServiceProvider());
+                if (result.Error == CommandError.ParseFailed &&
+                    result.ErrorReason.StartsWith("Failed to parse "))
+                {
+                    await context.Channel.SendMessageAsync(
+                        $"Sorry, I was unable to process that command because when I tried to parse a value into an {result.ErrorReason.Split(" ")[3]} but failed." +
+                        $"Please run `.help {commandToExec.Name}` for usage information about this command.");
+                }
             }
         }
 

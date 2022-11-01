@@ -41,9 +41,9 @@ public class UserListener
         client.GuildMemberUpdated += (oldMember, newMember) => Task.Run(async () => { await MemberUpdateEvent(oldMember, newMember); });
     }
 
-    private async Task MemberJoinEvent(SocketGuildUser member)
+    public async Task MemberJoinEvent(SocketGuildUser member, bool catchingUp = false)
     {
-        await _logger.Log($"New member join: {member.Username}#{member.DiscriminatorValue} ({member.Id})", level: LogLevel.Debug);
+        await _logger.Log($"New member join{(catchingUp ? " found after reboot" : "")}: {member.Username}#{member.DiscriminatorValue} ({member.Id})", level: LogLevel.Debug);
         if (!_users.ContainsKey(member.Id))
         {
             await _logger.Log($"No user data entry for new user, generating one now...", level: LogLevel.Debug);
@@ -55,7 +55,7 @@ public class UserListener
             await FileHelper.SaveUsersAsync(_users);
             await _logger.Log($"New user data entry generated.", level: LogLevel.Debug);
         }
-        else
+        else if (!catchingUp)
         {
             await _logger.Log($"Found user data entry for new user, add new join date", level: LogLevel.Debug);
             _users[member.Id].Joins.Add(member.JoinedAt.Value); // I still really fucking hope it isn't null because the user did just join
@@ -163,8 +163,8 @@ public class UserListener
         await _logger.Log($"Generated moderation log content, posting log", level: LogLevel.Debug);
         
         await _modLogger.CreateModLog(member.Guild)
-            .SetContent($"Join: <@{member.Id}> (`{member.Id}`), created <t:{member.CreatedAt.ToUnixTimeSeconds()}:R>{autoSilence}{joinedBefore}{rolesAutoappliedString}")
-            .SetFileLogContent($"Join: {member.Username}#{member.Discriminator} (`{member.Id}`), created {member.CreatedAt:O}{autoSilence}{joinedBefore}{rolesAutoappliedString}")
+            .SetContent($"{(catchingUp ? "Catching up on ": "")}Join: <@{member.Id}> (`{member.Id}`), created <t:{member.CreatedAt.ToUnixTimeSeconds()}:R>{autoSilence}{joinedBefore}{rolesAutoappliedString}")
+            .SetFileLogContent($"{(catchingUp ? "Catching up on ": "")}Join: {member.Username}#{member.Discriminator} (`{member.Id}`), created {member.CreatedAt:O}{autoSilence}{joinedBefore}{rolesAutoappliedString}")
             .Send();
         await _logger.Log($"Log posted", level: LogLevel.Debug);
     }

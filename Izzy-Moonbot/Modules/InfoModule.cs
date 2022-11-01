@@ -32,6 +32,7 @@ public class InfoModule : ModuleBase<SocketCommandContext>
 
         if (item == "")
         {
+            Context.Client.GetUser(4);
             // List modules.
             var moduleList = new List<string>();
 
@@ -56,10 +57,10 @@ public class InfoModule : ModuleBase<SocketCommandContext>
         }
         else
         {
-            if (_commands.Commands.Any(command => command.Name.ToLower() == item.ToLower()))
+            if (_commands.Commands.Any(command => command.Name.ToLower() == item.ToLower() || command.Aliases.Select(alias => alias.ToLower()).Contains(item.ToLower())))
             {
                 // It's a command!
-                var commandInfo = _commands.Commands.Single<CommandInfo>(command => command.Name.ToLower() == item.ToLower());
+                var commandInfo = _commands.Commands.Single<CommandInfo>(command => command.Name.ToLower() == item.ToLower() || command.Aliases.Select(alias => alias.ToLower()).Contains(item.ToLower()));
                 var ponyReadable = $"**{prefix}{commandInfo.Name}** - {commandInfo.Module.Name.Replace("Module", "").Replace("Submodule", "")} category{Environment.NewLine}";
                 if (commandInfo.Preconditions.Any(attribute => attribute is ModCommandAttribute) &&
                     commandInfo.Preconditions.Any(attribute => attribute is DevCommandAttribute))
@@ -75,7 +76,7 @@ public class InfoModule : ModuleBase<SocketCommandContext>
 
                 foreach (var parameters in commandInfo.Parameters)
                     ponyReadable +=
-                        $"{parameters.Name} [{parameters.Type.Name}] - {parameters.Summary}{Environment.NewLine}";
+                        $"{parameters.Name} [{(parameters.Type.Name.Contains("Nullable") ? Nullable.GetUnderlyingType(parameters.Type).Name : parameters.Type.Name)}] - {parameters.Summary}{Environment.NewLine}";
 
                 ponyReadable += $"```";
 
