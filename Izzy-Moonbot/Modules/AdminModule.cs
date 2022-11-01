@@ -340,13 +340,7 @@ public class AdminModule : ModuleBase<SocketCommandContext>
         var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(user, Context);
         var member = Context.Guild.GetUser(userId);
 
-        if (member == null)
-        {
-            await ReplyAsync("I couldn't find that user, sorry!");
-            return;
-        }
-
-        if (member.Id == Context.Client.CurrentUser.Id)
+        if (userId == Context.Client.CurrentUser.Id)
         {
             var rnd = new Random();
             if (rnd.Next(100) == 0)
@@ -365,16 +359,16 @@ public class AdminModule : ModuleBase<SocketCommandContext>
             return;
         }
 
-        if (member.Roles.Select(role => role.Id).Contains(_config.ModRole))
+        if (member != null && member.Roles.Select(role => role.Id).Contains(_config.ModRole))
         {
-            await ReplyAsync("I can't ban a mod. <:izzy_nothoughts:994638502350303344>");
+            await ReplyAsync("I can't ban a mod. <:izzynothoughtsheadempty:910198222255972382>");
             return;
         }
 
-        if (member.Hierarchy >= Context.Guild.GetUser(Context.Client.CurrentUser.Id).Hierarchy)
+        if (member != null && member.Hierarchy >= Context.Guild.GetUser(Context.Client.CurrentUser.Id).Hierarchy)
         {
             await ReplyAsync(
-                "That user is either at the same level or higher than me in the role hierarchy, I cannot ban them. <:izzy_nothoughts:994638502350303344>");
+                "That user is either at the same level or higher than me in the role hierarchy, I cannot ban them. <:izzynothoughtsheadempty:910198222255972382>");
             return;
         }
         
@@ -418,7 +412,7 @@ public class AdminModule : ModuleBase<SocketCommandContext>
                 };
                 ScheduledTaskAction action = new ScheduledTaskAction(ScheduledTaskActionType.Unban, fields);
                 ScheduledTask task = new ScheduledTask(DateTimeOffset.UtcNow, time.Time, action);
-                await _schedule.CreateScheduledTask(task, member.Guild);
+                await _schedule.CreateScheduledTask(task, Context.Guild);
             }
 
             await ReplyAsync(
@@ -455,7 +449,7 @@ public class AdminModule : ModuleBase<SocketCommandContext>
                         await ReplyAsync($"Removed an existing unban which was scheduled {removedTasks.First()}.{Environment.NewLine}" +
                                          $"Here's a userlog I generated that you can use if you want to!{Environment.NewLine}```{Environment.NewLine}" +
                                          $"Type: Ban (Indefinite){Environment.NewLine}" +
-                                         $"User: <@{userId}> ({userId}){Environment.NewLine}" +
+                                         $"User: <@{userId}> {(member != null ? $"({member.Username}#{member.Discriminator})" : "")} ({userId}){Environment.NewLine}" +
                                          $"Names: {(_users.ContainsKey(userId) ? string.Join(", ", _users[userId].Aliases) : "None (user isn't known by Izzy)")}{Environment.NewLine}" +
                                          $"```");
                     }
@@ -464,7 +458,7 @@ public class AdminModule : ModuleBase<SocketCommandContext>
                         await ReplyAsync($"Removed multiple existing unbans for this user which were scheduled:{Environment.NewLine}{string.Join(", ", removedTasks)}.{Environment.NewLine}" +
                                          $"Here's a userlog I generated that you can use if you want to!{Environment.NewLine}```{Environment.NewLine}" +
                                          $"Type: Ban (Indefinite){Environment.NewLine}" +
-                                         $"User: <@{userId}> ({userId}){Environment.NewLine}" +
+                                         $"User: <@{userId}> {(member != null ? $"({member.Username}#{member.Discriminator})" : "")} ({userId}){Environment.NewLine}" +
                                          $"Names: {(_users.ContainsKey(userId) ? string.Join(", ", _users[userId].Aliases) : "None (user isn't known by Izzy)")}{Environment.NewLine}" +
                                          $"```");
                     }
@@ -505,7 +499,7 @@ public class AdminModule : ModuleBase<SocketCommandContext>
                 await ReplyAsync($"Modified an existing scheduled unban from <t:{tasks.First().ExecuteAt.ToUnixTimeSeconds()}:R> to <t:{task.ExecuteAt.ToUnixTimeSeconds()}:R>.{Environment.NewLine}" +
                                  $"Here's a userlog I generated that you can use if you want to!{Environment.NewLine}```{Environment.NewLine}" +
                                  $"Type: Ban (<t:{time.Time.ToUnixTimeSeconds()}:R>){Environment.NewLine}" +
-                                 $"User: <@{userId}> ({userId}){Environment.NewLine}" +
+                                 $"User: <@{userId}> {(member != null ? $"({member.Username}#{member.Discriminator})" : "")} ({userId}){Environment.NewLine}" +
                                  $"Names: {(_users.ContainsKey(userId) ? string.Join(", ", _users[userId].Aliases) : "None (user isn't known by Izzy)")}{Environment.NewLine}" +
                                  $"```");
             }
@@ -523,13 +517,13 @@ public class AdminModule : ModuleBase<SocketCommandContext>
                 };
                 ScheduledTaskAction action = new ScheduledTaskAction(ScheduledTaskActionType.Unban, fields);
                 ScheduledTask task = new ScheduledTask(DateTimeOffset.UtcNow, time.Time, action);
-                await _schedule.CreateScheduledTask(task, member.Guild);
+                await _schedule.CreateScheduledTask(task, Context.Guild);
 
                 await ReplyAsync(
                     $"Scheduled unban for this user. They'll be unbanned <t:{time.Time.ToUnixTimeSeconds()}:R>{Environment.NewLine}" +
                     $"Here's a userlog I generated that you can use if you want to!{Environment.NewLine}```{Environment.NewLine}" +
                     $"Type: Ban (<t:{time.Time.ToUnixTimeSeconds()}:R>){Environment.NewLine}" +
-                    $"User: <@{userId}> ({userId}){Environment.NewLine}" +
+                    $"User: <@{userId}> {(member != null ? $"({member.Username}#{member.Discriminator})" : "")} ({userId}){Environment.NewLine}" +
                     $"Names: {(_users.ContainsKey(userId) ? string.Join(", ", _users[userId].Aliases) : "None (user isn't known by Izzy)")}{Environment.NewLine}" +
                     $"```");
             }
