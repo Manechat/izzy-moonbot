@@ -347,6 +347,27 @@ public class DevModule : ModuleBase<SocketCommandContext>
                     await ReplyAsync($"Exception: {exception.Message}");
                 }
                 break;
+            case "getuser":
+                if (ulong.TryParse(args[0], out var id))
+                {
+                    var user = await Context.Client.GetUserAsync(id);
+
+                    if (user == null)
+                    {
+                        await ReplyAsync("Couldn't find user");
+                    }
+                    else
+                    {
+                        await ReplyAsync($"User info:{Environment.NewLine}" +
+                                         $"Id: {id}{Environment.NewLine}" +
+                                         $"Name: {user.Username}#{user.Discriminator}");
+                    }
+                }
+                else
+                {
+                    await ReplyAsync($"not valid user");
+                }
+                break;
             default:
                 Context.Message.ReplyAsync("Unknown test.");
                 break;
