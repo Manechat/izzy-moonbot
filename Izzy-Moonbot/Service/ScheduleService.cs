@@ -91,6 +91,8 @@ public class ScheduleService
                 await _modLoggingService.CreateModLog(guild)
                     .SetContent(
                         $"Removed <@&{roleToRemove.Id}> from <@{userToRemoveFrom.Id}> (`{userToRemoveFrom.Id}`)")
+                    .SetFileLogContent(
+                        $"Removed {roleToRemove.Name} ({roleToRemove.Id}) from {userToRemoveFrom.Username}#{userToRemoveFrom.Discriminator} ({userToRemoveFrom.Id})")
                     .Send();
                 break;
             case ScheduledTaskActionType.AddRole:
@@ -109,10 +111,28 @@ public class ScheduleService
                 await _modLoggingService.CreateModLog(guild)
                     .SetContent(
                         $"Gave <@&{roleToAdd.Id}> to <@{userToAddTo.Id}> (`{userToAddTo.Id}`)")
+                    .SetFileLogContent(
+                        $"Gave {roleToAdd.Name} ({roleToAdd.Id}) to {userToAddTo.Username}#{userToAddTo.Discriminator} ({userToAddTo.Id})")
                     .Send();
                 break;
             case ScheduledTaskActionType.Unban:
-                throw new NotImplementedException("Timed bans are not implemented at this current time.");
+                if (!ulong.TryParse(action.Fields["userId"], out var userIdToUnban)) return;
+                
+                string reasonForUnbanning = null;
+                if (action.Fields.ContainsKey("reason")) reasonForUnbanning = action.Fields["reason"];
+                
+                await _logging.Log(
+                    $"Unbanning {userIdToUnban} for {reasonForUnbanning}",
+                    level: LogLevel.Trace);
+
+                await guild.RemoveBanAsync(userIdToUnban);
+                
+                await _modLoggingService.CreateModLog(guild)
+                    .SetContent(
+                        $"Unbanned <@{userIdToUnban}> for {reasonForUnbanning}")
+                    .SetFileLogContent(
+                        $"Unbanned {userIdToUnban} for {reasonForUnbanning}")
+                    .Send();
                 break;
             case ScheduledTaskActionType.Echo:
                 var channelToEchoTo = guild.GetTextChannel(ulong.Parse(action.Fields["channelId"]));
