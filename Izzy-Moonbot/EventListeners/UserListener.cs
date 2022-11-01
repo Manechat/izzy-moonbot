@@ -252,6 +252,7 @@ public class UserListener
         foreach (var scheduledTask in scheduledTasks)
         {
             if (scheduledTask == null) continue;
+            if (scheduledTask.Action.Type == ScheduledTaskActionType.Unban) continue;
             await _schedule.DeleteScheduledTask(scheduledTask);
         }
         await _logger.Log($"Cancelled all scheduled tasks for this user", level: LogLevel.Debug);
