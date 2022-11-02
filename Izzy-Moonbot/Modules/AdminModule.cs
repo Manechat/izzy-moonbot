@@ -416,9 +416,9 @@ public class AdminModule : ModuleBase<SocketCommandContext>
             }
 
             await ReplyAsync(
-                $"<:izzydeletethis:1028964499723661372> I've banned {(member == null ? $"<@{userId}>" : member.DisplayName)} ({userId}).{(time != null ? $" They'll be unbanned <t:{time.Time.ToUnixTimeSeconds()}:R>." : "")}{Environment.NewLine}" +
+                $"<:izzydeletethis:1028964499723661372> I've banned {(member == null ? $"<@{userId}>" : member.DisplayName)} ({userId}).{(time != null ? $" They'll be unbanned <t:{time.Time.ToUnixTimeSeconds()}:R>." : "")}{Environment.NewLine}{Environment.NewLine}" +
                 $"Here's a userlog I generated that you can use if you want to!{Environment.NewLine}```{Environment.NewLine}" +
-                $"Type: Ban ({(time == null ? "Indefinite" : $"<t:{time.Time.ToUnixTimeSeconds()}:R>")}){Environment.NewLine}" +
+                $"Type: Ban ({(duration == "" ? "" : $"{duration} ")}{(time == null ? "Indefinite" : $"<t:{time.Time.ToUnixTimeSeconds()}:R>")}){Environment.NewLine}" +
                 $"User: <@{userId}> {(member != null ? $"({member.Username}#{member.Discriminator})" : "")} ({userId}){Environment.NewLine}" +
                 $"Names: {(_users.ContainsKey(userId) ? string.Join(", ", _users[userId].Aliases) : "None (user isn't known by Izzy)")}{Environment.NewLine}" +
                 $"```");
@@ -432,41 +432,23 @@ public class AdminModule : ModuleBase<SocketCommandContext>
                 if (_schedule.GetScheduledTasks().Any(task => task.Action.Type == ScheduledTaskActionType.Unban &&
                                                               task.Action.Fields["userId"] == userId.ToString()))
                 {
-                    var tasks = _schedule.GetScheduledTasks().Where(task =>
+                    var task = _schedule.GetScheduledTasks().First(task => 
                         task.Action.Type == ScheduledTaskActionType.Unban &&
                         task.Action.Fields["userId"] == userId.ToString());
 
-                    var removedTasks = new List<string>();
+                    await _schedule.DeleteScheduledTask(task);
 
-                    foreach (var task in tasks)
-                    {
-                        await _schedule.DeleteScheduledTask(task);
-                        removedTasks.Add($"<t:{task.ExecuteAt.ToUnixTimeSeconds()}:R>");
-                    }
-
-                    if (removedTasks.Count == 1)
-                    {
-                        await ReplyAsync($"Removed an existing unban which was scheduled {removedTasks.First()}.{Environment.NewLine}" +
-                                         $"Here's a userlog I generated that you can use if you want to!{Environment.NewLine}```{Environment.NewLine}" +
-                                         $"Type: Ban (Indefinite){Environment.NewLine}" +
-                                         $"User: <@{userId}> {(member != null ? $"({member.Username}#{member.Discriminator})" : "")} ({userId}){Environment.NewLine}" +
-                                         $"Names: {(_users.ContainsKey(userId) ? string.Join(", ", _users[userId].Aliases) : "None (user isn't known by Izzy)")}{Environment.NewLine}" +
-                                         $"```");
-                    }
-                    else
-                    {
-                        await ReplyAsync($"Removed multiple existing unbans for this user which were scheduled:{Environment.NewLine}{string.Join(", ", removedTasks)}.{Environment.NewLine}" +
-                                         $"Here's a userlog I generated that you can use if you want to!{Environment.NewLine}```{Environment.NewLine}" +
-                                         $"Type: Ban (Indefinite){Environment.NewLine}" +
-                                         $"User: <@{userId}> {(member != null ? $"({member.Username}#{member.Discriminator})" : "")} ({userId}){Environment.NewLine}" +
-                                         $"Names: {(_users.ContainsKey(userId) ? string.Join(", ", _users[userId].Aliases) : "None (user isn't known by Izzy)")}{Environment.NewLine}" +
-                                         $"```");
-                    }
+                    await ReplyAsync($"This user is already banned. I have removed an existing unban for them which was scheduled <t:{task.ExecuteAt.ToUnixTimeSeconds()}:R>.{Environment.NewLine}{Environment.NewLine}" +
+                                     $"Here's a userlog I generated that you can use if you want to!{Environment.NewLine}```{Environment.NewLine}" +
+                                     $"Type: Ban (Indefinite){Environment.NewLine}" +
+                                     $"User: <@{userId}> {(member != null ? $"({member.Username}#{member.Discriminator})" : "")} ({userId}){Environment.NewLine}" +
+                                     $"Names: {(_users.ContainsKey(userId) ? string.Join(", ", _users[userId].Aliases) : "None (user isn't known by Izzy)")}{Environment.NewLine}" +
+                                     $"```");
                 }
                 else
                 {
                     // Doesn't exist, it's already permanent.
-                    await ReplyAsync("The ban for this user is already permanent.");
+                    await ReplyAsync("This user is already banned, with no scheduled unban. No changes made.");
                 }
                 
                 return;
@@ -490,15 +472,16 @@ public class AdminModule : ModuleBase<SocketCommandContext>
                     return task1.ExecuteAt.ToUnixTimeMilliseconds() > task2.ExecuteAt.ToUnixTimeMilliseconds() ? 1 : 0;
                 });
 
-                var task = tasks.First();
+                var task = tasks[0];
+                var taskOriginalExecution = task.ExecuteAt.ToUnixTimeSeconds();
 
                 task.ExecuteAt = time.Time;
 
-                await _schedule.ModifyScheduledTask(tasks.First(), task);
+                await _schedule.SyncModifiedScheduledTask(task, Context.Guild);
 
-                await ReplyAsync($"Modified an existing scheduled unban from <t:{tasks.First().ExecuteAt.ToUnixTimeSeconds()}:R> to <t:{task.ExecuteAt.ToUnixTimeSeconds()}:R>.{Environment.NewLine}" +
+                await ReplyAsync($"This user is already banned. I have modified an existing scheduled unban for them from <t:{taskOriginalExecution}:R> to <t:{task.ExecuteAt.ToUnixTimeSeconds()}:R>.{Environment.NewLine}{Environment.NewLine}" +
                                  $"Here's a userlog I generated that you can use if you want to!{Environment.NewLine}```{Environment.NewLine}" +
-                                 $"Type: Ban (<t:{time.Time.ToUnixTimeSeconds()}:R>){Environment.NewLine}" +
+                                 $"Type: Ban ({duration} <t:{time.Time.ToUnixTimeSeconds()}:R>){Environment.NewLine}" +
                                  $"User: <@{userId}> {(member != null ? $"({member.Username}#{member.Discriminator})" : "")} ({userId}){Environment.NewLine}" +
                                  $"Names: {(_users.ContainsKey(userId) ? string.Join(", ", _users[userId].Aliases) : "None (user isn't known by Izzy)")}{Environment.NewLine}" +
                                  $"```");
@@ -520,9 +503,9 @@ public class AdminModule : ModuleBase<SocketCommandContext>
                 await _schedule.CreateScheduledTask(task, Context.Guild);
 
                 await ReplyAsync(
-                    $"Scheduled unban for this user. They'll be unbanned <t:{time.Time.ToUnixTimeSeconds()}:R>{Environment.NewLine}" +
+                    $"This user is already banned. I have scheduled an unban for this user. They'll be unbanned <t:{time.Time.ToUnixTimeSeconds()}:R>{Environment.NewLine}{Environment.NewLine}" +
                     $"Here's a userlog I generated that you can use if you want to!{Environment.NewLine}```{Environment.NewLine}" +
-                    $"Type: Ban (<t:{time.Time.ToUnixTimeSeconds()}:R>){Environment.NewLine}" +
+                    $"Type: Ban ({duration} <t:{time.Time.ToUnixTimeSeconds()}:R>){Environment.NewLine}" +
                     $"User: <@{userId}> {(member != null ? $"({member.Username}#{member.Discriminator})" : "")} ({userId}){Environment.NewLine}" +
                     $"Names: {(_users.ContainsKey(userId) ? string.Join(", ", _users[userId].Aliases) : "None (user isn't known by Izzy)")}{Environment.NewLine}" +
                     $"```");

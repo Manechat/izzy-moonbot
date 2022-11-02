@@ -62,6 +62,8 @@ public class ScheduleService
                     await Task.Delay(Convert.ToInt32(scheduledTask.ExecuteAt.ToUnixTimeMilliseconds() -
                                                      DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()));
                     if (!_scheduledTasks.Contains(scheduledTask)) return;
+                    if (scheduledTask.ExecuteAt.ToUnixTimeMilliseconds() >
+                        DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()) return;
                     _logging.Log("Executing following task due to time passing after restart", null,
                         level: LogLevel.Trace);
                     await ExecuteTask(scheduledTask.Action, guild);
@@ -117,7 +119,8 @@ public class ScheduleService
                 break;
             case ScheduledTaskActionType.Unban:
                 if (!ulong.TryParse(action.Fields["userId"], out var userIdToUnban)) return;
-                
+                if (await guild.GetBanAsync(userIdToUnban) == null) return;
+
                 string reasonForUnbanning = null;
                 if (action.Fields.ContainsKey("reason")) reasonForUnbanning = action.Fields["reason"];
                 
@@ -175,7 +178,11 @@ public class ScheduleService
         {
             await Task.Delay(Convert.ToInt32(task.ExecuteAt.ToUnixTimeMilliseconds() -
                                              DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()));
+            await _logging.Log(
+                $"Contains: {_scheduledTasks.Contains(task)}, time: {task.ExecuteAt.ToUnixTimeMilliseconds() > DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}");
             if (!_scheduledTasks.Contains(task)) return;
+            if (task.ExecuteAt.ToUnixTimeMilliseconds() >
+                DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()) return;
             await _logging.Log("Executing following task due to time passing", null,
                 level: LogLevel.Trace);
             await ExecuteTask(task.Action, guild);
@@ -246,6 +253,8 @@ public class ScheduleService
                 await Task.Delay(Convert.ToInt32(task.ExecuteAt.ToUnixTimeMilliseconds() -
                                                  DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()));
                 if (!_scheduledTasks.Contains(_scheduledTasks[taskIndex])) return;
+                if (_scheduledTasks[taskIndex].ExecuteAt.ToUnixTimeMilliseconds() >
+                    DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()) return;
                 await _logging.Log("Executing following task due to time passing", null,
                     level: LogLevel.Trace);
                 await ExecuteTask(_scheduledTasks[taskIndex].Action, guild);
@@ -260,11 +269,20 @@ public class ScheduleService
         return await DeleteScheduledTask(task);
     }
 
-    public async Task<ScheduledTask> ModifyScheduledTask(ScheduledTask originalTask, ScheduledTask newTask)
+    public async Task SyncModifiedScheduledTask(ScheduledTask task, SocketGuild guild)
     {
-        _scheduledTasks[_scheduledTasks.IndexOf(originalTask)] = newTask;
-        await FileHelper.SaveScheduleAsync(_scheduledTasks);
-        return newTask;
+        Task.Run(async () =>
+        {
+            await Task.Delay(Convert.ToInt32(task.ExecuteAt.ToUnixTimeMilliseconds() -
+                                             DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()));
+            if (!_scheduledTasks.Contains(task)) return;
+            if (task.ExecuteAt.ToUnixTimeMilliseconds() >
+                DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()) return;
+            await _logging.Log("Executing following task due to time passing", null,
+                level: LogLevel.Trace);
+            await ExecuteTask(task.Action, guild);
+            await DeleteScheduledTaskOrRepeat(task, guild);
+        });
     }
 
     public ScheduledTaskAction stringToAction(string action)

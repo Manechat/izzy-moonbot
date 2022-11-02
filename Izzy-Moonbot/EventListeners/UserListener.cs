@@ -36,9 +36,31 @@ public class UserListener
 
     public void RegisterEvents(DiscordSocketClient client)
     {
+        client.UserUnbanned += (user, guild) => Task.Run(async () => { await MemberUnbanEvent(user, guild); });
         client.UserJoined += (member) => Task.Run(async () => { await MemberJoinEvent(member); });
         client.UserLeft += (guild, user) => Task.Run(async () => { await MemberLeaveEvent(guild, user); });
         client.GuildMemberUpdated += (oldMember, newMember) => Task.Run(async () => { await MemberUpdateEvent(oldMember, newMember); });
+    }
+
+    public async Task MemberUnbanEvent(SocketUser user, SocketGuild guild)
+    {
+        await _logger.Log($"User was unbanned: {user.Username}#{user.Discriminator}.", level: LogLevel.Debug);
+        var scheduledTasks = _schedule.GetScheduledTasks().ToList().Select(action =>
+        {
+            if (action.Action.Fields.ContainsKey("userId") &&
+                action.Action.Fields["userId"] == user.Id.ToString())
+                return action;
+            return null;
+        });
+
+        await _logger.Log($"Cancelling all scheduled unban tasks for this user", level: LogLevel.Debug);
+        foreach (var scheduledTask in scheduledTasks)
+        {
+            if (scheduledTask == null) continue;
+            if (scheduledTask.Action.Type != ScheduledTaskActionType.Unban) continue;
+            await _schedule.DeleteScheduledTask(scheduledTask);
+        }
+        await _logger.Log($"Cancelled all scheduled unban tasks for this user", level: LogLevel.Debug);
     }
 
     public async Task MemberJoinEvent(SocketGuildUser member, bool catchingUp = false)
