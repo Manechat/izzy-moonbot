@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Discord;
 using Discord.Commands;
 using Izzy_Moonbot.Attributes;
 using Izzy_Moonbot.Helpers;
@@ -47,7 +48,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                 // Get random quote and post
                 var quote = _quoteService.GetRandomQuote(Context.Guild);
 
-                await ReplyAsync($"**{quote.Name} `#{quote.Id+1}`:** {quote.Content}");
+                await ReplyAsync($"**{quote.Name} `#{quote.Id+1}`:** {quote.Content}", allowedMentions: AllowedMentions.None);
                 return;
             }
 
@@ -70,7 +71,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                             var quote = _quoteService.GetRandomQuote(user);
 
                             // Send quote and return
-                            await ReplyAsync($"**{quote.Name} `#{quote.Id + 1}`:** {quote.Content}");
+                            await ReplyAsync($"**{quote.Name} `#{quote.Id + 1}`:** {quote.Content}", allowedMentions: AllowedMentions.None);
                             return;
                         }
                         catch (NullReferenceException)
@@ -89,7 +90,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                         var quote = _quoteService.GetRandomQuote(category);
 
                         // Send quote and return.
-                        await ReplyAsync($"**{quote.Name} `#{quote.Id + 1}`:** {quote.Content}");
+                        await ReplyAsync($"**{quote.Name} `#{quote.Id + 1}`:** {quote.Content}", allowedMentions: AllowedMentions.None);
                         return;
                     }
                     catch (NullReferenceException)
@@ -108,7 +109,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                         var quote = _quoteService.GetRandomQuote(search);
 
                         // Send quote and return
-                        await ReplyAsync($"**{quote.Name} `#{quote.Id+1}`:** {quote.Content}");
+                        await ReplyAsync($"**{quote.Name} `#{quote.Id+1}`:** {quote.Content}", allowedMentions: AllowedMentions.None);
                         return;
                     } 
                     catch (NullReferenceException)
@@ -135,7 +136,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                     var quote = _quoteService.GetRandomQuote(member);
 
                     // Send quote and return
-                    await ReplyAsync($"**{quote.Name} `#{quote.Id+1}`:** {quote.Content}");
+                    await ReplyAsync($"**{quote.Name} `#{quote.Id+1}`:** {quote.Content}", allowedMentions: AllowedMentions.None);
                     return;
                 } 
                 catch (NullReferenceException)
@@ -167,7 +168,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                             var quote = _quoteService.GetQuote(user, number.Value - 1);
 
                             // Send quote and return
-                            await ReplyAsync($"**{quote.Name} `#{quote.Id + 1}`:** {quote.Content}");
+                            await ReplyAsync($"**{quote.Name} `#{quote.Id + 1}`:** {quote.Content}", allowedMentions: AllowedMentions.None);
                             return;
                         }
                         catch (NullReferenceException)
@@ -190,7 +191,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                         var quote = _quoteService.GetQuote(category, number.Value-1);
 
                         // Send quote and return.
-                        await ReplyAsync($"**{quote.Name} `#{quote.Id+1}`:** {quote.Content}");
+                        await ReplyAsync($"**{quote.Name} `#{quote.Id+1}`:** {quote.Content}", allowedMentions: AllowedMentions.None);
                         return;
                     }
                     catch (NullReferenceException)
@@ -214,7 +215,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                         var quote = _quoteService.GetQuote(search, number.Value-1);
 
                         // Send quote and return
-                        await ReplyAsync($"**{quote.Name} `#{quote.Id+1}`:** {quote.Content}");
+                        await ReplyAsync($"**{quote.Name} `#{quote.Id+1}`:** {quote.Content}", allowedMentions: AllowedMentions.None);
                         return;
                     } 
                     catch (NullReferenceException)
@@ -246,7 +247,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                     var quote = _quoteService.GetQuote(member, number.Value-1);
 
                     // Send quote and return
-                    await ReplyAsync($"**{quote.Name} `#{quote.Id+1}`:** {quote.Content}");
+                    await ReplyAsync($"**{quote.Name} `#{quote.Id+1}`:** {quote.Content}", allowedMentions: AllowedMentions.None);
                     return;
                 } 
                 catch (NullReferenceException)
@@ -304,14 +305,14 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                         $"Run `{_config.Prefix}quote` for a random quote from a random user/category."
                     };
 
-                    var paginationMessage = new PaginationHelper(Context, pages.ToArray(), staticParts);
+                    var paginationMessage = new PaginationHelper(Context, pages.ToArray(), staticParts, allowedMentions: AllowedMentions.None);
                     return;
                 }
                 // No pagination, just output
                 await ReplyAsync($"Here's a list of users/categories of quotes I've found.{Environment.NewLine}```{Environment.NewLine}" +
                                  $"{string.Join(Environment.NewLine, quoteKeys)}{Environment.NewLine}```{Environment.NewLine}" +
                                  $"Run `{_config.Prefix}quote <user/category>` to get a random quote from that user/category if specified.{Environment.NewLine}" +
-                                 $"Run `{_config.Prefix}quote` for a random quote from a random user/category.");
+                                 $"Run `{_config.Prefix}quote` for a random quote from a random user/category.", allowedMentions: AllowedMentions.None);
                 return;
             }
             
@@ -355,7 +356,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                                 $"Run `{_config.Prefix}quote` for a random quote from a random user/category."
                             };
 
-                            var paginationMessage = new PaginationHelper(Context, pages.ToArray(), staticParts);
+                            var paginationMessage = new PaginationHelper(Context, pages.ToArray(), staticParts, allowedMentions: AllowedMentions.None);
                             return;
                         }
                         // No pagination, just output
@@ -363,7 +364,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                                          $"{string.Join(Environment.NewLine, quotes)}{Environment.NewLine}```{Environment.NewLine}" +
                                          $"Run `{_config.Prefix}quote <user/category> <number>` to get a specific quote.{Environment.NewLine}" +
                                          $"Run `{_config.Prefix}quote <user/category>` to get a random quote from that user/category.{Environment.NewLine}" +
-                                         $"Run `{_config.Prefix}quote` for a random quote from a random user/category.");
+                                         $"Run `{_config.Prefix}quote` for a random quote from a random user/category.", allowedMentions: AllowedMentions.None);
                         return;
                     }
                     catch (NullReferenceException)
@@ -406,7 +407,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                                 $"Run `{_config.Prefix}quote` for a random quote from a random user/category."
                             };
 
-                            var paginationMessage = new PaginationHelper(Context, pages.ToArray(), staticParts);
+                            var paginationMessage = new PaginationHelper(Context, pages.ToArray(), staticParts, allowedMentions: AllowedMentions.None);
                             return;
                         }
                         // No pagination, just output
@@ -414,7 +415,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                                          $"{string.Join(Environment.NewLine, quotes)}{Environment.NewLine}```{Environment.NewLine}" +
                                          $"Run `{_config.Prefix}quote <user/category> <number>` to get a specific quote.{Environment.NewLine}" +
                                          $"Run `{_config.Prefix}quote <user/category>` to get a random quote from that user/category.{Environment.NewLine}" +
-                                         $"Run `{_config.Prefix}quote` for a random quote from a random user/category.");
+                                         $"Run `{_config.Prefix}quote` for a random quote from a random user/category.", allowedMentions: AllowedMentions.None);
                         return;
                 }
                 catch (NullReferenceException)
@@ -458,7 +459,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                                 $"Run `{_config.Prefix}quote` for a random quote from a random user/category."
                             };
 
-                            var paginationMessage = new PaginationHelper(Context, pages.ToArray(), staticParts);
+                            var paginationMessage = new PaginationHelper(Context, pages.ToArray(), staticParts, allowedMentions: AllowedMentions.None);
                             return;
                         }
                         // No pagination, just output
@@ -466,7 +467,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                                          $"{string.Join(Environment.NewLine, quotes)}{Environment.NewLine}```{Environment.NewLine}" +
                                          $"Run `{_config.Prefix}quote <user/category> <number>` to get a specific quote.{Environment.NewLine}" +
                                          $"Run `{_config.Prefix}quote <user/category>` to get a random quote from that user/category.{Environment.NewLine}" +
-                                         $"Run `{_config.Prefix}quote` for a random quote from a random user/category.");
+                                         $"Run `{_config.Prefix}quote` for a random quote from a random user/category.", allowedMentions: AllowedMentions.None);
                         return;
                 } 
                 catch (NullReferenceException)
@@ -518,7 +519,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                                 $"Run `{_config.Prefix}quote` for a random quote from a random user/category."
                             };
 
-                            var paginationMessage = new PaginationHelper(Context, pages.ToArray(), staticParts);
+                            var paginationMessage = new PaginationHelper(Context, pages.ToArray(), staticParts, allowedMentions: AllowedMentions.None);
                             return;
                         }
                         // No pagination, just output
@@ -526,7 +527,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                                          $"{string.Join(Environment.NewLine, quotes)}{Environment.NewLine}```{Environment.NewLine}" +
                                          $"Run `{_config.Prefix}quote <user/category> <number>` to get a specific quote.{Environment.NewLine}" +
                                          $"Run `{_config.Prefix}quote <user/category>` to get a random quote from that user/category.{Environment.NewLine}" +
-                                         $"Run `{_config.Prefix}quote` for a random quote from a random user/category.");
+                                         $"Run `{_config.Prefix}quote` for a random quote from a random user/category.", allowedMentions: AllowedMentions.None);
                         return;
             } 
             catch (NullReferenceException)
@@ -568,7 +569,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
 
                     await ReplyAsync(
                         $"Added the quote to **{quoteUser.Username}#{quoteUser.Discriminator}** as quote number {newAliasUserQuote.Id + 1}.{Environment.NewLine}" +
-                        $"> {newAliasUserQuote.Content}");
+                        $"> {newAliasUserQuote.Content}", allowedMentions: AllowedMentions.None);
                     return;
                 }
                 var quoteCategory = _quoteService.ProcessAlias(user, Context.Guild);
@@ -577,7 +578,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
 
                 await ReplyAsync(
                     $"Added the quote to **{newAliasCategoryQuote.Name}** as quote number {newAliasCategoryQuote.Id + 1}.{Environment.NewLine}" +
-                    $"> {newAliasCategoryQuote.Content}");
+                    $"> {newAliasCategoryQuote.Content}", allowedMentions: AllowedMentions.None);
                 return;
             }
 
@@ -589,7 +590,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
 
                 await ReplyAsync(
                     $"Added the quote to **{user}** as quote number {newCategoryQuote.Id + 1}.{Environment.NewLine}" +
-                    $"> {newCategoryQuote.Content}");
+                    $"> {newCategoryQuote.Content}", allowedMentions: AllowedMentions.None);
                 return;
             }
                 
@@ -604,7 +605,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
 
                 await ReplyAsync(
                     $"Added the quote to **{user}** as quote number {newCategoryNewQuote.Id + 1}.{Environment.NewLine}" +
-                    $"> {newCategoryNewQuote.Content}");
+                    $"> {newCategoryNewQuote.Content}", allowedMentions: AllowedMentions.None);
                 return;
             }
                 
@@ -612,7 +613,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
 
             await ReplyAsync(
                 $"Added the quote to **{newUserQuote.Name}** as quote number {newUserQuote.Id + 1}.{Environment.NewLine}" +
-                $"> {newUserQuote.Content}");
+                $"> {newUserQuote.Content}", allowedMentions: AllowedMentions.None);
             return;
         }
         
@@ -648,7 +649,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                     var newAliasUserQuote = await _quoteService.RemoveQuote(quoteUser, number.Value-1);
 
                     await ReplyAsync(
-                        $"Removed quote number {number.Value} from **{quoteUser.Username}#{quoteUser.Discriminator}**.");
+                        $"Removed quote number {number.Value} from **{quoteUser.Username}#{quoteUser.Discriminator}**.", allowedMentions: AllowedMentions.None);
                     return;
                 }
                 var quoteCategory = _quoteService.ProcessAlias(user, Context.Guild);
@@ -656,7 +657,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                 var newAliasCategoryQuote = await _quoteService.RemoveQuote(quoteCategory, number.Value-1);
 
                 await ReplyAsync(
-                    $"Removed quote number {number.Value} from **{newAliasCategoryQuote.Name}**.");
+                    $"Removed quote number {number.Value} from **{newAliasCategoryQuote.Name}**.", allowedMentions: AllowedMentions.None);
                 return;
             }
 
@@ -667,7 +668,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                 var newCategoryQuote = await _quoteService.RemoveQuote(user, number.Value-1);
 
                 await ReplyAsync(
-                    $"Removed quote number {number.Value} from **{newCategoryQuote.Name}**.");
+                    $"Removed quote number {number.Value} from **{newCategoryQuote.Name}**.", allowedMentions: AllowedMentions.None);
                 return;
             }
                 
@@ -685,7 +686,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
             var newUserQuote = await _quoteService.RemoveQuote(member, number.Value-1);
 
             await ReplyAsync(
-                $"Removed quote number {number.Value} from **{newUserQuote.Name}**.");
+                $"Removed quote number {number.Value} from **{newUserQuote.Name}**.", allowedMentions: AllowedMentions.None);
             return;
         }
         
@@ -716,7 +717,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                     $"{string.Join(", ", aliases)}{Environment.NewLine}```{Environment.NewLine}" +
                     $"Run `{_config.Prefix}quotealias get <alias>` to find out what an alias maps to.{Environment.NewLine}" +
                     $"Run `{_config.Prefix}quotealias set/add <alias> <user/category>` to create a new alias.{Environment.NewLine}" +
-                    $"Run `{_config.Prefix}quotealias delete/remove <alias>` to delete an alias.");
+                    $"Run `{_config.Prefix}quotealias delete/remove <alias>` to delete an alias.", allowedMentions: AllowedMentions.None);
             }
             else if (operation.ToLower() == "get")
             {
@@ -733,14 +734,14 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                         var user = _quoteService.ProcessAlias(alias, Context.Guild);
 
                         await ReplyAsync(
-                            $"Quote alias **{alias}** maps to user **{user.Username}#{user.Discriminator}**.");
+                            $"Quote alias **{alias}** maps to user **{user.Username}#{user.Discriminator}**.", allowedMentions: AllowedMentions.None);
                     }
                     else
                     {
                         var category = _quoteService.ProcessAlias(alias);
 
                         await ReplyAsync(
-                            $"Quote alias **{alias}** maps to category **{category}**.");
+                            $"Quote alias **{alias}** maps to category **{category}**.", allowedMentions: AllowedMentions.None);
                     }
                 }
             } else if (operation.ToLower() == "set" || operation.ToLower() == "add")
@@ -761,7 +762,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                 {
                     await _quoteService.AddAlias(alias, target);
                     
-                    await ReplyAsync($"Added alias **{alias}** to map to category **{target}**.");
+                    await ReplyAsync($"Added alias **{alias}** to map to category **{target}**.", allowedMentions: AllowedMentions.None);
                 }
                 else
                 {
@@ -777,7 +778,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
 
                     await _quoteService.AddAlias(alias, member);
 
-                    await ReplyAsync($"Added alias **{alias}** to map to user **{target}**.");
+                    await ReplyAsync($"Added alias **{alias}** to map to user **{target}**.", allowedMentions: AllowedMentions.None);
                 }
             } else if (operation.ToLower() == "delete" || operation.ToLower() == "remove")
             {
@@ -788,7 +789,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                 }
                 await _quoteService.RemoveAlias(alias);
 
-                await ReplyAsync($"Remove alias **{alias}**.");
+                await ReplyAsync($"Removed alias **{alias}**.", allowedMentions: AllowedMentions.None);
             }
             else
             {

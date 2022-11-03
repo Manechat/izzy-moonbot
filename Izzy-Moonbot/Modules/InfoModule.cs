@@ -57,10 +57,10 @@ public class InfoModule : ModuleBase<SocketCommandContext>
         }
         else
         {
-            if (_commands.Commands.Any(command => command.Name.ToLower() == item.ToLower() || command.Aliases.Select(alias => alias.ToLower()).Contains(item.ToLower())))
+            if (_commands.Commands.Any(command => command.Name.ToLower() == item.ToLower()))
             {
                 // It's a command!
-                var commandInfo = _commands.Commands.Single<CommandInfo>(command => command.Name.ToLower() == item.ToLower() || command.Aliases.Select(alias => alias.ToLower()).Contains(item.ToLower()));
+                var commandInfo = _commands.Commands.Single<CommandInfo>(command => command.Name.ToLower() == item.ToLower());
                 var ponyReadable = $"**{prefix}{commandInfo.Name}** - {commandInfo.Module.Name.Replace("Module", "").Replace("Submodule", "")} category{Environment.NewLine}";
                 if (commandInfo.Preconditions.Any(attribute => attribute is ModCommandAttribute) &&
                     commandInfo.Preconditions.Any(attribute => attribute is DevCommandAttribute))
@@ -71,6 +71,7 @@ public class InfoModule : ModuleBase<SocketCommandContext>
                     ponyReadable += $"ℹ  *This is a developer only command.*{Environment.NewLine}";
 
                 ponyReadable += $"*{commandInfo.Summary}*{Environment.NewLine}";
+                if (commandInfo.Remarks != null) ponyReadable += $"*{commandInfo.Remarks}*{Environment.NewLine}";
 
                 ponyReadable += $"```{Environment.NewLine}";
 
@@ -79,6 +80,10 @@ public class InfoModule : ModuleBase<SocketCommandContext>
                         $"{parameters.Name} [{(parameters.Type.Name.Contains("Nullable") ? Nullable.GetUnderlyingType(parameters.Type).Name : parameters.Type.Name)}] - {parameters.Summary}{Environment.NewLine}";
 
                 ponyReadable += $"```";
+                
+                if (commandInfo.Aliases.Count(alias => alias != commandInfo.Name) != 0)
+                    ponyReadable += $"{Environment.NewLine}" +
+                                    $"Aliases: {string.Join(", ", commandInfo.Aliases.Where(alias => alias != commandInfo.Name))}";
 
                 await ReplyAsync(ponyReadable);
                 return;
@@ -116,11 +121,14 @@ public class InfoModule : ModuleBase<SocketCommandContext>
                             pages[pageNumber] += commands[i] + Environment.NewLine;
                         }
 
-
+                        var potentialAliases = _commands.Commands.Where(command =>
+                            command.Aliases.Select(alias => alias.ToLower()).Contains(item.ToLower())).ToArray();
+                        
                         string[] staticParts =
                         {
                             $"Hii! Here's a list of all the commands I could find in the {moduleInfo.Name.Replace("Module", "").Replace("Submodule", "")} category!",
-                            $"Run `{prefix}help <command>` for help regarding a specific command!"
+                            $"Run `{prefix}help <command>` for help regarding a specific command!" +
+                            $"{(potentialAliases.Length != 0 ? $"{Environment.NewLine}ℹ  This category shares a name with an alias. For information regarding this alias, run `{prefix}help {potentialAliases.First().Name.ToLower()}`.": "")}"
                         };
 
                         var paginationMessage = new PaginationHelper(Context, pages.ToArray(), staticParts);
@@ -128,16 +136,53 @@ public class InfoModule : ModuleBase<SocketCommandContext>
                     }
                     else
                     {
+                        var potentialAliases = _commands.Commands.Where(command =>
+                            command.Aliases.Select(alias => alias.ToLower()).Contains(item.ToLower())).ToArray();
+
                         await ReplyAsync(
                             $"Hii! Here's a list of all the commands I could find in the {moduleInfo.Name.Replace("Module", "").Replace("Submodule", "")} category!{Environment.NewLine}" +
                             $"```{Environment.NewLine}{string.Join(Environment.NewLine, commands)}{Environment.NewLine}```{Environment.NewLine}" +
-                            $"Run `{prefix}help <command>` for help regarding a specific command!");
+                            $"Run `{prefix}help <command>` for help regarding a specific command!" +
+                            $"{(potentialAliases.Length != 0 ? $"{Environment.NewLine}ℹ  This category shares a name with an alias. For information regarding this alias, run `{prefix}help {potentialAliases.First().Name.ToLower()}`.": "")}");
                         return;
                     }
                 }
+                // Try command aliases
+                if (_commands.Commands.Any(command =>
+                        command.Aliases.Select(alias => alias.ToLower()).Contains(item.ToLower())))
+                {
+                    // Alias detected!
+                    var commandInfo = _commands.Commands.Single<CommandInfo>(command => command.Aliases.Select(alias => alias.ToLower()).Contains(item.ToLower()));
+                    var ponyReadable = $"**{prefix}{commandInfo.Aliases.Single(alias => alias.ToLower() == item.ToLower())}** (alias of **{commandInfo.Name}**) - {commandInfo.Module.Name.Replace("Module", "").Replace("Submodule", "")} category{Environment.NewLine}";
+                    if (commandInfo.Preconditions.Any(attribute => attribute is ModCommandAttribute) &&
+                        commandInfo.Preconditions.Any(attribute => attribute is DevCommandAttribute))
+                        ponyReadable += $"ℹ  *This is a moderator and developer only command.*{Environment.NewLine}";
+                    else if (commandInfo.Preconditions.Any(attribute => attribute is ModCommandAttribute))
+                        ponyReadable += $"ℹ  *This is a moderator only command.*{Environment.NewLine}";
+                    else if (commandInfo.Preconditions.Any(attribute => attribute is DevCommandAttribute))
+                        ponyReadable += $"ℹ  *This is a developer only command.*{Environment.NewLine}";
+
+                    ponyReadable += $"*{commandInfo.Summary}*{Environment.NewLine}";
+                    if (commandInfo.Remarks != null) ponyReadable += $"*{commandInfo.Remarks}*{Environment.NewLine}";
+
+                    ponyReadable += $"```{Environment.NewLine}";
+
+                    foreach (var parameters in commandInfo.Parameters)
+                        ponyReadable +=
+                            $"{parameters.Name} [{(parameters.Type.Name.Contains("Nullable") ? Nullable.GetUnderlyingType(parameters.Type).Name : parameters.Type.Name)}] - {parameters.Summary}{Environment.NewLine}";
+
+                    ponyReadable += $"```";
+
+                    if (commandInfo.Aliases.Count(alias => alias != commandInfo.Name) != 0)
+                        ponyReadable += $"{Environment.NewLine}" +
+                                        $"Aliases: {string.Join(", ", commandInfo.Aliases.Where(alias => alias != commandInfo.Name))}";
+
+                    await ReplyAsync(ponyReadable);
+                    return;
+                }
             }
 
-            await ReplyAsync($"Sorry, I was unable to find \"{item}\" as either a command, or a category.");
+            await ReplyAsync($"Sorry, I was unable to find \"{item}\" as either a command, category, or alias.");
         }
     }
 
