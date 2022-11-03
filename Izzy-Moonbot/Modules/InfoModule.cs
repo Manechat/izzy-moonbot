@@ -71,6 +71,7 @@ public class InfoModule : ModuleBase<SocketCommandContext>
                     ponyReadable += $"ℹ  *This is a developer only command.*{Environment.NewLine}";
 
                 ponyReadable += $"*{commandInfo.Summary}*{Environment.NewLine}";
+                if (commandInfo.Remarks != "") ponyReadable += $"*{commandInfo.Remarks}*{Environment.NewLine}";
 
                 ponyReadable += $"```{Environment.NewLine}";
 
@@ -79,6 +80,10 @@ public class InfoModule : ModuleBase<SocketCommandContext>
                         $"{parameters.Name} [{(parameters.Type.Name.Contains("Nullable") ? Nullable.GetUnderlyingType(parameters.Type).Name : parameters.Type.Name)}] - {parameters.Summary}{Environment.NewLine}";
 
                 ponyReadable += $"```";
+                
+                if (commandInfo.Aliases.Count != 0)
+                    ponyReadable += $"{Environment.NewLine}" +
+                                    $"Aliases: {string.Join(", ", commandInfo.Aliases)}";
 
                 await ReplyAsync(ponyReadable);
                 return;
@@ -158,6 +163,7 @@ public class InfoModule : ModuleBase<SocketCommandContext>
                         ponyReadable += $"ℹ  *This is a developer only command.*{Environment.NewLine}";
 
                     ponyReadable += $"*{commandInfo.Summary}*{Environment.NewLine}";
+                    if (commandInfo.Remarks != "") ponyReadable += $"*{commandInfo.Remarks}*{Environment.NewLine}";
 
                     ponyReadable += $"```{Environment.NewLine}";
 
@@ -166,6 +172,10 @@ public class InfoModule : ModuleBase<SocketCommandContext>
                             $"{parameters.Name} [{(parameters.Type.Name.Contains("Nullable") ? Nullable.GetUnderlyingType(parameters.Type).Name : parameters.Type.Name)}] - {parameters.Summary}{Environment.NewLine}";
 
                     ponyReadable += $"```";
+
+                    if (commandInfo.Aliases.Count != 0)
+                        ponyReadable += $"{Environment.NewLine}" +
+                                        $"Aliases: {string.Join(", ", commandInfo.Aliases)}";
 
                     await ReplyAsync(ponyReadable);
                     return;
