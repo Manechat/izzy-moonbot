@@ -19,16 +19,16 @@ public class AdminModule : ModuleBase<SocketCommandContext>
     private readonly LoggingService _logger;
     private readonly Config _config;
     private readonly State _state;
-    private readonly ScheduleService _scheduleService;
+    private readonly ScheduleService _schedule;
     private readonly Dictionary<ulong, User> _users;
 
     public AdminModule(LoggingService logger, Config config, Dictionary<ulong, User> users,
-        State state, ScheduleService scheduleService)
+        State state, ScheduleService schedule)
     {
         _logger = logger;
         _config = config;
         _state = state;
-        _scheduleService = scheduleService;
+        _schedule = schedule;
         _users = users;
     }
 
@@ -73,12 +73,12 @@ public class AdminModule : ModuleBase<SocketCommandContext>
             task.Action.Fields["userId"] == member.Id.ToString() &&
             task.Action.Fields["roleId"] == _config.NewMemberRole.ToString());
 
-        if (_scheduleService.GetScheduledTasks().Any(getSingleNewPonyRemoval))
+        if (_schedule.GetScheduledTasks().Any(getSingleNewPonyRemoval))
         {
             // Exists
-            var task = _scheduleService.GetScheduledTasks().Single(getSingleNewPonyRemoval);
+            var task = _schedule.GetScheduledTasks().Single(getSingleNewPonyRemoval);
 
-            await _scheduleService.DeleteScheduledTask(task);
+            await _schedule.DeleteScheduledTask(task);
 
             await ReplyAsync($"Removed the scheduled new pony role removal from <@{member.Id}>.");
         }
