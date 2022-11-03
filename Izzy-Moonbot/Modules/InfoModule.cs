@@ -81,9 +81,9 @@ public class InfoModule : ModuleBase<SocketCommandContext>
 
                 ponyReadable += $"```";
                 
-                if (commandInfo.Aliases.Count != 0)
+                if (commandInfo.Aliases.Count(alias => alias != commandInfo.Name) != 0)
                     ponyReadable += $"{Environment.NewLine}" +
-                                    $"Aliases: {string.Join(", ", commandInfo.Aliases)}";
+                                    $"Aliases: {string.Join(", ", commandInfo.Aliases.Where(alias => alias != commandInfo.Name))}";
 
                 await ReplyAsync(ponyReadable);
                 return;
@@ -173,9 +173,9 @@ public class InfoModule : ModuleBase<SocketCommandContext>
 
                     ponyReadable += $"```";
 
-                    if (commandInfo.Aliases.Count != 0)
+                    if (commandInfo.Aliases.Count(alias => alias != commandInfo.Name) != 0)
                         ponyReadable += $"{Environment.NewLine}" +
-                                        $"Aliases: {string.Join(", ", commandInfo.Aliases)}";
+                                        $"Aliases: {string.Join(", ", commandInfo.Aliases.Where(alias => alias != commandInfo.Name))}";
 
                     await ReplyAsync(ponyReadable);
                     return;
