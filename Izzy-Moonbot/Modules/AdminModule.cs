@@ -68,17 +68,15 @@ public class AdminModule : ModuleBase<SocketCommandContext>
             return;
         }
 
-        if (_scheduleService.GetScheduledTasks().Any(task => task.Action.Type == ScheduledTaskActionType.RemoveRole &&
-                                                             task.Action.Fields["userId"] == member.Id.ToString() &&
-                                                             task.Action.Fields["roleId"] ==
-                                                             _config.NewMemberRole.ToString()))
+        var getSingleNewPonyRemoval = new Func<ScheduledTask, bool>(task =>
+            task.Action.Type == ScheduledTaskActionType.RemoveRole &&
+            task.Action.Fields["userId"] == member.Id.ToString() &&
+            task.Action.Fields["roleId"] == _config.NewMemberRole.ToString());
+
+        if (_scheduleService.GetScheduledTasks().Any(getSingleNewPonyRemoval))
         {
             // Exists
-            var task = _scheduleService.GetScheduledTasks().Single(task =>
-                task.Action.Type == ScheduledTaskActionType.RemoveRole &&
-                task.Action.Fields["userId"] == member.Id.ToString() &&
-                task.Action.Fields["roleId"] ==
-                _config.NewMemberRole.ToString());
+            var task = _scheduleService.GetScheduledTasks().Single(getSingleNewPonyRemoval);
 
             await _scheduleService.DeleteScheduledTask(task);
 
