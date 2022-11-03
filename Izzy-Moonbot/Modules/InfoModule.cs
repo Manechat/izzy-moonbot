@@ -71,7 +71,7 @@ public class InfoModule : ModuleBase<SocketCommandContext>
                     ponyReadable += $"ℹ  *This is a developer only command.*{Environment.NewLine}";
 
                 ponyReadable += $"*{commandInfo.Summary}*{Environment.NewLine}";
-                if (commandInfo.Remarks != "") ponyReadable += $"*{commandInfo.Remarks}*{Environment.NewLine}";
+                if (commandInfo.Remarks != null) ponyReadable += $"*{commandInfo.Remarks}*{Environment.NewLine}";
 
                 ponyReadable += $"```{Environment.NewLine}";
 
@@ -163,7 +163,7 @@ public class InfoModule : ModuleBase<SocketCommandContext>
                         ponyReadable += $"ℹ  *This is a developer only command.*{Environment.NewLine}";
 
                     ponyReadable += $"*{commandInfo.Summary}*{Environment.NewLine}";
-                    if (commandInfo.Remarks != "") ponyReadable += $"*{commandInfo.Remarks}*{Environment.NewLine}";
+                    if (commandInfo.Remarks != null) ponyReadable += $"*{commandInfo.Remarks}*{Environment.NewLine}";
 
                     ponyReadable += $"```{Environment.NewLine}";
 
