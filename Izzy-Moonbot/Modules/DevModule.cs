@@ -491,7 +491,7 @@ public class DevModule : ModuleBase<SocketCommandContext>
                     var newScheduledTask = _schedule.GetScheduledTasks()[scheduleId];
                     newScheduledTask.Action = scheduledAction;
 
-                    await _schedule.ModifyScheduledTask(scheduledTask, newScheduledTask);
+                    await _schedule.SyncModifiedScheduledTask(newScheduledTask, Context.Guild);
                     await ReplyAsync("Operation complete.");
                 }
                 catch (FormatException)
@@ -538,7 +538,7 @@ public class DevModule : ModuleBase<SocketCommandContext>
                 var newScheduledTask = _schedule.GetScheduledTasks()[scheduleId];
                 newScheduledTask.ExecuteAt = scheduledExecute;
 
-                await _schedule.ModifyScheduledTask(scheduledTask, newScheduledTask);
+                await _schedule.SyncModifiedScheduledTask(newScheduledTask, Context.Guild);
                 await ReplyAsync("Operation complete.");
             } else if (action.ToLower() == "delete")
             {
