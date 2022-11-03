@@ -180,7 +180,7 @@ public class SpamService
                 }
 
                 // Go through each match
-                foreach (var match in matches)
+                /*foreach (var match in matches)
                 {
                     // Check if this URL will embed
                     try
@@ -201,7 +201,8 @@ public class SpamService
                         await _logger.Log($"Method: {exception.TargetSite}", level: LogLevel.Warning);
                         await _logger.Log($"Stack Trace: {exception.StackTrace}", level: LogLevel.Warning);
                     }
-                }
+                }*/
+                pressureToAdd += _config.SpamImagePressure * matches.Count;
             }
 
             // Check if the pressure we need to add is above 0 because no point adding 0 pressure
