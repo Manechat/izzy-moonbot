@@ -44,6 +44,51 @@ public class AdminModule : ModuleBase<SocketCommandContext>
         Environment.Exit(255);
     }
 
+    [Command("permanp")]
+    [Summary(
+        "Remove the scheduled new pony role removal for this user, essentially meaning they keep the new pony role until manually removed.")]
+    [RequireContext(ContextType.Guild)]
+    [ModCommand(Group = "Permissions")]
+    [DevCommand(Group = "Permissions")]
+    public async Task PermaNpCommandAsync(
+        [Remainder] [Summary("The user to remove the scheduled removal from.")] string user = "")
+    {
+        if (user == "")
+        {
+            await ReplyAsync("You need to provide a user to remove the scheduled removal from.");
+            return;
+        }
+        
+        var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(user, Context);
+        var member = Context.Guild.GetUser(userId);
+
+        if (member == null)
+        {
+            await ReplyAsync("I couldn't find that user, sorry!");
+            return;
+        }
+
+        var getSingleNewPonyRemoval = new Func<ScheduledTask, bool>(task =>
+            task.Action.Type == ScheduledTaskActionType.RemoveRole &&
+            task.Action.Fields["userId"] == member.Id.ToString() &&
+            task.Action.Fields["roleId"] == _config.NewMemberRole.ToString());
+
+        if (_schedule.GetScheduledTasks().Any(getSingleNewPonyRemoval))
+        {
+            // Exists
+            var task = _schedule.GetScheduledTasks().Single(getSingleNewPonyRemoval);
+
+            await _schedule.DeleteScheduledTask(task);
+
+            await ReplyAsync($"Removed the scheduled new pony role removal from <@{member.Id}>.");
+        }
+        else
+        {
+            await ReplyAsync(
+                $"I couldn't find a scheduled new pony role removal for <@{member.Id}>. It either already occured or they already have permanent new pony.");
+        }
+    }
+
     [Command("scan")]
     [Summary("Refresh the stored userlist")]
     [RequireContext(ContextType.Guild)]
