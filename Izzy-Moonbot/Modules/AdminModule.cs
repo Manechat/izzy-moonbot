@@ -19,14 +19,16 @@ public class AdminModule : ModuleBase<SocketCommandContext>
     private readonly LoggingService _logger;
     private readonly Config _config;
     private readonly State _state;
+    private readonly ScheduleService _schedule;
     private readonly Dictionary<ulong, User> _users;
 
     public AdminModule(LoggingService logger, Config config, Dictionary<ulong, User> users,
-        State state)
+        State state, ScheduleService schedule)
     {
         _logger = logger;
         _config = config;
         _state = state;
+        _schedule = schedule;
         _users = users;
     }
 
@@ -315,5 +317,199 @@ public class AdminModule : ModuleBase<SocketCommandContext>
                     $"I found these following stowaways:{Environment.NewLine}{string.Join(", ", stowawayStringList)}");
             }
         });
+    }
+
+    [Command("ban")]
+    [Summary(
+        "Bans a user without deleting message history, and optionally schedules unbanning them at a later date. If the user is already banned, this will only schedule unbanning.")]
+    [Remarks("Note that an \"indefinite\" ban, with no scheduled unban, is the same as banning with the regular Discord UI.")]
+    [RequireContext(ContextType.Guild)]
+    [ModCommand(Group = "Permissions")]
+    [DevCommand(Group = "Permissions")]
+    public async Task BanCommandAsync(
+        [Summary("The user to ban")] string user = "",
+        [Summary("How long the ban should last, e.g. \"2 weeks\" or \"6 months\". Omit for an indefinite ban.")]
+        string duration = "")
+    {
+        if (user == "")
+        {
+            await ReplyAsync($"Please provide a user to ban. Refer to `{_config.Prefix}help ban` for more information.");
+            return;
+        }
+        
+        var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(user, Context);
+        var member = Context.Guild.GetUser(userId);
+
+        if (userId == Context.Client.CurrentUser.Id)
+        {
+            var rnd = new Random();
+            if (rnd.Next(100) == 0)
+            {
+                await ReplyAsync("<:izzydeletethis:1028964499723661372>");
+            }
+            else if (rnd.NextSingle() > 0.5)
+            {
+                await ReplyAsync("<:sweetiebroken:399725081674383360>");
+            }
+            else
+            {
+                await ReplyAsync("<:izzysadness:910198257702031362>");
+            }
+
+            return;
+        }
+
+        if (member != null && member.Roles.Select(role => role.Id).Contains(_config.ModRole))
+        {
+            await ReplyAsync("I can't ban a mod. <:izzynothoughtsheadempty:910198222255972382>");
+            return;
+        }
+
+        if (member != null && member.Hierarchy >= Context.Guild.GetUser(Context.Client.CurrentUser.Id).Hierarchy)
+        {
+            await ReplyAsync(
+                "That user is either at the same level or higher than me in the role hierarchy, I cannot ban them. <:izzynothoughtsheadempty:910198222255972382>");
+            return;
+        }
+        
+        // Comprehend time
+        TimeHelperResponse? time = null;
+        try
+        {
+            if (duration != "")
+                time = TimeHelper.Convert(duration);
+        }
+        catch (FormatException exception)
+        {
+            await ReplyAsync($"I encountered an error while attempting to comprehend time: {exception.Message.Split(": ")[1]}");
+            return;
+        }
+
+        if (time is { Repeats: true })
+        {
+            await ReplyAsync("I can't ban a user repeatedly! Please give me a time that isn't repeating.");
+            return;
+        }
+
+        // Okay, enough joking around, serious Izzy time
+        var existingBan = await Context.Guild.GetBanAsync(userId);
+
+        if (existingBan == null)
+        {
+            // No ban exists, very serious Izzy time.
+            await Context.Guild.AddBanAsync(userId, pruneDays:0, reason:$"Banned by {Context.User.Username}#{Context.User.Discriminator}{(time == null ? "" : $" for {duration}")}.");
+
+            if (time != null)
+            {
+                // Create scheduled task!
+                Dictionary<string, string> fields = new Dictionary<string, string>
+                {
+                    { "userId", userId.ToString() },
+                    {
+                        "reason",
+                        $"Temporary ban has ended."
+                    }
+                };
+                ScheduledTaskAction action = new ScheduledTaskAction(ScheduledTaskActionType.Unban, fields);
+                ScheduledTask task = new ScheduledTask(DateTimeOffset.UtcNow, time.Time, action);
+                await _schedule.CreateScheduledTask(task, Context.Guild);
+            }
+
+            await ReplyAsync(
+                $"<:izzydeletethis:1028964499723661372> I've banned {(member == null ? $"<@{userId}>" : member.DisplayName)} ({userId}).{(time != null ? $" They'll be unbanned <t:{time.Time.ToUnixTimeSeconds()}:R>." : "")}{Environment.NewLine}{Environment.NewLine}" +
+                $"Here's a userlog I generated that you can use if you want to!{Environment.NewLine}```{Environment.NewLine}" +
+                $"Type: Ban ({(duration == "" ? "" : $"{duration} ")}{(time == null ? "Indefinite" : $"<t:{time.Time.ToUnixTimeSeconds()}:R>")}){Environment.NewLine}" +
+                $"User: <@{userId}> {(member != null ? $"({member.Username}#{member.Discriminator})" : "")} ({userId}){Environment.NewLine}" +
+                $"Names: {(_users.ContainsKey(userId) ? string.Join(", ", _users[userId].Aliases) : "None (user isn't known by Izzy)")}{Environment.NewLine}" +
+                $"```");
+        }
+        else
+        {
+            // ban exists, make sure a time is declared
+            if (time == null)
+            {
+                // time not declared, make ban permanent.
+                if (_schedule.GetScheduledTasks().Any(task => task.Action.Type == ScheduledTaskActionType.Unban &&
+                                                              task.Action.Fields["userId"] == userId.ToString()))
+                {
+                    var task = _schedule.GetScheduledTasks().First(task => 
+                        task.Action.Type == ScheduledTaskActionType.Unban &&
+                        task.Action.Fields["userId"] == userId.ToString());
+
+                    await _schedule.DeleteScheduledTask(task);
+
+                    await ReplyAsync($"This user is already banned. I have removed an existing unban for them which was scheduled <t:{task.ExecuteAt.ToUnixTimeSeconds()}:R>.{Environment.NewLine}{Environment.NewLine}" +
+                                     $"Here's a userlog I generated that you can use if you want to!{Environment.NewLine}```{Environment.NewLine}" +
+                                     $"Type: Ban (Indefinite){Environment.NewLine}" +
+                                     $"User: <@{userId}> {(member != null ? $"({member.Username}#{member.Discriminator})" : "")} ({userId}){Environment.NewLine}" +
+                                     $"Names: {(_users.ContainsKey(userId) ? string.Join(", ", _users[userId].Aliases) : "None (user isn't known by Izzy)")}{Environment.NewLine}" +
+                                     $"```");
+                }
+                else
+                {
+                    // Doesn't exist, it's already permanent.
+                    await ReplyAsync("This user is already banned, with no scheduled unban. No changes made.");
+                }
+                
+                return;
+            }
+            
+            // time declared, make ban temporary.
+            if (_schedule.GetScheduledTasks().Any(task => 
+                    task.Action.Type == ScheduledTaskActionType.Unban && 
+                    task.Action.Fields["userId"] == userId.ToString()))
+            {
+                var tasks = _schedule.GetScheduledTasks().Where(task =>
+                    task.Action.Type == ScheduledTaskActionType.Unban &&
+                    task.Action.Fields["userId"] == userId.ToString()).ToList();
+                
+                tasks.Sort((task1, task2) =>
+                {
+                    if (task1.ExecuteAt.ToUnixTimeMilliseconds() < task2.ExecuteAt.ToUnixTimeMilliseconds())
+                    {
+                        return -1;
+                    }
+                    return task1.ExecuteAt.ToUnixTimeMilliseconds() > task2.ExecuteAt.ToUnixTimeMilliseconds() ? 1 : 0;
+                });
+
+                var task = tasks[0];
+                var taskOriginalExecution = task.ExecuteAt.ToUnixTimeSeconds();
+
+                task.ExecuteAt = time.Time;
+
+                await _schedule.SyncModifiedScheduledTask(task, Context.Guild);
+
+                await ReplyAsync($"This user is already banned. I have modified an existing scheduled unban for them from <t:{taskOriginalExecution}:R> to <t:{task.ExecuteAt.ToUnixTimeSeconds()}:R>.{Environment.NewLine}{Environment.NewLine}" +
+                                 $"Here's a userlog I generated that you can use if you want to!{Environment.NewLine}```{Environment.NewLine}" +
+                                 $"Type: Ban ({duration} <t:{time.Time.ToUnixTimeSeconds()}:R>){Environment.NewLine}" +
+                                 $"User: <@{userId}> {(member != null ? $"({member.Username}#{member.Discriminator})" : "")} ({userId}){Environment.NewLine}" +
+                                 $"Names: {(_users.ContainsKey(userId) ? string.Join(", ", _users[userId].Aliases) : "None (user isn't known by Izzy)")}{Environment.NewLine}" +
+                                 $"```");
+            }
+            else
+            {
+                // Doesn't exist, it needs to exist.
+                // Create scheduled task!
+                Dictionary<string, string> fields = new Dictionary<string, string>
+                {
+                    { "userId", userId.ToString() },
+                    {
+                        "reason",
+                        $"Temporary ban has ended."
+                    }
+                };
+                ScheduledTaskAction action = new ScheduledTaskAction(ScheduledTaskActionType.Unban, fields);
+                ScheduledTask task = new ScheduledTask(DateTimeOffset.UtcNow, time.Time, action);
+                await _schedule.CreateScheduledTask(task, Context.Guild);
+
+                await ReplyAsync(
+                    $"This user is already banned. I have scheduled an unban for this user. They'll be unbanned <t:{time.Time.ToUnixTimeSeconds()}:R>{Environment.NewLine}{Environment.NewLine}" +
+                    $"Here's a userlog I generated that you can use if you want to!{Environment.NewLine}```{Environment.NewLine}" +
+                    $"Type: Ban ({duration} <t:{time.Time.ToUnixTimeSeconds()}:R>){Environment.NewLine}" +
+                    $"User: <@{userId}> {(member != null ? $"({member.Username}#{member.Discriminator})" : "")} ({userId}){Environment.NewLine}" +
+                    $"Names: {(_users.ContainsKey(userId) ? string.Join(", ", _users[userId].Aliases) : "None (user isn't known by Izzy)")}{Environment.NewLine}" +
+                    $"```");
+            }
+        }
     }
 }

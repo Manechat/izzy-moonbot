@@ -21,26 +21,6 @@ public class ModService
         _users = users;
     }
 
-    /*public async Task<string> GenerateSuggestedLog(ActionType action, SocketGuildUser target, DateTimeOffset time, DateTimeOffset? until, string reason)
-    {
-        string actionName = GetActionName(action);
-        string untilTimestamp = "";
-
-        if (until.HasValue == false) untilTimestamp = "Never (Permanent)";
-        else
-        {
-            long untilUnixTimestamp = until.Value.ToUnixTimeSeconds();
-            untilTimestamp = $"<t:{untilUnixTimestamp}:F>";
-        }
-
-        string template = $"Type: {actionName}{Environment.NewLine}" +
-               $"User: {target.Mention} (`{target.Id}`){Environment.NewLine}" +
-               $"Expires: {untilTimestamp}{Environment.NewLine}" +
-               $"Info: {reason}";
-
-        return template;
-    }*/
-
     public async Task KickUser(SocketGuildUser user, DateTimeOffset time, string? reason = null)
     {
         if (!_config.SafeMode) await user.KickAsync(reason);
