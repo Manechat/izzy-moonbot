@@ -68,8 +68,8 @@ public class AdminModule : ModuleBase<SocketCommandContext>
             return;
         }
 
-        var getSingleNewPonyRemoval = new Func<ScheduledTask, bool>(task =>
-            task.Action.Type == ScheduledTaskActionType.RemoveRole &&
+        var getSingleNewPonyRemoval = new Func<ScheduledJob, bool>(task =>
+            task.Action.Type == ScheduledJobActionType.RemoveRole &&
             task.Action.Fields["userId"] == member.Id.ToString() &&
             task.Action.Fields["roleId"] == _config.NewMemberRole.ToString());
 
@@ -455,8 +455,8 @@ public class AdminModule : ModuleBase<SocketCommandContext>
                         $"Temporary ban has ended."
                     }
                 };
-                ScheduledTaskAction action = new ScheduledTaskAction(ScheduledTaskActionType.Unban, fields);
-                ScheduledTask task = new ScheduledTask(DateTimeOffset.UtcNow, time.Time, action);
+                var action = new ScheduledJobAction(ScheduledJobActionType.Unban, fields);
+                var task = new ScheduledJob(DateTimeOffset.UtcNow, time.Time, action);
                 await _schedule.CreateScheduledTask(task, Context.Guild);
             }
 
@@ -474,11 +474,11 @@ public class AdminModule : ModuleBase<SocketCommandContext>
             if (time == null)
             {
                 // time not declared, make ban permanent.
-                if (_schedule.GetScheduledTasks().Any(task => task.Action.Type == ScheduledTaskActionType.Unban &&
+                if (_schedule.GetScheduledTasks().Any(task => task.Action.Type == ScheduledJobActionType.Unban &&
                                                               task.Action.Fields["userId"] == userId.ToString()))
                 {
                     var task = _schedule.GetScheduledTasks().First(task => 
-                        task.Action.Type == ScheduledTaskActionType.Unban &&
+                        task.Action.Type == ScheduledJobActionType.Unban &&
                         task.Action.Fields["userId"] == userId.ToString());
 
                     await _schedule.DeleteScheduledTask(task);
@@ -501,11 +501,11 @@ public class AdminModule : ModuleBase<SocketCommandContext>
             
             // time declared, make ban temporary.
             if (_schedule.GetScheduledTasks().Any(task => 
-                    task.Action.Type == ScheduledTaskActionType.Unban && 
+                    task.Action.Type == ScheduledJobActionType.Unban && 
                     task.Action.Fields["userId"] == userId.ToString()))
             {
                 var tasks = _schedule.GetScheduledTasks().Where(task =>
-                    task.Action.Type == ScheduledTaskActionType.Unban &&
+                    task.Action.Type == ScheduledJobActionType.Unban &&
                     task.Action.Fields["userId"] == userId.ToString()).ToList();
                 
                 tasks.Sort((task1, task2) =>
@@ -543,8 +543,8 @@ public class AdminModule : ModuleBase<SocketCommandContext>
                         $"Temporary ban has ended."
                     }
                 };
-                ScheduledTaskAction action = new ScheduledTaskAction(ScheduledTaskActionType.Unban, fields);
-                ScheduledTask task = new ScheduledTask(DateTimeOffset.UtcNow, time.Time, action);
+                var action = new ScheduledJobAction(ScheduledJobActionType.Unban, fields);
+                var task = new ScheduledJob(DateTimeOffset.UtcNow, time.Time, action);
                 await _schedule.CreateScheduledTask(task, Context.Guild);
 
                 await ReplyAsync(

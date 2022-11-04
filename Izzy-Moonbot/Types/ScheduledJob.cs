@@ -3,10 +3,10 @@ using System.Collections.Generic;
 
 namespace Izzy_Moonbot.Settings;
 
-public class ScheduledTask
+public class ScheduledJob
 {
-    public ScheduledTask(DateTimeOffset createdAt, DateTimeOffset executeAt, ScheduledTaskAction action,
-        ScheduledTaskRepeatType repeatType = ScheduledTaskRepeatType.None)
+    public ScheduledJob(DateTimeOffset createdAt, DateTimeOffset executeAt, ScheduledJobAction action,
+        ScheduledJobRepeatType repeatType = ScheduledJobRepeatType.None)
     {
         Id = Guid.NewGuid().ToString();
         CreatedAt = createdAt;
@@ -20,23 +20,23 @@ public class ScheduledTask
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset? LastExecutedAt { get; set; }
     public DateTimeOffset ExecuteAt { get; set; }
-    public ScheduledTaskAction Action { get; set; }
-    public ScheduledTaskRepeatType RepeatType { get; set; }
+    public ScheduledJobAction Action { get; set; }
+    public ScheduledJobRepeatType RepeatType { get; set; }
 }
 
-public class ScheduledTaskAction
+public class ScheduledJobAction
 {
-    public ScheduledTaskAction(ScheduledTaskActionType type, Dictionary<string, string> fields)
+    public ScheduledJobAction(ScheduledJobActionType type, Dictionary<string, string> fields)
     {
         Type = type;
         Fields = fields;
     }
 
-    public ScheduledTaskActionType Type { get; set; }
+    public ScheduledJobActionType Type { get; set; }
     public Dictionary<string, string> Fields { get; set; }
 }
 
-public enum ScheduledTaskActionType
+public enum ScheduledJobActionType
 {
     RemoveRole,
     AddRole,
@@ -44,7 +44,7 @@ public enum ScheduledTaskActionType
     Echo
 }
 
-public enum ScheduledTaskRepeatType
+public enum ScheduledJobRepeatType
 {
     None,
     Relative,

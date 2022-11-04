@@ -110,9 +110,9 @@ public static class FileHelper
         await File.WriteAllTextAsync(filepath, fileContents);
     }
 
-    public static async Task<List<ScheduledTask>> LoadScheduleAsync()
+    public static async Task<List<ScheduledJob>> LoadScheduleAsync()
     {
-        var scheduledTasks = new List<ScheduledTask>();
+        var scheduledTasks = new List<ScheduledJob>();
         var filepath = SetUpFilepath(FilePathType.Root, "scheduled-tasks", "conf");
         if (!File.Exists(filepath))
         {
@@ -122,13 +122,13 @@ public static class FileHelper
         else
         {
             var fileContents = await File.ReadAllTextAsync(filepath);
-            scheduledTasks = JsonConvert.DeserializeObject<List<ScheduledTask>>(fileContents);
+            scheduledTasks = JsonConvert.DeserializeObject<List<ScheduledJob>>(fileContents);
         }
 
         return scheduledTasks;
     }
 
-    public static async Task SaveScheduleAsync(List<ScheduledTask> scheduledTasks)
+    public static async Task SaveScheduleAsync(List<ScheduledJob> scheduledTasks)
     {
         var filepath = SetUpFilepath(FilePathType.Root, "scheduled-tasks", "conf");
         var fileContents = JsonConvert.SerializeObject(scheduledTasks, Formatting.Indented);

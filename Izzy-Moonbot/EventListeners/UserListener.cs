@@ -57,7 +57,7 @@ public class UserListener
         foreach (var scheduledTask in scheduledTasks)
         {
             if (scheduledTask == null) continue;
-            if (scheduledTask.Action.Type != ScheduledTaskActionType.Unban) continue;
+            if (scheduledTask.Action.Type != ScheduledJobActionType.Unban) continue;
             await _schedule.DeleteScheduledTask(scheduledTask);
         }
         await _logger.Log($"Cancelled all scheduled unban tasks for this user", level: LogLevel.Debug);
@@ -111,8 +111,8 @@ public class UserListener
                     $"{_config.NewMemberRoleDecay} minutes (`NewMemberRoleDecay`) passed."
                 }
             };
-            ScheduledTaskAction action = new ScheduledTaskAction(ScheduledTaskActionType.RemoveRole, fields);
-            ScheduledTask task = new ScheduledTask(DateTimeOffset.UtcNow, 
+            var action = new ScheduledJobAction(ScheduledJobActionType.RemoveRole, fields);
+            var task = new ScheduledJob(DateTimeOffset.UtcNow, 
                 (DateTimeOffset.UtcNow + TimeSpan.FromMinutes(_config.NewMemberRoleDecay)), action);
             await _schedule.CreateScheduledTask(task, member.Guild);
             await _logger.Log($"Added scheduled task for new user", level: LogLevel.Debug);
@@ -274,7 +274,7 @@ public class UserListener
         foreach (var scheduledTask in scheduledTasks)
         {
             if (scheduledTask == null) continue;
-            if (scheduledTask.Action.Type == ScheduledTaskActionType.Unban) continue;
+            if (scheduledTask.Action.Type == ScheduledJobActionType.Unban) continue;
             await _schedule.DeleteScheduledTask(scheduledTask);
         }
         await _logger.Log($"Cancelled all scheduled tasks for this user", level: LogLevel.Debug);

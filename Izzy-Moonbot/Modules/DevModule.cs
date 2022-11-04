@@ -130,7 +130,7 @@ public class DevModule : ModuleBase<SocketCommandContext>
             case "create-echo-task":
                 var action = _scheduleService.stringToAction(
                     $"echo in {Context.Channel.Id} content Hello! Exactly 1 minute should have passed between the test command and this message!");
-                var task = new ScheduledTask(DateTimeOffset.UtcNow,
+                var task = new ScheduledJob(DateTimeOffset.UtcNow,
                     DateTimeOffset.UtcNow + TimeSpan.FromMinutes(1), action);
                 await _scheduleService.CreateScheduledTask(task, Context.Guild);
                 await Context.Message.ReplyAsync("Created scheduled task.");
@@ -299,16 +299,16 @@ public class DevModule : ModuleBase<SocketCommandContext>
 
                     var repeatType = time.RepeatType switch
                     {
-                        "relative" => ScheduledTaskRepeatType.Relative,
-                        "daily" => ScheduledTaskRepeatType.Daily,
-                        "weekly" => ScheduledTaskRepeatType.Weekly,
-                        "yearly" => ScheduledTaskRepeatType.Yearly,
-                        _ => ScheduledTaskRepeatType.None
+                        "relative" => ScheduledJobRepeatType.Relative,
+                        "daily" => ScheduledJobRepeatType.Daily,
+                        "weekly" => ScheduledJobRepeatType.Weekly,
+                        "yearly" => ScheduledJobRepeatType.Yearly,
+                        _ => ScheduledJobRepeatType.None
                     };
 
                     var repeataction = _scheduleService.stringToAction(
                         $"echo in {Context.Channel.Id} content Hello! I'm a repeating task occuring `{timeinput}`!");
-                    var repeattask = new ScheduledTask(DateTimeOffset.UtcNow,
+                    var repeattask = new ScheduledJob(DateTimeOffset.UtcNow,
                         time.Time, repeataction, repeatType);
                     await _scheduleService.CreateScheduledTask(repeattask, Context.Guild);
                     await Context.Message.ReplyAsync("Created repeating scheduled task.");
@@ -327,11 +327,11 @@ public class DevModule : ModuleBase<SocketCommandContext>
 
                     var repeatType = time.RepeatType switch
                     {
-                        "relative" => ScheduledTaskRepeatType.Relative,
-                        "daily" => ScheduledTaskRepeatType.Daily,
-                        "weekly" => ScheduledTaskRepeatType.Weekly,
-                        "yearly" => ScheduledTaskRepeatType.Yearly,
-                        _ => ScheduledTaskRepeatType.None
+                        "relative" => ScheduledJobRepeatType.Relative,
+                        "daily" => ScheduledJobRepeatType.Daily,
+                        "weekly" => ScheduledJobRepeatType.Weekly,
+                        "yearly" => ScheduledJobRepeatType.Yearly,
+                        _ => ScheduledJobRepeatType.None
                     };
 
                     var repeataction = _scheduleService.stringToAction(
@@ -439,10 +439,10 @@ public class DevModule : ModuleBase<SocketCommandContext>
                                  $"*Please note that IDs are not persistent and will change as scheduled tasks are processed.*");
             } else if (action.ToLower() == "info")
             {
-                var removeRoles = _schedule.GetScheduledTasks().Where(task => task.Action.Type == ScheduledTaskActionType.RemoveRole);
-                var addRoles = _schedule.GetScheduledTasks().Where(task => task.Action.Type == ScheduledTaskActionType.AddRole);
-                var echo = _schedule.GetScheduledTasks().Where(task => task.Action.Type == ScheduledTaskActionType.Echo);
-                var unban = _schedule.GetScheduledTasks().Where(task => task.Action.Type == ScheduledTaskActionType.Unban);
+                var removeRoles = _schedule.GetScheduledTasks().Where(task => task.Action.Type == ScheduledJobActionType.RemoveRole);
+                var addRoles = _schedule.GetScheduledTasks().Where(task => task.Action.Type == ScheduledJobActionType.AddRole);
+                var echo = _schedule.GetScheduledTasks().Where(task => task.Action.Type == ScheduledJobActionType.Echo);
+                var unban = _schedule.GetScheduledTasks().Where(task => task.Action.Type == ScheduledJobActionType.Unban);
 
                 await ReplyAsync(
                     $"There are {_schedule.GetScheduledTasks().Count} scheduled tasks awaiting execution, of which:{Environment.NewLine}" +
@@ -616,7 +616,7 @@ public class DevModule : ModuleBase<SocketCommandContext>
                     var scheduledAction = _schedule.stringToAction(string.Join(" ", args.Skip(1)));
                     var scheduledExecute = DateTimeOffset.FromUnixTimeSeconds(timestamp);
                     
-                    var scheduledTask = new ScheduledTask(DateTimeOffset.UtcNow, scheduledExecute, scheduledAction);
+                    var scheduledTask = new ScheduledJob(DateTimeOffset.UtcNow, scheduledExecute, scheduledAction);
 
                     await _schedule.CreateScheduledTask(scheduledTask, Context.Guild);
                     await ReplyAsync("Operation complete.");
