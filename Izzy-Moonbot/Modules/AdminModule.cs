@@ -68,17 +68,17 @@ public class AdminModule : ModuleBase<SocketCommandContext>
             return;
         }
 
-        var getSingleNewPonyRemoval = new Func<ScheduledJob, bool>(task =>
-            task.Action.Type == ScheduledJobActionType.RemoveRole &&
-            task.Action.Fields["userId"] == member.Id.ToString() &&
-            task.Action.Fields["roleId"] == _config.NewMemberRole.ToString());
+        var getSingleNewPonyRemoval = new Func<ScheduledJob, bool>(job =>
+            job.Action.Type == ScheduledJobActionType.RemoveRole &&
+            job.Action.Fields["userId"] == member.Id.ToString() &&
+            job.Action.Fields["roleId"] == _config.NewMemberRole.ToString());
 
-        if (_schedule.GetScheduledTasks().Any(getSingleNewPonyRemoval))
+        if (_schedule.GetScheduledJobs(getSingleNewPonyRemoval).Any(getSingleNewPonyRemoval))
         {
             // Exists
-            var task = _schedule.GetScheduledTasks().Single(getSingleNewPonyRemoval);
+            var job = _schedule.GetScheduledJob(getSingleNewPonyRemoval);
 
-            await _schedule.DeleteScheduledTask(task);
+            await _schedule.DeleteScheduledJob(job);
 
             await ReplyAsync($"Removed the scheduled new pony role removal from <@{member.Id}>.");
         }
@@ -449,15 +449,11 @@ public class AdminModule : ModuleBase<SocketCommandContext>
                 // Create scheduled task!
                 Dictionary<string, string> fields = new Dictionary<string, string>
                 {
-                    { "userId", userId.ToString() },
-                    {
-                        "reason",
-                        $"Temporary ban has ended."
-                    }
+                    { "userId", userId.ToString() }
                 };
                 var action = new ScheduledJobAction(ScheduledJobActionType.Unban, fields);
-                var task = new ScheduledJob(DateTimeOffset.UtcNow, time.Time, action);
-                await _schedule.CreateScheduledTask(task, Context.Guild);
+                var job = new ScheduledJob(DateTimeOffset.UtcNow, time.Time, action);
+                await _schedule.CreateScheduledJob(job);
             }
 
             await ReplyAsync(
@@ -470,20 +466,21 @@ public class AdminModule : ModuleBase<SocketCommandContext>
         }
         else
         {
+            var getUserUnban = new Func<ScheduledJob, bool>(job =>
+                job.Action.Type == ScheduledJobActionType.Unban &&
+                job.Action.Fields["userId"] == userId.ToString());
+            
             // ban exists, make sure a time is declared
             if (time == null)
             {
                 // time not declared, make ban permanent.
-                if (_schedule.GetScheduledTasks().Any(task => task.Action.Type == ScheduledJobActionType.Unban &&
-                                                              task.Action.Fields["userId"] == userId.ToString()))
+                if (_schedule.GetScheduledJobs(getUserUnban).Any())
                 {
-                    var task = _schedule.GetScheduledTasks().First(task => 
-                        task.Action.Type == ScheduledJobActionType.Unban &&
-                        task.Action.Fields["userId"] == userId.ToString());
+                    var job = _schedule.GetScheduledJobs(getUserUnban).First();
 
-                    await _schedule.DeleteScheduledTask(task);
+                    await _schedule.DeleteScheduledJob(job);
 
-                    await ReplyAsync($"This user is already banned. I have removed an existing unban for them which was scheduled <t:{task.ExecuteAt.ToUnixTimeSeconds()}:R>.{Environment.NewLine}{Environment.NewLine}" +
+                    await ReplyAsync($"This user is already banned. I have removed an existing unban for them which was scheduled <t:{job.ExecuteAt.ToUnixTimeSeconds()}:R>.{Environment.NewLine}{Environment.NewLine}" +
                                      $"Here's a userlog I generated that you can use if you want to!{Environment.NewLine}```{Environment.NewLine}" +
                                      $"Type: Ban (Indefinite){Environment.NewLine}" +
                                      $"User: <@{userId}> {(member != null ? $"({member.Username}#{member.Discriminator})" : "")} ({userId}){Environment.NewLine}" +
@@ -500,31 +497,27 @@ public class AdminModule : ModuleBase<SocketCommandContext>
             }
             
             // time declared, make ban temporary.
-            if (_schedule.GetScheduledTasks().Any(task => 
-                    task.Action.Type == ScheduledJobActionType.Unban && 
-                    task.Action.Fields["userId"] == userId.ToString()))
+            if (_schedule.GetScheduledJobs(getUserUnban).Any())
             {
-                var tasks = _schedule.GetScheduledTasks().Where(task =>
-                    task.Action.Type == ScheduledJobActionType.Unban &&
-                    task.Action.Fields["userId"] == userId.ToString()).ToList();
+                var jobs = _schedule.GetScheduledJobs(getUserUnban);
                 
-                tasks.Sort((task1, task2) =>
+                jobs.Sort((job1, job2) =>
                 {
-                    if (task1.ExecuteAt.ToUnixTimeMilliseconds() < task2.ExecuteAt.ToUnixTimeMilliseconds())
+                    if (job1.ExecuteAt.ToUnixTimeMilliseconds() < job2.ExecuteAt.ToUnixTimeMilliseconds())
                     {
                         return -1;
                     }
-                    return task1.ExecuteAt.ToUnixTimeMilliseconds() > task2.ExecuteAt.ToUnixTimeMilliseconds() ? 1 : 0;
+                    return job1.ExecuteAt.ToUnixTimeMilliseconds() > job2.ExecuteAt.ToUnixTimeMilliseconds() ? 1 : 0;
                 });
 
-                var task = tasks[0];
-                var taskOriginalExecution = task.ExecuteAt.ToUnixTimeSeconds();
+                var job = jobs[0];
+                var jobOriginalExecution = job.ExecuteAt.ToUnixTimeSeconds();
 
-                task.ExecuteAt = time.Time;
+                job.ExecuteAt = time.Time;
 
-                await _schedule.SyncModifiedScheduledTask(task, Context.Guild);
+                await _schedule.ModifyScheduledJob(job.Id, job);
 
-                await ReplyAsync($"This user is already banned. I have modified an existing scheduled unban for them from <t:{taskOriginalExecution}:R> to <t:{task.ExecuteAt.ToUnixTimeSeconds()}:R>.{Environment.NewLine}{Environment.NewLine}" +
+                await ReplyAsync($"This user is already banned. I have modified an existing scheduled unban for them from <t:{jobOriginalExecution}:R> to <t:{job.ExecuteAt.ToUnixTimeSeconds()}:R>.{Environment.NewLine}{Environment.NewLine}" +
                                  $"Here's a userlog I generated that you can use if you want to!{Environment.NewLine}```{Environment.NewLine}" +
                                  $"Type: Ban ({duration} <t:{time.Time.ToUnixTimeSeconds()}:R>){Environment.NewLine}" +
                                  $"User: <@{userId}> {(member != null ? $"({member.Username}#{member.Discriminator})" : "")} ({userId}){Environment.NewLine}" +
@@ -537,15 +530,11 @@ public class AdminModule : ModuleBase<SocketCommandContext>
                 // Create scheduled task!
                 Dictionary<string, string> fields = new Dictionary<string, string>
                 {
-                    { "userId", userId.ToString() },
-                    {
-                        "reason",
-                        $"Temporary ban has ended."
-                    }
+                    { "userId", userId.ToString() }
                 };
                 var action = new ScheduledJobAction(ScheduledJobActionType.Unban, fields);
-                var task = new ScheduledJob(DateTimeOffset.UtcNow, time.Time, action);
-                await _schedule.CreateScheduledTask(task, Context.Guild);
+                var job = new ScheduledJob(DateTimeOffset.UtcNow, time.Time, action);
+                await _schedule.CreateScheduledJob(job);
 
                 await ReplyAsync(
                     $"This user is already banned. I have scheduled an unban for this user. They'll be unbanned <t:{time.Time.ToUnixTimeSeconds()}:R>{Environment.NewLine}{Environment.NewLine}" +

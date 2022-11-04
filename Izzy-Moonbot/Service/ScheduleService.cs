@@ -2,221 +2,149 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Discord;
 using Discord.WebSocket;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Settings;
 using Microsoft.Extensions.Logging;
+using static Izzy_Moonbot.Settings.ScheduledJobActionType;
+using static Izzy_Moonbot.Settings.ScheduledJobRepeatType;
 
 namespace Izzy_Moonbot.Service;
 
-/*
- * This service is responsible for the management and execution of
- * scheduled tasks that need to be non-volitile.
- *
- * All tasks that "need to happen later" that aren't just changing
- * volitle data values are added to this scheduler.
- *
- * This scheduler is not exposed in user-friendly ways, with the only
- * user management for them being via debug commands. This is thus not
- * equal to SweetieBot's `Scheduler` module.
- */
+/// <summary>
+/// Service responsible for the management and execution of scheduled tasks which need to be non-volatile.
+/// </summary>
 public class ScheduleService
 {
-    private readonly LoggingService _logging;
+    private readonly Config _config;
+    private readonly LoggingService _logger;
     private readonly ModService _mod;
-    private readonly ModLoggingService _modLoggingService;
-    private readonly List<ScheduledTask> _scheduledTasks;
+    private readonly ModLoggingService _modLogging;
 
-    private bool _alreadyInitiated = false;
+    private readonly List<ScheduledJob> _scheduledJobs;
 
-    public ScheduleService(List<ScheduledTask> scheduledTasks, ModService mod, ModLoggingService modLoggingService,
-        LoggingService logging)
+    private bool _alreadyInitiated;
+
+    public ScheduleService(Config config, ModService mod, ModLoggingService modLogging, LoggingService logger, 
+        List<ScheduledJob> scheduledJobs)
     {
-        _scheduledTasks = scheduledTasks;
+        _config = config;
+        _logger = logger;
         _mod = mod;
-        _modLoggingService = modLoggingService;
-        _logging = logging;
+        _modLogging = modLogging;
+        _scheduledJobs = scheduledJobs;
     }
 
-    public void ResumeScheduledTasks(SocketGuild guild)
+    public void BeginUnicycleLoop(SocketGuild guild, DiscordSocketClient client)
     {
-        if (_alreadyInitiated) return; // Don't allow double execution as this causes scheduled tasks to execute twice
+        if (_alreadyInitiated) return;
         _alreadyInitiated = true;
-        _scheduledTasks.ToArray().ToList().ForEach(scheduledTask =>
+        UnicycleLoop(guild, client);
+    }
+
+    private void UnicycleLoop(SocketGuild guild, DiscordSocketClient client)
+    {
+        // Core event loop. Executes every Config.UnicycleInterval seconds.
+        Task.Run(async () =>
         {
-            // Work out if the task needs to execute now
-            if (scheduledTask.ExecuteAt.ToUniversalTime().ToUnixTimeMilliseconds() <=
-                DateTimeOffset.UtcNow.ToUnixTimeMilliseconds())
-            {
-                _logging.Log("Executing following task due to immediate on startup", null,
-                    level: LogLevel.Trace);
-                ExecuteTask(scheduledTask.Action, guild);
-                
-                DeleteScheduledTaskOrRepeat(scheduledTask, guild);
-            }
-            else
-            {
-                // Task does not need to execute now, but should have a Task set up on a seperate thread to trigger when needed.
-                Task.Run(async () =>
-                {
-                    await Task.Delay(Convert.ToInt32(scheduledTask.ExecuteAt.ToUnixTimeMilliseconds() -
-                                                     DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()));
-                    if (!_scheduledTasks.Contains(scheduledTask)) return;
-                    if (scheduledTask.ExecuteAt.ToUnixTimeMilliseconds() >
-                        DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()) return;
-                    _logging.Log("Executing following task due to time passing after restart", null,
-                        level: LogLevel.Trace);
-                    await ExecuteTask(scheduledTask.Action, guild);
-                    await DeleteScheduledTaskOrRepeat(scheduledTask, guild);
-                });
-            }
+            await Task.Delay(_config.UnicycleInterval * 1000);
+            
+            // Run unicycle.
+            await Unicycle(guild, client);
+            
+            // Call self
+            UnicycleLoop(guild, client);
         });
     }
 
-    private async Task ExecuteTask(ScheduledTaskAction action, SocketGuild guild)
+    private async Task Unicycle(SocketGuild guild, DiscordSocketClient client)
     {
-        switch (action.Type)
+        var scheduledJobsToExecute = _scheduledJobs.Where(job =>
+            job.ExecuteAt.ToUnixTimeMilliseconds() <= DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+
+        foreach (var job in scheduledJobsToExecute)
         {
-            case ScheduledTaskActionType.RemoveRole:
-                var roleToRemove = guild.GetRole(ulong.Parse(action.Fields["roleId"]));
-                var userToRemoveFrom = guild.GetUser(ulong.Parse(action.Fields["userId"]));
-                if (roleToRemove == null || userToRemoveFrom == null) return;
-                string reasonForRemoval = null;
-                if (action.Fields.ContainsKey("reason")) reasonForRemoval = action.Fields["reason"];
+            await _logger.Log($"Executing scheduled job queued for execution at {job.ExecuteAt:F}", level: LogLevel.Debug);
 
-                await _logging.Log(
-                    $"Removing {roleToRemove.Name} ({roleToRemove.Id}) from {userToRemoveFrom.Username}#{userToRemoveFrom.Discriminator} ({userToRemoveFrom.Id})",
-                    null,
-                    level: LogLevel.Trace);
-
-                await _mod.RemoveRole(userToRemoveFrom, roleToRemove.Id, reasonForRemoval);
-                await _modLoggingService.CreateModLog(guild)
-                    .SetContent(
-                        $"Removed <@&{roleToRemove.Id}> from <@{userToRemoveFrom.Id}> (`{userToRemoveFrom.Id}`)")
-                    .SetFileLogContent(
-                        $"Removed {roleToRemove.Name} ({roleToRemove.Id}) from {userToRemoveFrom.Username}#{userToRemoveFrom.Discriminator} ({userToRemoveFrom.Id})")
-                    .Send();
-                break;
-            case ScheduledTaskActionType.AddRole:
-                var roleToAdd = guild.GetRole(ulong.Parse(action.Fields["roleId"]));
-                var userToAddTo = guild.GetUser(ulong.Parse(action.Fields["userId"]));
-                if (roleToAdd == null || userToAddTo == null) return;
-                string reasonForAdding = null;
-                if (action.Fields.ContainsKey("reason")) reasonForAdding = action.Fields["reason"];
-
-                await _logging.Log(
-                    $"Adding {roleToAdd.Name} ({roleToAdd.Id}) from {userToAddTo.Username}#{userToAddTo.Discriminator} ({userToAddTo.Id})",
-                    null,
-                    level: LogLevel.Trace);
-
-                await _mod.RemoveRole(userToAddTo, roleToAdd.Id, reasonForAdding);
-                await _modLoggingService.CreateModLog(guild)
-                    .SetContent(
-                        $"Gave <@&{roleToAdd.Id}> to <@{userToAddTo.Id}> (`{userToAddTo.Id}`)")
-                    .SetFileLogContent(
-                        $"Gave {roleToAdd.Name} ({roleToAdd.Id}) to {userToAddTo.Username}#{userToAddTo.Discriminator} ({userToAddTo.Id})")
-                    .Send();
-                break;
-            case ScheduledTaskActionType.Unban:
-                if (!ulong.TryParse(action.Fields["userId"], out var userIdToUnban)) return;
-                if (await guild.GetBanAsync(userIdToUnban) == null) return;
-
-                string reasonForUnbanning = null;
-                if (action.Fields.ContainsKey("reason")) reasonForUnbanning = action.Fields["reason"];
-                
-                await _logging.Log(
-                    $"Unbanning {userIdToUnban} for {reasonForUnbanning}",
-                    level: LogLevel.Trace);
-
-                await guild.RemoveBanAsync(userIdToUnban);
-                
-                await _modLoggingService.CreateModLog(guild)
-                    .SetContent(
-                        $"Unbanned <@{userIdToUnban}> for {reasonForUnbanning}")
-                    .SetFileLogContent(
-                        $"Unbanned {userIdToUnban} for {reasonForUnbanning}")
-                    .Send();
-                break;
-            case ScheduledTaskActionType.Echo:
-                var channelToEchoTo = guild.GetTextChannel(ulong.Parse(action.Fields["channelId"]));
-                if (channelToEchoTo == null) return;
-                var contentToEcho = action.Fields["content"];
-                Console.WriteLine(
-                    $"#{channelToEchoTo.Name} ({channelToEchoTo.Id}) Scheduled Echo: {contentToEcho}");
-                await channelToEchoTo.SendMessageAsync(contentToEcho);
-                break;
-            default:
-                throw new NotSupportedException($"{action.Type} is currently not supported.");
+            // Do processing here I guess!
+            switch (job.Action.Type)
+            {
+                case RemoveRole:
+                    await Unicycle_RemoveRole(job, guild, client);
+                    break;
+                case AddRole:
+                    await Unicycle_AddRole(job, guild, client);
+                    break;
+                case Unban:
+                    await Unicycle_Unban(job, guild, client);
+                    break;
+                case Echo:
+                    await Unicycle_Echo(job, guild, client);
+                    break;
+                default:
+                    throw new NotSupportedException($"{job.Action.Type} is currently not supported.");
+            }
+            
+            await DeleteOrRepeatScheduledJob(job);
         }
     }
 
-    public List<ScheduledTask> GetScheduledTasks()
+    public ScheduledJob GetScheduledJob(string id)
     {
-        return _scheduledTasks;
+        return _scheduledJobs.Single(job => job.Id == id);
     }
 
-    public ScheduledTask GetScheduledTaskByAction(ScheduledTaskAction action)
+    public ScheduledJob GetScheduledJob(Func<ScheduledJob, bool> predicate)
     {
-        if (_scheduledTasks.Exists(task =>
-            {
-                if (task.Action.Type == action.Type && task.Action.Fields == action.Fields) return true;
-                return false;
-            })) return _scheduledTasks.Find(task =>
-            {
-                if (task.Action.Type == action.Type && task.Action.Fields == action.Fields) return true;
-                return false;
-            });
-        return null;
+        return _scheduledJobs.Single(predicate);
+    }
+    
+    public List<ScheduledJob> GetScheduledJobs()
+    {
+        return _scheduledJobs.ToList();
     }
 
-    public async Task<ScheduledTask> CreateScheduledTask(ScheduledTask task, SocketGuild guild)
+    public List<ScheduledJob> GetScheduledJobs(Func<ScheduledJob, bool> predicate)
     {
-        _scheduledTasks.Add(task);
-        await FileHelper.SaveScheduleAsync(_scheduledTasks);
+        return _scheduledJobs.Where(predicate).ToList();
+    }
 
-        Task.Run(async () =>
+    public async Task CreateScheduledJob(ScheduledJob job)
+    {
+        _scheduledJobs.Add(job);
+        await FileHelper.SaveScheduleAsync(_scheduledJobs);
+    }
+
+    public async Task ModifyScheduledJob(string id, ScheduledJob job)
+    {
+        _scheduledJobs[_scheduledJobs.IndexOf(_scheduledJobs.First(job => job.Id == id))] = job;
+        await FileHelper.SaveScheduleAsync(_scheduledJobs);
+    }
+
+    public async Task DeleteScheduledJob(ScheduledJob job)
+    {
+        var result = _scheduledJobs.Remove(job);
+        if (!result)
+            throw new NullReferenceException("The scheduled job provided was not found in the scheduled job list.");
+        await FileHelper.SaveScheduleAsync(_scheduledJobs);
+    }
+
+    private async Task DeleteOrRepeatScheduledJob(ScheduledJob job)
+    {
+        if (job.RepeatType != None)
         {
-            await Task.Delay(Convert.ToInt32(task.ExecuteAt.ToUnixTimeMilliseconds() -
-                                             DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()));
-            await _logging.Log(
-                $"Contains: {_scheduledTasks.Contains(task)}, time: {task.ExecuteAt.ToUnixTimeMilliseconds() > DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}");
-            if (!_scheduledTasks.Contains(task)) return;
-            if (task.ExecuteAt.ToUnixTimeMilliseconds() >
-                DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()) return;
-            await _logging.Log("Executing following task due to time passing", null,
-                level: LogLevel.Trace);
-            await ExecuteTask(task.Action, guild);
-            await DeleteScheduledTaskOrRepeat(task, guild);
-        });
-
-        return task;
-    }
-
-    public async Task<ScheduledTask> DeleteScheduledTask(ScheduledTask task)
-    {
-        var result = _scheduledTasks.Remove(task);
-        if (result == null) return null;
-        await FileHelper.SaveScheduleAsync(_scheduledTasks);
-        return task;
-    }
-
-    private async Task<ScheduledTask> DeleteScheduledTaskOrRepeat(ScheduledTask task, SocketGuild guild)
-    {
-        // Calls DeleteScheduledTask if scheduled task doesn't repeat,
-        // Else changes ExecuteAt to be the current time + difference between LastExecutedAt/CreatedAt and ExecuteAt.
-        if (task.RepeatType != ScheduledTaskRepeatType.None)
-        {
-            // Modify task to allow repeatability.
-            var taskIndex = _scheduledTasks.FindIndex(scheduledTask => scheduledTask.Id == task.Id);
+            // Modify job to allow repeatability.
+            var taskIndex = _scheduledJobs.FindIndex(scheduledJob => scheduledJob.Id == job.Id);
             
             // Get LastExecutedAt, or CreatedAt if former is null as well as the execution time.
-            var creationAt = task.LastExecutedAt ?? task.CreatedAt;
-            var executeAt = task.ExecuteAt;
+            var creationAt = job.LastExecutedAt ?? job.CreatedAt;
+            var executeAt = job.ExecuteAt;
 
             // RepeatType is checked against null above.
-            switch (task.RepeatType)
+            switch (job.RepeatType)
             {
-                case ScheduledTaskRepeatType.Relative:
+                case Relative:
                     // Get the offset.
                     var repeatEvery = executeAt - creationAt;
             
@@ -224,77 +152,46 @@ public class ScheduleService
                     var nextExecuteAt = DateTimeOffset.UtcNow + repeatEvery;
             
                     // Set previous execution time and new execution time
-                    task.LastExecutedAt = executeAt;
-                    task.ExecuteAt = nextExecuteAt;
+                    job.LastExecutedAt = executeAt;
+                    job.ExecuteAt = nextExecuteAt;
                     break;
-                case ScheduledTaskRepeatType.Daily:
+                case Daily:
                     // Just add a single day to the execute at time lol
-                    task.LastExecutedAt = executeAt;
-                    task.ExecuteAt = executeAt.AddDays(1);
+                    job.LastExecutedAt = executeAt;
+                    job.ExecuteAt = executeAt.AddDays(1);
                     break;
-                case ScheduledTaskRepeatType.Weekly:
+                case Weekly:
                     // Add 7 days to the execute at time
-                    task.LastExecutedAt = executeAt;
-                    task.ExecuteAt = executeAt.AddDays(7);
+                    job.LastExecutedAt = executeAt;
+                    job.ExecuteAt = executeAt.AddDays(7);
                     break;
-                case ScheduledTaskRepeatType.Yearly:
+                case Yearly:
                     // Add a year to the execute at time
-                    task.LastExecutedAt = executeAt;
-                    task.ExecuteAt = executeAt.AddYears(1);
+                    job.LastExecutedAt = executeAt;
+                    job.ExecuteAt = executeAt.AddYears(1);
                     break;
             }
 
             // Update the task and save
-            _scheduledTasks[taskIndex] = task;
-            await FileHelper.SaveScheduleAsync(_scheduledTasks);
-            
-            Task.Run(async () =>
-            {
-                await Task.Delay(Convert.ToInt32(task.ExecuteAt.ToUnixTimeMilliseconds() -
-                                                 DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()));
-                if (!_scheduledTasks.Contains(_scheduledTasks[taskIndex])) return;
-                if (_scheduledTasks[taskIndex].ExecuteAt.ToUnixTimeMilliseconds() >
-                    DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()) return;
-                await _logging.Log("Executing following task due to time passing", null,
-                    level: LogLevel.Trace);
-                await ExecuteTask(_scheduledTasks[taskIndex].Action, guild);
-                await DeleteScheduledTaskOrRepeat(_scheduledTasks[taskIndex], guild);
-            });
-            
-            // Return the new task
-            return task;
+            _scheduledJobs[taskIndex] = job;
+            await FileHelper.SaveScheduleAsync(_scheduledJobs);
+
+            return;
         }
 
-        // Just delete
-        return await DeleteScheduledTask(task);
+        await DeleteScheduledJob(job);
     }
-
-    public async Task SyncModifiedScheduledTask(ScheduledTask task, SocketGuild guild)
+    
+    public ScheduledJobAction StringToAction(string action)
     {
-        Task.Run(async () =>
-        {
-            await Task.Delay(Convert.ToInt32(task.ExecuteAt.ToUnixTimeMilliseconds() -
-                                             DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()));
-            if (!_scheduledTasks.Contains(task)) return;
-            if (task.ExecuteAt.ToUnixTimeMilliseconds() >
-                DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()) return;
-            await _logging.Log("Executing following task due to time passing", null,
-                level: LogLevel.Trace);
-            await ExecuteTask(task.Action, guild);
-            await DeleteScheduledTaskOrRepeat(task, guild);
-        });
-    }
-
-    public ScheduledTaskAction stringToAction(string action)
-    {
-        ScheduledTaskActionType actionType;
+        ScheduledJobActionType actionType;
         var fields = new Dictionary<string, string>();
 
         switch (action.Split(" ")[0])
         {
             case "remove-role":
                 // remove-role <roleId> from <userId> reason <reason>
-                actionType = ScheduledTaskActionType.RemoveRole;
+                actionType = RemoveRole;
                 fields.Add("roleId", action.Split(" ")[1]);
                 if (action.Split(" ")[2] != "from") throw new FormatException("Invalid action format");
                 fields.Add("userId", action.Split(" ")[3]);
@@ -303,7 +200,7 @@ public class ScheduleService
                 break;
             case "add-role":
                 // add-role <roleId> from <userId> reason <reason>
-                actionType = ScheduledTaskActionType.AddRole;
+                actionType = AddRole;
                 fields.Add("roleId", action.Split(" ")[1]);
                 if (action.Split(" ")[2] != "from") throw new FormatException("Invalid action format");
                 fields.Add("userId", action.Split(" ")[3]);
@@ -311,15 +208,13 @@ public class ScheduleService
                 fields.Add("reason", string.Join(" ", action.Split(" ").Skip(5)));
                 break;
             case "unban":
-                // unban <userId> reason <reason>
-                actionType = ScheduledTaskActionType.Unban;
+                // unban <userId>
+                actionType = Unban;
                 fields.Add("userId", action.Split(" ")[1]);
-                if (action.Split(" ")[2] != "reason") break;
-                fields.Add("reason", string.Join(" ", action.Split(" ").Skip(3)));
                 break;
             case "echo":
                 // echo in <channelId> content <content>
-                actionType = ScheduledTaskActionType.Echo;
+                actionType = Echo;
                 if (action.Split(" ")[1] != "in") throw new FormatException("Invalid action format");
                 fields.Add("channelId", action.Split(" ")[2]);
                 if (action.Split(" ")[3] != "content") throw new FormatException("Invalid action format");
@@ -329,33 +224,32 @@ public class ScheduleService
                 throw new FormatException("Invalid action type");
         }
 
-        return new ScheduledTaskAction(actionType, fields);
+        return new ScheduledJobAction(actionType, fields);
     }
 
-    public string actionToString(ScheduledTaskAction action)
+    public string ActionToString(ScheduledJobAction action)
     {
         var output = "";
 
         switch (action.Type)
         {
-            case ScheduledTaskActionType.RemoveRole:
+            case RemoveRole:
                 output += "remove-role ";
                 output += $"{action.Fields["roleId"]} ";
                 output += $"from {action.Fields["userId"]}";
                 if (action.Fields["reason"] != null) output += $" reason {action.Fields["reason"]}";
                 break;
-            case ScheduledTaskActionType.AddRole:
+            case AddRole:
                 output += "add-role ";
                 output += $"{action.Fields["roleId"]} ";
                 output += $"from {action.Fields["userId"]}";
                 if (action.Fields["reason"] != null) output += $" reason {action.Fields["reason"]}";
                 break;
-            case ScheduledTaskActionType.Unban:
+            case Unban:
                 output += "unban ";
                 output += $"{action.Fields["userId"]}";
-                if (action.Fields["reason"] != null) output += $" reason {action.Fields["reason"]}";
                 break;
-            case ScheduledTaskActionType.Echo:
+            case Echo:
                 output += "echo in ";
                 output += $"{action.Fields["channelId"]} content ";
                 output += $"{action.Fields["content"]}";
@@ -365,5 +259,93 @@ public class ScheduleService
         }
 
         return output;
+    }
+    
+    // Executors for different types.
+    private async Task Unicycle_AddRole(ScheduledJob job, SocketGuild guild, DiscordSocketClient client)
+    {
+        var role = guild.GetRole(ulong.Parse(job.Action.Fields["roleId"]));
+        var user = guild.GetUser(ulong.Parse(job.Action.Fields["userId"]));
+        if (role == null || user == null) return;
+
+        string? reason = null;
+        if (job.Action.Fields.ContainsKey("reason")) reason = job.Action.Fields["reason"];
+        
+        await _logger.Log(
+            $"Adding {role.Name} ({role.Id}) to {user.Username}#{user.Discriminator} ({user.Id})", level: LogLevel.Debug);
+        
+        await _mod.AddRole(user, role.Id, reason);
+        await _modLogging.CreateModLog(guild)
+            .SetContent(
+                $"Gave <@&{role.Id}> to <@{user.Id}> (`{user.Id}`). {(reason != null ? $"Reason: {reason}." : "")}")
+            .SetFileLogContent(
+                $"Gave {role.Name} ({role.Id}) to {user.Username}#{user.Discriminator} ({user.Id}). {(reason != null ? $"Reason: {reason}." : "")}")
+            .Send();
+    }
+    
+    private async Task Unicycle_RemoveRole(ScheduledJob job, SocketGuild guild, DiscordSocketClient client)
+    {
+        if (!ulong.TryParse(job.Action.Fields["roleId"], out var roleId)) return;
+        if (!ulong.TryParse(job.Action.Fields["userId"], out var userId)) return;
+        var role = guild.GetRole(roleId);
+        var user = guild.GetUser(userId);
+        if (role == null || user == null) return;
+
+        string? reason = null;
+        if (job.Action.Fields.ContainsKey("reason")) reason = job.Action.Fields["reason"];
+        
+        await _logger.Log(
+            $"Removing {role.Name} ({role.Id}) from {user.Username}#{user.Discriminator} ({user.Id})", level: LogLevel.Debug);
+        
+        await _mod.RemoveRole(user, role.Id, reason);
+        await _modLogging.CreateModLog(guild)
+            .SetContent(
+                $"Removed <@&{role.Id}> from <@{user.Id}> (`{user.Id}`){(reason != null ? $" for {reason}" : "")}")
+            .SetFileLogContent(
+                $"Removed {role.Name} ({role.Id}) from {user.Username}#{user.Discriminator} ({user.Id}){(reason != null ? $" for {reason}" : "")}")
+            .Send();
+    }
+
+    private async Task Unicycle_Unban(ScheduledJob job, SocketGuild guild, DiscordSocketClient client)
+    {
+        if (!ulong.TryParse(job.Action.Fields["userId"], out var userId)) return;
+        if (await guild.GetBanAsync(userId) == null) return;
+
+        var user = await client.GetUserAsync(userId);
+        
+        await _logger.Log(
+            $"Unbanning {(user == null ? userId : $"")}.",
+            level: LogLevel.Debug);
+
+        await guild.RemoveBanAsync(userId);
+
+        var embed = new EmbedBuilder()
+            .WithTitle(
+                $"Unbanned {(user != null ? $"{user.Username}#{user.Discriminator} " : "")}<@{userId}> ({userId})")
+            .WithColor(16737792)
+            .WithFooter("Gasp! Does this mean I can invite them to our next traditional unicorn sleepover?")
+            .Build();
+        
+        await _modLogging.CreateModLog(guild)
+            .SetEmbed(embed)
+            .SetFileLogContent($"Unbanned {(user != null ? $"{user.Username}#{user.Discriminator} " : "")}<@{userId}> ({userId})")
+            .Send();
+    }
+
+    private async Task Unicycle_Echo(ScheduledJob job, SocketGuild guild, DiscordSocketClient client)
+    {
+        if (!job.Action.Fields.ContainsKey("content")) return;
+        if (!ulong.TryParse(job.Action.Fields["channelId"], out var channelId)) return;
+        var channel = guild.GetTextChannel(channelId);
+        if (channel == null)
+        {
+            var user = await client.GetUserAsync(channelId);
+            if (user == null) return;
+
+            await user.SendMessageAsync(job.Action.Fields["content"]);
+            return;
+        }
+
+        await channel.SendMessageAsync(job.Action.Fields["content"]);
     }
 }

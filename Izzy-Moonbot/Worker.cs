@@ -158,7 +158,7 @@ namespace Izzy_Moonbot
         public async Task ReadyEvent()
         {
             _logger.LogTrace("Ready event called");
-            _scheduleService.UnicycleLoop(_client.Guilds.Single(guild => guild.Id == 98609319519453184));
+            _scheduleService.BeginUnicycleLoop(_client.Guilds.Single(guild => guild.Id == 98609319519453184), _client);
             
             foreach (var clientGuild in _client.Guilds)
             {

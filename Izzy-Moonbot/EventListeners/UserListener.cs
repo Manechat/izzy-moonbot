@@ -45,22 +45,17 @@ public class UserListener
     public async Task MemberUnbanEvent(SocketUser user, SocketGuild guild)
     {
         await _logger.Log($"User was unbanned: {user.Username}#{user.Discriminator}.", level: LogLevel.Debug);
-        var scheduledTasks = _schedule.GetScheduledTasks().ToList().Select(action =>
-        {
-            if (action.Action.Fields.ContainsKey("userId") &&
-                action.Action.Fields["userId"] == user.Id.ToString())
-                return action;
-            return null;
-        });
+        var scheduledJobs = _schedule.GetScheduledJobs(job => 
+            (job.Action.Fields.ContainsKey("userId") && job.Action.Fields["userId"] == user.Id.ToString()) ||
+            (job.Action.Fields.ContainsKey("channelId") && job.Action.Fields["channelId"] == user.Id.ToString()));
 
-        await _logger.Log($"Cancelling all scheduled unban tasks for this user", level: LogLevel.Debug);
-        foreach (var scheduledTask in scheduledTasks)
+        await _logger.Log($"Cancelling all scheduled unban jobs for this user", level: LogLevel.Debug);
+        foreach (var scheduledJob in scheduledJobs)
         {
-            if (scheduledTask == null) continue;
-            if (scheduledTask.Action.Type != ScheduledJobActionType.Unban) continue;
-            await _schedule.DeleteScheduledTask(scheduledTask);
+            if (scheduledJob.Action.Type != ScheduledJobActionType.Unban) continue;
+            await _schedule.DeleteScheduledJob(scheduledJob);
         }
-        await _logger.Log($"Cancelled all scheduled unban tasks for this user", level: LogLevel.Debug);
+        await _logger.Log($"Cancelled all scheduled unban jobs for this user", level: LogLevel.Debug);
     }
 
     public async Task MemberJoinEvent(SocketGuildUser member, bool catchingUp = false)
@@ -101,21 +96,21 @@ public class UserListener
             roles.Add((ulong)_config.NewMemberRole);
             expiresString = $"{Environment.NewLine}New Member role expires in <t:{(DateTimeOffset.UtcNow + TimeSpan.FromMinutes(_config.NewMemberRoleDecay)).ToUnixTimeSeconds()}:R>";
 
-            await _logger.Log($"Adding scheduled task to remove Config.NewMemberRole from new user in {_config.NewMemberRoleDecay} minutes", level: LogLevel.Debug);
+            await _logger.Log($"Adding scheduled job to remove Config.NewMemberRole from new user in {_config.NewMemberRoleDecay} minutes", level: LogLevel.Debug);
             Dictionary<string, string> fields = new Dictionary<string, string>
             {
-                { "roleId", _config.NewMemberRole.ToString() },
+                { "roleId", _config.NewMemberRole.Value.ToString() },
                 { "userId", member.Id.ToString() },
                 {
                     "reason",
-                    $"{_config.NewMemberRoleDecay} minutes (`NewMemberRoleDecay`) passed."
+                    $"New member role removal, {_config.NewMemberRoleDecay} minutes (`NewMemberRoleDecay`) passed."
                 }
             };
             var action = new ScheduledJobAction(ScheduledJobActionType.RemoveRole, fields);
             var task = new ScheduledJob(DateTimeOffset.UtcNow, 
                 (DateTimeOffset.UtcNow + TimeSpan.FromMinutes(_config.NewMemberRoleDecay)), action);
-            await _schedule.CreateScheduledTask(task, member.Guild);
-            await _logger.Log($"Added scheduled task for new user", level: LogLevel.Debug);
+            await _schedule.CreateScheduledJob(task);
+            await _logger.Log($"Added scheduled job for new user", level: LogLevel.Debug);
         }
         
         await _logger.Log($"Generating action reason", level: LogLevel.Debug);
@@ -261,23 +256,18 @@ public class UserListener
         }
         await _logger.Log($"Finished constructing moderation log content", level: LogLevel.Debug);
 
-        await _logger.Log($"Fetch all scheduled tasks for this user", level: LogLevel.Debug);
-        var scheduledTasks = _schedule.GetScheduledTasks().ToList().Select(action =>
-        {
-            if (action.Action.Fields.ContainsKey("userId") &&
-                action.Action.Fields["userId"] == user.Id.ToString())
-                return action;
-            return null;
-        });
+        await _logger.Log($"Fetch all scheduled jobs for this user", level: LogLevel.Debug);
+        var scheduledTasks = _schedule.GetScheduledJobs(job => 
+            (job.Action.Fields.ContainsKey("userId") && job.Action.Fields["userId"] == user.Id.ToString()) ||
+            (job.Action.Fields.ContainsKey("channelId") && job.Action.Fields["channelId"] == user.Id.ToString()));
 
-        await _logger.Log($"Cancelling all scheduled tasks for this user", level: LogLevel.Debug);
+        await _logger.Log($"Cancelling all scheduled jobs for this user", level: LogLevel.Debug);
         foreach (var scheduledTask in scheduledTasks)
         {
-            if (scheduledTask == null) continue;
             if (scheduledTask.Action.Type == ScheduledJobActionType.Unban) continue;
-            await _schedule.DeleteScheduledTask(scheduledTask);
+            await _schedule.DeleteScheduledJob(scheduledTask);
         }
-        await _logger.Log($"Cancelled all scheduled tasks for this user", level: LogLevel.Debug);
+        await _logger.Log($"Cancelled all scheduled jobs for this user", level: LogLevel.Debug);
 
         await _logger.Log($"Sending moderation log", level: LogLevel.Debug);
         await _modLogger.CreateModLog(guild)
