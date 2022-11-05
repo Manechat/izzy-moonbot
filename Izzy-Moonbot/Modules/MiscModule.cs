@@ -141,7 +141,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                 } 
                 catch (NullReferenceException)
                 {
-                    await ReplyAsync($"I couldn't find any quotes in that category.");
+                    await ReplyAsync($"I couldn't find any for that user.");
                     return;
                 }
             }
@@ -375,7 +375,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                 }
                 // This alias refers to a category or user who left.
                 var category = _quoteService.ProcessAlias(search);
-                
+
                 // Choose a random quote from this category.
                 try
                 {
