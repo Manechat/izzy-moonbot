@@ -8,7 +8,7 @@ public class Config
     {
         // Core settings
         Prefix = '.';
-        UnicycleInterval = 5;
+        UnicycleInterval = 100;
         SafeMode = true;
         ThreadOnlyMode = true;
         BatchSendLogs = false;

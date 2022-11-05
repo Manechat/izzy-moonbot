@@ -334,6 +334,8 @@ public class DevModule : ModuleBase<SocketCommandContext>
                         _ => ScheduledJobRepeatType.None
                     };
 
+                    await _loggingService.Log($"{time.Time:F} {time.RepeatType}");
+                    
                     var repeataction = _scheduleService.StringToAction(
                         $"echo in {Context.Channel.Id} content misty");
                     var repeattask = new ScheduledJob(DateTimeOffset.UtcNow,

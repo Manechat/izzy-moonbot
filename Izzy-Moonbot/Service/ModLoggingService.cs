@@ -74,7 +74,7 @@ public class ModLogConstructor
 
     public async Task Send()
     {
-        if (_log.Content == null) throw new InvalidOperationException("A moderation log cannot have no content");
+        if (_log.Content == null && _log.Embed == null) throw new InvalidOperationException("A moderation log cannot have no content");
         
         // Log to file
         var modLogFileContent = LoggingService.PrepareMessageForLogging(_log.FileLogContent, null, true);

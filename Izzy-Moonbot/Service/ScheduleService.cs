@@ -48,11 +48,18 @@ public class ScheduleService
         // Core event loop. Executes every Config.UnicycleInterval seconds.
         Task.Run(async () =>
         {
-            await Task.Delay(_config.UnicycleInterval * 1000);
+            await Task.Delay(_config.UnicycleInterval);
             
             // Run unicycle.
-            await Unicycle(guild, client);
-            
+            try
+            {
+                await Unicycle(guild, client);
+            }
+            catch (Exception exception)
+            {
+                _logger.Log($"{exception.Message}{Environment.NewLine}{exception.StackTrace}", level: LogLevel.Error);
+            }
+
             // Call self
             UnicycleLoop(guild, client);
         });
@@ -60,8 +67,15 @@ public class ScheduleService
 
     private async Task Unicycle(SocketGuild guild, DiscordSocketClient client)
     {
-        var scheduledJobsToExecute = _scheduledJobs.Where(job =>
-            job.ExecuteAt.ToUnixTimeMilliseconds() <= DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+        var scheduledJobsToExecute = new List<ScheduledJob>();
+
+        foreach (var job in _scheduledJobs)
+        {
+            if (job.ExecuteAt.ToUnixTimeMilliseconds() <= DateTimeOffset.UtcNow.ToUnixTimeMilliseconds())
+            {
+                scheduledJobsToExecute.Add(job);
+            }
+        }
 
         foreach (var job in scheduledJobsToExecute)
         {
@@ -149,7 +163,7 @@ public class ScheduleService
                     var repeatEvery = executeAt - creationAt;
             
                     // Get the timestamp of next execution.
-                    var nextExecuteAt = DateTimeOffset.UtcNow + repeatEvery;
+                    var nextExecuteAt = executeAt + repeatEvery;
             
                     // Set previous execution time and new execution time
                     job.LastExecutedAt = executeAt;

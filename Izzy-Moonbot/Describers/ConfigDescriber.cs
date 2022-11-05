@@ -15,8 +15,8 @@ public class ConfigDescriber
             new ConfigItem(ConfigItemType.Char, "The prefix I will listen to for commands.",
                 ConfigItemCategory.Core));
         _config.Add("UnicycleInterval",
-            new ConfigItem(ConfigItemType.Boolean,
-                "How often I'll check scheduled jobs for execution.",
+            new ConfigItem(ConfigItemType.Integer,
+                "How often, in milliseconds, I'll check scheduled jobs for execution.",
                 ConfigItemCategory.Core));
         _config.Add("SafeMode",
             new ConfigItem(ConfigItemType.Boolean,
