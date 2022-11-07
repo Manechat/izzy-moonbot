@@ -52,8 +52,9 @@ public class Program
             }).ConfigureServices((hostContext, services) =>
         {
             // Configuration
-            var discordSettings = hostContext.Configuration;
-            services.Configure<DiscordSettings>(discordSettings.GetSection(nameof(DiscordSettings)));
+            var botSettings = hostContext.Configuration;
+            services.Configure<DiscordSettings>(botSettings.GetSection(nameof(DiscordSettings)));
+            services.Configure<DatabaseSettings>(botSettings.GetSection(nameof(DatabaseSettings)));
             var config = FileHelper.LoadConfigAsync().GetAwaiter().GetResult();
             services.AddSingleton(config);
             var users = FileHelper.LoadUsersAsync().GetAwaiter().GetResult();
