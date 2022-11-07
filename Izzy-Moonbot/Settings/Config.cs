@@ -8,6 +8,7 @@ public class Config
     {
         // Core settings
         Prefix = '.';
+        UnicycleInterval = 100;
         SafeMode = true;
         ThreadOnlyMode = true;
         BatchSendLogs = false;
@@ -77,6 +78,7 @@ public class Config
 
     // Core settings
     public char Prefix { get; set; }
+    public int UnicycleInterval { get; set; }
     public bool SafeMode { get; set; }
     public bool ThreadOnlyMode { get; set; }
     public bool BatchSendLogs { get; set; }
