@@ -29,7 +29,7 @@ public class QuoteService
     /// <returns>Whether the alias exists or not.</returns>
     public bool AliasExists(string alias)
     {
-        return _quoteStorage.Aliases.ContainsKey(alias);
+        return _quoteStorage.Aliases.Keys.Any(key => key.ToLower() == alias.ToLower());
     }
 
     /// <summary>
@@ -41,9 +41,9 @@ public class QuoteService
     /// <exception cref="NullReferenceException">If the alias doesn't exist.</exception>
     public string AliasRefersTo(string alias, SocketGuild guild)
     {
-        if (_quoteStorage.Aliases.ContainsKey(alias))
+        if (_quoteStorage.Aliases.Keys.Any(key => key.ToLower() == alias.ToLower()))
         {
-            var value = _quoteStorage.Aliases[alias];
+            var value = _quoteStorage.Aliases.Single(pair => pair.Key.ToLower() == alias.ToLower()).Value;
 
             if (ulong.TryParse(value, out var id))
             {
@@ -96,9 +96,9 @@ public class QuoteService
     /// <exception cref="NullReferenceException">If the alias doesn't exist.</exception>
     public string ProcessAlias(string alias)
     {
-        if (_quoteStorage.Aliases.ContainsKey(alias))
+        if (_quoteStorage.Aliases.Keys.Any(key => key.ToLower() == alias.ToLower()))
         {
-            var value = _quoteStorage.Aliases[alias];
+            var value = _quoteStorage.Aliases.Single(pair => pair.Key.ToLower() == alias.ToLower()).Value;
 
             return value;
         }
@@ -138,9 +138,11 @@ public class QuoteService
     
     public async Task RemoveAlias(string alias)
     {
-        if (!_quoteStorage.Aliases.ContainsKey(alias)) throw new NullReferenceException("This alias doesn't exist.");
+        if (!CategoryExists(alias)) throw new NullReferenceException("This alias doesn't exist.");
+
+        var toDelete = _quoteStorage.Aliases.Keys.Single(key => key.ToLower() == alias.ToLower());
         
-        _quoteStorage.Aliases.Remove(alias);
+        _quoteStorage.Aliases.Remove(toDelete);
         
         await FileHelper.SaveQuoteStorageAsync(_quoteStorage);
     }
@@ -167,7 +169,7 @@ public class QuoteService
     /// <returns>Whether the category exists or not.</returns>
     public bool CategoryExists(string name)
     {
-        return _quoteStorage.Quotes.ContainsKey(name);
+        return _quoteStorage.Quotes.Keys.Any(key => key.ToLower() == name.ToLower());
     }
 
     public string[] GetKeyList(SocketGuild guild)
@@ -235,10 +237,10 @@ public class QuoteService
     /// <exception cref="IndexOutOfRangeException">If the id provided is larger than the amount of quotes the category contains.</exception>
     public Quote GetQuote(string name, int id)
     {
-        if (!_quoteStorage.Quotes.ContainsKey(name))
+        if (_quoteStorage.Quotes.Keys.All(key => key.ToLower() != name.ToLower()))
             throw new NullReferenceException("That category does not have any quotes.");
         
-        var quotes = _quoteStorage.Quotes[name];
+        var quotes = _quoteStorage.Quotes.Single(pair => pair.Key.ToLower() == name.ToLower()).Value;
 
         if (quotes.Count <= id) throw new IndexOutOfRangeException("That quote ID does not exist.");
 
@@ -285,21 +287,21 @@ public class QuoteService
     /// <exception cref="NullReferenceException">If the category doesn't have any quotes.</exception>
     public Quote[] GetQuotes(string name)
     {
-        if (!_quoteStorage.Quotes.ContainsKey(name))
+        if (_quoteStorage.Quotes.Keys.All(key => key.ToLower() != name.ToLower()))
             throw new NullReferenceException("That category does not have any quotes.");
+
+        var keyValuePair = _quoteStorage.Quotes.Single(pair => pair.Key.ToLower() == name.ToLower());
         
-        var quoteName = name;
-        if (ulong.TryParse(name, out var userId))
+        var quoteName = keyValuePair.Key;
+        if (ulong.TryParse(quoteName, out var userId))
         {
             // It's a user, but since we're technically looking for a category, this user likely left.
             // Check to see if Izzy knows about them, if she does, set quote name to username, else just mention them.
             quoteName = _users.ContainsKey(userId) ? _users[userId].Username : $"<@{userId}>";
         }
         
-        var quotes = _quoteStorage.Quotes[name].Select(quoteContent =>
-        {
-            return new Quote(_quoteStorage.Quotes[name].IndexOf(quoteContent), quoteName, quoteContent);
-        }).ToArray();
+        var quotes = keyValuePair.Value.Select(quoteContent => 
+            new Quote(keyValuePair.Value.IndexOf(quoteContent), quoteName, quoteContent)).ToArray();
 
         return quotes;
     }
@@ -366,16 +368,17 @@ public class QuoteService
     /// <exception cref="NullReferenceException">If the category doesn't have any quotes.</exception>
     public Quote GetRandomQuote(string name)
     {
-        if (!_quoteStorage.Quotes.ContainsKey(name))
+        if (_quoteStorage.Quotes.Keys.All(key => key.ToLower() != name.ToLower()))
             throw new NullReferenceException("That category does not have any quotes.");
-        
-        var quotes = _quoteStorage.Quotes[name];
+
+        var keyValuePair = _quoteStorage.Quotes.Single(pair => pair.Key.ToLower() == name.ToLower());
+        var quotes = keyValuePair.Value;
 
         Random rnd = new Random();
         var quoteId = rnd.Next(quotes.Count);
         
-        var quoteName = name;
-        if (ulong.TryParse(name, out var userId))
+        var quoteName = keyValuePair.Key;
+        if (ulong.TryParse(quoteName, out var userId))
         {
             // It's a user, but since we're technically looking for a category, this user likely left.
             // Check to see if Izzy knows about them, if she does, set quote name to username, else just mention them.
@@ -417,16 +420,18 @@ public class QuoteService
     /// <returns>The newly created Quote.</returns>
     public async Task<Quote> AddQuote(string name, string content)
     {
-        if (!_quoteStorage.Quotes.ContainsKey(name))
+        if (_quoteStorage.Quotes.Keys.All(key => key.ToLower() != name.ToLower()))
             _quoteStorage.Quotes.Add(name, new List<string>());
 
-        _quoteStorage.Quotes[name].Add(content);
+        var keyValuePair = _quoteStorage.Quotes.Single(pair => pair.Key.ToLower() != name.ToLower());
+
+        _quoteStorage.Quotes[keyValuePair.Key].Add(content);
         
         await FileHelper.SaveQuoteStorageAsync(_quoteStorage);
 
-        var quoteId = _quoteStorage.Quotes[name].Count - 1;
+        var quoteId = _quoteStorage.Quotes[keyValuePair.Key].Count - 1;
 
-        return new Quote(quoteId, name, content);
+        return new Quote(quoteId, keyValuePair.Key, content);
     }
     
     /// <summary>
@@ -471,23 +476,24 @@ public class QuoteService
     /// <exception cref="IndexOutOfRangeException">If the quote id provided doesn't exist.</exception>
     public async Task<Quote> RemoveQuote(string name, int id)
     {
-        if (!_quoteStorage.Quotes.ContainsKey(name))
+        if (_quoteStorage.Quotes.Keys.Any(key => key.ToLower() != name.ToLower()))
             throw new NullReferenceException("That category does not have any quotes.");
         
-        var quotes = _quoteStorage.Quotes[name];
+        var keyValuePair = _quoteStorage.Quotes.Single(pair => pair.Key.ToLower() != name.ToLower());
+        var quotes = keyValuePair.Value;
 
         if (quotes.Count <= id) throw new IndexOutOfRangeException("That quote ID does not exist.");
 
         var quoteContent = quotes[id];
         
-        _quoteStorage.Quotes[name].RemoveAt(id);
+        _quoteStorage.Quotes[keyValuePair.Key].RemoveAt(id);
 
-        if (_quoteStorage.Quotes[name].Count == 0)
-            _quoteStorage.Quotes.Remove(name);
+        if (_quoteStorage.Quotes[keyValuePair.Key].Count == 0)
+            _quoteStorage.Quotes.Remove(keyValuePair.Key);
         
         await FileHelper.SaveQuoteStorageAsync(_quoteStorage);
         
-        return new Quote(id, name, quoteContent);
+        return new Quote(id, keyValuePair.Key, quoteContent);
     }
     
     /// <summary>
@@ -512,10 +518,12 @@ public class QuoteService
     /// <exception cref="NullReferenceException">If the category doesn't have any quotes.</exception>
     public async Task RemoveQuotes(string name)
     {
-        if (!_quoteStorage.Quotes.ContainsKey(name))
+        if (!_quoteStorage.Quotes.Keys.All(key => key.ToLower() == name.ToLower()))
             throw new NullReferenceException("That category does not have any quotes.");
         
-        _quoteStorage.Quotes.Remove(name);
+        var keyValuePair = _quoteStorage.Quotes.Single(pair => pair.Key.ToLower() != name.ToLower());
+        
+        _quoteStorage.Quotes.Remove(keyValuePair.Key);
         
         await FileHelper.SaveQuoteStorageAsync(_quoteStorage);
     }

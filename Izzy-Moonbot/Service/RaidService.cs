@@ -237,7 +237,7 @@ public class RaidService
             // Potential raid. Bug the mods
             await _modLog.CreateModLog(guild)
                 .SetContent(
-                    $"<@-&{_config.ModRole}> Bing-bong! Possible raid detected! ({_config.SmallRaidSize} (`SmallRaidSize`) users joined within {_config.SmallRaidTime} (`SmallRaidTime`) seconds.){Environment.NewLine}{Environment.NewLine}" +
+                    $"<@&{_config.ModRole}> Bing-bong! Possible raid detected! ({_config.SmallRaidSize} (`SmallRaidSize`) users joined within {_config.SmallRaidTime} (`SmallRaidTime`) seconds.){Environment.NewLine}{Environment.NewLine}" +
                     $"{string.Join($"{Environment.NewLine}", potentialRaiders)}{Environment.NewLine}{Environment.NewLine}" +
                     $"Possible commands for this scenario are:{Environment.NewLine}" +
                     $"`{_config.Prefix}ass` - Enable automatically silencing new joins *and* autosilence those considered part of the raid (those who joined within {_config.RecentJoinDecay} (`RecentJoinDecay`) seconds).{Environment.NewLine}" +
@@ -297,7 +297,7 @@ public class RaidService
             {
                 await _modLog.CreateModLog(guild)
                     .SetContent(
-                        $"<@-&{_config.ModRole}> Bing-bong! Raid detected! ({_config.LargeRaidSize} (`LargeRaidSize`) users joined within {_config.LargeRaidTime} (`LargeRaidTime`) seconds.){Environment.NewLine}" +
+                        $"<@&{_config.ModRole}> Bing-bong! Raid detected! ({_config.LargeRaidSize} (`LargeRaidSize`) users joined within {_config.LargeRaidTime} (`LargeRaidTime`) seconds.){Environment.NewLine}" +
                         $"I have automatically silenced all the members below members and enabled autosilencing users on join.{Environment.NewLine}{Environment.NewLine}" +
                         $"{string.Join($"{Environment.NewLine}", potentialRaiders)}{Environment.NewLine}{Environment.NewLine}" +
                         $"Possible commands for this scenario are:{Environment.NewLine}" +
@@ -314,13 +314,13 @@ public class RaidService
                 if (_config.AutoSilenceNewJoins)
                     await _modLog.CreateModLog(guild)
                         .SetContent(
-                            $"<@-&{_config.ModRole}> **The current raid has escalated. Silencing new joins has already been enabled manually.** ({_config.LargeRaidSize} (`LargeRaidSize`) users joined within {_config.LargeRaidTime} (`LargeRaidTime`) seconds.)")
+                            $"<@&{_config.ModRole}> **The current raid has escalated. Silencing new joins has already been enabled manually.** ({_config.LargeRaidSize} (`LargeRaidSize`) users joined within {_config.LargeRaidTime} (`LargeRaidTime`) seconds.)")
                         .SetFileLogContent($"The current raid has escalated. Silencing new joins has already been enabled manually. ({_config.LargeRaidSize} (`LargeRaidSize`) users joined within {_config.LargeRaidTime} (`LargeRaidTime`) seconds.)")
                         .Send();
                 else
                     await _modLog.CreateModLog(guild)
                         .SetContent(
-                            $"<@-&{_config.ModRole}> **The current raid has escalated and I have automatically enabled silencing new joins and I've silenced those considered part of the raid.** ({_config.LargeRaidSize} (`LargeRaidSize`) users joined within {_config.LargeRaidTime} (`LargeRaidTime`) seconds.)")
+                            $"<@&{_config.ModRole}> **The current raid has escalated and I have automatically enabled silencing new joins and I've silenced those considered part of the raid.** ({_config.LargeRaidSize} (`LargeRaidSize`) users joined within {_config.LargeRaidTime} (`LargeRaidTime`) seconds.)")
                         .SetFileLogContent($"The current raid has escalated and I have automatically enabled silencing new joins and I've silenced those considered part of the raid. ({_config.LargeRaidSize} (`LargeRaidSize`) users joined within {_config.LargeRaidTime} (`LargeRaidTime`) seconds.)")
                         .Send();
             }
