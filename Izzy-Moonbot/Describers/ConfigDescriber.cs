@@ -14,6 +14,10 @@ public class ConfigDescriber
         _config.Add("Prefix",
             new ConfigItem(ConfigItemType.Char, "The prefix I will listen to for commands.",
                 ConfigItemCategory.Core));
+        _config.Add("UnicycleInterval",
+            new ConfigItem(ConfigItemType.Integer,
+                "How often, in milliseconds, I'll check scheduled jobs for execution.",
+                ConfigItemCategory.Core));
         _config.Add("SafeMode",
             new ConfigItem(ConfigItemType.Boolean,
                 "If set to true, I will not preform any moderation actions. This is best used when testing moderation functions in case of potentially broken code.",
