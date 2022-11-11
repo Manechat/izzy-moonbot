@@ -158,14 +158,14 @@ namespace Izzy_Moonbot
         public async Task ReadyEvent()
         {
             _logger.LogTrace("Ready event called");
-            _scheduleService.BeginUnicycleLoop(_client.Guilds.Single(guild => guild.Id == 98609319519453184), _client);
+            //_scheduleService.BeginUnicycleLoop(_client.Guilds.Single(guild => guild.Id == 98609319519453184), _client);
             
             foreach (var clientGuild in _client.Guilds)
             {
                 await clientGuild.DownloadUsersAsync();
             }
 
-            ResyncUsers();
+            //ResyncUsers();
         }
 
         private void ResyncUsers()

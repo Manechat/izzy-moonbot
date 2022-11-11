@@ -67,6 +67,10 @@ public class Program
             services.AddSingleton(stateStorage);
             var quoteStorage = FileHelper.LoadQuoteStorageAsync().GetAwaiter().GetResult();
             services.AddSingleton(quoteStorage);
+            
+            // Database
+            var database = new DatabaseHelper(botSettings);
+            services.AddSingleton(database);
 
             // Describers
             services.AddSingleton<ConfigDescriber>();

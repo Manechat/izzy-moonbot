@@ -11,6 +11,8 @@ using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Service;
 using Izzy_Moonbot.Settings;
 using Microsoft.Extensions.Logging;
+using MongoDB.Bson;
+using MongoDB.Driver;
 
 namespace Izzy_Moonbot.Modules;
 
@@ -24,13 +26,14 @@ public class DevModule : ModuleBase<SocketCommandContext>
     private readonly SpamService _pressureService;
     private readonly RaidService _raidService;
     private readonly ScheduleService _scheduleService;
+    private readonly DatabaseHelper _database;
     private readonly Config _config;
     private readonly State _state;
     private readonly Dictionary<ulong, User> _users;
 
     public DevModule(Config config, Dictionary<ulong, User> users, FilterService filterService,
         LoggingService loggingService, ModLoggingService modLoggingService, ModService modService,
-        SpamService pressureService, RaidService raidService, ScheduleService scheduleService, State state)
+        SpamService pressureService, RaidService raidService, ScheduleService scheduleService, State state, DatabaseHelper database)
     {
         _config = config;
         _users = users;
@@ -42,6 +45,7 @@ public class DevModule : ModuleBase<SocketCommandContext>
         _raidService = raidService;
         _scheduleService = scheduleService;
         _state = state;
+        _database = database;
     }
 
     [NamedArgumentType]
@@ -369,6 +373,28 @@ public class DevModule : ModuleBase<SocketCommandContext>
                 {
                     await ReplyAsync($"not valid user");
                 }
+                break;
+            case "db-collection":
+                var collectionDBCollection = _database.GetCollection("test");
+                await ReplyAsync(collectionDBCollection.CollectionNamespace.FullName);
+                break;
+            case "db-document":
+                var collectionDBDocument = _database.GetCollection("test");
+                var documentDBDocument = new BsonDocument
+                {
+                    { "name", "MongoDB" },
+                    { "type", "Database" },
+                    { "count", 1 },
+                    { "info", new BsonDocument
+                    {
+                        { "x", 203 },
+                        { "y", 102 }
+                    }}
+                };
+                await collectionDBDocument.InsertOneAsync(documentDBDocument);
+                var gottenDocumentDBDocument =
+                    await collectionDBDocument.Find(new BsonDocument()).FirstOrDefaultAsync();
+                await ReplyAsync($"```json{Environment.NewLine}{gottenDocumentDBDocument.ToString()}{Environment.NewLine}```");
                 break;
             default:
                 Context.Message.ReplyAsync("Unknown test.");
