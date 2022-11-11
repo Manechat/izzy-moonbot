@@ -36,14 +36,14 @@ public class ScheduleService
         _scheduledJobs = scheduledJobs;
     }
 
-    public void BeginUnicycleLoop(SocketGuild guild, DiscordSocketClient client)
+    public void BeginUnicycleLoop(DiscordSocketClient client)
     {
         if (_alreadyInitiated) return;
         _alreadyInitiated = true;
-        UnicycleLoop(guild, client);
+        UnicycleLoop(client);
     }
 
-    private void UnicycleLoop(SocketGuild guild, DiscordSocketClient client)
+    private void UnicycleLoop(DiscordSocketClient client)
     {
         // Core event loop. Executes every Config.UnicycleInterval seconds.
         Task.Run(async () =>
@@ -53,7 +53,7 @@ public class ScheduleService
             // Run unicycle.
             try
             {
-                await Unicycle(guild, client);
+                await Unicycle(client);
             }
             catch (Exception exception)
             {
@@ -61,11 +61,11 @@ public class ScheduleService
             }
 
             // Call self
-            UnicycleLoop(guild, client);
+            UnicycleLoop(client);
         });
     }
 
-    private async Task Unicycle(SocketGuild guild, DiscordSocketClient client)
+    private async Task Unicycle(DiscordSocketClient client)
     {
         var scheduledJobsToExecute = new List<ScheduledJob>();
 
@@ -85,16 +85,16 @@ public class ScheduleService
             switch (job.Action.Type)
             {
                 case RemoveRole:
-                    await Unicycle_RemoveRole(job, guild, client);
+                    await Unicycle_RemoveRole(job, client.GetGuild(98609319519453184), client);
                     break;
                 case AddRole:
-                    await Unicycle_AddRole(job, guild, client);
+                    await Unicycle_AddRole(job, client.GetGuild(98609319519453184), client);
                     break;
                 case Unban:
-                    await Unicycle_Unban(job, guild, client);
+                    await Unicycle_Unban(job, client.GetGuild(98609319519453184), client);
                     break;
                 case Echo:
-                    await Unicycle_Echo(job, guild, client);
+                    await Unicycle_Echo(job, client.GetGuild(98609319519453184), client);
                     break;
                 default:
                     throw new NotSupportedException($"{job.Action.Type} is currently not supported.");
