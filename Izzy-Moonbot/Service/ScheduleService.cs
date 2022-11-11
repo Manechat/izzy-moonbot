@@ -291,7 +291,7 @@ public class ScheduleService
         await _mod.AddRole(user, role.Id, reason);
         await _modLogging.CreateModLog(guild)
             .SetContent(
-                $"Gave <@&{role.Id}> to <@{user.Id}> (`{user.Id}`). {(reason != null ? $"Reason: {reason}." : "")}")
+                $"Gave <@&{role.Id}> to <@{user.Id}> (`{user.Id}`).")
             .SetFileLogContent(
                 $"Gave {role.Name} ({role.Id}) to {user.Username}#{user.Discriminator} ({user.Id}). {(reason != null ? $"Reason: {reason}." : "")}")
             .Send();
@@ -314,9 +314,9 @@ public class ScheduleService
         await _mod.RemoveRole(user, role.Id, reason);
         await _modLogging.CreateModLog(guild)
             .SetContent(
-                $"Removed <@&{role.Id}> from <@{user.Id}> (`{user.Id}`){(reason != null ? $" for {reason}" : "")}")
+                $"Removed <@&{role.Id}> from <@{user.Id}> (`{user.Id}`)")
             .SetFileLogContent(
-                $"Removed {role.Name} ({role.Id}) from {user.Username}#{user.Discriminator} ({user.Id}){(reason != null ? $" for {reason}" : "")}")
+                $"Removed {role.Name} ({role.Id}) from {user.Username}#{user.Discriminator} ({user.Id}). {(reason != null ? $"Reason: {reason}." : "")}")
             .Send();
     }
 
