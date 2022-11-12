@@ -266,36 +266,68 @@ public class AdminModule : ModuleBase<SocketCommandContext>
     [Summary("Get information about a user")]
     [ModCommand(Group = "Permission")]
     [DevCommand(Group = "Permission")]
+    [Alias("uinfo")]
     public async Task UserInfoCommandAsync(
         [Remainder][Summary("The user to get information about")] string user = "")
     {
         if (user == "") user = Context.User.Id.ToString(); // Set to user ID to target self.
 
         var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(user, Context);
+
+        if (userId == 0)
+        {
+            await ReplyAsync("I couldn't find that user's id.");
+            return;
+        }
+        
+        var output = $"";
+        
         var member = Context.Guild.GetUser(userId);
 
         if (member == null)
         {
-            await ReplyAsync("I couldn't find that user, sorry!");
-            return;
-        }
+            // Try user?
+            var discordUser = await Context.Client.GetUserAsync(userId);
 
-        var output = $"";
-        output += $"**User:** `<@{member.Id}>` {member.Username} ({member.Id}){Environment.NewLine}";
-        output += $"**Names:** {string.Join(", ", _users[member.Id].Aliases)}{Environment.NewLine}";
-        output += $"**Roles:** {string.Join(", ", member.Roles.Where(role => role.Id != Context.Guild.Id).Select(role => role.Name))}{Environment.NewLine}";
-        output += $"**History:** ";
-        output += $"Created <t:{member.CreatedAt.ToUnixTimeSeconds()}:R>";
-        if (member.JoinedAt.HasValue)
+            if (discordUser == null)
+            {
+                await ReplyAsync("I couldn't find that user, sorry!");
+                return;
+            }
+
+            output += $"**User:** `<@{discordUser.Id}>` {discordUser.Username} ({discordUser.Id}){Environment.NewLine}";
+            output += _users.ContainsKey(discordUser.Id)
+                ? $"**Names:** {string.Join(", ", _users[discordUser.Id].Aliases)}{Environment.NewLine}"
+                : $"**Names:** None (user isn't known by Izzy){Environment.NewLine}";
+            output += $"**Roles:** None (user isn't in this server){Environment.NewLine}";
+            output += "**History:** ";
+            output += $"Created <t:{discordUser.CreatedAt.ToUnixTimeSeconds()}:R>";
+            output += _users.ContainsKey(discordUser.Id)
+                ? $", last seen <t:{_users[discordUser.Id].Timestamp.ToUnixTimeSeconds()}:R>{Environment.NewLine}"
+                : Environment.NewLine;
+            output += $"**Avatar(s):** {Environment.NewLine}";
+            output += $"    Server: User is not in this server.{Environment.NewLine}";
+            output += $"    Global: {member.GetAvatarUrl() ?? "No global avatar found."}";
+        }
+        else
         {
+            output += $"**User:** `<@{member.Id}>` {member.Username} ({member.Id}){Environment.NewLine}";
+            output += $"**Names:** {string.Join(", ", _users[member.Id].Aliases)}{Environment.NewLine}";
             output +=
-                $", joined <t:{member.JoinedAt.Value.ToUnixTimeSeconds()}:R>";
-        }
+                $"**Roles:** {string.Join(", ", member.Roles.Where(role => role.Id != Context.Guild.Id).Select(role => role.Name))}{Environment.NewLine}";
+            output += $"**History:** ";
+            output += $"Created <t:{member.CreatedAt.ToUnixTimeSeconds()}:R>";
+            if (member.JoinedAt.HasValue)
+            {
+                output +=
+                    $", joined <t:{member.JoinedAt.Value.ToUnixTimeSeconds()}:R>";
+            }
 
-        output += $", last seen <t:{_users[member.Id].Timestamp.ToUnixTimeSeconds()}:R>{Environment.NewLine}";
-        output += $"**Avatar(s):** {Environment.NewLine}";
-        output += $"    Server: {member.GetGuildAvatarUrl() ?? "No server avatar found."}{Environment.NewLine}";
-        output += $"    Global: {member.GetAvatarUrl() ?? "No global avatar found."}";
+            output += $", last seen <t:{_users[member.Id].Timestamp.ToUnixTimeSeconds()}:R>{Environment.NewLine}";
+            output += $"**Avatar(s):** {Environment.NewLine}";
+            output += $"    Server: {member.GetGuildAvatarUrl() ?? "No server avatar found."}{Environment.NewLine}";
+            output += $"    Global: {member.GetAvatarUrl() ?? "No global avatar found."}";
+        }
 
         await ReplyAsync(output, allowedMentions: AllowedMentions.None);
     }
