@@ -86,44 +86,35 @@ public class RaidService
 
         await FileHelper.SaveConfigAsync(_config);
 
+        _state.RecentJoins.RemoveAll( userId =>
+        {
+            var member = context.Guild.GetUser(userId);
+
+            if (member == null) return true;
+            if (!member.JoinedAt.HasValue) return true;
+            if (member.JoinedAt.Value.AddSeconds(_config.RecentJoinDecay) < DateTimeOffset.Now) return false;
+            
+            _log.Log(
+                $"{member.DisplayName} ({member.Id}) no longer a recent join (immediate after raid)",
+                null);
+            return true;
+        });
+        
         _state.RecentJoins.ForEach(async userId =>
         {
             var member = context.Guild.GetUser(userId);
 
-            if (member != null)
+            if (member is not { JoinedAt: { } }) return;
+            if (member.JoinedAt.Value.AddSeconds(_config.RecentJoinDecay) < DateTimeOffset.Now)
             {
-                if (member.JoinedAt.HasValue)
+                Task.Run(async () =>
                 {
-                    if (member.JoinedAt.Value.AddSeconds(_config.RecentJoinDecay) >= DateTimeOffset.Now)
-                    {
-                        await _log.Log(
-                            $"{member.DisplayName} ({member.Id}) no longer a recent join (immediate after raid)",
-                            null);
-                        _state.RecentJoins.Remove(userId);
-                    }
-                    else
-                    {
-                        Task.Run(async () =>
-                        {
-                            await Task.Delay(Convert.ToInt32((member.JoinedAt.Value.AddSeconds(_config.RecentJoinDecay) - DateTimeOffset.Now) * 1000));
-                            await _log.Log(
-                                $"{member.DisplayName} ({member.Id}) no longer a recent join (after raid)",
-                                null);
-                            _state.RecentJoins.Remove(member.Id);
-                        });
-                    }
-                }
-                else
-                {
-                    // ????
-                    // Just remove them lol
-                    _state.RecentJoins.Remove(userId);
-                }
-            }
-            else
-            {
-                // They got yeeted. Save on memory
-                _state.RecentJoins.Remove(userId);
+                    await Task.Delay(Convert.ToInt32((member.JoinedAt.Value.AddSeconds(_config.RecentJoinDecay) - DateTimeOffset.Now) * 1000));
+                    await _log.Log(
+                        $"{member.DisplayName} ({member.Id}) no longer a recent join (after raid)",
+                        null);
+                    _state.RecentJoins.Remove(member.Id);
+                });
             }
         });
 
@@ -143,44 +134,35 @@ public class RaidService
             .SetFileLogContent("The raid has ended. I've disabled raid defences and cleared my internal cache of all recent joins.")
             .Send();
 
+        _state.RecentJoins.RemoveAll( userId =>
+        {
+            var member = guild.GetUser(userId);
+
+            if (member == null) return true;
+            if (!member.JoinedAt.HasValue) return true;
+            if (member.JoinedAt.Value.AddSeconds(_config.RecentJoinDecay) < DateTimeOffset.Now) return false;
+            
+            _log.Log(
+                $"{member.DisplayName} ({member.Id}) no longer a recent join (immediate after raid)",
+                null);
+            return true;
+        });
+        
         _state.RecentJoins.ForEach(async userId =>
         {
             var member = guild.GetUser(userId);
 
-            if (member != null)
+            if (member is not { JoinedAt: { } }) return;
+            if (member.JoinedAt.Value.AddSeconds(_config.RecentJoinDecay) < DateTimeOffset.Now)
             {
-                if (member.JoinedAt.HasValue)
+                Task.Run(async () =>
                 {
-                    if (member.JoinedAt.Value.AddSeconds(_config.RecentJoinDecay) >= DateTimeOffset.Now)
-                    {
-                        await _log.Log(
-                            $"{member.DisplayName} ({member.Id}) no longer a recent join (immediate after raid)",
-                            null);
-                        _state.RecentJoins.Remove(userId);
-                    }
-                    else
-                    {
-                        Task.Run(async () =>
-                        {
-                            await Task.Delay(Convert.ToInt32((member.JoinedAt.Value.AddSeconds(_config.RecentJoinDecay) - DateTimeOffset.Now) * 1000));
-                            await _log.Log(
-                                $"{member.DisplayName} ({member.Id}) no longer a recent join (after raid)",
-                                null);
-                            _state.RecentJoins.Remove(member.Id);
-                        });
-                    }
-                }
-                else
-                {
-                    // ????
-                    // Just remove them lol
-                    _state.RecentJoins.Remove(userId);
-                }
-            }
-            else
-            {
-                // They got yeeted. Save on memory
-                _state.RecentJoins.Remove(userId);
+                    await Task.Delay(Convert.ToInt32((member.JoinedAt.Value.AddSeconds(_config.RecentJoinDecay) - DateTimeOffset.Now) * 1000));
+                    await _log.Log(
+                        $"{member.DisplayName} ({member.Id}) no longer a recent join (after raid)",
+                        null);
+                    _state.RecentJoins.Remove(member.Id);
+                });
             }
         });
 
