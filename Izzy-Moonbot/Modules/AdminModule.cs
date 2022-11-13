@@ -286,7 +286,7 @@ public class AdminModule : ModuleBase<SocketCommandContext>
 
         if (member == null)
         {
-            // Try user?
+            // Even if `userId` is not a member of Manechat, it might still be a real user elsewhere in Discord
             var discordUser = await Context.Client.GetUserAsync(userId);
 
             if (discordUser == null)
