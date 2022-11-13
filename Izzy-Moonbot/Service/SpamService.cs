@@ -270,8 +270,8 @@ public class SpamService
                     .WithColor(3355443)
                     .AddField("User", $"<@{context.User.Id}> (`{context.User.Id}`)", true)
                     .AddField("Channel", $"<#{context.Channel.Id}>", true)
-                    .AddField("Pressure reached", $"{newPressure}/{_config.SpamMaxPressure}")
-                    .AddField("Pressure breakdown of last message", $"{PressureTraceToPonyReadable(pressureTracer)}")
+                    .AddField("Pressure", $"This user's last message raised their pressure from {oldPressure} to {newPressure}, exceeding {_config.SpamMaxPressure} (SpamMaxPressure)")
+                    .AddField("Breakdown of last message", $"{PressureTraceToPonyReadable(pressureTracer)}")
                     .WithTimestamp(context.Message.Timestamp);
 
                 await _modLogger.CreateModLog(context.Guild)
