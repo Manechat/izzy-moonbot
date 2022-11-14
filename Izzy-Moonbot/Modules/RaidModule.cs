@@ -32,7 +32,7 @@ public class RaidModule : ModuleBase<SocketCommandContext>
     }
 
     [Command("ass")]
-    [Summary("Change whether raidsilence is enabled or not.")]
+    [Summary("Set `AutoSilenceNewJoins` to `true` and silence those I consider recent joins (if there's a raid ongoing).")]
     [RequireContext(ContextType.Guild)]
     [ModCommand(Group = "Permissions")]
     [DevCommand(Group = "Permissions")]
@@ -46,11 +46,11 @@ public class RaidModule : ModuleBase<SocketCommandContext>
 
         await _raidService.SilenceRecentJoins(Context);
         await ReplyAsync(
-            $"I've enabled autosilencing new members! I also autosilenced those who joined earlier than {_config.RecentJoinDecay} seconds ago.");
+            $"I've enabled autosilencing new members! I also silenced those who joined earlier than {_config.RecentJoinDecay} seconds ago.");
     }
 
     [Command("assoff")]
-    [Summary("Disable autosilencing on join and resets the raid mode.")]
+    [Summary("Set `AutoSilenceNewJoins` to `false` and stop me from thinking that a raid is ongoing (if there's a raid ongoing).")]
     [RequireContext(ContextType.Guild)]
     [ModCommand(Group = "Permissions")]
     [DevCommand(Group = "Permissions")]
@@ -58,8 +58,7 @@ public class RaidModule : ModuleBase<SocketCommandContext>
     {
         if (_state.CurrentRaidMode == RaidMode.None)
         {
-            await ReplyAsync("There doesn't seem to be any raids going on...",
-                messageReference: new MessageReference(Context.Message.Id, Context.Channel.Id, Context.Guild.Id));
+            await ReplyAsync("There doesn't seem to be any raids going on...");
             return;
         }
 
@@ -77,8 +76,7 @@ public class RaidModule : ModuleBase<SocketCommandContext>
     {
         if (_state.CurrentRaidMode == RaidMode.None)
         {
-            await ReplyAsync("There doesn't seem to be any raids going on...",
-                messageReference: new MessageReference(Context.Message.Id, Context.Channel.Id, Context.Guild.Id));
+            await ReplyAsync("There doesn't seem to be any raids going on...");
             return;
         }
 
@@ -90,8 +88,7 @@ public class RaidModule : ModuleBase<SocketCommandContext>
         });
 
         await ReplyAsync(
-            $"I consider the following users as part of the current raid.{Environment.NewLine}```{Environment.NewLine}{string.Join(", ", potentialRaiders)}{Environment.NewLine}```",
-            messageReference: new MessageReference(Context.Message.Id, Context.Channel.Id, Context.Guild.Id));
+            $"I consider the following users as part of the current raid.{Environment.NewLine}```{Environment.NewLine}{string.Join(", ", potentialRaiders)}{Environment.NewLine}```");
     }
 
     /*[Command("banraid")]
