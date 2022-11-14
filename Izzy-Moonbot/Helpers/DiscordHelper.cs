@@ -48,21 +48,11 @@ public static class DiscordHelper
 
     public static string[] GetArguments(string content)
     {
-        var characters = content.Split("").Select(character =>
-        {
-            try
-            {
-                return char.Parse(character);
-            }
-            catch (FormatException)
-            {
-                return '\r';
-            }
-        }).ToArray();
+        var characters = content.ToCharArray();
         
         var arguments = new List<string>();
 
-        for (var i = 0; i < content.Length; i++)
+        for (var i = 0; i < characters.Length; i++)
         {
             var argument = characters[i];
             if (!IsSpace(argument))
@@ -70,15 +60,18 @@ public static class DiscordHelper
                 var start = 0;
                 var end = 0;
 
-                if (argument == '"' && (i < 1 || (char?)GetSafely(characters, i-1) != '\\'))
+                var safePrevious = (char?)GetSafely(characters, i - 1);
+                
+                if (argument == '"' && (i < 1 || safePrevious != '\\'))
                 {
                     i++;
                     start = i;
-                    while (i < content.Length && (characters[i] != '"' || (char?)GetSafely(characters, i-1) == '\\'))
+                    
+                    while (i < content.Length && (characters[i] != '"' || characters[i-1] == '\\'))
                     {
                         i++;
                     }
-                    if ((char?)GetSafely(characters, i - 1) == '\\')
+                    if (i-1 >= 0 && characters[i-1] == '\\')
                     {
                         end = i - 1;
                     }
@@ -91,14 +84,15 @@ public static class DiscordHelper
                 {
                     start = i;
                     i++;
-                    while (i < content.Length && !IsSpace(argument) &&
-                           (characters[i] != '"' || (char?)GetSafely(characters, i - 1) == '\\'))
+                    
+                    while (i < content.Length && !IsSpace(characters[i]) &&
+                           (characters[i] != '"' || characters[i-1] == '\\'))
                     {
                         i++;
                     }
                     end = i;
                 }
-                arguments.Add(string.Join("", content.Split("")[new Range(start, end)]));
+                arguments.Add(string.Join("", content[new Range(start, end)]));
             }
         }
 
