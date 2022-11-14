@@ -24,7 +24,8 @@ public class SpamModule : ModuleBase<SocketCommandContext>
     [Summary("Get a users pressure")]
     [ModCommand(Group = "Permissions")]
     [DevCommand(Group = "Permissions")]
-    public async Task GetPressureAsync([Remainder][Summary("The user you wish to search for.")] string userName = "")
+    [Parameter("user", ParameterType.User, "The user to get the pressure of, or yourself if no user is provided.", true)]
+    public async Task GetPressureAsync([Remainder] string userName = "")
     {
         // If no target is specified, target self.
         if (userName == "") userName = $"<@!{Context.User.Id}>";
@@ -48,8 +49,9 @@ public class SpamModule : ModuleBase<SocketCommandContext>
     [Summary("Get a users previous messages (the messages which would have been deleted if the user spammed).")]
     [ModCommand(Group = "Permissions")]
     [DevCommand(Group = "Permissions")]
+    [Parameter("user", ParameterType.User, "The user to get the messages of, or yourself if no user is provided.", true)]
     public async Task GetPreviousMessagesAsync(
-        [Remainder] [Summary("The user you wish to search for.")] string userName = "")
+        [Remainder] string userName = "")
     {
         // If no target is specified, target self.
         if (userName == "") userName = $"<@!{Context.User.Id}>";
