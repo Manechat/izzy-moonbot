@@ -426,6 +426,11 @@ public class AdminModule : ModuleBase<SocketCommandContext>
 
         var user = args.Arguments[0];
         var duration = string.Join("", argsString.Skip(args.Indices[0]));
+
+        if (duration.StartsWith("\"") && duration.EndsWith("\""))
+        {
+            duration = duration[new Range(1, ^1)];
+        }
         
         var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(user, Context);
         var member = Context.Guild.GetUser(userId);

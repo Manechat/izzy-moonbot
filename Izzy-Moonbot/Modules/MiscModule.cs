@@ -80,6 +80,11 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                     search = args.Arguments[0];
                 }
             }
+        
+            if (search.StartsWith("\"") && search.EndsWith("\""))
+            {
+                search = search[new Range(1, ^1)];
+            }
 
             if (search == "" && number != -1)
             {
@@ -684,6 +689,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
             }
 
             var user = argsString;
+            
             var number = -1;
 
             var args = DiscordHelper.GetArguments(argsString);
@@ -717,6 +723,11 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                 await ReplyAsync(
                     "I uhh.. only saw 1 parameter for that command. This command requires both the user, and the id of the quote to remove.");
                 return;
+            }
+            
+            if (user.StartsWith("\"") && user.EndsWith("\""))
+            {
+                user = user[new Range(1, ^1)];
             }
 
             if (user == "")
