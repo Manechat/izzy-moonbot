@@ -46,11 +46,12 @@ public static class DiscordHelper
         return array.ElementAt(index);
     }
 
-    public static string[] GetArguments(string content)
+    public static ArgumentResult GetArguments(string content)
     {
         var characters = content.ToCharArray();
         
         var arguments = new List<string>();
+        var indices = new List<int>();
 
         for (var i = 0; i < characters.Length; i++)
         {
@@ -93,10 +94,26 @@ public static class DiscordHelper
                     end = i;
                 }
                 arguments.Add(string.Join("", content[new Range(start, end)]));
+
+                var previous = 0;
+                
+                if (indices.Count >= 1) previous = indices[^1];
+                
+                indices.Add(previous + (end - start) + 1);
             }
         }
 
-        return arguments.ToArray();
+        return new ArgumentResult
+        {
+            Arguments = arguments.ToArray(),
+            Indices = indices.ToArray()
+        };
+    }
+
+    public struct ArgumentResult
+    {
+        public string[] Arguments;
+        public int[] Indices;
     }
 
     public static bool IsInGuild(SocketMessage msg)
