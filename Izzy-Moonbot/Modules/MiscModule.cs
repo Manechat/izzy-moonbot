@@ -611,6 +611,11 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                 return;
             }
             
+            if (content.StartsWith("\"") && content.EndsWith("\""))
+            {
+                content = content[new Range(1, ^1)];
+            }
+            
             // Check for aliases
             if (_quoteService.AliasExists(user))
             {
@@ -817,8 +822,8 @@ public class MiscModule : ModuleBase<SocketCommandContext>
             var args = DiscordHelper.GetArguments(argsString);
 
             var operation = args.Arguments[0];
-            var alias = args.Arguments[1];
-            var target = args.Arguments[2];
+            var alias = args.Arguments.Length >= 2 ? args.Arguments[1] : "";
+            var target = args.Arguments.Length >= 3 ? args.Arguments[2] : "";
             
             if (operation.ToLower() == "list")
             {
