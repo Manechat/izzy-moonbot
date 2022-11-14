@@ -66,8 +66,7 @@ public class RaidService
         {
             var member = context.Guild.GetUser(recentJoin);
 
-            if (member == null) return null;
-            return member;
+            return member ?? null;
         }).Where(member => member != null).ToList();
 
         await _modService.SilenceUsers(recentJoins, "Suspected raider");
@@ -90,8 +89,7 @@ public class RaidService
         {
             var member = context.Guild.GetUser(userId);
 
-            if (member == null) return true;
-            if (!member.JoinedAt.HasValue) return true;
+            if (member is not { JoinedAt: { } }) return true;
             if (member.JoinedAt.Value.AddSeconds(_config.RecentJoinDecay) < DateTimeOffset.Now) return false;
             
             _log.Log(
@@ -127,19 +125,14 @@ public class RaidService
 
         _config.AutoSilenceNewJoins = false;
         _config.BatchSendLogs = false;
-
-        await _modLog.CreateModLog(guild)
-            .SetContent(
-                $"The raid has ended. I've disabled raid defences and cleared my internal cache of all recent joins.")
-            .SetFileLogContent("The raid has ended. I've disabled raid defences and cleared my internal cache of all recent joins.")
-            .Send();
+        
+        await FileHelper.SaveConfigAsync(_config);
 
         _state.RecentJoins.RemoveAll( userId =>
         {
             var member = guild.GetUser(userId);
 
-            if (member == null) return true;
-            if (!member.JoinedAt.HasValue) return true;
+            if (member is not { JoinedAt: { } }) return true;
             if (member.JoinedAt.Value.AddSeconds(_config.RecentJoinDecay) < DateTimeOffset.Now) return false;
             
             _log.Log(
@@ -165,8 +158,12 @@ public class RaidService
                 });
             }
         });
-
-        await FileHelper.SaveConfigAsync(_config);
+        
+        await _modLog.CreateModLog(guild)
+            .SetContent(
+                $"The raid has ended. I've disabled raid defences and cleared my internal cache of all recent joins.")
+            .SetFileLogContent("The raid has ended. I've disabled raid defences and cleared my internal cache of all recent joins.")
+            .Send();
     }
 
     private async Task DecayLargeRaid(SocketGuild guild)
