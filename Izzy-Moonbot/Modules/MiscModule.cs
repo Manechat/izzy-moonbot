@@ -36,14 +36,13 @@ public class MiscModule : ModuleBase<SocketCommandContext>
         [Command("quote")]
         [Summary("Get a quote, either randomly, from a specific user, or a specific quote.")]
         [Alias("q")]
+        [Parameter("user", ParameterType.User, "The user to get a quote from.", true)]
+        [Parameter("id", ParameterType.Integer, "The specific quote number from that user to post.", true)]
         [BotsAllowed]
         public async Task QuoteCommandAsync(
-            [Summary("A user (or quote category) to search for.")]
-            string search = "",
-            [Summary("A specific quote number in a user (or quote category)")]
-            int? number = null)
+            [Remainder]string argsString = "")
         {
-            if (search == "" && number == null)
+            if (argsString == "")
             {
                 // Get random quote and post
                 var quote = _quoteService.GetRandomQuote(Context.Guild);
@@ -52,7 +51,43 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                 return;
             }
 
-            if (search != "" && number == null)
+            var search = argsString;
+            var number = -1;
+
+            var args = DiscordHelper.GetArguments(argsString);
+
+            if (args.Arguments.Length >= 2)
+            {
+                if (!int.TryParse(args.Arguments[1], out number))
+                {
+                    number = -1;
+                    foreach (var s in argsString.Split(" "))
+                    {
+                        if (int.TryParse(s, out number))
+                        {
+                            // Found the number, all content before it is search
+                            var index = argsString.Split(" ").ToList().IndexOf(s);
+                            search = string.Join(" ", argsString.Split(" ")[new Range(0, index)]);
+                        }
+                        else
+                        {
+                            number = -1;
+                        }
+                    }
+                }
+                else
+                {
+                    search = args.Arguments[0];
+                }
+            }
+
+            if (search == "" && number != -1)
+            {
+                await ReplyAsync("You need to provide a user to get the quotes from!");
+                return;
+            }
+
+            if (search != "" && number == -1)
             {
                 // Get random quote depending on if search is user-resolvable or not
                 // First check if the search resolves to an alias.
@@ -146,11 +181,11 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                 }
             }
 
-            if (search != "" && number != null)
+            if (search != "" && number != -1)
             {
-                if (number.Value <= 0)
+                if (number <= 0)
                 {
-                    await ReplyAsync($"Quotes begin at #1, not #{number.Value}!");
+                    await ReplyAsync($"Quotes begin at #1, not #{number}!");
                     return;
                 }
                 
@@ -165,7 +200,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                         // Choose a random quote from this user.
                         try
                         {
-                            var quote = _quoteService.GetQuote(user, number.Value - 1);
+                            var quote = _quoteService.GetQuote(user, number - 1);
 
                             // Send quote and return
                             await ReplyAsync($"**{quote.Name} `#{quote.Id + 1}`:** {quote.Content}", allowedMentions: AllowedMentions.None);
@@ -188,7 +223,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                     // Choose a random quote from this category.
                     try
                     {
-                        var quote = _quoteService.GetQuote(category, number.Value-1);
+                        var quote = _quoteService.GetQuote(category, number-1);
 
                         // Send quote and return.
                         await ReplyAsync($"**{quote.Name} `#{quote.Id+1}`:** {quote.Content}", allowedMentions: AllowedMentions.None);
@@ -212,7 +247,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                     // Get a random quote from the category
                     try
                     {
-                        var quote = _quoteService.GetQuote(search, number.Value-1);
+                        var quote = _quoteService.GetQuote(search, number-1);
 
                         // Send quote and return
                         await ReplyAsync($"**{quote.Name} `#{quote.Id+1}`:** {quote.Content}", allowedMentions: AllowedMentions.None);
@@ -244,7 +279,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                 // User exists, choose a random quote from this user.
                 try
                 {
-                    var quote = _quoteService.GetQuote(member, number.Value-1);
+                    var quote = _quoteService.GetQuote(member, number-1);
 
                     // Send quote and return
                     await ReplyAsync($"**{quote.Name} `#{quote.Id+1}`:** {quote.Content}", allowedMentions: AllowedMentions.None);
@@ -270,9 +305,9 @@ public class MiscModule : ModuleBase<SocketCommandContext>
         [Summary(
             "Find a list of quotes for a specific user or category, or a list of categories and users with quotes if one is not provided.")]
         [Alias("searchquotes", "sq", "listquotes", "lq", "quotes")]
+        [Parameter("user", ParameterType.User, "The user to search for.", true)]
         public async Task SearchQuoteCommandAsync(
-            [Summary("A user (or quote category) to search for.")]
-            string search = ""
+            [Remainder] string search = ""
         )
         {
             if (search == "")
@@ -542,10 +577,23 @@ public class MiscModule : ModuleBase<SocketCommandContext>
             "Adds a quote to a user or category.")]
         [ModCommand(Group="Permission")]
         [DevCommand(Group="Permission")]
+        [Parameter("user", ParameterType.User, "The user to add the quote to.")]
+        [Parameter("content", ParameterType.String, "The quote content to add.")]
         public async Task AddQuoteCommandAsync(
-            [Summary("The user/category to add the quote to.")] string user = "",
-            [Remainder] [Summary("The quote content.")] string content = "")
+            [Remainder] string argsString = "")
         {
+            if (argsString == "")
+            {
+                await ReplyAsync(
+                    "You need to tell me the user you want to add the quote to, and the content of the quote.");
+                return;
+            }
+            
+            var args = DiscordHelper.GetArguments(argsString);
+
+            var user = args.Arguments[0];
+            var content = string.Join("", argsString.Skip(args.Indices[0]));
+
             if (user == "")
             {
                 await ReplyAsync("You need to tell me the user/category you want to add the quote to.");
@@ -616,24 +664,68 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                 $"> {newUserQuote.Content}", allowedMentions: AllowedMentions.None);
             return;
         }
-        
+
         [Command("removequote")]
         [Summary(
             "Removes a quote from a user or category.")]
-        [ModCommand(Group="Permission")]
-        [DevCommand(Group="Permission")]
+        [ModCommand(Group = "Permission")]
+        [DevCommand(Group = "Permission")]
         [Alias("deletequote", "rmquote", "delquote")]
+        [Parameter("user", ParameterType.User, "The user to remove the quote from.")]
+        [Parameter("id", ParameterType.Integer, "The quote number to remove.")]
         public async Task RemoveQuoteCommandAsync(
-            [Summary("The user/category to remove the quote from.")] string user = "",
-            [Summary("The quote number to remove.")] int? number = null)
+            [Remainder] string argsString = "")
         {
+            if (argsString == "")
+            {
+                await ReplyAsync(
+                    "You need to tell me the user you want to remove the quote from, and the quote number to remove.");
+                return;
+            }
+
+            var user = argsString;
+            var number = -1;
+
+            var args = DiscordHelper.GetArguments(argsString);
+
+            if (args.Arguments.Length >= 2)
+            {
+                if (!int.TryParse(args.Arguments[1], out number))
+                {
+                    number = -1;
+                    foreach (var s in argsString.Split(" "))
+                    {
+                        if (int.TryParse(s, out number))
+                        {
+                            // Found the number, all content before it is search
+                            var index = argsString.Split(" ").ToList().IndexOf(s);
+                            user = string.Join(" ", argsString.Split(" ")[new Range(0, index)]);
+                        }
+                        else
+                        {
+                            number = -1;
+                        }
+                    }
+                }
+                else
+                {
+                    user = args.Arguments[0];
+                }
+            }
+            else
+            {
+                await ReplyAsync(
+                    "I uhh.. only saw 1 parameter for that command. This command requires both the user, and the id of the quote to remove.");
+                return;
+            }
+
             if (user == "")
             {
                 await ReplyAsync("You need to tell me the user/category you want to remove the quote from.");
                 return;
             }
 
-            if (number == null)
+            if (number == -1)
             {
                 await ReplyAsync("You need to tell me the quote number to remove.");
                 return;
@@ -646,18 +738,18 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                 {
                     var quoteUser = _quoteService.ProcessAlias(user, Context.Guild);
 
-                    var newAliasUserQuote = await _quoteService.RemoveQuote(quoteUser, number.Value-1);
+                    var newAliasUserQuote = await _quoteService.RemoveQuote(quoteUser, number-1);
 
                     await ReplyAsync(
-                        $"Removed quote number {number.Value} from **{quoteUser.Username}#{quoteUser.Discriminator}**.", allowedMentions: AllowedMentions.None);
+                        $"Removed quote number {number} from **{quoteUser.Username}#{quoteUser.Discriminator}**.", allowedMentions: AllowedMentions.None);
                     return;
                 }
                 var quoteCategory = _quoteService.ProcessAlias(user, Context.Guild);
                     
-                var newAliasCategoryQuote = await _quoteService.RemoveQuote(quoteCategory, number.Value-1);
+                var newAliasCategoryQuote = await _quoteService.RemoveQuote(quoteCategory, number-1);
 
                 await ReplyAsync(
-                    $"Removed quote number {number.Value} from **{newAliasCategoryQuote.Name}**.", allowedMentions: AllowedMentions.None);
+                    $"Removed quote number {number} from **{newAliasCategoryQuote.Name}**.", allowedMentions: AllowedMentions.None);
                 return;
             }
 
@@ -665,10 +757,10 @@ public class MiscModule : ModuleBase<SocketCommandContext>
             if (_quoteService.CategoryExists(user))
             {
                 // Category exists, add new quote to it.
-                var newCategoryQuote = await _quoteService.RemoveQuote(user, number.Value-1);
+                var newCategoryQuote = await _quoteService.RemoveQuote(user, number-1);
 
                 await ReplyAsync(
-                    $"Removed quote number {number.Value} from **{newCategoryQuote.Name}**.", allowedMentions: AllowedMentions.None);
+                    $"Removed quote number {number} from **{newCategoryQuote.Name}**.", allowedMentions: AllowedMentions.None);
                 return;
             }
                 
@@ -683,10 +775,10 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                 return;
             }
                 
-            var newUserQuote = await _quoteService.RemoveQuote(member, number.Value-1);
+            var newUserQuote = await _quoteService.RemoveQuote(member, number-1);
 
             await ReplyAsync(
-                $"Removed quote number {number.Value} from **{newUserQuote.Name}**.", allowedMentions: AllowedMentions.None);
+                $"Removed quote number {number} from **{newUserQuote.Name}**.", allowedMentions: AllowedMentions.None);
             return;
         }
         
@@ -695,20 +787,29 @@ public class MiscModule : ModuleBase<SocketCommandContext>
             "Manage quote aliases.")]
         [ModCommand(Group="Permission")]
         [DevCommand(Group="Permission")]
+        [Parameter("operation", ParameterType.String, "The operation to complete (get/list/set/delete)")]
+        [Parameter("alias", ParameterType.String, "The alias name.")]
+        [Parameter("target", ParameterType.User, "The user to set the alias to, if applicable.", true)]
         public async Task QuoteAliasCommandAsync(
-            [Summary("The operation to complete (get/list/set/delete).")] string operation = "",
-            [Summary("The alias name.")] string alias = "",
-            [Summary("The user/category to set the alias to.")] string target = "")
+            [Remainder] string argsString = "")
         {
-            if (operation == "")
+            if (argsString == "")
             {
                 await ReplyAsync($"Hiya! This is how to use the quote alias command!{Environment.NewLine}" +
                                  $"`{_config.Prefix}quotealias get <alias>` - Work out what an alias maps to.{Environment.NewLine}" +
                                  $"`{_config.Prefix}quotealias list` - List all aliases.{Environment.NewLine}" +
                                  $"`{_config.Prefix}quotealias set/add <alias> <user/category>` - Creates an alias.{Environment.NewLine}" +
                                  $"`{_config.Prefix}quotealias delete/remove <alias>` - Deletes an alias.");
+                return;
             }
-            else if (operation.ToLower() == "list")
+
+            var args = DiscordHelper.GetArguments(argsString);
+
+            var operation = args.Arguments[0];
+            var alias = args.Arguments[1];
+            var target = args.Arguments[2];
+            
+            if (operation.ToLower() == "list")
             {
                 var aliases = _quoteService.GetAliasKeyList();
 
