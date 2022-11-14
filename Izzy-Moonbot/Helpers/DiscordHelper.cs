@@ -1,4 +1,6 @@
-﻿using System.Linq;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Discord;
@@ -29,6 +31,78 @@ public static class DiscordHelper
         if (msg.Type != MessageType.Default && msg.Type != MessageType.Reply &&
             msg.Type != MessageType.ThreadStarterMessage) return false;
         return true;
+    }
+
+    public static bool IsSpace(char character)
+    {
+        return character is ' ' or '\t' or '\r';
+    }
+
+    public static object GetSafely<T>(IEnumerable<T> array, int index)
+    {
+        if (array.Count() <= index) return null;
+        if (index < 0) return null;
+
+        return array.ElementAt(index);
+    }
+
+    public static string[] GetArguments(string content)
+    {
+        var characters = content.Split("").Select(character =>
+        {
+            try
+            {
+                return char.Parse(character);
+            }
+            catch (FormatException)
+            {
+                return '\r';
+            }
+        }).ToArray();
+        
+        var arguments = new List<string>();
+
+        for (var i = 0; i < content.Length; i++)
+        {
+            var argument = characters[i];
+            if (!IsSpace(argument))
+            {
+                var start = 0;
+                var end = 0;
+
+                if (argument == '"' && (i < 1 || (char?)GetSafely(characters, i-1) != '\\'))
+                {
+                    i++;
+                    start = i;
+                    while (i < content.Length && (characters[i] != '"' || (char?)GetSafely(characters, i-1) == '\\'))
+                    {
+                        i++;
+                    }
+                    if ((char?)GetSafely(characters, i - 1) == '\\')
+                    {
+                        end = i - 1;
+                    }
+                    else
+                    {
+                        end = i;
+                    }
+                }
+                else
+                {
+                    start = i;
+                    i++;
+                    while (i < content.Length && !IsSpace(argument) &&
+                           (characters[i] != '"' || (char?)GetSafely(characters, i - 1) == '\\'))
+                    {
+                        i++;
+                    }
+                    end = i;
+                }
+                arguments.Add(string.Join("", content.Split("")[new Range(start, end)]));
+            }
+        }
+
+        return arguments.ToArray();
     }
 
     public static bool IsInGuild(SocketMessage msg)
