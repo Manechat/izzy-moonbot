@@ -153,7 +153,7 @@ public class InfoModule : ModuleBase<SocketCommandContext>
                 {
                     // Alias detected!
                     var commandInfo = _commands.Commands.Single<CommandInfo>(command => command.Aliases.Select(alias => alias.ToLower()).Contains(item.ToLower()));
-                    var ponyReadable = $"**{prefix}{commandInfo.Aliases.Single(alias => alias.ToLower() == item.ToLower())}** (alias of **{commandInfo.Name}**) - {commandInfo.Module.Name.Replace("Module", "").Replace("Submodule", "")} category{Environment.NewLine}";
+                    var ponyReadable = $"**{prefix}{commandInfo.Aliases.Single(alias => alias.ToLower() == item.ToLower())}** (alternate name of **{commandInfo.Name}**) - {commandInfo.Module.Name.Replace("Module", "").Replace("Submodule", "")} category{Environment.NewLine}";
                     if (commandInfo.Preconditions.Any(attribute => attribute is ModCommandAttribute) &&
                         commandInfo.Preconditions.Any(attribute => attribute is DevCommandAttribute))
                         ponyReadable += $"ℹ  *This is a moderator and developer only command.*{Environment.NewLine}";
@@ -174,8 +174,11 @@ public class InfoModule : ModuleBase<SocketCommandContext>
                     ponyReadable += $"```";
 
                     if (commandInfo.Aliases.Count(alias => alias != commandInfo.Name) != 0)
+                    {
+                        var altNames = string.Join(", ", commandInfo.Aliases.Where(alias => alias != commandInfo.Name)).Select(alias => $".{alias}"));
                         ponyReadable += $"{Environment.NewLine}" +
-                                        $"Aliases: {string.Join(", ", commandInfo.Aliases.Where(alias => alias != commandInfo.Name))}";
+                                        $"Alternate names: {altNames}";
+                    }
 
                     await ReplyAsync(ponyReadable);
                     return;
