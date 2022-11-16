@@ -33,12 +33,12 @@ public class ParameterAttribute : Attribute
              ParameterType.Boolean => "Boolean",
              ParameterType.Character => "Character",
              ParameterType.String => "String",
-             ParameterType.Integer => "Whole Number",
+             ParameterType.Integer => "Integer",
              ParameterType.Double => "Decimal Number",
              ParameterType.User => "User",
              ParameterType.Role => "Role",
              ParameterType.Channel => "Channel",
-             ParameterType.Time => "Date/Time",
+             ParameterType.DateTime => "Date/Time",
              _ => "Unknown"
          };
          return $"{Name} [{typeName}]{(Optional ? " {OPTIONAL}" : "")} - {Summary}";
@@ -55,5 +55,5 @@ public enum ParameterType
     User,
     Role,
     Channel,
-    Time
+    DateTime
 }

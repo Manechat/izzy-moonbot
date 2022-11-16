@@ -412,7 +412,7 @@ public class AdminModule : ModuleBase<SocketCommandContext>
     [ModCommand(Group = "Permissions")]
     [DevCommand(Group = "Permissions")]
     [Parameter("user", ParameterType.User, "The user to ban.")]
-    [Parameter("duration", ParameterType.Time, "How long the ban should last, e.g. \"2 weeks\" or \"6 months\". Omit for an indefinite ban.", true)]
+    [Parameter("duration", ParameterType.DateTime, "How long the ban should last, e.g. \"2 weeks\" or \"6 months\". Omit for an indefinite ban.", true)]
     public async Task BanCommandAsync(
         [Remainder] string argsString = "")
     {
