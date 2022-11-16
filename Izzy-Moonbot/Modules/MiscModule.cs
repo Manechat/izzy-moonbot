@@ -51,48 +51,15 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                 return;
             }
 
-            var search = argsString;
-            var number = -1;
+            var (search, number) = ParseQuoteArgs(argsString);
 
-            var args = DiscordHelper.GetArguments(argsString);
-
-            if (args.Arguments.Length >= 2)
-            {
-                if (!int.TryParse(args.Arguments[1], out number))
-                {
-                    number = -1;
-                    foreach (var s in argsString.Split(" "))
-                    {
-                        if (int.TryParse(s, out number))
-                        {
-                            // Found the number, all content before it is search
-                            var index = argsString.Split(" ").ToList().IndexOf(s);
-                            search = string.Join(" ", argsString.Split(" ")[new Range(0, index)]);
-                        }
-                        else
-                        {
-                            number = -1;
-                        }
-                    }
-                }
-                else
-                {
-                    search = args.Arguments[0];
-                }
-            }
-        
-            if (search.StartsWith("\"") && search.EndsWith("\""))
-            {
-                search = search[new Range(1, ^1)];
-            }
-
-            if (search == "" && number != -1)
+            if (search == "" && number != null)
             {
                 await ReplyAsync("You need to provide a user to get the quotes from!");
                 return;
             }
 
-            if (search != "" && number == -1)
+            if (search != "" && number == null)
             {
                 // Get random quote depending on if search is user-resolvable or not
                 // First check if the search resolves to an alias.
@@ -186,11 +153,11 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                 }
             }
 
-            if (search != "" && number != -1)
+            if (search != "" && number != null)
             {
-                if (number <= 0)
+                if (number.Value <= 0)
                 {
-                    await ReplyAsync($"Quotes begin at #1, not #{number}!");
+                    await ReplyAsync($"Quotes begin at #1, not #{number.Value}!");
                     return;
                 }
                 
@@ -205,7 +172,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                         // Choose a random quote from this user.
                         try
                         {
-                            var quote = _quoteService.GetQuote(user, number - 1);
+                            var quote = _quoteService.GetQuote(user, number.Value - 1);
 
                             // Send quote and return
                             await ReplyAsync($"**{quote.Name} `#{quote.Id + 1}`:** {quote.Content}", allowedMentions: AllowedMentions.None);
@@ -228,7 +195,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                     // Choose a random quote from this category.
                     try
                     {
-                        var quote = _quoteService.GetQuote(category, number-1);
+                        var quote = _quoteService.GetQuote(category, number.Value-1);
 
                         // Send quote and return.
                         await ReplyAsync($"**{quote.Name} `#{quote.Id+1}`:** {quote.Content}", allowedMentions: AllowedMentions.None);
@@ -252,7 +219,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                     // Get a random quote from the category
                     try
                     {
-                        var quote = _quoteService.GetQuote(search, number-1);
+                        var quote = _quoteService.GetQuote(search, number.Value-1);
 
                         // Send quote and return
                         await ReplyAsync($"**{quote.Name} `#{quote.Id+1}`:** {quote.Content}", allowedMentions: AllowedMentions.None);
@@ -284,7 +251,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                 // User exists, choose a random quote from this user.
                 try
                 {
-                    var quote = _quoteService.GetQuote(member, number-1);
+                    var quote = _quoteService.GetQuote(member, number.Value-1);
 
                     // Send quote and return
                     await ReplyAsync($"**{quote.Name} `#{quote.Id+1}`:** {quote.Content}", allowedMentions: AllowedMentions.None);
@@ -303,7 +270,6 @@ public class MiscModule : ModuleBase<SocketCommandContext>
             }
 
             await ReplyAsync($"I... don't know what you want me to do?");
-            return;
         }
 
         [Command("searchquote")]
@@ -693,47 +659,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                 return;
             }
 
-            var user = argsString;
-            
-            var number = -1;
-
-            var args = DiscordHelper.GetArguments(argsString);
-
-            if (args.Arguments.Length >= 2)
-            {
-                if (!int.TryParse(args.Arguments[1], out number))
-                {
-                    number = -1;
-                    foreach (var s in argsString.Split(" "))
-                    {
-                        if (int.TryParse(s, out number))
-                        {
-                            // Found the number, all content before it is search
-                            var index = argsString.Split(" ").ToList().IndexOf(s);
-                            user = string.Join(" ", argsString.Split(" ")[new Range(0, index)]);
-                        }
-                        else
-                        {
-                            number = -1;
-                        }
-                    }
-                }
-                else
-                {
-                    user = args.Arguments[0];
-                }
-            }
-            else
-            {
-                await ReplyAsync(
-                    "I uhh.. only saw 1 parameter for that command. This command requires both the user, and the id of the quote to remove.");
-                return;
-            }
-            
-            if (user.StartsWith("\"") && user.EndsWith("\""))
-            {
-                user = user[new Range(1, ^1)];
-            }
+            var (user, number) = ParseQuoteArgs(argsString);
 
             if (user == "")
             {
@@ -741,7 +667,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                 return;
             }
 
-            if (number == -1)
+            if (number == null)
             {
                 await ReplyAsync("You need to tell me the quote number to remove.");
                 return;
@@ -754,18 +680,18 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                 {
                     var quoteUser = _quoteService.ProcessAlias(user, Context.Guild);
 
-                    var newAliasUserQuote = await _quoteService.RemoveQuote(quoteUser, number-1);
+                    var newAliasUserQuote = await _quoteService.RemoveQuote(quoteUser, number.Value-1);
 
                     await ReplyAsync(
-                        $"Removed quote number {number} from **{quoteUser.Username}#{quoteUser.Discriminator}**.", allowedMentions: AllowedMentions.None);
+                        $"Removed quote number {number.Value} from **{quoteUser.Username}#{quoteUser.Discriminator}**.", allowedMentions: AllowedMentions.None);
                     return;
                 }
                 var quoteCategory = _quoteService.ProcessAlias(user, Context.Guild);
                     
-                var newAliasCategoryQuote = await _quoteService.RemoveQuote(quoteCategory, number-1);
+                var newAliasCategoryQuote = await _quoteService.RemoveQuote(quoteCategory, number.Value-1);
 
                 await ReplyAsync(
-                    $"Removed quote number {number} from **{newAliasCategoryQuote.Name}**.", allowedMentions: AllowedMentions.None);
+                    $"Removed quote number {number.Value} from **{newAliasCategoryQuote.Name}**.", allowedMentions: AllowedMentions.None);
                 return;
             }
 
@@ -773,10 +699,10 @@ public class MiscModule : ModuleBase<SocketCommandContext>
             if (_quoteService.CategoryExists(user))
             {
                 // Category exists, add new quote to it.
-                var newCategoryQuote = await _quoteService.RemoveQuote(user, number-1);
+                var newCategoryQuote = await _quoteService.RemoveQuote(user, number.Value-1);
 
                 await ReplyAsync(
-                    $"Removed quote number {number} from **{newCategoryQuote.Name}**.", allowedMentions: AllowedMentions.None);
+                    $"Removed quote number {number.Value} from **{newCategoryQuote.Name}**.", allowedMentions: AllowedMentions.None);
                 return;
             }
                 
@@ -791,10 +717,10 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                 return;
             }
                 
-            var newUserQuote = await _quoteService.RemoveQuote(member, number-1);
+            var newUserQuote = await _quoteService.RemoveQuote(member, number.Value-1);
 
             await ReplyAsync(
-                $"Removed quote number {number} from **{newUserQuote.Name}**.", allowedMentions: AllowedMentions.None);
+                $"Removed quote number {number.Value} from **{newUserQuote.Name}**.", allowedMentions: AllowedMentions.None);
             return;
         }
         
@@ -913,6 +839,48 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                 await ReplyAsync(
                     "Sorry, I don't understand what you want me to do.");
             }
+        }
+
+        private Tuple<string, int?> ParseQuoteArgs(string argsString)
+        {
+            var search = argsString;
+            var number = int.MinValue;
+
+            var args = DiscordHelper.GetArguments(argsString);
+
+            if (args.Arguments.Length >= 2)
+            {
+                if (!int.TryParse(args.Arguments[1], out number))
+                {
+                    number = int.MinValue;
+                    foreach (var s in argsString.Split(" "))
+                    {
+                        if (int.TryParse(s, out number))
+                        {
+                            // Found the number, all content before it is search
+                            var index = argsString.Split(" ").ToList().IndexOf(s);
+                            search = string.Join(" ", argsString.Split(" ")[new Range(0, index)]);
+                        }
+                        else
+                        {
+                            number = int.MinValue;
+                        }
+                    }
+                }
+                else
+                {
+                    search = args.Arguments[0];
+                }
+            }
+        
+            if (search.StartsWith("\"") && search.EndsWith("\""))
+            {
+                search = search[new Range(1, ^1)];
+            }
+
+            return number == int.MinValue 
+                ? new Tuple<string, int?>(search, null) 
+                : new Tuple<string, int?>(search, number);
         }
     }
 }
