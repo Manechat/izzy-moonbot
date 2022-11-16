@@ -872,11 +872,8 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                     search = args.Arguments[0];
                 }
             }
-        
-            if (search.StartsWith("\"") && search.EndsWith("\""))
-            {
-                search = search[new Range(1, ^1)];
-            }
+
+            search = DiscordHelper.StripQuotes(search);
 
             return number == int.MinValue 
                 ? new Tuple<string, int?>(search, null) 

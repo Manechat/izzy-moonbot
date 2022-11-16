@@ -33,6 +33,21 @@ public static class DiscordHelper
         return true;
     }
 
+    public static string StripQuotes(string str)
+    {
+        var quotes = new[]
+        {
+            '"', '\'', 'ʺ', '˝', 'ˮ', '˶', 'ײ', '״', '᳓', '“', '”', '‟', '″', '‶', '〃', '＂'
+        };
+        
+        var needToStrip = quotes.Any(quote1 =>
+        {
+            return quotes.Any(quote2 => str.StartsWith(quote1) && str.EndsWith(quote2));
+        });
+        
+        return needToStrip ? str[new Range(1, ^1)] : str;
+    }
+
     public static bool IsSpace(char character)
     {
         return character is ' ' or '\t' or '\r';

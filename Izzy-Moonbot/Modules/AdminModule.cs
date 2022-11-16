@@ -245,6 +245,8 @@ public class AdminModule : ModuleBase<SocketCommandContext>
         var channelName = args.Arguments[0];
         var message = string.Join("", argsString.Skip(args.Indices[0]));
 
+        message = DiscordHelper.StripQuotes(message);
+
         var channelId = await DiscordHelper.GetChannelIdIfAccessAsync(channelName, Context);
 
         if (channelId > 0)
@@ -266,7 +268,7 @@ public class AdminModule : ModuleBase<SocketCommandContext>
             return;
         }
 
-        await ReplyAsync(argsString);
+        await ReplyAsync(DiscordHelper.StripQuotes(argsString));
     }
 
     [Command("userinfo")]
@@ -427,10 +429,7 @@ public class AdminModule : ModuleBase<SocketCommandContext>
         var user = args.Arguments[0];
         var duration = string.Join("", argsString.Skip(args.Indices[0]));
 
-        if (duration.StartsWith("\"") && duration.EndsWith("\""))
-        {
-            duration = duration[new Range(1, ^1)];
-        }
+        duration = DiscordHelper.StripQuotes(duration);
         
         var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(user, Context);
         var member = Context.Guild.GetUser(userId);
