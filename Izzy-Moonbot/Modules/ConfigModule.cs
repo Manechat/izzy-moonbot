@@ -30,6 +30,8 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
     [RequireContext(ContextType.Guild)]
     [ModCommand(Group = "Permissions")]
     [DevCommand(Group = "Permissions")]
+    [Parameter("key", ParameterType.String, "The config item to get/modify. This is case sensitive.")]
+    [Parameter("[...]", ParameterType.String, "...", true)]
     public async Task ConfigCommandAsync(
         [Summary("The item to get/modify.")] string configItemKey = "",
         [Summary("")] [Remainder] string? value = "")
