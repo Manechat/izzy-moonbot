@@ -154,7 +154,7 @@ public class InfoModule : ModuleBase<SocketCommandContext>
                 {
                     // Alias detected!
                     var commandInfo = _commands.Commands.Single<CommandInfo>(command => command.Aliases.Select(alias => alias.ToLower()).Contains(item.ToLower()));
-                    var ponyReadable = $"**{prefix}{commandInfo.Aliases.Single(alias => alias.ToLower() == item.ToLower())}** (alias of **{commandInfo.Name}**) - {commandInfo.Module.Name.Replace("Module", "").Replace("Submodule", "")} category{Environment.NewLine}";
+                    var ponyReadable = $"**{prefix}{commandInfo.Aliases.Single(alias => alias.ToLower() == item.ToLower())}** (alternate name of **{commandInfo.Name}**) - {commandInfo.Module.Name.Replace("Module", "").Replace("Submodule", "")} category{Environment.NewLine}";
                     if (commandInfo.Preconditions.Any(attribute => attribute is ModCommandAttribute) &&
                         commandInfo.Preconditions.Any(attribute => attribute is DevCommandAttribute))
                         ponyReadable += $"ℹ  *This is a moderator and developer only command.*{Environment.NewLine}";
@@ -171,12 +171,12 @@ public class InfoModule : ModuleBase<SocketCommandContext>
                     var parameters = commandInfo.Attributes.OfType<ParameterAttribute>();
 
                     ponyReadable = parameters.Aggregate(ponyReadable, (current, parameter) => current + $"{parameter}{Environment.NewLine}");
-
+                    
                     ponyReadable += $"```";
                 
                     if (commandInfo.Aliases.Any(alternative => alternative.ToLower() != commandInfo.Name.ToLower() && alternative.ToLower() != item.ToLower()))
                         ponyReadable += $"{Environment.NewLine}" +
-                                        $"Alternative names: {string.Join(", ", commandInfo.Aliases.Where(alternative => alternative.ToLower() != commandInfo.Name.ToLower() && alternative.ToLower() != item.ToLower()))}";
+                                        $"Alternate names: {string.Join(", ", commandInfo.Aliases.Where(alternative => alternative.ToLower() != commandInfo.Name.ToLower() && alternative.ToLower() != item.ToLower()))}";
 
                     await ReplyAsync(ponyReadable);
                     return;
