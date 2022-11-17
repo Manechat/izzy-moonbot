@@ -340,8 +340,8 @@ namespace Izzy_Moonbot
             if (message.HasCharPrefix(_config.Prefix, ref argPos) ||
                 message.Content.StartsWith($"<@{_client.CurrentUser.Id}>"))
             {
-                string parsedMessage = null;
-                bool checkCommands = true;
+                string parsedMessage;
+                var checkCommands = true;
                 if (message.Content.StartsWith($"<@{_client.CurrentUser.Id}>"))
                 {
                     checkCommands = false;
@@ -349,30 +349,56 @@ namespace Izzy_Moonbot
                 }
                 else
                 {
-                    parsedMessage = DiscordHelper.CheckAliasesAsync(message.Content, _config);
-                }
-
-                if (checkCommands)
-                {
-                    bool validCommand = false;
-                    foreach (var command in _commands.Commands)
+                    parsedMessage = message.Content[1..].TrimStart();
+                    
+                    if (_config.Aliases.Count != 0)
                     {
-                        if (command.Name != parsedMessage.Split(" ")[0] && 
-                            !command.Aliases.Contains(parsedMessage.Split(" ")[0]))
+                        var command = parsedMessage.Split(" ");
+                        
+                        foreach (var keyValuePair in _config.Aliases)
                         {
-                            continue;
+                            if (command[0] != keyValuePair.Key) continue;
+                            // Alias match
+                            
+                            var commandAlias = keyValuePair.Value.StartsWith(_config.Prefix)
+                                ? keyValuePair.Value[1..].TrimStart().Split(" ")[0]
+                                : keyValuePair.Value.TrimStart().Split(" ")[0];
+                            
+                            if (_config.Aliases.Any(alias => alias.Key == commandAlias))
+                            {
+                                await context.Channel.SendMessageAsync(
+                                    $"**Warning!** This alias directs to another alias!{Environment.NewLine}Izzy doesn't support aliases feeding into aliases. Please remove this alias or redirect it to an existing command.");
+                                return;
+                            }
+
+                            if (_commands.Commands.All(cmd => cmd.Name != commandAlias))
+                            {
+                                await context.Channel.SendMessageAsync(
+                                    $"**Warning!** This alias directs to a non-existent command!{Environment.NewLine}Please remove this alias or redirect it to an existing command.");
+                                return;
+                            }
+
+                            command[0] = keyValuePair.Value.StartsWith(_config.Prefix)
+                                ? keyValuePair.Value[1..]
+                                : keyValuePair.Value;
                         }
 
-                        validCommand = true;
-                        break;
+                        parsedMessage = string.Join(" ", command);
                     }
+                }
+                
+                if (checkCommands)
+                {
+                    var validCommand = _commands.Commands.Any(command => 
+                        command.Name == parsedMessage.Split(" ")[0] 
+                        || command.Aliases.Contains(parsedMessage.Split(" ")[0]));
 
                     if (!validCommand) return;
                 }
 
                 // Check for BotsAllowed attribute
-                SearchResult searchResult = _commands.Search(parsedMessage);
-                CommandInfo commandToExec = searchResult.Commands[0].Command;
+                var searchResult = _commands.Search(parsedMessage);
+                var commandToExec = searchResult.Commands[0].Command;
 
                 var hasBotsAllowedAttribute = commandToExec.Preconditions.Where(attribute => attribute != null).OfType<BotsAllowedAttribute>().Any();
 

@@ -56,6 +56,10 @@ public class ConfigDescriber
             new ConfigItem(ConfigItemType.Boolean,
                 "Whether my Discord status says 'Playing' (`false`) or 'Watching' (`true`). Note: This takes time to set.",
                 ConfigItemCategory.Core));
+        _config.Add("Aliases",
+            new ConfigItem(ConfigItemType.StringDictionary,
+                "Shorthand commands which can be used as an alternative to executing a different, often longer, command.",
+                ConfigItemCategory.Core));
 
         // Mod settings
         _config.Add("ModRole",
