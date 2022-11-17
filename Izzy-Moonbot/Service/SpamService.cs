@@ -287,12 +287,12 @@ public class SpamService
             {
                 // User is not immune to spam punishments, process trip.
                 await _logger.Log("Silence, executing trip method.", context, level: LogLevel.Debug);
-                await ProcessTrip(id, newPressure, pressureTracer, message, user, context, (oldPressure >= _config.SpamMaxPressure));
+                await ProcessTrip(id, oldPressure, newPressure, pressureTracer, message, user, context, (oldPressure >= _config.SpamMaxPressure));
             }
         }
     }
 
-    private async Task ProcessTrip(ulong id, double pressure, Dictionary<string, double> pressureTracer, 
+    private async Task ProcessTrip(ulong id, double oldPressure, double pressure, Dictionary<string, double> pressureTracer, 
         SocketUserMessage message, SocketGuildUser user, SocketCommandContext context, bool alreadyAlerted = false)
     {
         // Silence user, this also logs the action.
@@ -338,8 +338,8 @@ public class SpamService
             .WithColor(16776960)
             .AddField("User", $"<@{context.User.Id}> (`{context.User.Id}`)", true)
             .AddField("Channel", $"<#{context.Channel.Id}>", true)
-            .AddField("Pressure reached", $"{pressure}/{_config.SpamMaxPressure}")
-            .AddField("Pressure breakdown of last message", $"{PressureTraceToPonyReadable(pressureTracer)}")
+            .AddField("Pressure", $"This user's last message raised their pressure from {oldPressure} to {pressure}, exceeding {_config.SpamMaxPressure} (SpamMaxPressure)")
+            .AddField("Breakdown of last message", $"{PressureTraceToPonyReadable(pressureTracer)}")
             .WithTimestamp(context.Message.Timestamp);
 
         if (alreadyDeletedMessages != 0)

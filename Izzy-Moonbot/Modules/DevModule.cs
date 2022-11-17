@@ -370,6 +370,13 @@ public class DevModule : ModuleBase<SocketCommandContext>
                     await ReplyAsync($"not valid user");
                 }
                 break;
+            case "customArgument":
+                var customArgument_Result = DiscordHelper.GetArguments(argString);
+
+                await ReplyAsync($"Processed. Here's what I got:{Environment.NewLine}```{Environment.NewLine}" +
+                                 $"{string.Join(", ", customArgument_Result)}" +
+                                 $"{Environment.NewLine}```");
+                break;
             default:
                 Context.Message.ReplyAsync("Unknown test.");
                 break;

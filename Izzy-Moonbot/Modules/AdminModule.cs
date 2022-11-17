@@ -50,12 +50,14 @@ public class AdminModule : ModuleBase<SocketCommandContext>
     [RequireContext(ContextType.Guild)]
     [ModCommand(Group = "Permissions")]
     [DevCommand(Group = "Permissions")]
+    [Parameter("user", ParameterType.User, "The user to remove the scheduled removal from.")]
     public async Task PermaNpCommandAsync(
-        [Remainder] [Summary("The user to remove the scheduled removal from.")] string user = "")
+        [Remainder]string user = "")
     {
         if (user == "")
         {
-            await ReplyAsync("You need to provide a user to remove the scheduled removal from.");
+            await ReplyAsync(
+                "Hey uhh... I can't remove the scheduled new pony role removal for a user if you haven't given me the user to remove it from...");
             return;
         }
         
@@ -94,12 +96,12 @@ public class AdminModule : ModuleBase<SocketCommandContext>
     [RequireContext(ContextType.Guild)]
     [ModCommand(Group = "Permissions")]
     [DevCommand(Group = "Permissions")]
+    [Parameter("type", ParameterType.String, "The type of scan to execute.")]
     public async Task ScanCommandAsync(
-        [Summary("The type of scan to do")] [Remainder]
-        string scanType = ""
+        [Remainder] string type = ""
     )
     {
-        if (scanType.ToLower() == "full")
+        if (type.ToLower() == "full")
             Task.Run(async () =>
             {
                 if (!Context.Guild.HasAllMembers) await Context.Guild.DownloadUsersAsync();
@@ -227,15 +229,23 @@ public class AdminModule : ModuleBase<SocketCommandContext>
     [Summary("Posts a message to a specified channel")]
     [ModCommand(Group = "Permission")]
     [DevCommand(Group = "Permission")]
-    public async Task EchoCommandAsync([Summary("The channel to send to")] string channelName = "",
-        [Remainder] [Summary("The message to send")]
-        string message = "")
+    [Parameter("channel", ParameterType.Channel, "The channel to send the message to.", true)]
+    [Parameter("content", ParameterType.String, "The message to send.")]
+    public async Task EchoCommandAsync(
+        [Remainder] string argsString = "")
     {
-        if (channelName == "")
+        if (argsString == "")
         {
-            await ReplyAsync("You must specify a channel name or a message.");
+            await ReplyAsync("You must provide a channel and a message, or just a message.");
             return;
         }
+
+        var args = DiscordHelper.GetArguments(argsString);
+
+        var channelName = args.Arguments[0];
+        var message = string.Join("", argsString.Skip(args.Indices[0]));
+
+        message = DiscordHelper.StripQuotes(message);
 
         var channelId = await DiscordHelper.GetChannelIdIfAccessAsync(channelName, Context);
 
@@ -254,21 +264,21 @@ public class AdminModule : ModuleBase<SocketCommandContext>
                 return;
             }
 
-
             await ReplyAsync("I can't send a message there.");
             return;
         }
 
-        await ReplyAsync($"{channelName} {message}");
+        await ReplyAsync(DiscordHelper.StripQuotes(argsString));
     }
 
     [Command("userinfo")]
-    [Summary("Get information about a user")]
+    [Summary("Get information about a user (or yourself)")]
     [ModCommand(Group = "Permission")]
     [DevCommand(Group = "Permission")]
     [Alias("uinfo")]
+    [Parameter("user", ParameterType.User, "The user to get information about, or yourself if not provided.", true)]
     public async Task UserInfoCommandAsync(
-        [Remainder][Summary("The user to get information about")] string user = "")
+        [Remainder] string user = "")
     {
         if (user == "") user = Context.User.Id.ToString(); // Set to user ID to target self.
 
@@ -403,16 +413,23 @@ public class AdminModule : ModuleBase<SocketCommandContext>
     [RequireContext(ContextType.Guild)]
     [ModCommand(Group = "Permissions")]
     [DevCommand(Group = "Permissions")]
+    [Parameter("user", ParameterType.User, "The user to ban.")]
+    [Parameter("duration", ParameterType.DateTime, "How long the ban should last, e.g. \"2 weeks\" or \"6 months\". Omit for an indefinite ban.", true)]
     public async Task BanCommandAsync(
-        [Summary("The user to ban")] string user = "",
-        [Summary("How long the ban should last, e.g. \"2 weeks\" or \"6 months\". Omit for an indefinite ban.")]
-        string duration = "")
+        [Remainder] string argsString = "")
     {
-        if (user == "")
+        if (argsString == "")
         {
             await ReplyAsync($"Please provide a user to ban. Refer to `{_config.Prefix}help ban` for more information.");
             return;
         }
+        
+        var args = DiscordHelper.GetArguments(argsString);
+
+        var user = args.Arguments[0];
+        var duration = string.Join("", argsString.Skip(args.Indices[0]));
+
+        duration = DiscordHelper.StripQuotes(duration);
         
         var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(user, Context);
         var member = Context.Guild.GetUser(userId);
@@ -448,7 +465,7 @@ public class AdminModule : ModuleBase<SocketCommandContext>
                 "That user is either at the same level or higher than me in the role hierarchy, I cannot ban them. <:izzynothoughtsheadempty:910198222255972382>");
             return;
         }
-        
+
         // Comprehend time
         TimeHelperResponse? time = null;
         try

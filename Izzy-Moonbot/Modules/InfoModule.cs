@@ -25,8 +25,9 @@ public class InfoModule : ModuleBase<SocketCommandContext>
 
     [Command("help")]
     [Summary("Lists all commands")]
+    [Parameter("search", ParameterType.String, "The command, category, or alias you want to get information about.")]
     public async Task HelpCommandAsync(
-        [Remainder] [Summary("The command/category you want to look at.")] string item = "")
+        [Remainder]string item = "")
     {
         var prefix = _settings.Prefix;
 
@@ -75,15 +76,15 @@ public class InfoModule : ModuleBase<SocketCommandContext>
 
                 ponyReadable += $"```{Environment.NewLine}";
 
-                foreach (var parameters in commandInfo.Parameters)
-                    ponyReadable +=
-                        $"{parameters.Name} [{(parameters.Type.Name.Contains("Nullable") ? Nullable.GetUnderlyingType(parameters.Type).Name : parameters.Type.Name)}] - {parameters.Summary}{Environment.NewLine}";
+                var parameters = commandInfo.Attributes.OfType<ParameterAttribute>();
+
+                ponyReadable = parameters.Aggregate(ponyReadable, (current, parameter) => current + $"{parameter}{Environment.NewLine}");
 
                 ponyReadable += $"```";
                 
-                if (commandInfo.Aliases.Count(alias => alias != commandInfo.Name) != 0)
+                if (commandInfo.Aliases.Any(alternative => alternative.ToLower() != commandInfo.Name.ToLower() && alternative.ToLower() != item.ToLower()))
                     ponyReadable += $"{Environment.NewLine}" +
-                                    $"Aliases: {string.Join(", ", commandInfo.Aliases.Where(alias => alias != commandInfo.Name))}";
+                                    $"Alternative names: {string.Join(", ", commandInfo.Aliases.Where(alternative => alternative.ToLower() != commandInfo.Name.ToLower() && alternative.ToLower() != item.ToLower()))}";
 
                 await ReplyAsync(ponyReadable);
                 return;
@@ -167,18 +168,15 @@ public class InfoModule : ModuleBase<SocketCommandContext>
 
                     ponyReadable += $"```{Environment.NewLine}";
 
-                    foreach (var parameters in commandInfo.Parameters)
-                        ponyReadable +=
-                            $"{parameters.Name} [{(parameters.Type.Name.Contains("Nullable") ? Nullable.GetUnderlyingType(parameters.Type).Name : parameters.Type.Name)}] - {parameters.Summary}{Environment.NewLine}";
+                    var parameters = commandInfo.Attributes.OfType<ParameterAttribute>();
 
+                    ponyReadable = parameters.Aggregate(ponyReadable, (current, parameter) => current + $"{parameter}{Environment.NewLine}");
+                    
                     ponyReadable += $"```";
-
-                    if (commandInfo.Aliases.Count(alias => alias != commandInfo.Name) != 0)
-                    {
-                        var altNames = string.Join(", ", commandInfo.Aliases.Where(alias => alias != commandInfo.Name)).Select(alias => $".{alias}"));
+                
+                    if (commandInfo.Aliases.Any(alternative => alternative.ToLower() != commandInfo.Name.ToLower() && alternative.ToLower() != item.ToLower()))
                         ponyReadable += $"{Environment.NewLine}" +
-                                        $"Alternate names: {altNames}";
-                    }
+                                        $"Alternate names: {string.Join(", ", commandInfo.Aliases.Where(alternative => alternative.ToLower() != commandInfo.Name.ToLower() && alternative.ToLower() != item.ToLower()))}";
 
                     await ReplyAsync(ponyReadable);
                     return;
