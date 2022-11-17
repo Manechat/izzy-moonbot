@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 
 namespace Izzy_Moonbot.Settings;
 
@@ -20,6 +21,7 @@ public class Config
         MentionResponseCooldown = 600;
         DiscordActivityName = "you all soon";
         DiscordActivityWatching = true;
+        Aliases = new Dictionary<string, string>();
 
         // Mod settings
         AllowedUsers = new HashSet<ulong>();
@@ -90,6 +92,7 @@ public class Config
     public double MentionResponseCooldown { get; set; }
     public string? DiscordActivityName { get; set; }
     public bool DiscordActivityWatching { get; set; }
+    public Dictionary<string, string> Aliases { get; set; }
 
     // Moderation settings
     public HashSet<ulong> AllowedUsers { get; set; }
