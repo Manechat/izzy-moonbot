@@ -132,13 +132,13 @@ public class SpamService
     {
         // Get the base pressure and create the pressureTracer
         var pressure = _config.SpamBasePressure;
-        var pressureBreakdown = new List<(double, string)> { ( _config.SpamBasePressure, $"Base: {_config.SpamBasePressure} (SpamBasePressure)" ) };
+        var pressureBreakdown = new List<(double, string)> { ( _config.SpamBasePressure, $"Base: {_config.SpamBasePressure}" ) };
 
         var lengthPressure = Math.Round(_config.SpamLengthPressure * message.Content.Length, 5);
         if (lengthPressure > 0)
         {
             pressure += lengthPressure;
-            pressureBreakdown.Add((lengthPressure, $"Length: {lengthPressure} ≈ {message.Content.Length} characters × {_config.SpamLengthPressure} (SpamLengthPressure)"));
+            pressureBreakdown.Add((lengthPressure, $"Length: {lengthPressure} ≈ {message.Content.Length} characters × {_config.SpamLengthPressure}"));
         }
 
         var newlineCount = (message.Content.Split("\n").Length - 1);
@@ -146,7 +146,7 @@ public class SpamService
         if (linePressure > 0)
         {
             pressure += linePressure;
-            pressureBreakdown.Add((linePressure, $"Lines: {linePressure} ≈ {newlineCount} line breaks × {_config.SpamLengthPressure} (SpamLengthPressure)"));
+            pressureBreakdown.Add((linePressure, $"Lines: {linePressure} ≈ {newlineCount} line breaks × {_config.SpamLengthPressure}"));
         }
 
         // Attachments, embeds, and stickers count as Image pressure
@@ -156,7 +156,7 @@ public class SpamService
         {
             var embedPressure = _config.SpamImagePressure * embedsCount;
             pressure += embedPressure;
-            pressureBreakdown.Add((embedPressure , $"Embeds: {embedPressure} = {embedsCount} embeds × {_config.SpamImagePressure} (SpamImagePressure)"));
+            pressureBreakdown.Add((embedPressure , $"Embeds: {embedPressure} = {embedsCount} embeds × {_config.SpamImagePressure}"));
         }
 
         // Check if there's at least one url in the message (and there's no embeds)
@@ -189,7 +189,7 @@ public class SpamService
             {
                 // It is, increase pressure and add pressure trace
                 pressure += embedPressure;
-                pressureBreakdown.Add((embedPressure, $"URLs: {embedPressure} = {totalMatches} unfurling URLs × {_config.SpamImagePressure} (SpamImagePressure)"));
+                pressureBreakdown.Add((embedPressure, $"URLs: {embedPressure} = {totalMatches} unfurling URLs × {_config.SpamImagePressure}"));
             }
         }
 
@@ -199,7 +199,7 @@ public class SpamService
             var mentionCount = _mention.Matches(message.Content).Count;
             var mentionPressure = _config.SpamPingPressure * mentionCount;
             pressure += mentionPressure;
-            pressureBreakdown.Add((mentionPressure, $"Mentions: {mentionPressure} = {mentionCount} mentions × {_config.SpamPingPressure} (SpamPingPressure)"));
+            pressureBreakdown.Add((mentionPressure, $"Mentions: {mentionPressure} = {mentionCount} mentions × {_config.SpamPingPressure}"));
         }
 
         // Repeat pressure
@@ -257,7 +257,7 @@ public class SpamService
                     .WithColor(3355443)
                     .AddField("User", $"<@{context.User.Id}> (`{context.User.Id}`)", true)
                     .AddField("Channel", $"<#{context.Channel.Id}>", true)
-                    .AddField("Pressure", $"This user's last message raised their pressure from {oldPressureAfterDecay} to {newPressure}, exceeding {_config.SpamMaxPressure} (SpamMaxPressure)")
+                    .AddField("Pressure", $"This user's last message raised their pressure from {oldPressureAfterDecay} to {newPressure}, exceeding {_config.SpamMaxPressure}")
                     .AddField("Breakdown of last message", PonyReadableBreakdown(pressureBreakdown))
                     .WithTimestamp(context.Message.Timestamp);
 
@@ -326,7 +326,7 @@ public class SpamService
             .WithColor(16776960)
             .AddField("User", $"<@{context.User.Id}> (`{context.User.Id}`)", true)
             .AddField("Channel", $"<#{context.Channel.Id}>", true)
-            .AddField("Pressure", $"This user's last message raised their pressure from {oldPressureAfterDecay} to {pressure}, exceeding {_config.SpamMaxPressure} (SpamMaxPressure)")
+            .AddField("Pressure", $"This user's last message raised their pressure from {oldPressureAfterDecay} to {pressure}, exceeding {_config.SpamMaxPressure}")
             .AddField("Breakdown of last message", $"{PonyReadableBreakdown(pressureBreakdown)}")
             .WithTimestamp(context.Message.Timestamp);
 
