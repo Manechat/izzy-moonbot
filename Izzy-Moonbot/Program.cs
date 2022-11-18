@@ -31,7 +31,11 @@ public class Program
         try
         {
             Log.Information("Starting up");
-            CreateHostBuilder(args).Build().Run();
+            #if DEBUG
+            CreateHostBuilder(args).UseEnvironment("Development").Build().Run();
+            #else
+            CreateHostBuilder(args).UseEnvironment("Production").Build().Run();
+            #endif
         }
         catch (Exception ex)
         {
