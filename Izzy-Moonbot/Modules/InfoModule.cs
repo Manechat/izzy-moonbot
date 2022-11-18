@@ -15,11 +15,11 @@ namespace Izzy_Moonbot.Modules;
 public class InfoModule : ModuleBase<SocketCommandContext>
 {
     private readonly CommandService _commands;
-    private readonly Config _settings;
+    private readonly Config _config;
 
-    public InfoModule(Config settings, CommandService commands)
+    public InfoModule(Config config, CommandService commands)
     {
-        _settings = settings;
+        _config = config;
         _commands = commands;
     }
 
@@ -29,7 +29,7 @@ public class InfoModule : ModuleBase<SocketCommandContext>
     public async Task HelpCommandAsync(
         [Remainder]string item = "")
     {
-        var prefix = _settings.Prefix;
+        var prefix = _config.Prefix;
 
         if (item == "")
         {
@@ -148,11 +148,11 @@ public class InfoModule : ModuleBase<SocketCommandContext>
                         return;
                     }
                 }
-                // Try command aliases
+                // Try alternate command names
                 if (_commands.Commands.Any(command =>
                         command.Aliases.Select(alias => alias.ToLower()).Contains(item.ToLower())))
                 {
-                    // Alias detected!
+                    // Alternate detected!
                     var commandInfo = _commands.Commands.Single<CommandInfo>(command => command.Aliases.Select(alias => alias.ToLower()).Contains(item.ToLower()));
                     var ponyReadable = $"**{prefix}{commandInfo.Aliases.Single(alias => alias.ToLower() == item.ToLower())}** (alternate name of **{commandInfo.Name}**) - {commandInfo.Module.Name.Replace("Module", "").Replace("Submodule", "")} category{Environment.NewLine}";
                     if (commandInfo.Preconditions.Any(attribute => attribute is ModCommandAttribute) &&
@@ -179,6 +179,49 @@ public class InfoModule : ModuleBase<SocketCommandContext>
                                         $"Alternate names: {string.Join(", ", commandInfo.Aliases.Where(alternative => alternative.ToLower() != commandInfo.Name.ToLower() && alternative.ToLower() != item.ToLower()))}";
 
                     await ReplyAsync(ponyReadable);
+                    return;
+                }
+                // Try aliases
+                if (_config.Aliases.Any(alias => alias.Key.ToLower() == item.ToLower()))
+                {
+                    var alias = _config.Aliases.First(alias => alias.Key.ToLower() == item.ToLower());
+                    var ponyReadable = $"**{prefix}{alias.Key}** is an alias for **{prefix}{alias.Value}** (see {prefix}config Aliases){Environment.NewLine}{Environment.NewLine}";
+
+                    var commandInfo = _commands.Commands.FirstOrDefault(command => command.Name.ToLower() == alias.Value.Split(" ")[0].ToLower());
+
+                    if (commandInfo != null)
+                    { 
+                        ponyReadable += $"**{prefix}{commandInfo.Name}** - {commandInfo.Module.Name.Replace("Module", "").Replace("Submodule", "")} category{Environment.NewLine}";
+                        if (commandInfo.Preconditions.Any(attribute => attribute is ModCommandAttribute) &&
+                            commandInfo.Preconditions.Any(attribute => attribute is DevCommandAttribute))
+                            ponyReadable += $"ℹ  *This is a moderator and developer only command.*{Environment.NewLine}";
+                        else if (commandInfo.Preconditions.Any(attribute => attribute is ModCommandAttribute))
+                            ponyReadable += $"ℹ  *This is a moderator only command.*{Environment.NewLine}";
+                        else if (commandInfo.Preconditions.Any(attribute => attribute is DevCommandAttribute))
+                            ponyReadable += $"ℹ  *This is a developer only command.*{Environment.NewLine}";
+
+                        ponyReadable += $"*{commandInfo.Summary}*{Environment.NewLine}";
+                        if (commandInfo.Remarks != null) ponyReadable += $"*{commandInfo.Remarks}*{Environment.NewLine}";
+
+                        ponyReadable += $"```{Environment.NewLine}";
+
+                        var parameters = commandInfo.Attributes.OfType<ParameterAttribute>();
+
+                        ponyReadable = parameters.Aggregate(ponyReadable, (current, parameter) => current + $"{parameter}{Environment.NewLine}");
+                    
+                        ponyReadable += $"```";
+                
+                        if (commandInfo.Aliases.Any(alternative => alternative.ToLower() != commandInfo.Name.ToLower() && alternative.ToLower() != item.ToLower()))
+                            ponyReadable += $"{Environment.NewLine}" +
+                                        $"Alternate names: {string.Join(", ", commandInfo.Aliases.Where(alternative => alternative.ToLower() != commandInfo.Name.ToLower() && alternative.ToLower() != item.ToLower()))}";
+
+                        await ReplyAsync(ponyReadable);
+                        return;
+                    }
+
+                    // Complain
+                    await ReplyAsync(
+                        $"**Warning!** This alias directs to a non-existent command!{Environment.NewLine}Please remove this alias or redirect it to an existing command.");
                     return;
                 }
             }
