@@ -272,12 +272,12 @@ public class MiscModule : ModuleBase<SocketCommandContext>
             await ReplyAsync($"I... don't know what you want me to do?");
         }
 
-        [Command("searchquote")]
+        [Command("listquotes")]
         [Summary(
-            "Find a list of quotes for a specific user or category, or a list of categories and users with quotes if one is not provided.")]
-        [Alias("searchquotes", "sq", "listquotes", "lq", "quotes")]
+            "List all the quotes for a specific user or category, or list all the users and categories that have quotes if one is not provided.")]
+        [Alias("lq", "searchquotes", "searchquote", "sq")]
         [Parameter("user", ParameterType.User, "The user to search for.", true)]
-        public async Task SearchQuoteCommandAsync(
+        public async Task ListQuotesCommandAsync(
             [Remainder] string search = ""
         )
         {
