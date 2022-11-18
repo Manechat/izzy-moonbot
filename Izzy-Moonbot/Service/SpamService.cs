@@ -174,29 +174,6 @@ public class SpamService
                     matches.Remove(matchToRemove);
                 }
 
-                // Go through each match
-                /*foreach (var match in matches)
-                {
-                    // Check if this URL will embed
-                    try
-                    {
-                        var willEmbed = DiscordHelper.WouldUrlEmbed(match.Value);
-                        await _logger.Log($"{match.Value} = {willEmbed}");
-
-                        // If it will, add Image pressure
-                        if (willEmbed) pressureToAdd += _config.SpamImagePressure;
-                    }
-                    catch (Exception exception)
-                    {
-                        // Somewhere, something went wrong. Report the error but assume not embedding and continue.
-                        await _logger.Log($"Exception occured while processing whether a link has an embed. Assuming no embed.", level: LogLevel.Warning);
-                        await _logger.Log($"URL Trigger: {match.Value}", level: LogLevel.Warning);
-                        await _logger.Log($"Message: {exception.Message}", level: LogLevel.Warning);
-                        await _logger.Log($"Source: {exception.Source}", level: LogLevel.Warning);
-                        await _logger.Log($"Method: {exception.TargetSite}", level: LogLevel.Warning);
-                        await _logger.Log($"Stack Trace: {exception.StackTrace}", level: LogLevel.Warning);
-                    }
-                }*/
                 pressureToAdd += _config.SpamImagePressure * matches.Count;
             }
 
