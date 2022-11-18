@@ -275,7 +275,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
         [Command("listquotes")]
         [Summary(
             "List all the quotes for a specific user or category, or list all the users and categories that have quotes if one is not provided.")]
-        [Alias("lq", "quotes", "searchquotes", "searchquote", "sq")]
+        [Alias("lq", "searchquotes", "searchquote", "sq")]
         [Parameter("user", ParameterType.User, "The user to search for.", true)]
         public async Task ListQuotesCommandAsync(
             [Remainder] string search = ""
