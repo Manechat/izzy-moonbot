@@ -132,31 +132,38 @@ public class SpamService
     {
         // Get the base pressure and create the pressureTracer
         var pressure = _config.SpamBasePressure;
-        var pressureTracer = new Dictionary<string, double>{ {"Base", _config.SpamBasePressure} };
-        
-        // Length pressure
-        pressure += _config.SpamLengthPressure * message.Content.Length;
-        pressureTracer.Add("Length", _config.SpamLengthPressure * message.Content.Length);
-        
-        // Line pressure
-        pressure += _config.SpamLengthPressure * (message.Content.Split("\n").Length - 1);
-        pressureTracer.Add("Lines", _config.SpamLengthPressure * (message.Content.Split("\n").Length - 1));
+        var pressureBreakdown = new List<(double, string)> { ( _config.SpamBasePressure, $"Base: {_config.SpamBasePressure} (SpamBasePressure)" ) };
+
+        var lengthPressure = _config.SpamLengthPressure * message.Content.Length;
+        if (lengthPressure > 0)
+        {
+            pressure += lengthPressure;
+            pressureBreakdown.Add((lengthPressure, $"Length: {lengthPressure} = {message.Content.Length} characters × {_config.SpamLengthPressure} (SpamLengthPressure)"));
+        }
+
+        var newlineCount = (message.Content.Split("\n").Length - 1);
+        var linePressure = _config.SpamLengthPressure * newlineCount;
+        if (linePressure > 0)
+        {
+            pressure += linePressure;
+            pressureBreakdown.Add((linePressure, $"Lines: {linePressure} = {newlineCount} line breaks × {_config.SpamLengthPressure} (SpamLengthPressure)"));
+        }
 
         // Attachments, embeds, and stickers count as Image pressure
-        if (message.Attachments.Count >= 1 || message.Embeds.Count >= 1 || message.Stickers.Count >= 1)
+        // TODO: figure out better names for this
+        var embedsCount = message.Attachments.Count + message.Embeds.Count + message.Stickers.Count;
+        if (embedsCount >= 1)
         {
-            // Register pressure increase and add increase to the pressure tracer
-            pressure += _config.SpamImagePressure *
-                        (message.Attachments.Count + message.Embeds.Count + message.Stickers.Count);
-            pressureTracer.Add("Embeds", _config.SpamImagePressure *
-                               (message.Attachments.Count + message.Embeds.Count + message.Stickers.Count));
+            var embedPressure = _config.SpamImagePressure * embedsCount;
+            pressure += embedPressure;
+            pressureBreakdown.Add((embedPressure , $"Embeds: {embedPressure} = {embedsCount} embeds × {_config.SpamImagePressure} (SpamImagePressure)"));
         }
 
         // Check if there's at least one url in the message (and there's no embeds)
         if (_url.IsMatch(message.Content) && message.Embeds.Count == 0)
         {
             // Because url pressure can occur multiple times, we store the pressure to add here
-            var pressureToAdd = 0.0;
+            var totalMatches = 0;
             
             // Go through each "word" because the URL regex is funky
             foreach (var content in message.Content.Split(" "))
@@ -174,30 +181,32 @@ public class SpamService
                     matches.Remove(matchToRemove);
                 }
 
-                pressureToAdd += _config.SpamImagePressure * matches.Count;
+                totalMatches += matches.Count;
             }
 
-            // Check if the pressure we need to add is above 0 because no point adding 0 pressure
-            if (pressureToAdd > 0.0)
+            var embedPressure = _config.SpamImagePressure * totalMatches;
+            if (embedPressure > 0.0)
             {
                 // It is, increase pressure and add pressure trace
-                pressure += pressureToAdd;
-                pressureTracer.Add("URLs", pressureToAdd);
+                pressure += embedPressure;
+                pressureBreakdown.Add((embedPressure, $"URLs: {embedPressure} = {totalMatches} unfurling URLs × {_config.SpamImagePressure} (SpamImagePressure)"));
             }
         }
 
         // Mention pressure
         if (_mention.IsMatch(message.Content))
         {
-            pressure += _config.SpamPingPressure * _mention.Matches(message.Content).Count;
-            pressureTracer.Add("Mention", _config.SpamPingPressure * _mention.Matches(message.Content).Count);
+            var mentionCount = _mention.Matches(message.Content).Count;
+            var mentionPressure = _config.SpamPingPressure * mentionCount;
+            pressure += mentionPressure;
+            pressureBreakdown.Add((mentionPressure, $"Mentions: {mentionPressure} = {mentionCount} mentions × {_config.SpamPingPressure} (SpamPingPressure)"));
         }
 
         // Repeat pressure
         if (message.CleanContent.ToLower() == _users[id].PreviousMessage.ToLower())
         {
             pressure += _config.SpamRepeatPressure;
-            pressureTracer.Add("Repeat", _config.SpamRepeatPressure);
+            pressureBreakdown.Add((_config.SpamRepeatPressure, $"Repeat: {_config.SpamRepeatPressure}"));
         }
         
         #if DEBUG
@@ -205,7 +214,7 @@ public class SpamService
         if (message.Content == _testString)
         {
             pressure = _config.SpamMaxPressure;
-            pressureTracer = new Dictionary<string, double>() { { "Test string", _config.SpamMaxPressure } };
+            pressureBreakdown = new List<(double, string)> { (_config.SpamMaxPressure, "Test string") };
         }
         #endif
 
@@ -224,7 +233,7 @@ public class SpamService
 
         var newPressure = await IncreasePressure(id, pressure);
 
-        await _logger.Log($"Pressure increase by {pressure} to {newPressure}/{_config.SpamMaxPressure}.{Environment.NewLine}                          Pressure trace: {string.Join(", ", pressureTracer)}", context, level: LogLevel.Debug);
+        await _logger.Log($"Pressure increase from {oldPressureAfterDecay} by {pressure} to {newPressure}/{_config.SpamMaxPressure}. Pressure breakdown: {string.Join(Environment.NewLine, pressureBreakdown)}", context, level: LogLevel.Debug);
 
         // If this user already tripped spam pressure, but was either immune to silencing or managed to
         // send another message before Izzy could respond, we don't want duplicate notifications
@@ -249,7 +258,7 @@ public class SpamService
                     .AddField("User", $"<@{context.User.Id}> (`{context.User.Id}`)", true)
                     .AddField("Channel", $"<#{context.Channel.Id}>", true)
                     .AddField("Pressure", $"This user's last message raised their pressure from {oldPressureAfterDecay} to {newPressure}, exceeding {_config.SpamMaxPressure} (SpamMaxPressure)")
-                    .AddField("Breakdown of last message", $"{PressureTraceToPonyReadable(pressureTracer)}")
+                    .AddField("Breakdown of last message", PonyReadableBreakdown(pressureBreakdown))
                     .WithTimestamp(context.Message.Timestamp);
 
                 await _modLogger.CreateModLog(context.Guild)
@@ -257,7 +266,7 @@ public class SpamService
                     .SetEmbed(embedBuilder.Build())
                     .SetFileLogContent(
                         $"{user.Username}#{user.Discriminator} ({user.DisplayName}) (`{user.Id}`) exceeded pressure max ({newPressure}/{_config.SpamMaxPressure}) in #{message.Channel.Name} (`{message.Channel.Id}`).{Environment.NewLine}" +
-                        $"Pressure breakdown: {PressureTraceToPonyReadable(pressureTracer)}{Environment.NewLine}" +
+                        $"Pressure breakdown: {PonyReadableBreakdown(pressureBreakdown)}{Environment.NewLine}" +
                         $"Did nothing: User has a role which bypasses punishment or has dev bypass.") 
                     .Send();
             }
@@ -265,12 +274,12 @@ public class SpamService
             {
                 // User is not immune to spam punishments, process trip.
                 await _logger.Log("Silence, executing trip method.", context, level: LogLevel.Debug);
-                await ProcessTrip(id, oldPressureAfterDecay, newPressure, pressureTracer, message, user, context, alreadyAlerted);
+                await ProcessTrip(id, oldPressureAfterDecay, newPressure, pressureBreakdown, message, user, context, alreadyAlerted);
             }
         }
     }
 
-    private async Task ProcessTrip(ulong id, double oldPressureAfterDecay, double pressure, Dictionary<string, double> pressureTracer, 
+    private async Task ProcessTrip(ulong id, double oldPressureAfterDecay, double pressure, List<(double, string)> pressureBreakdown,
         SocketUserMessage message, SocketGuildUser user, SocketCommandContext context, bool alreadyAlerted = false)
     {
         // Silence user, this also logs the action.
@@ -317,7 +326,7 @@ public class SpamService
             .AddField("User", $"<@{context.User.Id}> (`{context.User.Id}`)", true)
             .AddField("Channel", $"<#{context.Channel.Id}>", true)
             .AddField("Pressure", $"This user's last message raised their pressure from {oldPressureAfterDecay} to {pressure}, exceeding {_config.SpamMaxPressure} (SpamMaxPressure)")
-            .AddField("Breakdown of last message", $"{PressureTraceToPonyReadable(pressureTracer)}")
+            .AddField("Breakdown of last message", $"{PonyReadableBreakdown(pressureBreakdown)}")
             .WithTimestamp(context.Message.Timestamp);
 
         if (alreadyDeletedMessages != 0)
@@ -329,20 +338,14 @@ public class SpamService
             .SetEmbed(embedBuilder.Build())
             .SetFileLogContent(
                 $"{user.Username}#{user.Discriminator} ({user.DisplayName}) (`{user.Id}`) was silenced for exceeding pressure max ({pressure}/{_config.SpamMaxPressure}) in #{message.Channel.Name} (`{message.Channel.Id}`).{Environment.NewLine}" +
-                $"Pressure breakdown: {PressureTraceToPonyReadable(pressureTracer)}{Environment.NewLine}" +
+                $"Pressure breakdown: {PonyReadableBreakdown(pressureBreakdown)}{Environment.NewLine}" +
                 $"{(alreadyDeletedMessages != 0 ? $"I was unable to delete {alreadyDeletedMessages} messages from this user, please double check whether their messages have been deleted." : "")}")
             .Send();
     }
 
-    private string PressureTraceToPonyReadable(Dictionary<string, double> pressureTracer)
+    private string PonyReadableBreakdown(List<(double, string)> pressureBreakdown)
     {
-        var output = new List<string>();
-        foreach (var (key, value) in pressureTracer)
-        {
-            output.Add($"{key}: {value}");
-        }
-
-        return string.Join(", ", output);
+        return string.Join(Environment.NewLine, pressureBreakdown.OrderBy(tuple => -tuple.Item1).Select(tuple => tuple.Item2));
     }
 
     private async Task MessageReceiveEvent(SocketMessage messageParam, DiscordSocketClient client)
