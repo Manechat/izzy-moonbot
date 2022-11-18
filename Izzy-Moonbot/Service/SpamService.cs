@@ -124,7 +124,7 @@ public class SpamService
         await FileHelper.SaveUsersAsync(_users);
 
         // Return new pressure
-        return currentPressure;
+        return _users[id].Pressure;
     }
 
     private async Task ProcessPressure(ulong id, SocketUserMessage message, SocketGuildUser user,
