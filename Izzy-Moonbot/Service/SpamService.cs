@@ -134,19 +134,19 @@ public class SpamService
         var pressure = _config.SpamBasePressure;
         var pressureBreakdown = new List<(double, string)> { ( _config.SpamBasePressure, $"Base: {_config.SpamBasePressure} (SpamBasePressure)" ) };
 
-        var lengthPressure = _config.SpamLengthPressure * message.Content.Length;
+        var lengthPressure = Math.Round(_config.SpamLengthPressure * message.Content.Length, 5);
         if (lengthPressure > 0)
         {
             pressure += lengthPressure;
-            pressureBreakdown.Add((lengthPressure, $"Length: {lengthPressure} = {message.Content.Length} characters × {_config.SpamLengthPressure} (SpamLengthPressure)"));
+            pressureBreakdown.Add((lengthPressure, $"Length: {lengthPressure} ≈ {message.Content.Length} characters × {_config.SpamLengthPressure} (SpamLengthPressure)"));
         }
 
         var newlineCount = (message.Content.Split("\n").Length - 1);
-        var linePressure = _config.SpamLengthPressure * newlineCount;
+        var linePressure = Math.Round(_config.SpamLengthPressure * newlineCount, 5);
         if (linePressure > 0)
         {
             pressure += linePressure;
-            pressureBreakdown.Add((linePressure, $"Lines: {linePressure} = {newlineCount} line breaks × {_config.SpamLengthPressure} (SpamLengthPressure)"));
+            pressureBreakdown.Add((linePressure, $"Lines: {linePressure} ≈ {newlineCount} line breaks × {_config.SpamLengthPressure} (SpamLengthPressure)"));
         }
 
         // Attachments, embeds, and stickers count as Image pressure
