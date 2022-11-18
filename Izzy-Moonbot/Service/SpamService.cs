@@ -294,7 +294,8 @@ public class SpamService
             {
                 var previousMessage = await context.Guild.GetTextChannel(previousMessageItem.ChannelId)
                     .GetMessageAsync(previousMessageItem.Id);
-                await previousMessage.DeleteAsync();
+                if (previousMessage == null) alreadyDeletedMessages++;
+                else await previousMessage.DeleteAsync();
             }
             catch (HttpException exception)
             {
