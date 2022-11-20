@@ -172,7 +172,7 @@ namespace Izzy_Moonbot
         {
             Task.Run(async () =>
             {
-                var guild = _client.Guilds.Single(guild => guild.Id == 98609319519453184);
+                var guild = _client.Guilds.Single(guild => guild.Id == _discordSettings.DefaultGuild);
                 if (!guild.HasAllMembers) await guild.DownloadUsersAsync();
 
                 var newUserCount = 0;
