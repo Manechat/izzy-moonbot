@@ -14,10 +14,32 @@ namespace Izzy_Moonbot.Helpers;
 
 public static class DiscordHelper
 {
+    public static ulong DefaultGuild()
+    {
+        var config = new ConfigurationBuilder()
+            #if DEBUG
+            .AddJsonFile("appsettings.Development.json")
+            #else
+            .AddJsonFile("appsettings.json")
+            #endif
+            .Build();
+
+        var section = config.GetSection(nameof(DiscordSettings));
+        var settings = section.Get<DiscordSettings>();
+
+        if (settings == null) throw new NullReferenceException("Discord settings is null!");
+
+        return settings.DefaultGuild;
+    }
+    
     public static bool IsDev(ulong user)
     {
         var config = new ConfigurationBuilder()
+            #if DEBUG
+            .AddJsonFile("appsettings.Development.json")
+            #else
             .AddJsonFile("appsettings.json")
+            #endif
             .Build();
 
         var section = config.GetSection(nameof(DiscordSettings));
