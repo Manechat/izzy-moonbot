@@ -365,7 +365,7 @@ public class SpamService
 
         var context = new SocketCommandContext(client, message);
 
-        if (!DiscordHelper.ShouldExecuteInPrivate(null, context)) return; // Don't process anything other than DiscordSettings.DefaultGuild
+        if (!DiscordHelper.IsDefaultGuild(context)) return;
         
         var guildUser = context.User as SocketGuildUser;
 
