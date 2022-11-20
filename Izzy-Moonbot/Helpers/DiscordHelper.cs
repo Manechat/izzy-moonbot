@@ -14,6 +14,26 @@ namespace Izzy_Moonbot.Helpers;
 
 public static class DiscordHelper
 {
+    public static bool ShouldExecuteInPrivate(bool? dmsAllowedFlag, SocketCommandContext context)
+    {
+        var settings = GetDiscordSettings();
+        
+        if (dmsAllowedFlag == null)
+        {
+            // First return if the channel type is a type that cannot have a Guild.
+            if (context.IsPrivate) return false;
+
+            // Next, return if the guild id doesn't match the default guild.
+            return context.Guild.Id == settings.DefaultGuild;
+        }
+        
+        // First return if the channel type is a type that cannot have a Guild.
+        if (!dmsAllowedFlag.Value && context.IsPrivate) return false;
+
+        // Next, return if the guild id doesn't match the default guild.
+        return dmsAllowedFlag.Value || context.Guild.Id == settings.DefaultGuild;
+    }
+    
     public static ulong DefaultGuild()
     {
         var settings = GetDiscordSettings();
@@ -205,12 +225,14 @@ public static class DiscordHelper
     }
 
     public static async Task<ulong> GetUserIdFromPingOrIfOnlySearchResultAsync(string userName,
-        SocketCommandContext context)
+        SocketCommandContext context, bool searchDefaultGuild = false)
     {
         var userId = ConvertUserPingToId(userName);
         if (userId > 0) return userId;
 
-        var userList = await context.Guild.SearchUsersAsync(userName);
+        var userList = searchDefaultGuild 
+            ? await context.Client.Guilds.Single(guild => guild.Id == DefaultGuild()).SearchUsersAsync(userName)
+            : await context.Guild.SearchUsersAsync(userName);
         return userList.Count < 1 ? 0 : userList.First().Id;
     }
 
