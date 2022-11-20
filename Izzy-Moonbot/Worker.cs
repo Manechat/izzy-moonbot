@@ -151,7 +151,7 @@ namespace Izzy_Moonbot
 
         private async Task InstallCommandsAsync()
         {
-            _client.MessageReceived += HandleCommandAsync;
+            _client.MessageReceived += HandleMessageReceivedAsync;
             await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), _services.BuildServiceProvider());
         }
 
@@ -323,9 +323,8 @@ namespace Izzy_Moonbot
             });
         }
 
-        private async Task HandleCommandAsync(SocketMessage messageParam)
+        private async Task HandleMessageReceivedAsync(SocketMessage messageParam)
         {
-            //_logger.Log(LogLevel.Debug, $"{messageParam.CleanContent}; {messageParam.EditedTimestamp}");
             if (messageParam.Type != MessageType.Default && messageParam.Type != MessageType.Reply &&
                 messageParam.Type != MessageType.ThreadStarterMessage) return;
             SocketUserMessage message = messageParam as SocketUserMessage;
@@ -340,6 +339,8 @@ namespace Izzy_Moonbot
             if (message.HasCharPrefix(_config.Prefix, ref argPos) ||
                 message.Content.StartsWith($"<@{_client.CurrentUser.Id}>"))
             {
+                _logger.Log(LogLevel.Information, $"Received possible command: {messageParam.CleanContent}");
+
                 string parsedMessage;
                 var checkCommands = true;
                 if (message.Content.StartsWith($"<@{_client.CurrentUser.Id}>"))
@@ -393,7 +394,11 @@ namespace Izzy_Moonbot
                         command.Name == parsedMessage.Split(" ")[0] 
                         || command.Aliases.Contains(parsedMessage.Split(" ")[0]));
 
-                    if (!validCommand) return;
+                    if (!validCommand)
+                    {
+                        _logger.Log(LogLevel.Information, $"Ignoring message {messageParam.CleanContent} because it doesn't match any command or alias names");
+                        return;
+                    }
                 }
 
                 // Check for BotsAllowed attribute
