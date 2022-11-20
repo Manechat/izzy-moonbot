@@ -116,20 +116,15 @@ public class SpamService
 
     public async Task<double> IncreasePressure(ulong id, double pressure)
     {
-        // Get current time and pressure (also execute pressure decay)
-        var now = DateTimeOffset.UtcNow;
-        var currentPressure = await GetAndDecayPressure(id);
-        
         // Increase pressure
-        currentPressure += pressure;
+        _users[id].Pressure += pressure;
 
         // Save user
-        _users[id].Pressure = currentPressure;
-        _users[id].Timestamp = now;
+        _users[id].Timestamp = DateTimeOffset.UtcNow;
         await FileHelper.SaveUsersAsync(_users);
 
         // Return new pressure
-        return currentPressure;
+        return _users[id].Pressure;
     }
 
     private async Task ProcessPressure(ulong id, SocketUserMessage message, SocketGuildUser user,
@@ -246,11 +241,17 @@ public class SpamService
         
         await FileHelper.SaveUsersAsync(_users);
 
-        var oldPressure = _users[id].Pressure * 1; // seperate it from the thingy
-        
+        var oldPressureBeforeDecay = _users[id].Pressure * 1; // seperate it from the thingy
+
+        var oldPressureAfterDecay = await GetAndDecayPressure(id);
+
         var newPressure = await IncreasePressure(id, pressure);
 
         await _logger.Log($"Pressure increase by {pressure} to {newPressure}/{_config.SpamMaxPressure}.{Environment.NewLine}                          Pressure trace: {string.Join(", ", pressureTracer)}", context, level: LogLevel.Debug);
+
+        // If this user already tripped spam pressure, but was either immune to silencing or managed to
+        // send another message before Izzy could respond, we don't want duplicate notifications
+        var alreadyAlerted = oldPressureBeforeDecay >= _config.SpamMaxPressure;
 
         if (newPressure >= _config.SpamMaxPressure)
         {
@@ -262,15 +263,15 @@ public class SpamService
                 // User has a role which bypasses the punishment of spam trigger. Mention it in action log.
                 await _logger.Log("No silence, user has role(s) in Config.SpamBypassRoles", context, level: LogLevel.Debug);
 
-                if (oldPressure >= _config.SpamMaxPressure) return;
-                
+                if (alreadyAlerted) return;
+
                 var embedBuilder = new EmbedBuilder()
                     .WithTitle(":warning: Spam detected")
                     .WithDescription("No action was taken against this user as they have a role which bypasses punishment (`SpamBypassRoles`)")
                     .WithColor(3355443)
                     .AddField("User", $"<@{context.User.Id}> (`{context.User.Id}`)", true)
                     .AddField("Channel", $"<#{context.Channel.Id}>", true)
-                    .AddField("Pressure", $"This user's last message raised their pressure from {oldPressure} to {newPressure}, exceeding {_config.SpamMaxPressure} (SpamMaxPressure)")
+                    .AddField("Pressure", $"This user's last message raised their pressure from {oldPressureAfterDecay} to {newPressure}, exceeding {_config.SpamMaxPressure} (SpamMaxPressure)")
                     .AddField("Breakdown of last message", $"{PressureTraceToPonyReadable(pressureTracer)}")
                     .WithTimestamp(context.Message.Timestamp);
 
@@ -287,12 +288,12 @@ public class SpamService
             {
                 // User is not immune to spam punishments, process trip.
                 await _logger.Log("Silence, executing trip method.", context, level: LogLevel.Debug);
-                await ProcessTrip(id, oldPressure, newPressure, pressureTracer, message, user, context, (oldPressure >= _config.SpamMaxPressure));
+                await ProcessTrip(id, oldPressureAfterDecay, newPressure, pressureTracer, message, user, context, alreadyAlerted);
             }
         }
     }
 
-    private async Task ProcessTrip(ulong id, double oldPressure, double pressure, Dictionary<string, double> pressureTracer, 
+    private async Task ProcessTrip(ulong id, double oldPressureAfterDecay, double pressure, Dictionary<string, double> pressureTracer, 
         SocketUserMessage message, SocketGuildUser user, SocketCommandContext context, bool alreadyAlerted = false)
     {
         // Silence user, this also logs the action.
@@ -338,7 +339,7 @@ public class SpamService
             .WithColor(16776960)
             .AddField("User", $"<@{context.User.Id}> (`{context.User.Id}`)", true)
             .AddField("Channel", $"<#{context.Channel.Id}>", true)
-            .AddField("Pressure", $"This user's last message raised their pressure from {oldPressure} to {pressure}, exceeding {_config.SpamMaxPressure} (SpamMaxPressure)")
+            .AddField("Pressure", $"This user's last message raised their pressure from {oldPressureAfterDecay} to {pressure}, exceeding {_config.SpamMaxPressure} (SpamMaxPressure)")
             .AddField("Breakdown of last message", $"{PressureTraceToPonyReadable(pressureTracer)}")
             .WithTimestamp(context.Message.Timestamp);
 
