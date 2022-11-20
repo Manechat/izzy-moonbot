@@ -38,6 +38,7 @@ public class ParameterAttribute : Attribute
              ParameterType.User => "User",
              ParameterType.Role => "Role",
              ParameterType.Channel => "Channel",
+             ParameterType.Snowflake => "Snowflake ID",
              ParameterType.DateTime => "Date/Time",
              _ => "Unknown"
          };
@@ -55,5 +56,6 @@ public enum ParameterType
     User,
     Role,
     Channel,
+    Snowflake,
     DateTime
 }

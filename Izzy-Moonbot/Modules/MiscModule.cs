@@ -21,6 +21,32 @@ public class MiscModule : ModuleBase<SocketCommandContext>
         _config = config;
     }
 
+    [Command("snowflaketime")]
+    [Summary("Get the creation date of a Discord resource via its snowflake ID.")]
+    [Alias("sft")]
+    [Parameter("snowflake", ParameterType.Snowflake, "The snowflake to get the creation date from.")]
+    [ExternalUsageAllowed]
+    public async Task SnowflakeTimeCommandAsync([Remainder]string snowflakeString = "")
+    {
+        if (snowflakeString == "")
+        {
+            await ReplyAsync("You need to give me a snowflake to convert!");
+            return;
+        }
+        
+        try
+        {
+            var snowflake = ulong.Parse(snowflakeString);
+            var time = SnowflakeUtils.FromSnowflake(snowflake);
+
+            await ReplyAsync($"`{snowflake}` -> <t:{time.ToUnixTimeSeconds()}:F> (<t:{time.ToUnixTimeSeconds()}:R>)");
+        }
+        catch
+        {
+            await ReplyAsync("Sorry, I couldn't convert the snowflake you gave me to an actual snowflake.");
+        }
+    }
+
     [Summary("Commands for viewing and modifying quotes.")]
     public class QuotesSubmodule : ModuleBase<SocketCommandContext>
     {
