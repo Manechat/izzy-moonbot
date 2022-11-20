@@ -44,6 +44,8 @@ public class UserListener
 
     public async Task MemberUnbanEvent(SocketUser user, SocketGuild guild)
     {
+        if (guild.Id != DiscordHelper.DefaultGuild()) return;
+        
         await _logger.Log($"User was unbanned: {user.Username}#{user.Discriminator}.", level: LogLevel.Debug);
         var scheduledJobs = _schedule.GetScheduledJobs(job => 
             (job.Action.Fields.ContainsKey("userId") && job.Action.Fields["userId"] == user.Id.ToString()) ||
@@ -60,6 +62,8 @@ public class UserListener
 
     public async Task MemberJoinEvent(SocketGuildUser member, bool catchingUp = false)
     {
+        if (member.Guild.Id != DiscordHelper.DefaultGuild()) return;
+        
         await _logger.Log($"New member join{(catchingUp ? " found after reboot" : "")}: {member.Username}#{member.DiscriminatorValue} ({member.Id})", level: LogLevel.Debug);
         if (!_users.ContainsKey(member.Id))
         {
@@ -188,6 +192,8 @@ public class UserListener
     
     private async Task MemberLeaveEvent(SocketGuild guild, SocketUser user)
     {
+        if (guild.Id != DiscordHelper.DefaultGuild()) return;
+        
         await _logger.Log($"Member leaving: {user.Username}#{user.Discriminator} ({user.Id}), getting last nickname", level: LogLevel.Debug);
         var lastNickname = "";
         try
@@ -279,6 +285,8 @@ public class UserListener
 
     private async Task MemberUpdateEvent(Cacheable<SocketGuildUser,ulong> oldUser, SocketGuildUser newUser)
     {
+        if (newUser.Guild.Id != DiscordHelper.DefaultGuild()) return;
+        
         var changed = false;
         
         if (!_users.ContainsKey(newUser.Id))
