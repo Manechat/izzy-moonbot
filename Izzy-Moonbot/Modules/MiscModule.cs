@@ -39,7 +39,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
         [Parameter("user", ParameterType.User, "The user to get a quote from.", true)]
         [Parameter("id", ParameterType.Integer, "The specific quote number from that user to post.", true)]
         [BotsAllowed]
-        [DMsAllowed]
+        [ExternalUsageAllowed]
         public async Task QuoteCommandAsync(
             [Remainder]string argsString = "")
         {
@@ -280,7 +280,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
             "List all the quotes for a specific user or category, or list all the users and categories that have quotes if one is not provided.")]
         [Alias("lq", "searchquotes", "searchquote", "sq")]
         [Parameter("user", ParameterType.User, "The user to search for.", true)]
-        [DMsAllowed]
+        [ExternalUsageAllowed]
         public async Task ListQuotesCommandAsync(
             [Remainder] string search = ""
         )

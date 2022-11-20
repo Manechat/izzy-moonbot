@@ -26,7 +26,7 @@ public class InfoModule : ModuleBase<SocketCommandContext>
     [Command("help")]
     [Summary("Lists all commands")]
     [Parameter("search", ParameterType.String, "The command, category, or alias you want to get information about.")]
-    [DMsAllowed]
+    [ExternalUsageAllowed]
     public async Task HelpCommandAsync(
         [Remainder]string item = "")
     {
@@ -233,7 +233,7 @@ public class InfoModule : ModuleBase<SocketCommandContext>
 
     [Command("about")]
     [Summary("About the bot")]
-    [DMsAllowed]
+    [ExternalUsageAllowed]
     public async Task AboutCommandAsync()
     {
         await ReplyAsync(
