@@ -85,16 +85,16 @@ public class ScheduleService
             switch (job.Action.Type)
             {
                 case RemoveRole:
-                    await Unicycle_RemoveRole(job, client.GetGuild(98609319519453184), client);
+                    await Unicycle_RemoveRole(job, client.GetGuild(DiscordHelper.DefaultGuild()), client);
                     break;
                 case AddRole:
-                    await Unicycle_AddRole(job, client.GetGuild(98609319519453184), client);
+                    await Unicycle_AddRole(job, client.GetGuild(DiscordHelper.DefaultGuild()), client);
                     break;
                 case Unban:
-                    await Unicycle_Unban(job, client.GetGuild(98609319519453184), client);
+                    await Unicycle_Unban(job, client.GetGuild(DiscordHelper.DefaultGuild()), client);
                     break;
                 case Echo:
-                    await Unicycle_Echo(job, client.GetGuild(98609319519453184), client);
+                    await Unicycle_Echo(job, client.GetGuild(DiscordHelper.DefaultGuild()), client);
                     break;
                 default:
                     throw new NotSupportedException($"{job.Action.Type} is currently not supported.");
