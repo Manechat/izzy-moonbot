@@ -14,24 +14,25 @@ namespace Izzy_Moonbot.Helpers;
 
 public static class DiscordHelper
 {
-    public static bool ShouldExecuteInPrivate(bool? dmsAllowedFlag, SocketCommandContext context)
+    public static bool ShouldExecuteInPrivate(bool externalUsageAllowedFlag, SocketCommandContext context)
     {
         var settings = GetDiscordSettings();
-        
-        if (dmsAllowedFlag == null)
-        {
-            // First return if the channel type is a type that cannot have a Guild.
-            if (context.IsPrivate) return false;
 
-            // Next, return if the guild id doesn't match the default guild.
-            return context.Guild.Id == settings.DefaultGuild;
+        if (context.IsPrivate || context.Guild.Id != settings.DefaultGuild)
+        {
+            return externalUsageAllowedFlag;
         }
         
-        // First return if the channel type is a type that cannot have a Guild.
-        if (!dmsAllowedFlag.Value && context.IsPrivate) return false;
+        return true;
+    }
 
-        // Next, return if the guild id doesn't match the default guild.
-        return dmsAllowedFlag.Value || context.Guild.Id == settings.DefaultGuild;
+    public static bool IsDefaultGuild(SocketCommandContext context)
+    {
+        var settings = GetDiscordSettings();
+
+        if (context.IsPrivate) return false;
+        
+        return context.Guild.Id == settings.DefaultGuild;
     }
     
     public static ulong DefaultGuild()
