@@ -406,9 +406,9 @@ namespace Izzy_Moonbot
                 var commandToExec = searchResult.Commands[0].Command;
 
                 // Check for DMsAllowed attribute
-                var hasDMsAllowedAttribute = commandToExec.Preconditions.Where(attribute => attribute != null).OfType<DMsAllowedAttribute>().Any();
+                var hasExternalUsageAllowedAttribute = commandToExec.Preconditions.Where(attribute => attribute != null).OfType<ExternalUsageAllowed>().Any();
 
-                if (!DiscordHelper.ShouldExecuteInPrivate(hasDMsAllowedAttribute, context)) return;
+                if (!DiscordHelper.ShouldExecuteInPrivate(hasExternalUsageAllowedAttribute, context)) return;
 
                 // Check for BotsAllowed attribute
                 var hasBotsAllowedAttribute = commandToExec.Preconditions.Where(attribute => attribute != null).OfType<BotsAllowedAttribute>().Any();
