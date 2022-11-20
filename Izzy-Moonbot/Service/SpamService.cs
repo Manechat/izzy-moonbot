@@ -347,7 +347,7 @@ public class SpamService
     private string PonyReadableBreakdown(List<(double, string)> pressureBreakdown)
     {
         var orderedBreakdown = pressureBreakdown.OrderBy(tuple => -tuple.Item1).Select(tuple => tuple.Item2).ToList();
-        orderedBreakdown[0] = "**" + orderedBreakdown[0] + "**"; // show the top contributor in bold
+        orderedBreakdown[0] = "**" + orderedBreakdown[0] - "**"; // show the top contributor in bold
         return string.Join(Environment.NewLine, orderedBreakdown);
     }
 
