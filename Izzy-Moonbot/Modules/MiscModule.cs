@@ -39,13 +39,16 @@ public class MiscModule : ModuleBase<SocketCommandContext>
         [Parameter("user", ParameterType.User, "The user to get a quote from.", true)]
         [Parameter("id", ParameterType.Integer, "The specific quote number from that user to post.", true)]
         [BotsAllowed]
+        [DMsAllowed]
         public async Task QuoteCommandAsync(
             [Remainder]string argsString = "")
         {
+            var defaultGuild = Context.Client.Guilds.Single(guild => guild.Id == DiscordHelper.DefaultGuild());
+            
             if (argsString == "")
             {
                 // Get random quote and post
-                var quote = _quoteService.GetRandomQuote(Context.Guild);
+                var quote = _quoteService.GetRandomQuote(defaultGuild);
 
                 await ReplyAsync($"**{quote.Name} `#{quote.Id+1}`:** {quote.Content}", allowedMentions: AllowedMentions.None);
                 return;
@@ -67,10 +70,10 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                 if (_quoteService.AliasExists(search))
                 {
                     // This is an alias, check what type
-                    if (_quoteService.AliasRefersTo(search, Context.Guild) == "user")
+                    if (_quoteService.AliasRefersTo(search, defaultGuild) == "user")
                     {
                         // The alias refers to an existing user. 
-                        var user = _quoteService.ProcessAlias(search, Context.Guild);
+                        var user = _quoteService.ProcessAlias(search, defaultGuild);
 
                         // Choose a random quote from this user.
                         try
@@ -126,8 +129,8 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                     }
                 }
                 // It isn't, this is a user.
-                var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(search, Context);
-                var member = Context.Guild.GetUser(userId);
+                var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(search, Context, true);
+                var member = defaultGuild.GetUser(userId);
                         
                 // Check if the user exists or not
                 if (member == null)
@@ -164,10 +167,10 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                 if (_quoteService.AliasExists(search))
                 {
                     // This is an alias, check what type
-                    if (_quoteService.AliasRefersTo(search, Context.Guild) == "user")
+                    if (_quoteService.AliasRefersTo(search, defaultGuild) == "user")
                     {
                         // The alias refers to an existing user. 
-                        var user = _quoteService.ProcessAlias(search, Context.Guild);
+                        var user = _quoteService.ProcessAlias(search, defaultGuild);
 
                         // Choose a random quote from this user.
                         try
@@ -237,8 +240,8 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                     }
                 }
                 // It isn't, this is a user.
-                var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(search, Context);
-                var member = Context.Guild.GetUser(userId);
+                var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(search, Context, true);
+                var member = defaultGuild.GetUser(userId);
                 
                 // Check if the user exists or not
                 if (member == null)
@@ -277,14 +280,17 @@ public class MiscModule : ModuleBase<SocketCommandContext>
             "List all the quotes for a specific user or category, or list all the users and categories that have quotes if one is not provided.")]
         [Alias("lq", "searchquotes", "searchquote", "sq")]
         [Parameter("user", ParameterType.User, "The user to search for.", true)]
+        [DMsAllowed]
         public async Task ListQuotesCommandAsync(
             [Remainder] string search = ""
         )
         {
+            var defaultGuild = Context.Client.Guilds.Single(guild => guild.Id == DiscordHelper.DefaultGuild());
+            
             if (search == "")
             {
                 // Show a list of list keys, paginating them if possible.
-                var quoteKeys = _quoteService.GetKeyList(Context.Guild);
+                var quoteKeys = _quoteService.GetKeyList(defaultGuild);
 
                 if (quoteKeys.Length > 15)
                 {
@@ -326,10 +332,10 @@ public class MiscModule : ModuleBase<SocketCommandContext>
             if (_quoteService.AliasExists(search))
             {
                 // This is an alias, check what type
-                if (_quoteService.AliasRefersTo(search, Context.Guild) == "user")
+                if (_quoteService.AliasRefersTo(search, defaultGuild) == "user")
                 {
                     // The alias refers to an existing user. 
-                    var user = _quoteService.ProcessAlias(search, Context.Guild);
+                    var user = _quoteService.ProcessAlias(search, defaultGuild);
 
                     // Choose a random quote from this user.
                     try
@@ -483,8 +489,8 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                 }
             }
             // It isn't, this is a user.
-            var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(search, Context);
-            var member = Context.Guild.GetUser(userId);
+            var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(search, Context, true);
+            var member = defaultGuild.GetUser(userId);
             
             // Check if the user exists or not
             if (member == null)
