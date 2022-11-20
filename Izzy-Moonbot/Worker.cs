@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
+using Discord.Interactions;
 using Discord.Net;
 using Discord.Rest;
 using Discord.WebSocket;
@@ -400,11 +401,16 @@ namespace Izzy_Moonbot
                         return;
                     }
                 }
-
-                // Check for BotsAllowed attribute
+                
                 var searchResult = _commands.Search(parsedMessage);
                 var commandToExec = searchResult.Commands[0].Command;
 
+                // Check for DMsAllowed attribute
+                var hasExternalUsageAllowedAttribute = commandToExec.Preconditions.Where(attribute => attribute != null).OfType<ExternalUsageAllowed>().Any();
+
+                if (!DiscordHelper.ShouldExecuteInPrivate(hasExternalUsageAllowedAttribute, context)) return;
+
+                // Check for BotsAllowed attribute
                 var hasBotsAllowedAttribute = commandToExec.Preconditions.Where(attribute => attribute != null).OfType<BotsAllowedAttribute>().Any();
 
                 if (!hasBotsAllowedAttribute && context.User.IsBot) return;

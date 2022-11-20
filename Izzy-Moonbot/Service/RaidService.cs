@@ -313,6 +313,7 @@ public class RaidService
 
     public async Task ProcessMemberJoin(SocketGuildUser member)
     {
+        if (member.Guild.Id != DiscordHelper.DefaultGuild()) return; // Don't process non-default server.
         if (!_config.RaidProtectionEnabled) return;
         if (!UserRecentlyJoined(member.Id))
         {

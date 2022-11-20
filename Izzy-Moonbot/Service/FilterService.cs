@@ -166,6 +166,8 @@ public class FilterService
         if (newMessage is not SocketUserMessage message) return; // Not processable
         SocketCommandContext context = new SocketCommandContext(client, message);
         
+        if (!DiscordHelper.IsDefaultGuild(context)) return;
+        
         if (_config.ThreadOnlyMode &&
             (message.Channel.GetChannelType() != ChannelType.PublicThread &&
              message.Channel.GetChannelType() != ChannelType.PrivateThread)) return; // Not a thread, in thread only mode
@@ -203,6 +205,8 @@ public class FilterService
         if (!DiscordHelper.IsProcessableMessage(messageParam)) return; // Not processable
         if (messageParam is not SocketUserMessage message) return; // Not processable
         SocketCommandContext context = new SocketCommandContext(client, message);
+        
+        if (!DiscordHelper.IsDefaultGuild(context)) return;
         
         if (_config.ThreadOnlyMode &&
             (message.Channel.GetChannelType() != ChannelType.PublicThread &&

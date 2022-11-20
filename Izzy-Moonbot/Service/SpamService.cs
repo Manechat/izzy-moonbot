@@ -364,6 +364,9 @@ public class SpamService
              message.Channel.GetChannelType() != ChannelType.PrivateThread)) return; // Not a thread, in thread only mode
 
         var context = new SocketCommandContext(client, message);
+
+        if (!DiscordHelper.IsDefaultGuild(context)) return;
+        
         var guildUser = context.User as SocketGuildUser;
 
         if (guildUser.Id == client.CurrentUser.Id) return; // Don't process the bot
