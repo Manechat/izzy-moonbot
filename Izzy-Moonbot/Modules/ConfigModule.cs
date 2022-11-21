@@ -1372,11 +1372,6 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                     var key = value.Split(' ')[0].ToLower();
                     value = value.Replace(key + " ", "");
                     
-                    // .config Aliases <key> set <value>
-                    //                  key action value
-                    // .config Aliases set <key> <value>
-                    //              action key   value
-                    
                     switch (configItem.Type)
                     {
                         case ConfigItemType.StringDictionary:
