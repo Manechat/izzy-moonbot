@@ -953,9 +953,24 @@ public static class ConfigHelper
 
         return list;
     }
+    
+    public static bool DoesStringDictionaryKeyExist<T>(Config settings, string key, string dictionaryKey,
+        SocketCommandContext context) where T : Config
+    {
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
 
-    public static async Task<string> CreateStringDictionaryKey<T>(Config settings, string key,
-        string dictionaryKey, SocketCommandContext context) where T : Config
+        var t = typeof(T);
+
+        var property = t.GetProperty(key);
+        if (property == null) return false;
+
+        var items = property.GetValue(settings);
+        return items is Dictionary<string, string> dictionary && dictionary.ContainsKey(dictionaryKey);
+    }
+
+    public static async Task<(string, string?, string)> CreateStringDictionaryKey<T>(Config settings, string key,
+        string dictionaryKey, string value, SocketCommandContext context) where T : Config
     {
         if (!DoesValueExist<Config>(settings, key))
             throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
@@ -971,12 +986,12 @@ public static class ConfigHelper
 
         try
         {
-            list.Add(dictionaryKey, "");
+            list.Add(dictionaryKey, value);
 
             t.GetProperty(key).SetValue(settings, list);
 
             await FileHelper.SaveConfigAsync(settings);
-            return dictionaryKey;
+            return (dictionaryKey, null, value);
         }
         catch (ArgumentException ex)
         {
@@ -1023,11 +1038,13 @@ public static class ConfigHelper
         var list = (IDictionary<string, string>?)t.GetProperty(key).GetValue(settings);
 
         if (list == null) throw new NullReferenceException("Dictionary is null *despite* already being nullchecked?");
+        
+        if (!list.ContainsKey(dictionaryKey)) throw new KeyNotFoundException($"'{dictionaryKey}' is not in '{key}'");
 
         return list[dictionaryKey];
     }
 
-    public static async Task<string> SetStringDictionaryValue<T>(Config settings, string key,
+    public static async Task<(string, string?, string)> SetStringDictionaryValue<T>(Config settings, string key,
         string dictionaryKey, string value, SocketCommandContext context) where T : Config
     {
         if (!DoesValueExist<Config>(settings, key))
@@ -1042,12 +1059,14 @@ public static class ConfigHelper
 
         if (list == null) throw new NullReferenceException("Dictionary is null *despite* already being nullchecked?");
 
+        if (!list.TryGetValue(dictionaryKey, out var oldValue)) oldValue = null;
+        
         list[dictionaryKey] = value;
 
         t.GetProperty(key).SetValue(settings, list);
 
         await FileHelper.SaveConfigAsync(settings);
-        return dictionaryKey;
+        return (dictionaryKey, oldValue, value);
     }
 
     public static Dictionary<string, string?> GetNullableStringDictionary<T>(Config settings, string key,
@@ -1068,8 +1087,23 @@ public static class ConfigHelper
         return list;
     }
 
-    public static async Task<string> CreateNullableStringDictionaryKey<T>(Config settings, string key,
-        string dictionaryKey, SocketCommandContext context) where T : Config
+    public static bool DoesNullableStringDictionaryKeyExist<T>(Config settings, string key, string dictionaryKey,
+        SocketCommandContext context) where T : Config
+    {
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
+
+        var t = typeof(T);
+
+        var property = t.GetProperty(key);
+        if (property == null) return false;
+
+        var items = property.GetValue(settings);
+        return items is Dictionary<string, string?> dictionary && dictionary.ContainsKey(dictionaryKey);
+    }
+
+    public static async Task<(string, string?, string?)> CreateNullableStringDictionaryKey<T>(Config settings, string key,
+        string dictionaryKey, string? value, SocketCommandContext context) where T : Config
     {
         if (!DoesValueExist<Config>(settings, key))
             throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
@@ -1085,12 +1119,12 @@ public static class ConfigHelper
 
         try
         {
-            list.Add(dictionaryKey, null);
+            list.Add(dictionaryKey, value);
 
             t.GetProperty(key).SetValue(settings, list);
 
             await FileHelper.SaveConfigAsync(settings);
-            return dictionaryKey;
+            return (dictionaryKey, null, value);
         }
         catch (ArgumentException ex)
         {
@@ -1138,10 +1172,12 @@ public static class ConfigHelper
 
         if (list == null) throw new NullReferenceException("Dictionary is null *despite* already being nullchecked?");
 
+        if (!list.ContainsKey(dictionaryKey)) throw new KeyNotFoundException($"'{dictionaryKey}' is not in '{key}'");
+
         return list[dictionaryKey];
     }
 
-    public static async Task<string?> SetNullableStringDictionaryValue<T>(Config settings, string key,
+    public static async Task<(string, string?, string?)> SetNullableStringDictionaryValue<T>(Config settings, string key,
         string dictionaryKey, string? value, SocketCommandContext context) where T : Config
     {
         if (!DoesValueExist<Config>(settings, key))
@@ -1156,12 +1192,14 @@ public static class ConfigHelper
 
         if (list == null) throw new NullReferenceException("Dictionary is null *despite* already being nullchecked?");
 
+        if (!list.TryGetValue(dictionaryKey, out var oldValue)) oldValue = null;
+        
         list[dictionaryKey] = value;
 
         t.GetProperty(key).SetValue(settings, list);
 
         await FileHelper.SaveConfigAsync(settings);
-        return value;
+        return (dictionaryKey, oldValue, value);
     }
 
     public static Dictionary<string, bool> GetBooleanDictionary<T>(Config settings, string key,
@@ -1181,9 +1219,24 @@ public static class ConfigHelper
 
         return list;
     }
+    
+    public static bool DoesBooleanDictionaryKeyExist<T>(Config settings, string key, string dictionaryKey,
+        SocketCommandContext context) where T : Config
+    {
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
 
-    public static async Task<string> CreateBooleanDictionaryKey<T>(Config settings, string key,
-        string dictionaryKey, SocketCommandContext context) where T : Config
+        var t = typeof(T);
+
+        var property = t.GetProperty(key);
+        if (property == null) return false;
+
+        var items = property.GetValue(settings);
+        return items is Dictionary<string, bool> dictionary && dictionary.ContainsKey(dictionaryKey);
+    }
+
+    public static async Task<(string, bool?, bool)> CreateBooleanDictionaryKey<T>(Config settings, string key,
+        string dictionaryKey, string value, SocketCommandContext context) where T : Config
     {
         if (!DoesValueExist<Config>(settings, key))
             throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
@@ -1199,12 +1252,36 @@ public static class ConfigHelper
 
         try
         {
-            list.Add(dictionaryKey, false);
+            var boolean = false;
+            
+            switch (value.ToLower())
+            {
+                case "true":
+                case "yes":
+                case "enable":
+                case "activate":
+                case "on":
+                case "y":
+                    boolean = true;
+                    break;
+                case "false":
+                case "no":
+                case "disable":
+                case "deactivate":
+                case "off":
+                case "n":
+                    boolean = false;
+                    break;
+                default:
+                    throw new FormatException($"Couldn't process {value} into a boolean.");
+            }
+
+            list.Add(dictionaryKey, boolean);
 
             t.GetProperty(key).SetValue(settings, list);
 
             await FileHelper.SaveConfigAsync(settings);
-            return dictionaryKey;
+            return (dictionaryKey, null, boolean);
         }
         catch (ArgumentException ex)
         {
@@ -1252,10 +1329,12 @@ public static class ConfigHelper
 
         if (list == null) throw new NullReferenceException("Dictionary is null *despite* already being nullchecked?");
 
+        if (!list.ContainsKey(dictionaryKey)) throw new KeyNotFoundException($"'{dictionaryKey}' is not in '{key}'");
+
         return list[dictionaryKey];
     }
 
-    public static async Task<bool> SetBooleanDictionaryValue<T>(Config settings, string key,
+    public static async Task<(string, bool?, bool)> SetBooleanDictionaryValue<T>(Config settings, string key,
         string dictionaryKey, string value, SocketCommandContext context) where T : Config
     {
         if (!DoesValueExist<Config>(settings, key))
@@ -1270,6 +1349,8 @@ public static class ConfigHelper
 
         if (list == null) throw new NullReferenceException("Dictionary is null *despite* already being nullchecked?");
 
+        bool? oldValue = list[dictionaryKey];
+        
         switch (value.ToLower())
         {
             case "true":
@@ -1295,7 +1376,7 @@ public static class ConfigHelper
         t.GetProperty(key).SetValue(settings, list);
 
         await FileHelper.SaveConfigAsync(settings);
-        return list[dictionaryKey];
+        return (dictionaryKey, oldValue, list[dictionaryKey]);
     }
 
     public static Dictionary<string, List<string>> GetStringListDictionary<T>(Config settings, string key,
@@ -1315,9 +1396,24 @@ public static class ConfigHelper
 
         return list;
     }
+    
+    public static bool DoesStringListDictionaryKeyExist<T>(Config settings, string key, string dictionaryKey,
+        SocketCommandContext context) where T : Config
+    {
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
 
-    public static async Task<string> CreateStringListDictionaryKey<T>(Config settings, string key,
-        string dictionaryKey, SocketCommandContext context) where T : Config
+        var t = typeof(T);
+
+        var property = t.GetProperty(key);
+        if (property == null) return false;
+
+        var items = property.GetValue(settings);
+        return items is Dictionary<string, List<string>> dictionary && dictionary.ContainsKey(dictionaryKey);
+    }
+
+    public static async Task<(string, string)> CreateStringListDictionaryKey<T>(Config settings, string key,
+        string dictionaryKey, string value, SocketCommandContext context) where T : Config
     {
         if (!DoesValueExist<Config>(settings, key))
             throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
@@ -1333,12 +1429,12 @@ public static class ConfigHelper
 
         try
         {
-            list.Add(dictionaryKey, new List<string>());
+            list.Add(dictionaryKey, new List<string>{ value });
 
             t.GetProperty(key).SetValue(settings, list);
 
             await FileHelper.SaveConfigAsync(settings);
-            return dictionaryKey;
+            return (dictionaryKey, value);
         }
         catch (ArgumentException ex)
         {
@@ -1386,10 +1482,13 @@ public static class ConfigHelper
 
         if (list == null) throw new NullReferenceException("Dictionary is null *despite* already being nullchecked?");
 
+        if (!list.ContainsKey(dictionaryKey))
+            throw new KeyNotFoundException($"'{dictionaryKey}' does not exist within '{key}'");
+        
         return list[dictionaryKey];
     }
 
-    public static async Task<string> AddToStringListDictionaryValue<T>(Config settings, string key,
+    public static async Task<(string, string)> AddToStringListDictionaryValue<T>(Config settings, string key,
         string dictionaryKey, string value, SocketCommandContext context) where T : Config
     {
         if (!DoesValueExist<Config>(settings, key))
@@ -1409,10 +1508,10 @@ public static class ConfigHelper
         t.GetProperty(key).SetValue(settings, list);
 
         await FileHelper.SaveConfigAsync(settings);
-        return value;
+        return (dictionaryKey, value);
     }
 
-    public static async Task<string> RemoveFromStringListDictionaryValue<T>(Config settings, string key,
+    public static async Task<(string, string)> RemoveFromStringListDictionaryValue<T>(Config settings, string key,
         string dictionaryKey, string value, SocketCommandContext context) where T : Config
     {
         if (!DoesValueExist<Config>(settings, key))
@@ -1434,6 +1533,6 @@ public static class ConfigHelper
         t.GetProperty(key).SetValue(settings, list);
 
         await FileHelper.SaveConfigAsync(settings);
-        return value;
+        return (dictionaryKey, value);
     }
 }
