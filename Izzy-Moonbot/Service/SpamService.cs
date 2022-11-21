@@ -262,8 +262,7 @@ public class SpamService
                     .AddField("User", $"<@{context.User.Id}> (`{context.User.Id}`)", true)
                     .AddField("Channel", $"<#{context.Channel.Id}>", true)
                     .AddField("Pressure", $"This user's last message raised their pressure from {oldPressureAfterDecay} to {newPressure}, exceeding {_config.SpamMaxPressure}")
-                    .AddField("Breakdown of last message", PonyReadableBreakdown(pressureBreakdown))
-                    .WithTimestamp(context.Message.Timestamp);
+                    .AddField("Breakdown of last message", PonyReadableBreakdown(pressureBreakdown));
 
                 await _modLogger.CreateModLog(context.Guild)
                     .SetContent($"Spam detected by <@{user.Id}>")
@@ -331,8 +330,7 @@ public class SpamService
             .AddField("User", $"<@{context.User.Id}> (`{context.User.Id}`)", true)
             .AddField("Channel", $"<#{context.Channel.Id}>", true)
             .AddField("Pressure", $"This user's last message raised their pressure from {oldPressureAfterDecay} to {pressure}, exceeding {_config.SpamMaxPressure}")
-            .AddField("Breakdown of last message", $"{PonyReadableBreakdown(pressureBreakdown)}")
-            .WithTimestamp(context.Message.Timestamp);
+            .AddField("Breakdown of last message", $"{PonyReadableBreakdown(pressureBreakdown)}");
 
         if (alreadyDeletedMessages != 0)
             embedBuilder.WithDescription(
