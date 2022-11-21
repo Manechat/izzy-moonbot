@@ -969,7 +969,7 @@ public static class ConfigHelper
         return items is Dictionary<string, string> dictionary && dictionary.ContainsKey(dictionaryKey);
     }
 
-    public static async Task<(string, string)> CreateStringDictionaryKey<T>(Config settings, string key,
+    public static async Task<(string, string?, string)> CreateStringDictionaryKey<T>(Config settings, string key,
         string dictionaryKey, string value, SocketCommandContext context) where T : Config
     {
         if (!DoesValueExist<Config>(settings, key))
@@ -991,7 +991,7 @@ public static class ConfigHelper
             t.GetProperty(key).SetValue(settings, list);
 
             await FileHelper.SaveConfigAsync(settings);
-            return (dictionaryKey, value);
+            return (dictionaryKey, null, value);
         }
         catch (ArgumentException ex)
         {
@@ -1042,7 +1042,7 @@ public static class ConfigHelper
         return list[dictionaryKey];
     }
 
-    public static async Task<(string, string)> SetStringDictionaryValue<T>(Config settings, string key,
+    public static async Task<(string, string?, string)> SetStringDictionaryValue<T>(Config settings, string key,
         string dictionaryKey, string value, SocketCommandContext context) where T : Config
     {
         if (!DoesValueExist<Config>(settings, key))
@@ -1057,12 +1057,14 @@ public static class ConfigHelper
 
         if (list == null) throw new NullReferenceException("Dictionary is null *despite* already being nullchecked?");
 
+        if (!list.TryGetValue(dictionaryKey, out var oldValue)) oldValue = null;
+        
         list[dictionaryKey] = value;
 
         t.GetProperty(key).SetValue(settings, list);
 
         await FileHelper.SaveConfigAsync(settings);
-        return (dictionaryKey, value);
+        return (dictionaryKey, oldValue, value);
     }
 
     public static Dictionary<string, string?> GetNullableStringDictionary<T>(Config settings, string key,
@@ -1098,7 +1100,7 @@ public static class ConfigHelper
         return items is Dictionary<string, string?> dictionary && dictionary.ContainsKey(dictionaryKey);
     }
 
-    public static async Task<(string, string?)> CreateNullableStringDictionaryKey<T>(Config settings, string key,
+    public static async Task<(string, string?, string?)> CreateNullableStringDictionaryKey<T>(Config settings, string key,
         string dictionaryKey, string? value, SocketCommandContext context) where T : Config
     {
         if (!DoesValueExist<Config>(settings, key))
@@ -1120,7 +1122,7 @@ public static class ConfigHelper
             t.GetProperty(key).SetValue(settings, list);
 
             await FileHelper.SaveConfigAsync(settings);
-            return (dictionaryKey, value);
+            return (dictionaryKey, null, value);
         }
         catch (ArgumentException ex)
         {
@@ -1171,7 +1173,7 @@ public static class ConfigHelper
         return list[dictionaryKey];
     }
 
-    public static async Task<(string, string?)> SetNullableStringDictionaryValue<T>(Config settings, string key,
+    public static async Task<(string, string?, string?)> SetNullableStringDictionaryValue<T>(Config settings, string key,
         string dictionaryKey, string? value, SocketCommandContext context) where T : Config
     {
         if (!DoesValueExist<Config>(settings, key))
@@ -1186,12 +1188,14 @@ public static class ConfigHelper
 
         if (list == null) throw new NullReferenceException("Dictionary is null *despite* already being nullchecked?");
 
+        if (!list.TryGetValue(dictionaryKey, out var oldValue)) oldValue = null;
+        
         list[dictionaryKey] = value;
 
         t.GetProperty(key).SetValue(settings, list);
 
         await FileHelper.SaveConfigAsync(settings);
-        return (dictionaryKey, value);
+        return (dictionaryKey, oldValue, value);
     }
 
     public static Dictionary<string, bool> GetBooleanDictionary<T>(Config settings, string key,
@@ -1227,7 +1231,7 @@ public static class ConfigHelper
         return items is Dictionary<string, bool> dictionary && dictionary.ContainsKey(dictionaryKey);
     }
 
-    public static async Task<(string, bool)> CreateBooleanDictionaryKey<T>(Config settings, string key,
+    public static async Task<(string, bool?, bool)> CreateBooleanDictionaryKey<T>(Config settings, string key,
         string dictionaryKey, string value, SocketCommandContext context) where T : Config
     {
         if (!DoesValueExist<Config>(settings, key))
@@ -1273,7 +1277,7 @@ public static class ConfigHelper
             t.GetProperty(key).SetValue(settings, list);
 
             await FileHelper.SaveConfigAsync(settings);
-            return (dictionaryKey, boolean);
+            return (dictionaryKey, null, boolean);
         }
         catch (ArgumentException ex)
         {
@@ -1324,7 +1328,7 @@ public static class ConfigHelper
         return list[dictionaryKey];
     }
 
-    public static async Task<(string, bool)> SetBooleanDictionaryValue<T>(Config settings, string key,
+    public static async Task<(string, bool?, bool)> SetBooleanDictionaryValue<T>(Config settings, string key,
         string dictionaryKey, string value, SocketCommandContext context) where T : Config
     {
         if (!DoesValueExist<Config>(settings, key))
@@ -1339,6 +1343,8 @@ public static class ConfigHelper
 
         if (list == null) throw new NullReferenceException("Dictionary is null *despite* already being nullchecked?");
 
+        bool? oldValue = list[dictionaryKey];
+        
         switch (value.ToLower())
         {
             case "true":
@@ -1364,7 +1370,7 @@ public static class ConfigHelper
         t.GetProperty(key).SetValue(settings, list);
 
         await FileHelper.SaveConfigAsync(settings);
-        return (dictionaryKey, list[dictionaryKey]);
+        return (dictionaryKey, oldValue, list[dictionaryKey]);
     }
 
     public static Dictionary<string, List<string>> GetStringListDictionary<T>(Config settings, string key,

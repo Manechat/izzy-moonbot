@@ -1184,14 +1184,25 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             try
                             {
                                 var keys = new List<string>();
+                                var values = new List<string?>();
                                 if (configItem.Nullable)
+                                {
                                     keys = ConfigHelper
                                         .GetNullableStringDictionary<Config>(_config, configItemKey, Context)
                                         .Keys.ToList();
+                                    values = ConfigHelper
+                                        .GetNullableStringDictionary<Config>(_config, configItemKey, Context)
+                                        .Values.ToList();
+                                }
                                 else
+                                {
                                     keys = ConfigHelper
-                                        .GetStringDictionary<Config>(_config, configItemKey, Context).Keys
-                                        .ToList();
+                                        .GetStringDictionary<Config>(_config, configItemKey, Context)
+                                        .Keys.ToList();
+                                    values = ConfigHelper
+                                        .GetStringDictionary<Config>(_config, configItemKey, Context)
+                                        .Values.Select(t => (string?)t).ToList();
+                                }
 
                                 if (keys.Count > 10)
                                 {
@@ -1206,7 +1217,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                             pages.Add("");
                                         }
 
-                                        pages[pageNumber] += keys[i] + Environment.NewLine;
+                                        pages[pageNumber] += $"{keys[i]} = {values[i]}{Environment.NewLine}";
                                     }
 
                                     string[] staticParts =
@@ -1219,8 +1230,10 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                 }
                                 else
                                 {
+                                    var listString = keys.Select((t, i) => $"{t} = {values[i]}").ToList();
+                                    
                                     await ReplyAsync(
-                                        $"**{configItemKey}** contains the following keys:{Environment.NewLine}```{Environment.NewLine}{string.Join($"{Environment.NewLine}", keys)}{Environment.NewLine}```");
+                                        $"**{configItemKey}** contains the following keys:{Environment.NewLine}```{Environment.NewLine}{string.Join($"{Environment.NewLine}", listString)}{Environment.NewLine}```");
                                 }
                             }
                             catch (ArgumentOutOfRangeException ex)
@@ -1242,6 +1255,10 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                     .GetBooleanDictionary<Config>(_config, configItemKey, Context).Keys
                                     .ToList();
 
+                                var values = ConfigHelper
+                                    .GetBooleanDictionary<Config>(_config, configItemKey, Context).Values
+                                    .ToList();
+
                                 if (keys.Count > 10)
                                 {
                                     // Use pagination
@@ -1255,7 +1272,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                             pages.Add("");
                                         }
 
-                                        pages[pageNumber] += keys[i] + Environment.NewLine;
+                                        pages[pageNumber] += $"{keys[i]} = {values[i]}{Environment.NewLine}";
                                     }
 
                                     string[] staticParts =
@@ -1268,8 +1285,10 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                 }
                                 else
                                 {
+                                    var listString = keys.Select((t, i) => $"{t} = {values[i]}").ToList();
+
                                     await ReplyAsync(
-                                        $"**{configItemKey}** contains the following keys:{Environment.NewLine}```{Environment.NewLine}{string.Join($"{Environment.NewLine}", keys)}{Environment.NewLine}```");
+                                        $"**{configItemKey}** contains the following keys:{Environment.NewLine}```{Environment.NewLine}{string.Join($"{Environment.NewLine}", listString)}{Environment.NewLine}```");
                                 }
                             }
                             catch (ArgumentOutOfRangeException ex)
@@ -1308,7 +1327,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                         configItemKey, value, Context);
 
                                 await ReplyAsync(
-                                    $"**{value}** contains the following value: {contents}");
+                                    $"**{value}** contains the following value: `{contents.Replace("`", "\\`")}`");
                             }
                             catch (ArgumentOutOfRangeException ex)
                             {
@@ -1329,7 +1348,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                     configItemKey, value, Context);
 
                                 await ReplyAsync(
-                                    $"**{value}** contains the following value: {contents}");
+                                    $"**{value}** contains the following value: `{contents}`");
                             }
                             catch (ArgumentOutOfRangeException ex)
                             {
@@ -1363,7 +1382,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                         case ConfigItemType.StringDictionary:
                             try
                             {
-                                (string, string?) result = ("", null);
+                                (string, string?, string?) result = ("", null, null);
 
                                 if (configItem.Nullable)
                                 {
@@ -1388,8 +1407,16 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                             configItemKey, key, value, Context);
                                 }
 
-                                await ReplyAsync(
-                                    $"I added the following string to the `{result.Item1}` map key in the `{configItemKey}` map: {result.Item2}");
+                                if (result.Item2 == null)
+                                {
+                                    await ReplyAsync(
+                                        $"I added the following string to the `{result.Item1}` map key in the `{configItemKey}` map: `{result.Item3.Replace("`", "\\`")}`");
+                                }
+                                else
+                                {
+                                    await ReplyAsync(
+                                        $"I changed the string in the `{result.Item1}` map key in the `{configItemKey}` map from `{result.Item2.Replace("`", "\\`")}` to `{result.Item3.Replace("`", "\\`")}`");
+                                }
                             }
                             catch (ArgumentOutOfRangeException)
                             {
@@ -1406,7 +1433,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                         case ConfigItemType.BooleanDictionary:
                             try
                             {
-                                var result = ("", false);
+                                (string, bool?, bool) result = ("", null, false);
                                 
                                 if (ConfigHelper.DoesBooleanDictionaryKeyExist<Config>(_config,
                                         configItemKey, key, Context))
@@ -1416,8 +1443,16 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                     result = await ConfigHelper.CreateBooleanDictionaryKey<Config>(_config,
                                         configItemKey, key, value, Context);
 
-                                await ReplyAsync(
-                                    $"I added the following boolean to the `{result.Item1}` map key in the `{configItemKey}` map: {result.Item2}");
+                                if (result.Item2 == null)
+                                {
+                                    await ReplyAsync(
+                                        $"I added the following boolean to the `{result.Item1}` map key in the `{configItemKey}` map: `{result.Item3}`");
+                                }
+                                else
+                                {
+                                    await ReplyAsync(
+                                        $"I changed the boolean in the `{result.Item1}` map key in the `{configItemKey}` map from `{result.Item2}` to `{result.Item3}`");
+                                }
                             }
                             catch (ArgumentOutOfRangeException)
                             {
@@ -1451,7 +1486,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                         configItemKey, value, Context);
 
                                 await ReplyAsync(
-                                    $"I removed the string with the following key from the `{configItemKey}` map: {value}");
+                                    $"I removed the string with the following key from the `{configItemKey}` map: `{value}`");
                             }
                             catch (ArgumentOutOfRangeException)
                             {
@@ -1472,7 +1507,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                     value, Context);
 
                                 await ReplyAsync(
-                                    $"I removed the boolean with the following key from the `{configItemKey}` map: {value}");
+                                    $"I removed the boolean with the following key from the `{configItemKey}` map: `{value}`");
                             }
                             catch (ArgumentOutOfRangeException)
                             {
@@ -1517,7 +1552,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                             configItemKey, key, Context);
 
                                     await ReplyAsync(
-                                        $"**{key}** contains the following value: {contents}");
+                                        $"**{key}** contains the following value: `{contents}`");
                                 }
                                 catch (ArgumentOutOfRangeException ex)
                                 {
