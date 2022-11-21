@@ -243,9 +243,16 @@ public class AdminModule : ModuleBase<SocketCommandContext>
         var args = DiscordHelper.GetArguments(argsString);
 
         var channelName = args.Arguments[0];
-        var message = string.Join("", argsString.Skip(args.Indices[0]));
-
-        message = DiscordHelper.StripQuotes(message);
+        var message = "";
+        try
+        {
+            message = string.Join("", argsString.Skip(args.Indices[0]));
+            message = DiscordHelper.StripQuotes(message);
+        }
+        catch
+        {
+            message = "";
+        }
 
         var channelId = await DiscordHelper.GetChannelIdIfAccessAsync(channelName, Context);
 
