@@ -199,8 +199,8 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                         $"Run `{_config.Prefix}config {configItemKey} list` to view a list of keys in this map.{Environment.NewLine}" +
                         $"Run `{_config.Prefix}config {configItemKey} get <key>` to get the values of a key in this map.{Environment.NewLine}" +
                         $"Run `{_config.Prefix}config {configItemKey} add <key> <value>` to add a value to a key in this map, creating the key if need be.{Environment.NewLine}" +
-                        $"Run `{_config.Prefix}config {configItemKey} remove <key> <value>` to remove a value from a key from this map. **Note that this doesn't delete the key. See `clear` to delete the key.**{Environment.NewLine}" +
-                        $"Run `{_config.Prefix}config {configItemKey} clear <key>` to delete a key from this map.",
+                        $"Run `{_config.Prefix}config {configItemKey} deleteitem <key> <value>` to remove a value from a key from this map.{Environment.NewLine}" +
+                        $"Run `{_config.Prefix}config {configItemKey} deletelist <key>` to delete a key from this map.",
                         allowedMentions: AllowedMentions.None);
                     break;
                 default:
@@ -1528,148 +1528,9 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                 }
                 else
                 {
-                    // Assume key
-                    var key = action.ToLower();
-                    action = value.Split(' ')[0].ToLower();
-                    value = value.Replace(action + " ", "");
-
-                    if (action == "get")
-                    {
-                        switch (configItem.Type)
-                        {
-                            case ConfigItemType.StringDictionary:
-                                try
-                                {
-                                    var contents = "";
-
-                                    if (configItem.Nullable)
-                                        contents = ConfigHelper.GetNullableStringDictionaryValue<Config>(
-                                            _config,
-                                            configItemKey, key, Context);
-                                    else
-                                        contents = (string?)ConfigHelper.GetStringDictionaryValue<Config>(
-                                            _config,
-                                            configItemKey, key, Context);
-
-                                    await ReplyAsync(
-                                        $"**{key}** contains the following value: `{contents}`");
-                                }
-                                catch (ArgumentOutOfRangeException ex)
-                                {
-                                    await ReplyAsync(
-                                        $"I couldn't get the value in the `{key}` key from the `{configItemKey}` map? {ex.Message}");
-                                }
-                                catch (ArgumentException)
-                                {
-                                    await ReplyAsync(
-                                        $"I couldn't get the value in the `{key}` key from the `{configItemKey}` map because the `{configItemKey}` config item isn't a map. There is likely a misconfiguration in the config item describer.");
-                                }
-
-                                break;
-                            case ConfigItemType.BooleanDictionary:
-                                try
-                                {
-                                    var contents = ConfigHelper.GetBooleanDictionaryValue<Config>(_config,
-                                        configItemKey, key, Context);
-
-                                    await ReplyAsync(
-                                        $"**{key}** contains the following value: {contents}");
-                                }
-                                catch (ArgumentOutOfRangeException ex)
-                                {
-                                    await ReplyAsync(
-                                        $"I couldn't get the value in the `{key}` key from the `{configItemKey}` map? {ex.Message}");
-                                }
-                                catch (ArgumentException)
-                                {
-                                    await ReplyAsync(
-                                        $"I couldn't get the value in the `{key}` key from the `{configItemKey}` map because the `{configItemKey}` config item isn't a map. There is likely a misconfiguration in the config item describer.");
-                                }
-
-                                break;
-                            default:
-                                await ReplyAsync("I seem to have encountered a setting type that I do not know about.");
-                                break;
-                        }
-                    }
-                    else if (action == "set")
-                    {
-                        switch (configItem.Type)
-                        {
-                            case ConfigItemType.StringDictionary:
-                                try
-                                {
-                                    if (configItem.Nullable)
-                                    {
-                                        if (value == "<nothing>") value = null;
-
-                                        var result =
-                                            await ConfigHelper.SetNullableStringDictionaryValue<Config>(
-                                                _config, configItemKey, key, value, Context);
-
-                                        await Context.Message.ReplyAsync(
-                                            $"I've set `{key}` to the following content: {result}",
-                                            allowedMentions: AllowedMentions.None);
-                                    }
-                                    else
-                                    {
-                                        var result = await ConfigHelper.SetStringDictionaryValue<Config>(
-                                            _config, configItemKey, key, value, Context);
-
-                                        await Context.Message.ReplyAsync(
-                                            $"I've set `{key}` to the following content: {result}",
-                                            allowedMentions: AllowedMentions.None);
-                                    }
-                                }
-                                catch (ArgumentOutOfRangeException ex)
-                                {
-                                    await ReplyAsync(
-                                        $"I couldn't set the value in the `{key}` key from the `{configItemKey}` map? {ex.Message}");
-                                }
-                                catch (ArgumentException)
-                                {
-                                    await ReplyAsync(
-                                        $"I couldn't set the value in the `{key}` key from the `{configItemKey}` map because the `{configItemKey}` config item isn't a map. There is likely a misconfiguration in the config item describer.");
-                                }
-
-                                break;
-                            case ConfigItemType.BooleanDictionary:
-                                try
-                                {
-                                    var result = await ConfigHelper.SetBooleanDictionaryValue<Config>(
-                                        _config, configItemKey, key, value, Context);
-
-                                    await Context.Message.ReplyAsync(
-                                        $"I've set `{key}` to the following content: {result}",
-                                        allowedMentions: AllowedMentions.None);
-                                }
-                                catch (ArgumentOutOfRangeException ex)
-                                {
-                                    await ReplyAsync(
-                                        $"I couldn't set the value in the `{key}` key from the `{configItemKey}` map? {ex.Message}");
-                                }
-                                catch (ArgumentException)
-                                {
-                                    await ReplyAsync(
-                                        $"I couldn't set the value in the `{key}` key from the `{configItemKey}` map because the `{configItemKey}` config item isn't a map. There is likely a misconfiguration in the config item describer.");
-                                }
-
-                                break;
-                            default:
-                                await ReplyAsync("I seem to have encountered a setting type that I do not know about.");
-                                break;
-                        }
-                    }
-                    else
-                    {
-                        var nullableString = " (Pass `<nothing>` as the value when setting to set to nothing/null)";
-                        if (!configItem.Nullable) nullableString = "";
-
-                        await ReplyAsync($"**{key}** - Key in {configItemKey}{Environment.NewLine}" +
-                                         $"Run `{_config.Prefix}config {configItemKey} {key} get` to get the value in this map key.{Environment.NewLine}" +
-                                         $"Run `{_config.Prefix}config {configItemKey} {key} set <value>` to set the value for this map key{nullableString}.",
-                            allowedMentions: AllowedMentions.None);
-                    }
+                    await ReplyAsync(
+                        "The action you wanted to take isn't supported for this type of config item, the available actions are `list`, `get`, `set`, and `delete`.");
+                    return;
                 }
             }
             else if (_configDescriber.TypeIsDictionaryList(configItem.Type))
@@ -1688,6 +1549,10 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                     .GetStringListDictionary<Config>(_config, configItemKey, Context).Keys
                                     .ToList();
 
+                                var values = ConfigHelper
+                                    .GetStringListDictionary<Config>(_config, configItemKey, Context).Values
+                                    .ToList();
+
                                 if (keys.Count > 10)
                                 {
                                     // Use pagination
@@ -1701,7 +1566,8 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                             pages.Add("");
                                         }
 
-                                        pages[pageNumber] += keys[i] + Environment.NewLine;
+                                        pages[pageNumber] +=
+                                            $"{keys[i]} ({values[i].Count} entries){Environment.NewLine}";
                                     }
 
 
@@ -1711,12 +1577,16 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                         ""
                                     };
 
-                                    var paginationMessage = new PaginationHelper(Context, pages.ToArray(), staticParts);
+                                    var paginationMessage =
+                                        new PaginationHelper(Context, pages.ToArray(), staticParts);
                                 }
                                 else
                                 {
+                                    var listString = keys.Select((t, i) =>
+                                        $"{t} ({values[i].Count} entries){Environment.NewLine}").ToList();
+
                                     await ReplyAsync(
-                                        $"**{configItemKey}** contains the following keys:{Environment.NewLine}```{Environment.NewLine}{string.Join($"{Environment.NewLine}", keys)}{Environment.NewLine}```");
+                                        $"**{configItemKey}** contains the following keys:{Environment.NewLine}```{Environment.NewLine}{string.Join($"{Environment.NewLine}", listString)}{Environment.NewLine}```");
                                 }
                             }
                             catch (ArgumentOutOfRangeException ex)
@@ -1736,38 +1606,117 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             break;
                     }
                 }
-                else if (action == "create")
+                else if (action == "get")
                 {
-                    // TODO: Creating keys in Dictionary Lists
                     switch (configItem.Type)
                     {
                         case ConfigItemType.StringListDictionary:
-                            try
-                            {
-                                await ConfigHelper.CreateStringListDictionaryKey<Config>(_config,
-                                    configItemKey, value, Context);
+                            var stringList =
+                                ConfigHelper.GetStringListDictionaryValue<Config>(_config, configItemKey,
+                                    value, Context);
 
-                                await ReplyAsync(
-                                    $"I created the string list with the following key in the `{configItemKey}` map: {value}");
+                            if (stringList.Count > 10)
+                            {
+                                // Use pagination
+                                var pages = new List<string>();
+                                var pageNumber = -1;
+                                for (var i = 0; i < stringList.Count; i++)
+                                {
+                                    if (i % 10 == 0)
+                                    {
+                                        pageNumber += 1;
+                                        pages.Add("");
+                                    }
+
+                                    pages[pageNumber] += stringList[i] + Environment.NewLine;
+                                }
+
+                                string[] staticParts =
+                                {
+                                    $"**{value}** contains the following values:",
+                                    ""
+                                };
+
+                                var paginationMessage = new PaginationHelper(Context, pages.ToArray(), staticParts);
                             }
-                            catch (ArgumentOutOfRangeException)
+                            else
                             {
                                 await ReplyAsync(
-                                    $"I couldn't create the string list you wanted in the `{configItemKey}` map because the `{value}` key already exists.");
-                            }
-                            catch (ArgumentException)
-                            {
-                                await ReplyAsync(
-                                    $"I couldn't create the string list you wanted in the `{configItemKey}` map because the `{configItemKey}` config item isn't a map. There is likely a misconfiguration in the config item describer.");
+                                    $"**{value}** contains the following values:{Environment.NewLine}```{Environment.NewLine}{string.Join(", ", stringList)}{Environment.NewLine}```",
+                                    allowedMentions: AllowedMentions.None);
                             }
 
                             break;
+                        // Other types, I don't see any reason to add them until I need them.
                         default:
                             await ReplyAsync("I seem to have encountered a setting type that I do not know about.");
                             break;
                     }
                 }
-                else if (action == "delete")
+                else if (action == "add")
+                {
+                    var key = value.Split(' ')[0].ToLower();
+                    value = value.Replace(key + " ", "");
+                    
+                    switch (configItem.Type)
+                    {
+                        case ConfigItemType.StringListDictionary:
+                            try
+                            {
+                                var output =
+                                    ConfigHelper.DoesStringListDictionaryKeyExist<Config>(_config, configItemKey, key, Context)
+                                    ? await ConfigHelper.AddToStringListDictionaryValue<Config>(_config,
+                                        configItemKey, key, value, Context)
+                                    : await ConfigHelper.CreateStringListDictionaryKey<Config>(_config, configItemKey, key, value, Context);
+
+                                await ReplyAsync(
+                                    $"I added the following string to the `{output.Item1}` string list in the `{configItemKey}` map: `{output.Item2}`",
+                                    allowedMentions: AllowedMentions.None);
+                            }
+                            catch (ArgumentException)
+                            {
+                                await ReplyAsync(
+                                    $"I couldn't add your content to the `{key}` string list in the `{configItemKey}` map because the `{configItemKey}` config item isn't a map. There is likely a misconfiguration in the config item describer.");
+                            }
+
+                            break;
+                        // Other types, I don't see any reason to add them until I need them.
+                        default:
+                            await ReplyAsync("I seem to have encountered a setting type that I do not know about.");
+                            break;
+                    }                    
+                }
+                else if (action == "deleteitem")
+                {
+                    var key = value.Split(' ')[0].ToLower();
+                    value = value.Replace(key + " ", "");
+                    switch (configItem.Type)
+                    {
+                        case ConfigItemType.StringListDictionary:
+                            try
+                            {
+                                var output =
+                                    await ConfigHelper.RemoveFromStringListDictionaryValue<Config>(
+                                        _config, configItemKey, key, value, Context);
+
+                                await ReplyAsync(
+                                    $"I removed the following content from the `{output.Item1}` string list in the `{configItemKey}` map: `{output.Item2}`",
+                                    allowedMentions: AllowedMentions.None);
+                            }
+                            catch (ArgumentException)
+                            {
+                                await ReplyAsync(
+                                    $"I couldn't remove your content from the `{key}` string list in the `{configItemKey}` map because the `{configItemKey}` config item isn't a map. There is likely a misconfiguration in the config item describer.");
+                            }
+
+                            break;
+                        // Other types, I don't see any reason to add them until I need them.
+                        default:
+                            await ReplyAsync("I seem to have encountered a setting type that I do not know about.");
+                            break;
+                    }
+                }
+                else if (action == "deletelist")
                 {
                     switch (configItem.Type)
                     {
@@ -1792,7 +1741,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             }
 
                             break;
-                        // TODO: Other types, I don't see any reason to add them until I need them.
+                        // Other types, I don't see any reason to add them until I need them.
                         default:
                             await ReplyAsync("I seem to have encountered a setting type that I do not know about.");
                             break;
@@ -1800,131 +1749,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                 }
                 else
                 {
-                    // Assume key
-                    var key = action.ToLower();
-                    action = value.Split(' ')[0].ToLower();
-                    value = value.Replace(action + " ", "");
-
-                    if (action == "list")
-                    {
-                        switch (configItem.Type)
-                        {
-                            case ConfigItemType.StringListDictionary:
-                                var stringList =
-                                    ConfigHelper.GetStringListDictionaryValue<Config>(_config, configItemKey,
-                                        key, Context);
-
-                                if (stringList == null)
-                                {
-                                    await ReplyAsync("Somehow, the entire list is null.");
-                                    return;
-                                }
-
-                                if (stringList.Count > 10)
-                                {
-                                    // Use pagination
-                                    var pages = new List<string>();
-                                    var pageNumber = -1;
-                                    for (var i = 0; i < stringList.Count; i++)
-                                    {
-                                        if (i % 10 == 0)
-                                        {
-                                            pageNumber += 1;
-                                            pages.Add("");
-                                        }
-
-                                        pages[pageNumber] += stringList[i] + Environment.NewLine;
-                                    }
-
-                                    string[] staticParts =
-                                    {
-                                        $"**{key}** contains the following values:",
-                                        ""
-                                    };
-
-                                    var paginationMessage = new PaginationHelper(Context, pages.ToArray(), staticParts);
-                                }
-                                else
-                                {
-                                    await ReplyAsync(
-                                        $"**{key}** contains the following values:{Environment.NewLine}```{Environment.NewLine}{string.Join(", ", stringList)}{Environment.NewLine}```",
-                                        allowedMentions: AllowedMentions.None);
-                                }
-
-                                break;
-                            // TODO: Other types, I don't see any reason to add them until I need them.
-                            default:
-                                await ReplyAsync("I seem to have encountered a setting type that I do not know about.");
-                                break;
-                        }
-                    }
-                    else if (action == "add")
-                    {
-                        switch (configItem.Type)
-                        {
-                            case ConfigItemType.StringListDictionary:
-                                try
-                                {
-                                    var output =
-                                        await ConfigHelper.AddToStringListDictionaryValue<Config>(_config,
-                                            configItemKey, key, value, Context);
-
-                                    await ReplyAsync(
-                                        $"I added the following content to the `{key}` string list in the `{configItemKey}` map:{Environment.NewLine}```{Environment.NewLine}{output}{Environment.NewLine}```",
-                                        allowedMentions: AllowedMentions.None);
-                                }
-                                catch (ArgumentException)
-                                {
-                                    await ReplyAsync(
-                                        $"I couldn't add your content to the `{key}` string list in the `{configItemKey}` map because the `{configItemKey}` config item isn't a map. There is likely a misconfiguration in the config item describer.");
-                                }
-
-                                break;
-                            // TODO: Other types, I don't see any reason to add them until I need them.
-                            default:
-                                await ReplyAsync("I seem to have encountered a setting type that I do not know about.");
-                                break;
-                        }
-                    }
-                    else if (action == "remove")
-                    {
-                        switch (configItem.Type)
-                        {
-                            case ConfigItemType.StringListDictionary:
-                                try
-                                {
-                                    var output =
-                                        await ConfigHelper.RemoveFromStringListDictionaryValue<Config>(
-                                            _config, configItemKey, key, value, Context);
-
-                                    await ReplyAsync(
-                                        $"I removed the following content from the `{key}` string list in the `{configItemKey}` map:{Environment.NewLine}```{Environment.NewLine}{output}{Environment.NewLine}```",
-                                        allowedMentions: AllowedMentions.None);
-                                }
-                                catch (ArgumentException)
-                                {
-                                    await ReplyAsync(
-                                        $"I couldn't remove your content from the `{key}` string list in the `{configItemKey}` map because the `{configItemKey}` config item isn't a map. There is likely a misconfiguration in the config item describer.");
-                                }
-
-                                break;
-                            // TODO: Other types, I don't see any reason to add them until I need them.
-                            default:
-                                await ReplyAsync("I seem to have encountered a setting type that I do not know about.");
-                                break;
-                        }
-                    }
-                    else
-                    {
-                        var nullableString = " (Pass `<nothing>` as the value when setting to set to nothing/null)";
-                        if (!configItem.Nullable) nullableString = "";
-
-                        await ReplyAsync($"**{key}** - Key in {configItemKey}{Environment.NewLine}" +
-                                         $"Run `{_config.Prefix}config {configItemKey} {key} list` to view a list of values in this map key.{Environment.NewLine}" +
-                                         $"Run `{_config.Prefix}config {configItemKey} {key} add <value>` to add a value to this map key{nullableString}.{Environment.NewLine}" +
-                                         $"Run `{_config.Prefix}config {configItemKey} {key} remove <value>` to remove a value from this map key{nullableString}.",
-                            allowedMentions: AllowedMentions.None);
-                    }
+                    
                 }
             }
             else
