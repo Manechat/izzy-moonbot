@@ -134,7 +134,7 @@ public class SpamService
         var pressure = _config.SpamBasePressure;
         var pressureBreakdown = new List<(double, string)> { ( _config.SpamBasePressure, $"Base: {_config.SpamBasePressure}" ) };
 
-        var lengthPressure = Math.Round(_config.SpamLengthPressure * message.Content.Length, 5);
+        var lengthPressure = Math.Round(_config.SpamLengthPressure * message.Content.Length, 2);
         if (lengthPressure > 0)
         {
             pressure += lengthPressure;
@@ -142,7 +142,7 @@ public class SpamService
         }
 
         var newlineCount = (message.Content.Split("\n").Length - 1);
-        var linePressure = Math.Round(_config.SpamLengthPressure * newlineCount, 5);
+        var linePressure = Math.Round(_config.SpamLengthPressure * newlineCount, 2);
         if (linePressure > 0)
         {
             pressure += linePressure;
@@ -154,9 +154,9 @@ public class SpamService
         var embedsCount = message.Attachments.Count + message.Embeds.Count + message.Stickers.Count;
         if (embedsCount >= 1)
         {
-            var embedPressure = _config.SpamImagePressure * embedsCount;
+            var embedPressure = Math.Round(_config.SpamImagePressure * embedsCount, 2);
             pressure += embedPressure;
-            pressureBreakdown.Add((embedPressure , $"Embeds: {embedPressure} = {embedsCount} embeds × {_config.SpamImagePressure}"));
+            pressureBreakdown.Add((embedPressure , $"Embeds: {embedPressure} ≈ {embedsCount} embeds × {_config.SpamImagePressure}"));
         }
 
         // Check if there's at least one url in the message (and there's no embeds)
@@ -184,12 +184,12 @@ public class SpamService
                 totalMatches += matches.Count;
             }
 
-            var embedPressure = _config.SpamImagePressure * totalMatches;
+            var embedPressure = Math.Round(_config.SpamImagePressure * totalMatches, 2);
             if (embedPressure > 0.0)
             {
                 // It is, increase pressure and add pressure trace
                 pressure += embedPressure;
-                pressureBreakdown.Add((embedPressure, $"URLs: {embedPressure} = {totalMatches} unfurling URLs × {_config.SpamImagePressure}"));
+                pressureBreakdown.Add((embedPressure, $"URLs: {embedPressure} ≈ {totalMatches} unfurling URLs × {_config.SpamImagePressure}"));
             }
         }
 
@@ -197,9 +197,9 @@ public class SpamService
         if (_mention.IsMatch(message.Content))
         {
             var mentionCount = _mention.Matches(message.Content).Count;
-            var mentionPressure = _config.SpamPingPressure * mentionCount;
+            var mentionPressure = Math.Round(_config.SpamPingPressure * mentionCount, 2);
             pressure += mentionPressure;
-            pressureBreakdown.Add((mentionPressure, $"Mentions: {mentionPressure} = {mentionCount} mentions × {_config.SpamPingPressure}"));
+            pressureBreakdown.Add((mentionPressure, $"Mentions: {mentionPressure} ≈ {mentionCount} mentions × {_config.SpamPingPressure}"));
         }
 
         // Repeat pressure
