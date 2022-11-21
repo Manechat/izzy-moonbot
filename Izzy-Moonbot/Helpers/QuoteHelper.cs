@@ -27,6 +27,7 @@ public static class QuoteHelper
                         // Found the number, all content before it is search
                         var index = argsString.Split(" ").ToList().IndexOf(s);
                         search = string.Join(" ", argsString.Split(" ")[new Range(0, index)]);
+                        break;
                     }
                     else
                     {
