@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord;
@@ -175,6 +176,15 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                 //case SettingsItemType.UserDictionary: // Note: Implement when needed
                 //case SettingsItemType.RoleDictionary: // Note: Implement when needed
                 //case SettingsItemType.ChannelDictionary: // Note: Implement when needed
+                    await ReplyAsync(
+                        $"**{configItemKey}** - {_configDescriber.TypeToString(configItem.Type)} - {_configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
+                        $"*{configItem.Description}*{Environment.NewLine}" +
+                        $"Run `{_config.Prefix}config {configItemKey} list` to view a list of keys in this map.{Environment.NewLine}" +
+                        $"Run `{_config.Prefix}config {configItemKey} get <key>` to get the current value of a key in this map.{Environment.NewLine}" +
+                        $"Run `{_config.Prefix}config {configItemKey} set <key> <value>` to set a key to a value in this map, creating the key if need be.{Environment.NewLine}" +
+                        $"Run `{_config.Prefix}config {configItemKey} delete <key>` to delete a key from this map.",
+                        allowedMentions: AllowedMentions.None);
+                    break;
                 case ConfigItemType.StringListDictionary:
                     //case SettingsItemType.CharListDictionary: // Note: Implement when needed
                     //case SettingsItemType.BooleanListDictionary: // Note: Implement when needed
@@ -187,9 +197,10 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                         $"**{configItemKey}** - {_configDescriber.TypeToString(configItem.Type)} - {_configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
                         $"*{configItem.Description}*{Environment.NewLine}" +
                         $"Run `{_config.Prefix}config {configItemKey} list` to view a list of keys in this map.{Environment.NewLine}" +
-                        $"Run `{_config.Prefix}config {configItemKey} create <key>` to create a new key in this map.{Environment.NewLine}" +
-                        $"Run `{_config.Prefix}config {configItemKey} delete <key>` to delete a key from this map.{Environment.NewLine}" +
-                        $"Run `{_config.Prefix}config {configItemKey} <key>` to view information about a key in this map.",
+                        $"Run `{_config.Prefix}config {configItemKey} get <key>` to get the values of a key in this map.{Environment.NewLine}" +
+                        $"Run `{_config.Prefix}config {configItemKey} add <key> <value>` to add a value to a key in this map, creating the key if need be.{Environment.NewLine}" +
+                        $"Run `{_config.Prefix}config {configItemKey} remove <key> <value>` to remove a value from a key from this map. **Note that this doesn't delete the key. See `clear` to delete the key.**{Environment.NewLine}" +
+                        $"Run `{_config.Prefix}config {configItemKey} clear <key>` to delete a key from this map.",
                         allowedMentions: AllowedMentions.None);
                     break;
                 default:
@@ -1278,27 +1289,112 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             break;
                     }
                 }
-                else if (action == "create")
+                else if (action == "get")
                 {
                     switch (configItem.Type)
                     {
                         case ConfigItemType.StringDictionary:
                             try
                             {
+                                var contents = "";
+
                                 if (configItem.Nullable)
-                                    await ConfigHelper.CreateNullableStringDictionaryKey<Config>(_config,
+                                    contents = ConfigHelper.GetNullableStringDictionaryValue<Config>(
+                                        _config,
                                         configItemKey, value, Context);
                                 else
-                                    await ConfigHelper.CreateStringDictionaryKey<Config>(_config,
+                                    contents = (string?)ConfigHelper.GetStringDictionaryValue<Config>(
+                                        _config,
                                         configItemKey, value, Context);
 
                                 await ReplyAsync(
-                                    $"I created the string with the following key in the `{configItemKey}` map: {value}");
+                                    $"**{value}** contains the following value: {contents}");
+                            }
+                            catch (ArgumentOutOfRangeException ex)
+                            {
+                                await ReplyAsync(
+                                    $"I couldn't get the value in the `{value}` key from the `{configItemKey}` map? {ex.Message}");
+                            }
+                            catch (ArgumentException)
+                            {
+                                await ReplyAsync(
+                                    $"I couldn't get the value in the `{value}` key from the `{configItemKey}` map because the `{configItemKey}` config item isn't a map. There is likely a misconfiguration in the config item describer.");
+                            }
+
+                            break;
+                        case ConfigItemType.BooleanDictionary:
+                            try
+                            {
+                                var contents = ConfigHelper.GetBooleanDictionaryValue<Config>(_config,
+                                    configItemKey, value, Context);
+
+                                await ReplyAsync(
+                                    $"**{value}** contains the following value: {contents}");
+                            }
+                            catch (ArgumentOutOfRangeException ex)
+                            {
+                                await ReplyAsync(
+                                    $"I couldn't get the value in the `{value}` key from the `{configItemKey}` map? {ex.Message}");
+                            }
+                            catch (ArgumentException)
+                            {
+                                await ReplyAsync(
+                                    $"I couldn't get the value in the `{value}` key from the `{configItemKey}` map because the `{configItemKey}` config item isn't a map. There is likely a misconfiguration in the config item describer.");
+                            }
+
+                            break;
+                        default:
+                            await ReplyAsync("I seem to have encountered a setting type that I do not know about.");
+                            break;
+                    }
+                }
+                else if (action == "set")
+                {
+                    var key = value.Split(' ')[0].ToLower();
+                    value = value.Replace(key + " ", "");
+                    
+                    // .config Aliases <key> set <value>
+                    //                  key action value
+                    // .config Aliases set <key> <value>
+                    //              action key   value
+                    
+                    switch (configItem.Type)
+                    {
+                        case ConfigItemType.StringDictionary:
+                            try
+                            {
+                                (string, string?) result = ("", null);
+
+                                if (configItem.Nullable)
+                                {
+                                    if (value == "<nothing>") value = null;
+                                    
+                                    if (ConfigHelper.DoesNullableStringDictionaryKeyExist<Config>(_config,
+                                            configItemKey, key, Context))
+                                        result = await ConfigHelper.SetNullableStringDictionaryValue<Config>(_config,
+                                            configItemKey, key, value, Context);
+                                    else
+                                        result = await ConfigHelper.CreateNullableStringDictionaryKey<Config>(_config,
+                                            configItemKey, key, value, Context);
+                                }
+                                else
+                                {
+                                    if (ConfigHelper.DoesStringDictionaryKeyExist<Config>(_config,
+                                            configItemKey, key, Context))
+                                        result = await ConfigHelper.SetStringDictionaryValue<Config>(_config,
+                                            configItemKey, key, value, Context);
+                                    else
+                                        result = await ConfigHelper.CreateStringDictionaryKey<Config>(_config,
+                                            configItemKey, key, value, Context);
+                                }
+
+                                await ReplyAsync(
+                                    $"I added the following string to the `{result.Item1}` map key in the `{configItemKey}` map: {result.Item2}");
                             }
                             catch (ArgumentOutOfRangeException)
                             {
                                 await ReplyAsync(
-                                    $"I couldn't create the string you wanted in the `{configItemKey}` map because the `{value}` key already exists.");
+                                    $"I couldn't create the string you wanted in the `{configItemKey}` map because the `{key}` key already exists.");
                             }
                             catch (ArgumentException)
                             {
@@ -1310,16 +1406,23 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                         case ConfigItemType.BooleanDictionary:
                             try
                             {
-                                await ConfigHelper.CreateBooleanDictionaryKey<Config>(_config, configItemKey,
-                                    value, Context);
+                                var result = ("", false);
+                                
+                                if (ConfigHelper.DoesBooleanDictionaryKeyExist<Config>(_config,
+                                        configItemKey, key, Context))
+                                    result = await ConfigHelper.SetBooleanDictionaryValue<Config>(_config,
+                                        configItemKey, key, value, Context);
+                                else
+                                    result = await ConfigHelper.CreateBooleanDictionaryKey<Config>(_config,
+                                        configItemKey, key, value, Context);
 
                                 await ReplyAsync(
-                                    $"I created the boolean with the following key in the `{configItemKey}` map: {value}");
+                                    $"I added the following boolean to the `{result.Item1}` map key in the `{configItemKey}` map: {result.Item2}");
                             }
                             catch (ArgumentOutOfRangeException)
                             {
                                 await ReplyAsync(
-                                    $"I couldn't create the boolean you wanted in the `{configItemKey}` map because the `{value}` key already exists.");
+                                    $"I couldn't create the boolean you wanted in the `{configItemKey}` map because the `{key}` key already exists.");
                             }
                             catch (ArgumentException)
                             {
@@ -1333,7 +1436,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             break;
                     }
                 }
-                else if (action == "remove")
+                else if (action == "delete" || action == "remove")
                 {
                     switch (configItem.Type)
                     {
