@@ -1038,6 +1038,8 @@ public static class ConfigHelper
         var list = (IDictionary<string, string>?)t.GetProperty(key).GetValue(settings);
 
         if (list == null) throw new NullReferenceException("Dictionary is null *despite* already being nullchecked?");
+        
+        if (!list.ContainsKey(dictionaryKey)) throw new KeyNotFoundException($"'{dictionaryKey}' is not in '{key}'");
 
         return list[dictionaryKey];
     }
@@ -1169,6 +1171,8 @@ public static class ConfigHelper
         var list = (IDictionary<string, string?>?)t.GetProperty(key).GetValue(settings);
 
         if (list == null) throw new NullReferenceException("Dictionary is null *despite* already being nullchecked?");
+
+        if (!list.ContainsKey(dictionaryKey)) throw new KeyNotFoundException($"'{dictionaryKey}' is not in '{key}'");
 
         return list[dictionaryKey];
     }
@@ -1325,6 +1329,8 @@ public static class ConfigHelper
 
         if (list == null) throw new NullReferenceException("Dictionary is null *despite* already being nullchecked?");
 
+        if (!list.ContainsKey(dictionaryKey)) throw new KeyNotFoundException($"'{dictionaryKey}' is not in '{key}'");
+
         return list[dictionaryKey];
     }
 
@@ -1476,6 +1482,9 @@ public static class ConfigHelper
 
         if (list == null) throw new NullReferenceException("Dictionary is null *despite* already being nullchecked?");
 
+        if (!list.ContainsKey(dictionaryKey))
+            throw new KeyNotFoundException($"'{dictionaryKey}' does not exist within '{key}'");
+        
         return list[dictionaryKey];
     }
 

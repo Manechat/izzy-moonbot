@@ -1334,6 +1334,13 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                 await ReplyAsync(
                                     $"I couldn't get the value in the `{value}` key from the `{configItemKey}` map? {ex.Message}");
                             }
+                            catch (KeyNotFoundException ex)
+                            {
+                                if (ex.Message.Contains(value))
+                                {
+                                    await ReplyAsync("The key you provided does not exist within the map.");
+                                }
+                            }
                             catch (ArgumentException)
                             {
                                 await ReplyAsync(
@@ -1354,6 +1361,13 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             {
                                 await ReplyAsync(
                                     $"I couldn't get the value in the `{value}` key from the `{configItemKey}` map? {ex.Message}");
+                            }
+                            catch (KeyNotFoundException ex)
+                            {
+                                if (ex.Message.Contains(value))
+                                {
+                                    await ReplyAsync("The key you provided does not exist within the map.");
+                                }
                             }
                             catch (ArgumentException)
                             {
@@ -1453,6 +1467,12 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             {
                                 await ReplyAsync(
                                     $"I couldn't create the boolean you wanted in the `{configItemKey}` map because the `{key}` key already exists.");
+                            }
+                            catch (FormatException)
+                            {
+                                await ReplyAsync(
+                                    $"I couldn't set `{key}` to the content provided because you provided content that I couldn't turn into a boolean. Please try again.",
+                                    allowedMentions: AllowedMentions.None);
                             }
                             catch (ArgumentException)
                             {
@@ -1603,42 +1623,58 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                 }
                 else if (action == "get")
                 {
+                    if (value == "")
+                    {
+                        await ReplyAsync("Please provide a key to get.");
+                        return;
+                    }
+                    
                     switch (configItem.Type)
                     {
                         case ConfigItemType.StringListDictionary:
-                            var stringList =
-                                ConfigHelper.GetStringListDictionaryValue<Config>(_config, configItemKey,
-                                    value, Context);
-
-                            if (stringList.Count > 10)
+                            try
                             {
-                                // Use pagination
-                                var pages = new List<string>();
-                                var pageNumber = -1;
-                                for (var i = 0; i < stringList.Count; i++)
+                                var stringList =
+                                    ConfigHelper.GetStringListDictionaryValue<Config>(_config, configItemKey,
+                                        value, Context);
+
+                                if (stringList.Count > 10)
                                 {
-                                    if (i % 10 == 0)
+                                    // Use pagination
+                                    var pages = new List<string>();
+                                    var pageNumber = -1;
+                                    for (var i = 0; i < stringList.Count; i++)
                                     {
-                                        pageNumber += 1;
-                                        pages.Add("");
+                                        if (i % 10 == 0)
+                                        {
+                                            pageNumber += 1;
+                                            pages.Add("");
+                                        }
+
+                                        pages[pageNumber] += stringList[i] + Environment.NewLine;
                                     }
 
-                                    pages[pageNumber] += stringList[i] + Environment.NewLine;
+                                    string[] staticParts =
+                                    {
+                                        $"**{value}** contains the following values:",
+                                        ""
+                                    };
+
+                                    var paginationMessage = new PaginationHelper(Context, pages.ToArray(), staticParts);
                                 }
-
-                                string[] staticParts =
+                                else
                                 {
-                                    $"**{value}** contains the following values:",
-                                    ""
-                                };
-
-                                var paginationMessage = new PaginationHelper(Context, pages.ToArray(), staticParts);
+                                    await ReplyAsync(
+                                        $"**{value}** contains the following values:{Environment.NewLine}```{Environment.NewLine}{string.Join(", ", stringList)}{Environment.NewLine}```",
+                                        allowedMentions: AllowedMentions.None);
+                                }
                             }
-                            else
+                            catch (KeyNotFoundException ex)
                             {
-                                await ReplyAsync(
-                                    $"**{value}** contains the following values:{Environment.NewLine}```{Environment.NewLine}{string.Join(", ", stringList)}{Environment.NewLine}```",
-                                    allowedMentions: AllowedMentions.None);
+                                if (ex.Message.Contains(value))
+                                {
+                                    await ReplyAsync("The key you provided does not exist within the map.");
+                                }
                             }
 
                             break;
