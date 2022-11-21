@@ -8,7 +8,7 @@ namespace Izzy_Moonbot.Helpers;
 
 public static class QuoteHelper
 {
-    public static Tuple<string, int?> ParseQuoteArgs(string argsString)
+    public static (string, int?) ParseQuoteArgs(string argsString)
     {
         var search = argsString;
         var number = int.MinValue;
@@ -43,7 +43,7 @@ public static class QuoteHelper
         search = DiscordHelper.StripQuotes(search);
 
         return number == int.MinValue
-            ? new Tuple<string, int?>(search, null)
-            : new Tuple<string, int?>(search, number);
+            ? (search, null)
+            : (search, number);
     }
 }
