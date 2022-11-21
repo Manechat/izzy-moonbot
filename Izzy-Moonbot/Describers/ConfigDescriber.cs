@@ -153,7 +153,7 @@ public class ConfigDescriber
                 "The channels I will not process pressure for. Best used for channels where spam is allowed.",
                 ConfigItemCategory.Spam));
         _config.Add("SpamDevBypass",
-            new ConfigItem(ConfigItemType.RoleList,
+            new ConfigItem(ConfigItemType.Boolean,
                 "Whether I will not silence my developers if they exceed `SpamMaxPressure`. Please note that I __will still process pressure for developers__, I just won't silence them and I'll just log that it occured.",
                 ConfigItemCategory.Spam));
         _config.Add("SpamBasePressure",
