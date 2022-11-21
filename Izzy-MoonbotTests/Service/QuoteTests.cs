@@ -50,7 +50,7 @@ namespace Izzy_Moonbot.Helpers.Tests
 
             Assert.AreEqual(("foo", 1), QuoteHelper.ParseQuoteArgs("foo 1 bar"));
 
-            Assert.AreEqual(("foo bar", null), QuoteHelper.ParseQuoteArgs("foo bar 1 baz"));
+            Assert.AreEqual(("foo bar", 1), QuoteHelper.ParseQuoteArgs("foo bar 1 baz"));
 
             Assert.AreEqual(("foo", 1), QuoteHelper.ParseQuoteArgs("foo 1 bar 2 baz"));
         }
