@@ -130,9 +130,8 @@ public class SpamService
     private async Task ProcessPressure(ulong id, SocketUserMessage message, SocketGuildUser user,
         SocketCommandContext context)
     {
-        // Get the base pressure and create the pressureTracer
-        var pressure = _config.SpamBasePressure;
-        var pressureBreakdown = new List<(double, string)> { ( _config.SpamBasePressure, $"Base: {_config.SpamBasePressure}" ) };
+        var pressure = 0.0;
+        var pressureBreakdown = new List<(double, string)>{};
 
         var lengthPressure = Math.Round(_config.SpamLengthPressure * message.Content.Length, 2);
         if (lengthPressure > 0)
@@ -208,7 +207,12 @@ public class SpamService
             pressure += _config.SpamRepeatPressure;
             pressureBreakdown.Add((_config.SpamRepeatPressure, $"Repeat of Previous Message: {_config.SpamRepeatPressure}"));
         }
-        
+
+        // Add the Base pressure last so that, if one of the other categories happens to equal it,
+        // that other category will show up higher in the sorted breakdown.
+        pressure += _config.SpamBasePressure;
+        pressureBreakdown.Add((_config.SpamBasePressure, $"Base: {_config.SpamBasePressure}"));
+
         #if DEBUG
         // Test string, only exists when built on Debug.
         if (message.Content == _testString)
