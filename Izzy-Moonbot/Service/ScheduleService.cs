@@ -349,6 +349,7 @@ public class ScheduleService
     private async Task Unicycle_Echo(ScheduledJob job, SocketGuild guild, DiscordSocketClient client)
     {
         if (!job.Action.Fields.ContainsKey("content")) return;
+        if (job.Action.Fields["content"] == "") return;
         if (!ulong.TryParse(job.Action.Fields["channelId"], out var channelId)) return;
         var channel = guild.GetTextChannel(channelId);
         if (channel == null)
