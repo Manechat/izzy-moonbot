@@ -80,7 +80,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                 return;
             }
 
-            var (search, number) = ParseQuoteArgs(argsString);
+            var (search, number) = QuoteHelper.ParseQuoteArgs(argsString);
 
             if (search == "" && number != null)
             {
@@ -691,7 +691,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                 return;
             }
 
-            var (user, number) = ParseQuoteArgs(argsString);
+            var (user, number) = QuoteHelper.ParseQuoteArgs(argsString);
 
             if (user == "")
             {
@@ -871,45 +871,6 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                 await ReplyAsync(
                     "Sorry, I don't understand what you want me to do.");
             }
-        }
-
-        private Tuple<string, int?> ParseQuoteArgs(string argsString)
-        {
-            var search = argsString;
-            var number = int.MinValue;
-
-            var args = DiscordHelper.GetArguments(argsString);
-
-            if (args.Arguments.Length >= 2)
-            {
-                if (!int.TryParse(args.Arguments[1], out number))
-                {
-                    number = int.MinValue;
-                    foreach (var s in argsString.Split(" "))
-                    {
-                        if (int.TryParse(s, out number))
-                        {
-                            // Found the number, all content before it is search
-                            var index = argsString.Split(" ").ToList().IndexOf(s);
-                            search = string.Join(" ", argsString.Split(" ")[new Range(0, index)]);
-                        }
-                        else
-                        {
-                            number = int.MinValue;
-                        }
-                    }
-                }
-                else
-                {
-                    search = args.Arguments[0];
-                }
-            }
-
-            search = DiscordHelper.StripQuotes(search);
-
-            return number == int.MinValue 
-                ? new Tuple<string, int?>(search, null) 
-                : new Tuple<string, int?>(search, number);
         }
     }
 }
