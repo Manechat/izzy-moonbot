@@ -8,6 +8,28 @@ namespace Izzy_Moonbot.Helpers;
 
 public static class TimeHelper
 {
+    public static string GetTimeType(string input)
+    {
+        var timeFormatRegex = new Regex(
+            "(?<query1>every |in |on |on the |at |)",
+            RegexOptions.IgnoreCase);
+
+        switch (input.Split(" ")[0].ToLower())
+        {
+            case "every":
+                return "repeat";
+            case "in":
+                return "relative";
+            case "at":
+                return "absolute time";
+            case "on":
+            case "on the":
+                return "absolute date";
+            default:
+                return "unknown";
+        }
+    }
+    
     public static TimeHelperResponse Convert(string input)
     {
         var timeFormatRegex = new Regex(
