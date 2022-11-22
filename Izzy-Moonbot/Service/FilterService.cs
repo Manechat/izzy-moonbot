@@ -56,8 +56,8 @@ public class FilterService
             .AddField("User", $"<@{context.User.Id}> (`{context.User.Id}`)", true)
             .AddField("Category", category, true)
             .AddField("Channel", $"<#{context.Channel.Id}>", true)
-            .AddField("Filtered message (trigger word in bold)",
-                $"{context.Message.CleanContent.Replace(word, $"**{word}**")}")
+            .AddField("Trigger Word", $"{word}")
+            .AddField("Filtered Message", $"{context.Message.CleanContent}")
             .WithTimestamp(onEdit ? (DateTimeOffset)context.Message.EditedTimestamp : context.Message.Timestamp);
 
         var actions = new List<string>();
