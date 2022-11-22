@@ -33,12 +33,6 @@ public class ConfigDescriber
         _config.Add("BatchLogsSendRate",
             new ConfigItem(ConfigItemType.Double, "The amount of seconds between each batch send.",
                 ConfigItemCategory.Core));
-        _config.Add("IgnoredChannels",
-            new ConfigItem(ConfigItemType.ChannelList, "A list of channels I will ignore commands from.",
-                ConfigItemCategory.Core));
-        _config.Add("IgnoredRoles",
-            new ConfigItem(ConfigItemType.RoleList, "A list of roles I will ignore commands from.",
-                ConfigItemCategory.Core));
         _config.Add("MentionResponseEnabled",
             new ConfigItem(ConfigItemType.Boolean, "Whether I will respond to someone mentioning me.",
                 ConfigItemCategory.Core));

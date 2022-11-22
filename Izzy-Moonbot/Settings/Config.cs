@@ -14,8 +14,6 @@ public class Config
         ThreadOnlyMode = true;
         BatchSendLogs = false;
         BatchLogsSendRate = 10;
-        IgnoredChannels = new HashSet<ulong>();
-        IgnoredRoles = new HashSet<ulong>();
         MentionResponseEnabled = false;
         MentionResponses = new List<string>();
         MentionResponseCooldown = 600;
@@ -85,8 +83,6 @@ public class Config
     public bool ThreadOnlyMode { get; set; }
     public bool BatchSendLogs { get; set; }
     public double BatchLogsSendRate { get; set; }
-    public HashSet<ulong> IgnoredChannels { get; set; }
-    public HashSet<ulong> IgnoredRoles { get; set; }
     public bool MentionResponseEnabled { get; set; }
     public List<string> MentionResponses { get; set; }
     public double MentionResponseCooldown { get; set; }
