@@ -141,7 +141,7 @@ public class SpamService
         }
 
         var newlineCount = (message.Content.Split("\n").Length - 1);
-        var linePressure = Math.Round(_config.SpamLengthPressure * newlineCount, 2);
+        var linePressure = Math.Round(_config.SpamLinePressure * newlineCount, 2);
         if (linePressure > 0)
         {
             pressure += linePressure;
