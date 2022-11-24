@@ -8,6 +8,7 @@ using Izzy_Moonbot.Attributes;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Service;
 using Izzy_Moonbot.Settings;
+using Microsoft.Extensions.Logging;
 
 namespace Izzy_Moonbot.Modules;
 
@@ -15,10 +16,14 @@ namespace Izzy_Moonbot.Modules;
 public class MiscModule : ModuleBase<SocketCommandContext>
 {
     private readonly Config _config;
+    private readonly ScheduleService _schedule;
+    private readonly LoggingService _logger;
 
-    public MiscModule(Config config)
+    public MiscModule(Config config, ScheduleService schedule, LoggingService logger)
     {
         _config = config;
+        _schedule = schedule;
+        _logger = logger;
     }
 
     [Command("snowflaketime")]
@@ -47,6 +52,96 @@ public class MiscModule : ModuleBase<SocketCommandContext>
         }
     }
 
+    [Command("remindme")]
+    [Summary("Ask Izzy to DM you a message in the future.")]
+    [Alias("remind", "dmme")]
+    [Parameter("time", ParameterType.DateTime,
+        "How long to wait until sending the message, e.g. \"5 days\" or \"2 hours\".")]
+    [Parameter("message", ParameterType.String, "The reminder message to DM.")]
+    [ExternalUsageAllowed]
+    public async Task RemindMeCommandAsync([Remainder] string argsString = "")
+    {
+        if (argsString == "")
+        {
+            await ReplyAsync(
+                $"Hey uhh... I think you forgot something... (Missing `time` and `message` parameters, see `{_config.Prefix}help remindme`)");
+            return;
+        }
+
+        var args = DiscordHelper.GetArguments(argsString);
+
+        var timeType = TimeHelper.GetTimeType(args.Arguments[0]);
+
+        _logger.Log(timeType, level: LogLevel.Trace);
+
+        if (timeType == "unknown" || timeType == "relative")
+        {
+            if (args.Arguments.Length < (timeType == "unknown" ? 2 : 3))
+            {
+                await ReplyAsync("Please provide a time/date!");
+                return;
+            }
+
+            if (args.Arguments.Length < (timeType == "unknown" ? 3 : 4))
+            {
+                await ReplyAsync("You have to tell me what to remind you!");
+                return;
+            }
+
+            var relativeTimeUnits = new[]
+            {
+                "years", "year", "months", "month", "days", "day", "weeks", "week", "days", "day", "hours", "hour",
+                "minutes", "minute", "seconds", "second"
+            };
+
+            var timeNumber = args.Arguments[(timeType == "unknown" ? 0 : 1)];
+            var timeUnit = args.Arguments[(timeType == "unknown" ? 1 : 2)];
+
+            if (!int.TryParse(timeNumber, out var time))
+            {
+                await ReplyAsync($"I couldn't convert `{timeNumber}` to a number, please try again.");
+                return;
+            }
+
+            if (!relativeTimeUnits.Contains(timeUnit))
+            {
+                await ReplyAsync($"I couldn't convert `{timeUnit}` to a duration type, please try again.");
+                return;
+            }
+
+            var timeHelperResponse = TimeHelper.Convert($"in {time} {timeUnit}");
+
+            var content = string.Join("", argsString.Skip(args.Indices[(timeType == "unknown" ? 1 : 2)]));
+            content = DiscordHelper.StripQuotes(content);
+
+            if (content == "")
+            {
+                await ReplyAsync("You have to tell me what to remind you!");
+                return;
+            }
+
+            await _logger.Log($"Adding scheduled job to remind user to \"{content}\" at {timeHelperResponse.Time:F}",
+                context: Context, level: LogLevel.Debug);
+            var fields = new Dictionary<string, string>
+            {
+                { "channelId", Context.User.Id.ToString() },
+                { "content", content }
+            };
+            var action = new ScheduledJobAction(ScheduledJobActionType.Echo, fields);
+            var task = new ScheduledJob(DateTimeOffset.UtcNow,
+                timeHelperResponse.Time, action);
+            await _schedule.CreateScheduledJob(task);
+            await _logger.Log($"Added scheduled job for user", context: Context, level: LogLevel.Debug);
+
+            await ReplyAsync($"Okay! I'll DM you a reminder <t:{timeHelperResponse.Time.ToUnixTimeSeconds()}:R>.");
+        }
+        else
+        {
+            await ReplyAsync($"<@186730180872634368> https://www.youtube.com/watch?v=-5wpm-gesOY{Environment.NewLine}(I don't currently support timezones, which is required for the input you just gave me, so I'm telling my primary dev that she has to make me support them)");
+            return;
+        }
+    }
+    
     [Summary("Commands for viewing and modifying quotes.")]
     public class QuotesSubmodule : ModuleBase<SocketCommandContext>
     {
