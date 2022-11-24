@@ -32,9 +32,11 @@ public class ModLoggingService
 public class ModLog
 {
     public SocketTextChannel Channel;
-    public string Content;
-    public Embed Embed;
-    public string FileLogContent;
+    public string? Content;
+    public Embed? Embed;
+    public string? FileLogContent;
+
+    public ModLog(SocketTextChannel channel) { Channel = channel; }
 }
 
 public class ModLogConstructor
@@ -43,7 +45,7 @@ public class ModLogConstructor
     private readonly Config _config;
     private readonly BatchLogger _batchLogger;
 
-    private readonly ModLog _log = new();
+    private readonly ModLog _log;
 
     public ModLogConstructor(Config config, SocketGuild guild, BatchLogger batchLogger)
     {
@@ -51,7 +53,7 @@ public class ModLogConstructor
         _guild = guild;
         _batchLogger = batchLogger;
 
-        _log.Channel = _guild.GetTextChannel(_config.ModChannel);
+        _log = new ModLog(_guild.GetTextChannel(_config.ModChannel));
     }
 
     public ModLogConstructor SetContent(string content)
@@ -77,13 +79,16 @@ public class ModLogConstructor
         if (_log.Content == null && _log.Embed == null) throw new InvalidOperationException("A moderation log cannot have no content");
         
         // Log to file
-        var modLogFileContent = LoggingService.PrepareMessageForLogging(_log.FileLogContent, null, true);
-        var filepath = FileHelper.SetUpFilepath(FilePathType.Root, "moderation", "log");
-                
-        if (!File.Exists(filepath))
-            await File.WriteAllTextAsync(filepath, $"----------= {DateTimeOffset.UtcNow:F} =----------{Environment.NewLine}");
-                
-        await File.AppendAllTextAsync(filepath, modLogFileContent);
+        if (_log.FileLogContent is string fileLogContent)
+        {
+            var modLogFileContent = LoggingService.PrepareMessageForLogging(fileLogContent, null, true);
+            var filepath = FileHelper.SetUpFilepath(FilePathType.Root, "moderation", "log");
+
+            if (!File.Exists(filepath))
+                await File.WriteAllTextAsync(filepath, $"----------= {DateTimeOffset.UtcNow:F} =----------{Environment.NewLine}");
+
+            await File.AppendAllTextAsync(filepath, modLogFileContent);
+        }
 
         if (_config.BatchSendLogs)
             _batchLogger.AddModLog(_log);
@@ -114,18 +119,16 @@ public class BatchLogger
         Task.Factory.StartNew(async () =>
         {
             await Task.Delay(Convert.ToInt32(_config.BatchLogsSendRate * 1000));
-            // Do stuff*tm* to construct and create the batched stuff:tm:
-            SocketTextChannel modLogChannel = null;
-            SocketTextChannel actionLogChannel = null;
 
+            SocketTextChannel? modLogChannel = null;
             var modLogContent = new List<string>();
             var modLogEmbeds = new List<Embed>();
 
             foreach (var modLog in _modLogs)
             {
                 modLogChannel = modLog.Channel;
-                modLogEmbeds.Add(modLog.Embed);
-                modLogContent.Add(modLog.Content);
+                if (modLog.Embed is not null) modLogEmbeds.Add(modLog.Embed);
+                if (modLog.Content is not null) modLogContent.Add(modLog.Content);
             }
 
             if (modLogChannel != null)
