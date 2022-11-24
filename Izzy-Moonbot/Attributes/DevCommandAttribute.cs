@@ -18,7 +18,11 @@ public class DevCommandAttribute : PreconditionAttribute
         // Get the config.
         // It has to be done like this because attributes don't get the services and settings.
         var config = new ConfigurationBuilder()
+            #if DEBUG
+            .AddJsonFile("appsettings.Development.json")
+            #else
             .AddJsonFile("appsettings.json")
+            #endif
             .Build();
 
         var section = config.GetSection(nameof(DiscordSettings));
