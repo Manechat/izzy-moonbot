@@ -377,6 +377,20 @@ public class DevModule : ModuleBase<SocketCommandContext>
                                  $"{string.Join(", ", customArgument_Result)}" +
                                  $"{Environment.NewLine}```");
                 break;
+            case "listEnum":
+                var enumNames = Enum.GetNames<TestEnum>();
+
+                await ReplyAsync($"```{Environment.NewLine}{string.Join(", ", enumNames)}{Environment.NewLine}```");
+                break;
+            case "parseEnum":
+                if (!Enum.TryParse<TestEnum>(args[0], out var testEnum))
+                {
+                    await ReplyAsync("Parse fail.");
+                    return;
+                }
+
+                await ReplyAsync($"Parse success. `{testEnum}`");
+                break;
             default:
                 Context.Message.ReplyAsync("Unknown test.");
                 break;
