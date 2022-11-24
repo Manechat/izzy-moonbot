@@ -23,9 +23,9 @@ public class ModLoggingService
         _batchLogger = new BatchLogger(_config);
     }
 
-    public ModLogConstructor CreateModLog(SocketGuild guild)
+    public ModLogBuilder CreateModLog(SocketGuild guild)
     {
-        return new ModLogConstructor(_config, guild, _batchLogger);
+        return new ModLogBuilder(_config, guild, _batchLogger);
     }
 }
 
@@ -39,7 +39,7 @@ public class ModLog
     public ModLog(SocketTextChannel channel) { Channel = channel; }
 }
 
-public class ModLogConstructor
+public class ModLogBuilder
 {
     private readonly SocketGuild _guild;
     private readonly Config _config;
@@ -47,7 +47,7 @@ public class ModLogConstructor
 
     private readonly ModLog _log;
 
-    public ModLogConstructor(Config config, SocketGuild guild, BatchLogger batchLogger)
+    public ModLogBuilder(Config config, SocketGuild guild, BatchLogger batchLogger)
     {
         _config = config;
         _guild = guild;
@@ -56,19 +56,19 @@ public class ModLogConstructor
         _log = new ModLog(_guild.GetTextChannel(_config.ModChannel));
     }
 
-    public ModLogConstructor SetContent(string content)
+    public ModLogBuilder SetContent(string content)
     {
         _log.Content = content;
         return this;
     }
 
-    public ModLogConstructor SetEmbed(Embed embed)
+    public ModLogBuilder SetEmbed(Embed embed)
     {
         _log.Embed = embed;
         return this;
     }
 
-    public ModLogConstructor SetFileLogContent(string content)
+    public ModLogBuilder SetFileLogContent(string content)
     {
         _log.FileLogContent = content;
         return this;
