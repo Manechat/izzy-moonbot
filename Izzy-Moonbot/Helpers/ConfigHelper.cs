@@ -13,14 +13,6 @@ namespace Izzy_Moonbot.Helpers;
 
 public static class ConfigHelper
 {
-    public static bool DoesValueExist<T>(Config settings, string key) where T : Config
-    {
-        var t = typeof(T);
-
-        if (t.GetProperty(key) == null) return false;
-        return true;
-    }
-
     public static bool ResolveBool(string boolResolvable)
     {
         switch (boolResolvable.ToLower())
@@ -1238,8 +1230,8 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<(string, string)> RemoveFromStringListDictionaryValue<T>(Config settings, string key,
-        string dictionaryKey, string value) where T : Config
+    public static async Task<(string, string)> RemoveFromStringListDictionaryValue(Config settings, string key,
+        string dictionaryKey, string value)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {

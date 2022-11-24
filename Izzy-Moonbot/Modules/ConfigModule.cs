@@ -1769,7 +1769,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             try
                             {
                                 var output =
-                                    await ConfigHelper.RemoveFromStringListDictionaryValue<Config>(
+                                    await ConfigHelper.RemoveFromStringListDictionaryValue(
                                         _config, configItemKey, key, value);
 
                                 await ReplyAsync(
