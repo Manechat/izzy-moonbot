@@ -18,6 +18,29 @@ public static class ConfigHelper
         return true;
     }
 
+    public static bool ResolveBool(string boolResolvable)
+    {
+        switch (boolResolvable.ToLower())
+        {
+            case "true":
+            case "yes":
+            case "enable":
+            case "activate":
+            case "on":
+            case "y":
+                return true;
+            case "false":
+            case "no":
+            case "disable":
+            case "deactivate":
+            case "off":
+            case "n":
+                return false;
+            default:
+                throw new FormatException($"Couldn't process {boolResolvable} into a boolean.");
+        }
+    }
+
 #nullable enable
     public static object? GetValue<T>(Config settings, string key) where T : Config
     {
@@ -88,33 +111,14 @@ public static class ConfigHelper
         }
         else
         {
+            var resolvedBool = ResolveBool(boolResolvable);
+
             var t = typeof(T);
 
-            switch (boolResolvable.ToLower())
-            {
-                case "true":
-                case "yes":
-                case "enable":
-                case "activate":
-                case "on":
-                case "y":
-                    t.GetProperty(key).SetValue(settings, true);
+            t.GetProperty(key).SetValue(settings, resolvedBool);
 
-                    await FileHelper.SaveConfigAsync(settings);
-                    return true;
-                case "false":
-                case "no":
-                case "disable":
-                case "deactivate":
-                case "off":
-                case "n":
-                    t.GetProperty(key).SetValue(settings, false);
-
-                    await FileHelper.SaveConfigAsync(settings);
-                    return false;
-                default:
-                    throw new FormatException($"Couldn't process {boolResolvable} into a boolean.");
-            }
+            await FileHelper.SaveConfigAsync(settings);
+            return resolvedBool;
         }
     }
 
@@ -479,35 +483,14 @@ public static class ConfigHelper
 
         var list = (List<bool>?)t.GetProperty(key).GetValue(settings);
 
-        switch (booleanResolvable.ToLower())
-        {
-            case "true":
-            case "yes":
-            case "enable":
-            case "activate":
-            case "on":
-            case "y":
-                list.Add(true);
+        var resolvedBool = ResolveBool(booleanResolvable);
 
-                t.GetProperty(key).SetValue(settings, list);
+        list.Add(resolvedBool);
 
-                await FileHelper.SaveConfigAsync(settings);
-                return true;
-            case "false":
-            case "no":
-            case "disable":
-            case "deactivate":
-            case "off":
-            case "n":
-                list.Add(false);
+        t.GetProperty(key).SetValue(settings, list);
 
-                t.GetProperty(key).SetValue(settings, list);
-
-                await FileHelper.SaveConfigAsync(settings);
-                return false;
-            default:
-                throw new FormatException($"Couldn't process {booleanResolvable} into a boolean.");
-        }
+        await FileHelper.SaveConfigAsync(settings);
+        return resolvedBool;
     }
 
     public static async Task<bool> RemoveFromBooleanList<T>(Config settings, string key,
@@ -525,35 +508,14 @@ public static class ConfigHelper
 
         var list = (List<bool>?)t.GetProperty(key).GetValue(settings);
 
-        switch (booleanResolvable.ToLower())
-        {
-            case "true":
-            case "yes":
-            case "enable":
-            case "activate":
-            case "on":
-            case "y":
-                list.Remove(true);
+        var resolvedBool = ResolveBool(booleanResolvable);
 
-                t.GetProperty(key).SetValue(settings, list);
+        list.Remove(resolvedBool);
 
-                await FileHelper.SaveConfigAsync(settings);
-                return true;
-            case "false":
-            case "no":
-            case "disable":
-            case "deactivate":
-            case "off":
-            case "n":
-                list.Remove(false);
+        t.GetProperty(key).SetValue(settings, list);
 
-                t.GetProperty(key).SetValue(settings, list);
-
-                await FileHelper.SaveConfigAsync(settings);
-                return false;
-            default:
-                throw new FormatException($"Couldn't process {booleanResolvable} into a boolean.");
-        }
+        await FileHelper.SaveConfigAsync(settings);
+        return resolvedBool;
     }
 
     public static List<int>? GetIntList<T>(Config settings, string key) where T : Config
@@ -1271,29 +1233,7 @@ public static class ConfigHelper
 
         try
         {
-            var boolean = false;
-            
-            switch (value.ToLower())
-            {
-                case "true":
-                case "yes":
-                case "enable":
-                case "activate":
-                case "on":
-                case "y":
-                    boolean = true;
-                    break;
-                case "false":
-                case "no":
-                case "disable":
-                case "deactivate":
-                case "off":
-                case "n":
-                    boolean = false;
-                    break;
-                default:
-                    throw new FormatException($"Couldn't process {value} into a boolean.");
-            }
+            var boolean = ResolveBool(value);
 
             list.Add(dictionaryKey, boolean);
 
@@ -1368,28 +1308,8 @@ public static class ConfigHelper
         if (list == null) throw new NullReferenceException("Dictionary is null *despite* already being nullchecked?");
 
         bool? oldValue = list[dictionaryKey];
-        
-        switch (value.ToLower())
-        {
-            case "true":
-            case "yes":
-            case "enable":
-            case "activate":
-            case "on":
-            case "y":
-                list[dictionaryKey] = true;
-                break;
-            case "false":
-            case "no":
-            case "disable":
-            case "deactivate":
-            case "off":
-            case "n":
-                list[dictionaryKey] = false;
-                break;
-            default:
-                throw new FormatException($"Couldn't process {value} into a boolean.");
-        }
+
+        list[dictionaryKey] = ResolveBool(value);
 
         t.GetProperty(key).SetValue(settings, list);
 
