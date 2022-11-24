@@ -88,28 +88,28 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                 return;
             }
 
-            var relativeMonths = new[]
+            var relativeTimeUnits = new[]
             {
                 "years", "year", "months", "month", "days", "day", "weeks", "week", "days", "day", "hours", "hour",
                 "minutes", "minute", "seconds", "second"
             };
 
-            var timeString = args.Arguments[(timeType == "unknown" ? 0 : 1)];
-            var timeMonth = args.Arguments[(timeType == "unknown" ? 1 : 2)];
+            var timeNumber = args.Arguments[(timeType == "unknown" ? 0 : 1)];
+            var timeUnit = args.Arguments[(timeType == "unknown" ? 1 : 2)];
 
-            if (!int.TryParse(timeString, out var time))
+            if (!int.TryParse(timeNumber, out var time))
             {
-                await ReplyAsync($"I couldn't convert `{timeString}` to a number, please try again.");
+                await ReplyAsync($"I couldn't convert `{timeNumber}` to a number, please try again.");
                 return;
             }
 
-            if (!relativeMonths.Contains(timeMonth))
+            if (!relativeTimeUnits.Contains(timeUnit))
             {
-                await ReplyAsync($"I couldn't convert `{timeMonth}` to a duration type, please try again.");
+                await ReplyAsync($"I couldn't convert `{timeUnit}` to a duration type, please try again.");
                 return;
             }
 
-            var timeHelperResponse = TimeHelper.Convert($"in {time} {timeMonth}");
+            var timeHelperResponse = TimeHelper.Convert($"in {time} {timeUnit}");
 
             var content = string.Join("", argsString.Skip(args.Indices[(timeType == "unknown" ? 1 : 2)]));
             content = DiscordHelper.StripQuotes(content);
