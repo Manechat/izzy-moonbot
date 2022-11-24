@@ -37,7 +37,7 @@ public static class ConfigHelper
     }
 
 #nullable enable
-    public static object? GetValue<T>(Config settings, string key) where T : Config
+    public static object? GetValue(Config settings, string key)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
             return pinfo.GetValue(settings);
@@ -45,8 +45,7 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config.");
     }
 
-    public static async Task<string?> SetStringValue<T>(Config settings, string key, string? stringResolvable)
-        where T : Config
+    public static async Task<string?> SetStringValue(Config settings, string key, string? stringResolvable)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -58,8 +57,7 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config.");
     }
 
-    public static async Task<char?> SetCharValue<T>(Config settings, string key, char? charResolvable)
-        where T : Config
+    public static async Task<char?> SetCharValue(Config settings, string key, char? charResolvable)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -71,8 +69,7 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config.");
     }
 
-    public static async Task<bool?> SetBooleanValue<T>(Config settings, string key, string? boolResolvable)
-        where T : Config
+    public static async Task<bool?> SetBooleanValue(Config settings, string key, string? boolResolvable)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -86,8 +83,7 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config.");
     }
 
-    public static async Task<int?> SetIntValue<T>(Config settings, string key, int? intResolvable)
-        where T : Config
+    public static async Task<int?> SetIntValue(Config settings, string key, int? intResolvable)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -99,8 +95,7 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<double?> SetDoubleValue<T>(Config settings, string key, double? doubleResolvable)
-        where T : Config
+    public static async Task<double?> SetDoubleValue(Config settings, string key, double? doubleResolvable)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -112,8 +107,7 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
     }
     
-    public static async Task<Enum?> SetEnumValue<T>(Config settings, string key, Enum? enumResolvable)
-        where T : Config
+    public static async Task<Enum?> SetEnumValue(Config settings, string key, Enum? enumResolvable)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -125,8 +119,8 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<SocketGuildUser?> SetUserValue<T>(Config settings, string key,
-        string? userResolvable, SocketCommandContext context) where T : Config
+    public static async Task<SocketGuildUser?> SetUserValue(Config settings, string key,
+        string? userResolvable, SocketCommandContext context)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -153,8 +147,8 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
     }
 
-        public static async Task<SocketRole?> SetRoleValue<T>(Config settings, string key, string? roleResolvable,
-        SocketCommandContext context) where T : Config
+        public static async Task<SocketRole?> SetRoleValue(Config settings, string key, string? roleResolvable,
+        SocketCommandContext context)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -181,8 +175,8 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<SocketGuildChannel?> SetChannelValue<T>(Config settings, string key,
-        string? channelResolvable, SocketCommandContext context) where T : Config
+    public static async Task<SocketGuildChannel?> SetChannelValue(Config settings, string key,
+        string? channelResolvable, SocketCommandContext context)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -209,7 +203,7 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
     }
 
-    public static bool HasValueInList<T>(Config settings, string key, object? value) where T : Config
+    public static bool HasValueInList(Config settings, string key, object? value)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -226,7 +220,7 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static IList<string>? GetStringList<T>(Config settings, string key) where T : Config
+    public static IList<string>? GetStringList(Config settings, string key)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -246,8 +240,7 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<string> AddToStringList<T>(Config settings, string key, string value)
-        where T : Config
+    public static async Task<string> AddToStringList(Config settings, string key, string value)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -268,8 +261,7 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<string> RemoveFromStringList<T>(Config settings, string key, string value)
-        where T : Config
+    public static async Task<string> RemoveFromStringList(Config settings, string key, string value)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -290,7 +282,7 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
     }
 
-    public static IList<char>? GetCharList<T>(Config settings, string key) where T : Config
+    public static IList<char>? GetCharList(Config settings, string key)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -307,8 +299,7 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<char> AddToCharList<T>(Config settings, string key, char charResolvable)
-        where T : Config
+    public static async Task<char> AddToCharList(Config settings, string key, char charResolvable)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -329,8 +320,7 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<char> RemoveFromCharList<T>(Config settings, string key, char charResolvable)
-        where T : Config
+    public static async Task<char> RemoveFromCharList(Config settings, string key, char charResolvable)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -351,7 +341,7 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
     }
 
-    public static IList<bool>? GetBooleanList<T>(Config settings, string key) where T : Config
+    public static IList<bool>? GetBooleanList(Config settings, string key)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -368,8 +358,7 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<bool> AddToBooleanList<T>(Config settings, string key, string booleanResolvable)
-        where T : Config
+    public static async Task<bool> AddToBooleanList(Config settings, string key, string booleanResolvable)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -391,8 +380,8 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<bool> RemoveFromBooleanList<T>(Config settings, string key,
-        string booleanResolvable) where T : Config
+    public static async Task<bool> RemoveFromBooleanList(Config settings, string key,
+        string booleanResolvable)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -414,7 +403,7 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
     }
 
-    public static IList<int>? GetIntList<T>(Config settings, string key) where T : Config
+    public static IList<int>? GetIntList(Config settings, string key)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -431,8 +420,7 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<int> AddToIntList<T>(Config settings, string key, int intResolvable)
-        where T : Config
+    public static async Task<int> AddToIntList(Config settings, string key, int intResolvable)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -453,8 +441,7 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<int> RemoveFromIntList<T>(Config settings, string key, int intResolvable)
-        where T : Config
+    public static async Task<int> RemoveFromIntList(Config settings, string key, int intResolvable)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -475,7 +462,7 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
     }
 
-    public static IList<double>? GetDoubleList<T>(Config settings, string key) where T : Config
+    public static IList<double>? GetDoubleList(Config settings, string key)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -492,8 +479,7 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<double> AddToDoubleList<T>(Config settings, string key, double doubleResolvable)
-        where T : Config
+    public static async Task<double> AddToDoubleList(Config settings, string key, double doubleResolvable)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -514,8 +500,8 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<double> RemoveFromDoubleList<T>(Config settings, string key,
-        double doubleResolvable) where T : Config
+    public static async Task<double> RemoveFromDoubleList(Config settings, string key,
+        double doubleResolvable)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -546,8 +532,8 @@ public static class ConfigHelper
         return finalList;
     }
 
-    public static HashSet<SocketGuildUser> GetUserList<T>(Config settings, string key,
-        SocketCommandContext context) where T : Config
+    public static HashSet<SocketGuildUser> GetUserList(Config settings, string key,
+        SocketCommandContext context)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -564,8 +550,8 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<SocketGuildUser> AddToUserList<T>(Config settings, string key,
-        string userResolvable, SocketCommandContext context) where T : Config
+    public static async Task<SocketGuildUser> AddToUserList(Config settings, string key,
+        string userResolvable, SocketCommandContext context)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -592,8 +578,8 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<SocketGuildUser> RemoveFromUserList<T>(Config settings, string key,
-        string userResolvable, SocketCommandContext context) where T : Config
+    public static async Task<SocketGuildUser> RemoveFromUserList(Config settings, string key,
+        string userResolvable, SocketCommandContext context)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -629,8 +615,7 @@ public static class ConfigHelper
         return finalList;
     }
 
-    public static HashSet<SocketRole> GetRoleList<T>(Config settings, string key, SocketCommandContext context)
-        where T : Config
+    public static HashSet<SocketRole> GetRoleList(Config settings, string key, SocketCommandContext context)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -647,8 +632,8 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<SocketRole> AddToRoleList<T>(Config settings, string key, string roleResolvable,
-        SocketCommandContext context) where T : Config
+    public static async Task<SocketRole> AddToRoleList(Config settings, string key, string roleResolvable,
+        SocketCommandContext context)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -675,8 +660,8 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<SocketRole> RemoveFromRoleList<T>(Config settings, string key,
-        string roleResolvable, SocketCommandContext context) where T : Config
+    public static async Task<SocketRole> RemoveFromRoleList(Config settings, string key,
+        string roleResolvable, SocketCommandContext context)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -712,8 +697,8 @@ public static class ConfigHelper
         return finalList;
     }
 
-    public static HashSet<SocketGuildChannel> GetChannelList<T>(Config settings, string key,
-        SocketCommandContext context) where T : Config
+    public static HashSet<SocketGuildChannel> GetChannelList(Config settings, string key,
+        SocketCommandContext context)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -730,8 +715,8 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<SocketGuildChannel> AddToChannelList<T>(Config settings, string key,
-        string channelResolvable, SocketCommandContext context) where T : Config
+    public static async Task<SocketGuildChannel> AddToChannelList(Config settings, string key,
+        string channelResolvable, SocketCommandContext context)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -758,8 +743,8 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<SocketGuildChannel> RemoveFromChannelList<T>(Config settings, string key,
-        string channelResolvable, SocketCommandContext context) where T : Config
+    public static async Task<SocketGuildChannel> RemoveFromChannelList(Config settings, string key,
+        string channelResolvable, SocketCommandContext context)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -786,7 +771,7 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static IDictionary<string, string> GetStringDictionary<T>(Config settings, string key) where T : Config
+    public static IDictionary<string, string> GetStringDictionary(Config settings, string key)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -800,7 +785,7 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
     
-    public static bool DoesStringDictionaryKeyExist<T>(Config settings, string key, string dictionaryKey) where T : Config
+    public static bool DoesStringDictionaryKeyExist(Config settings, string key, string dictionaryKey)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -814,8 +799,8 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<(string, string?, string)> CreateStringDictionaryKey<T>(Config settings, string key,
-        string dictionaryKey, string value) where T : Config
+    public static async Task<(string, string?, string)> CreateStringDictionaryKey(Config settings, string key,
+        string dictionaryKey, string value)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -840,8 +825,8 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<string> RemoveStringDictionaryKey<T>(Config settings, string key,
-        string dictionaryKey) where T : Config
+    public static async Task<string> RemoveStringDictionaryKey(Config settings, string key,
+        string dictionaryKey)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -859,8 +844,7 @@ public static class ConfigHelper
 
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
-
-    public static string GetStringDictionaryValue<T>(Config settings, string key, string dictionaryKey) where T : Config
+    public static string GetStringDictionaryValue(Config settings, string key, string dictionaryKey)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -876,8 +860,8 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<(string, string?, string)> SetStringDictionaryValue<T>(Config settings, string key,
-        string dictionaryKey, string value) where T : Config
+    public static async Task<(string, string?, string)> SetStringDictionaryValue(Config settings, string key,
+        string dictionaryKey, string value)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -897,7 +881,7 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static IDictionary<string, string?> GetNullableStringDictionary<T>(Config settings, string key) where T : Config
+    public static IDictionary<string, string?> GetNullableStringDictionary(Config settings, string key)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -911,7 +895,7 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static bool DoesNullableStringDictionaryKeyExist<T>(Config settings, string key, string dictionaryKey) where T : Config
+    public static bool DoesNullableStringDictionaryKeyExist(Config settings, string key, string dictionaryKey)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -925,8 +909,8 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<(string, string?, string?)> CreateNullableStringDictionaryKey<T>(Config settings, string key,
-        string dictionaryKey, string? value) where T : Config
+    public static async Task<(string, string?, string?)> CreateNullableStringDictionaryKey(Config settings, string key,
+        string dictionaryKey, string? value)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -951,8 +935,8 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<string> RemoveNullableStringDictionaryKey<T>(Config settings, string key,
-        string dictionaryKey) where T : Config
+    public static async Task<string> RemoveNullableStringDictionaryKey(Config settings, string key,
+        string dictionaryKey)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -971,7 +955,7 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static string? GetNullableStringDictionaryValue<T>(Config settings, string key, string dictionaryKey) where T : Config
+    public static string? GetNullableStringDictionaryValue(Config settings, string key, string dictionaryKey)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -987,8 +971,8 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<(string, string?, string?)> SetNullableStringDictionaryValue<T>(Config settings, string key,
-        string dictionaryKey, string? value) where T : Config
+    public static async Task<(string, string?, string?)> SetNullableStringDictionaryValue(Config settings, string key,
+        string dictionaryKey, string? value)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -1008,7 +992,7 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static IDictionary<string, bool> GetBooleanDictionary<T>(Config settings, string key) where T : Config
+    public static IDictionary<string, bool> GetBooleanDictionary(Config settings, string key)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -1022,7 +1006,7 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
     
-    public static bool DoesBooleanDictionaryKeyExist<T>(Config settings, string key, string dictionaryKey) where T : Config
+    public static bool DoesBooleanDictionaryKeyExist(Config settings, string key, string dictionaryKey)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -1036,8 +1020,8 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<(string, bool?, bool)> CreateBooleanDictionaryKey<T>(Config settings, string key,
-        string dictionaryKey, string value) where T : Config
+    public static async Task<(string, bool?, bool)> CreateBooleanDictionaryKey(Config settings, string key,
+        string dictionaryKey, string value)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -1063,8 +1047,8 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<string> RemoveBooleanDictionaryKey<T>(Config settings, string key,
-        string dictionaryKey) where T : Config
+    public static async Task<string> RemoveBooleanDictionaryKey(Config settings, string key,
+        string dictionaryKey)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -1083,7 +1067,7 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static bool GetBooleanDictionaryValue<T>(Config settings, string key, string dictionaryKey) where T : Config
+    public static bool GetBooleanDictionaryValue(Config settings, string key, string dictionaryKey)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -1099,8 +1083,8 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<(string, bool?, bool)> SetBooleanDictionaryValue<T>(Config settings, string key,
-        string dictionaryKey, string value) where T : Config
+    public static async Task<(string, bool?, bool)> SetBooleanDictionaryValue(Config settings, string key,
+        string dictionaryKey, string value)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -1120,7 +1104,7 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static IDictionary<string, List<string>> GetStringListDictionary<T>(Config settings, string key) where T : Config
+    public static IDictionary<string, List<string>> GetStringListDictionary(Config settings, string key)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -1134,7 +1118,7 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
     
-    public static bool DoesStringListDictionaryKeyExist<T>(Config settings, string key, string dictionaryKey) where T : Config
+    public static bool DoesStringListDictionaryKeyExist(Config settings, string key, string dictionaryKey)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -1148,8 +1132,8 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<(string, string)> CreateStringListDictionaryKey<T>(Config settings, string key,
-        string dictionaryKey, string value) where T : Config
+    public static async Task<(string, string)> CreateStringListDictionaryKey(Config settings, string key,
+        string dictionaryKey, string value)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -1174,8 +1158,8 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<string> RemoveStringListDictionaryKey<T>(Config settings, string key,
-        string dictionaryKey) where T : Config
+    public static async Task<string> RemoveStringListDictionaryKey(Config settings, string key,
+        string dictionaryKey)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -1194,8 +1178,8 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static List<string> GetStringListDictionaryValue<T>(Config settings, string key,
-        string dictionaryKey) where T : Config
+    public static List<string> GetStringListDictionaryValue(Config settings, string key,
+        string dictionaryKey)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -1211,8 +1195,8 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<(string, string)> AddToStringListDictionaryValue<T>(Config settings, string key,
-        string dictionaryKey, string value) where T : Config
+    public static async Task<(string, string)> AddToStringListDictionaryValue(Config settings, string key,
+        string dictionaryKey, string value)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
