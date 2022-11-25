@@ -646,6 +646,7 @@ public class AdminModule : ModuleBase<SocketCommandContext>
             await ReplyAsync("I couldn't find that role, sorry!");
             return;
         }
+        var role = Context.Guild.GetRole(roleId);
 
         // Comprehend time
         TimeHelperResponse? time = null;
@@ -668,16 +669,10 @@ public class AdminModule : ModuleBase<SocketCommandContext>
 
         if (maybeMember is SocketGuildUser member)
         {
-            if (member.Roles.Select(role => role.Id).Contains(_config.ModRole))
-            {
-                await ReplyAsync("I can't assign roles to a mod. <:izzynothoughtsheadempty:910198222255972382>");
-                return;
-            }
-
-            if (member.Hierarchy >= Context.Guild.GetUser(Context.Client.CurrentUser.Id).Hierarchy)
+            if (role.Position >= Context.Guild.GetUser(Context.Client.CurrentUser.Id).Hierarchy)
             {
                 await ReplyAsync(
-                    "That user is either at the same level or higher than me in the role hierarchy, I cannot assign roles to them. <:izzynothoughtsheadempty:910198222255972382>");
+                    "That role is either at the same level or higher than me in the role hierarchy, I cannot assign it. <:izzynothoughtsheadempty:910198222255972382>");
                 return;
             }
 
