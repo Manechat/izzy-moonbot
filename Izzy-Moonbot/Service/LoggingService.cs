@@ -17,13 +17,13 @@ public class LoggingService
         _logger = logger;
     }
 
-    public async Task Log(string message, SocketCommandContext context = null, LogLevel level = LogLevel.Information)
+    public async Task Log(string message, SocketCommandContext? context = null, LogLevel level = LogLevel.Information)
     {
         var logMessage = PrepareMessageForLogging(message, context);
         _logger.Log(level, logMessage);
     }
 
-    public static string PrepareMessageForLogging(string message, SocketCommandContext context, bool header = false)
+    public static string PrepareMessageForLogging(string message, SocketCommandContext? context, bool header = false)
     {
         var logMessage = "";
         if (header)
