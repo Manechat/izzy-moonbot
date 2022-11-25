@@ -14,7 +14,7 @@ namespace Izzy_Moonbot.Helpers.Tests
         [TestMethod()]
         public void ParseQuoteArgs_NoArgsTests()
         {
-            Assert.ThrowsException<InvalidOperationException>(() => QuoteHelper.ParseQuoteArgs(""));
+            Assert.AreEqual(("", null), QuoteHelper.ParseQuoteArgs(""));
 
             Assert.AreEqual((" ", null), QuoteHelper.ParseQuoteArgs(" "));
         }
@@ -46,7 +46,7 @@ namespace Izzy_Moonbot.Helpers.Tests
         [TestMethod()]
         public void ParseQuoteArgs_TextAfterNumberTests()
         {
-            Assert.ThrowsException<InvalidOperationException>(() => QuoteHelper.ParseQuoteArgs("1 foo"));
+            Assert.AreEqual(("", 1), QuoteHelper.ParseQuoteArgs("1 foo"));
 
             Assert.AreEqual(("foo", 1), QuoteHelper.ParseQuoteArgs("foo 1 bar"));
 
