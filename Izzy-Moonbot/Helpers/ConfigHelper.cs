@@ -936,8 +936,7 @@ public static class ConfigHelper
         return channel;
     }
 
-    public static Dictionary<string, string> GetStringDictionary<T>(Config settings, string key,
-        SocketCommandContext context) where T : Config
+    public static Dictionary<string, string> GetStringDictionary<T>(Config settings, string key) where T : Config
     {
         if (!DoesValueExist<Config>(settings, key))
             throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
@@ -954,8 +953,7 @@ public static class ConfigHelper
         return list;
     }
     
-    public static bool DoesStringDictionaryKeyExist<T>(Config settings, string key, string dictionaryKey,
-        SocketCommandContext context) where T : Config
+    public static bool DoesStringDictionaryKeyExist<T>(Config settings, string key, string dictionaryKey) where T : Config
     {
         if (!DoesValueExist<Config>(settings, key))
             throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
@@ -970,7 +968,7 @@ public static class ConfigHelper
     }
 
     public static async Task<(string, string?, string)> CreateStringDictionaryKey<T>(Config settings, string key,
-        string dictionaryKey, string value, SocketCommandContext context) where T : Config
+        string dictionaryKey, string value) where T : Config
     {
         if (!DoesValueExist<Config>(settings, key))
             throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
@@ -1000,7 +998,7 @@ public static class ConfigHelper
     }
 
     public static async Task<string> RemoveStringDictionaryKey<T>(Config settings, string key,
-        string dictionaryKey, SocketCommandContext context) where T : Config
+        string dictionaryKey) where T : Config
     {
         if (!DoesValueExist<Config>(settings, key))
             throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
@@ -1024,8 +1022,7 @@ public static class ConfigHelper
         return dictionaryKey;
     }
 
-    public static string GetStringDictionaryValue<T>(Config settings, string key, string dictionaryKey,
-        SocketCommandContext context) where T : Config
+    public static string GetStringDictionaryValue<T>(Config settings, string key, string dictionaryKey) where T : Config
     {
         if (!DoesValueExist<Config>(settings, key))
             throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
@@ -1045,7 +1042,7 @@ public static class ConfigHelper
     }
 
     public static async Task<(string, string?, string)> SetStringDictionaryValue<T>(Config settings, string key,
-        string dictionaryKey, string value, SocketCommandContext context) where T : Config
+        string dictionaryKey, string value) where T : Config
     {
         if (!DoesValueExist<Config>(settings, key))
             throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
@@ -1069,8 +1066,7 @@ public static class ConfigHelper
         return (dictionaryKey, oldValue, value);
     }
 
-    public static Dictionary<string, string?> GetNullableStringDictionary<T>(Config settings, string key,
-        SocketCommandContext context) where T : Config
+    public static Dictionary<string, string?> GetNullableStringDictionary<T>(Config settings, string key) where T : Config
     {
         if (!DoesValueExist<Config>(settings, key))
             throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
@@ -1087,8 +1083,7 @@ public static class ConfigHelper
         return list;
     }
 
-    public static bool DoesNullableStringDictionaryKeyExist<T>(Config settings, string key, string dictionaryKey,
-        SocketCommandContext context) where T : Config
+    public static bool DoesNullableStringDictionaryKeyExist<T>(Config settings, string key, string dictionaryKey) where T : Config
     {
         if (!DoesValueExist<Config>(settings, key))
             throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
@@ -1103,7 +1098,7 @@ public static class ConfigHelper
     }
 
     public static async Task<(string, string?, string?)> CreateNullableStringDictionaryKey<T>(Config settings, string key,
-        string dictionaryKey, string? value, SocketCommandContext context) where T : Config
+        string dictionaryKey, string? value) where T : Config
     {
         if (!DoesValueExist<Config>(settings, key))
             throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
@@ -1133,7 +1128,7 @@ public static class ConfigHelper
     }
 
     public static async Task<string> RemoveNullableStringDictionaryKey<T>(Config settings, string key,
-        string dictionaryKey, SocketCommandContext context) where T : Config
+        string dictionaryKey) where T : Config
     {
         if (!DoesValueExist<Config>(settings, key))
             throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
@@ -1157,8 +1152,7 @@ public static class ConfigHelper
         return dictionaryKey;
     }
 
-    public static string? GetNullableStringDictionaryValue<T>(Config settings, string key, string dictionaryKey,
-        SocketCommandContext context) where T : Config
+    public static string? GetNullableStringDictionaryValue<T>(Config settings, string key, string dictionaryKey) where T : Config
     {
         if (!DoesValueExist<Config>(settings, key))
             throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
@@ -1178,7 +1172,7 @@ public static class ConfigHelper
     }
 
     public static async Task<(string, string?, string?)> SetNullableStringDictionaryValue<T>(Config settings, string key,
-        string dictionaryKey, string? value, SocketCommandContext context) where T : Config
+        string dictionaryKey, string? value) where T : Config
     {
         if (!DoesValueExist<Config>(settings, key))
             throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
@@ -1202,8 +1196,7 @@ public static class ConfigHelper
         return (dictionaryKey, oldValue, value);
     }
 
-    public static Dictionary<string, bool> GetBooleanDictionary<T>(Config settings, string key,
-        SocketCommandContext context) where T : Config
+    public static Dictionary<string, bool> GetBooleanDictionary<T>(Config settings, string key) where T : Config
     {
         if (!DoesValueExist<Config>(settings, key))
             throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
@@ -1220,8 +1213,7 @@ public static class ConfigHelper
         return list;
     }
     
-    public static bool DoesBooleanDictionaryKeyExist<T>(Config settings, string key, string dictionaryKey,
-        SocketCommandContext context) where T : Config
+    public static bool DoesBooleanDictionaryKeyExist<T>(Config settings, string key, string dictionaryKey) where T : Config
     {
         if (!DoesValueExist<Config>(settings, key))
             throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
@@ -1236,7 +1228,7 @@ public static class ConfigHelper
     }
 
     public static async Task<(string, bool?, bool)> CreateBooleanDictionaryKey<T>(Config settings, string key,
-        string dictionaryKey, string value, SocketCommandContext context) where T : Config
+        string dictionaryKey, string value) where T : Config
     {
         if (!DoesValueExist<Config>(settings, key))
             throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
@@ -1290,7 +1282,7 @@ public static class ConfigHelper
     }
 
     public static async Task<string> RemoveBooleanDictionaryKey<T>(Config settings, string key,
-        string dictionaryKey, SocketCommandContext context) where T : Config
+        string dictionaryKey) where T : Config
     {
         if (!DoesValueExist<Config>(settings, key))
             throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
@@ -1314,8 +1306,7 @@ public static class ConfigHelper
         return dictionaryKey;
     }
 
-    public static bool GetBooleanDictionaryValue<T>(Config settings, string key, string dictionaryKey,
-        SocketCommandContext context) where T : Config
+    public static bool GetBooleanDictionaryValue<T>(Config settings, string key, string dictionaryKey) where T : Config
     {
         if (!DoesValueExist<Config>(settings, key))
             throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
@@ -1335,7 +1326,7 @@ public static class ConfigHelper
     }
 
     public static async Task<(string, bool?, bool)> SetBooleanDictionaryValue<T>(Config settings, string key,
-        string dictionaryKey, string value, SocketCommandContext context) where T : Config
+        string dictionaryKey, string value) where T : Config
     {
         if (!DoesValueExist<Config>(settings, key))
             throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
@@ -1379,8 +1370,7 @@ public static class ConfigHelper
         return (dictionaryKey, oldValue, list[dictionaryKey]);
     }
 
-    public static Dictionary<string, List<string>> GetStringListDictionary<T>(Config settings, string key,
-        SocketCommandContext context) where T : Config
+    public static Dictionary<string, List<string>> GetStringListDictionary<T>(Config settings, string key) where T : Config
     {
         if (!DoesValueExist<Config>(settings, key))
             throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
@@ -1397,8 +1387,7 @@ public static class ConfigHelper
         return list;
     }
     
-    public static bool DoesStringListDictionaryKeyExist<T>(Config settings, string key, string dictionaryKey,
-        SocketCommandContext context) where T : Config
+    public static bool DoesStringListDictionaryKeyExist<T>(Config settings, string key, string dictionaryKey) where T : Config
     {
         if (!DoesValueExist<Config>(settings, key))
             throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
@@ -1413,7 +1402,7 @@ public static class ConfigHelper
     }
 
     public static async Task<(string, string)> CreateStringListDictionaryKey<T>(Config settings, string key,
-        string dictionaryKey, string value, SocketCommandContext context) where T : Config
+        string dictionaryKey, string value) where T : Config
     {
         if (!DoesValueExist<Config>(settings, key))
             throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
@@ -1443,7 +1432,7 @@ public static class ConfigHelper
     }
 
     public static async Task<string> RemoveStringListDictionaryKey<T>(Config settings, string key,
-        string dictionaryKey, SocketCommandContext context) where T : Config
+        string dictionaryKey) where T : Config
     {
         if (!DoesValueExist<Config>(settings, key))
             throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
@@ -1468,7 +1457,7 @@ public static class ConfigHelper
     }
 
     public static List<string> GetStringListDictionaryValue<T>(Config settings, string key,
-        string dictionaryKey, SocketCommandContext context) where T : Config
+        string dictionaryKey) where T : Config
     {
         if (!DoesValueExist<Config>(settings, key))
             throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
@@ -1489,7 +1478,7 @@ public static class ConfigHelper
     }
 
     public static async Task<(string, string)> AddToStringListDictionaryValue<T>(Config settings, string key,
-        string dictionaryKey, string value, SocketCommandContext context) where T : Config
+        string dictionaryKey, string value) where T : Config
     {
         if (!DoesValueExist<Config>(settings, key))
             throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
@@ -1512,7 +1501,7 @@ public static class ConfigHelper
     }
 
     public static async Task<(string, string)> RemoveFromStringListDictionaryValue<T>(Config settings, string key,
-        string dictionaryKey, string value, SocketCommandContext context) where T : Config
+        string dictionaryKey, string value) where T : Config
     {
         if (!DoesValueExist<Config>(settings, key))
             throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
