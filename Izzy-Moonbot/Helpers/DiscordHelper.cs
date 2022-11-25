@@ -268,7 +268,7 @@ public static class DiscordHelper
         return 0;
     }
 
-    private static ulong ConvertChannelPingToId(string channelPing)
+    public static ulong ConvertChannelPingToId(string channelPing)
     {
         if (!channelPing.Contains("<#") || !channelPing.Contains(">"))
         {
@@ -281,7 +281,7 @@ public static class DiscordHelper
         return ulong.Parse(trim);
     }
 
-    private static ulong ConvertUserPingToId(string userPing)
+    public static ulong ConvertUserPingToId(string userPing)
     {
         if (!userPing.Contains("<@") || !userPing.Contains(">"))
         {
@@ -320,7 +320,7 @@ public static class DiscordHelper
         return 0;
     }
 
-    private static ulong ConvertRolePingToId(string rolePing)
+    public static ulong ConvertRolePingToId(string rolePing)
     {
         if (!rolePing.Contains("<@&") || !rolePing.Contains(">"))
         {
