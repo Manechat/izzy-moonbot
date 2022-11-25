@@ -22,7 +22,6 @@ public class Config
         Aliases = new Dictionary<string, string>();
 
         // Mod settings
-        AllowedUsers = new HashSet<ulong>();
         ModRole = 0;
         ModChannel = 0;
         LogChannel = 0;
@@ -91,7 +90,6 @@ public class Config
     public Dictionary<string, string> Aliases { get; set; }
 
     // Moderation settings
-    public HashSet<ulong> AllowedUsers { get; set; }
     public ulong ModRole { get; set; }
     public ulong ModChannel { get; set; }
     public ulong LogChannel { get; set; }
