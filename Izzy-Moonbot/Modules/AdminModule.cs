@@ -709,7 +709,7 @@ public class AdminModule : ModuleBase<SocketCommandContext>
             // If a duration was provided, schedule removal.
             if (time is not null)
             {
-                await _logger.Log($"Adding scheduled job to remove Config.NewMemberRole from new user in {_config.NewMemberRoleDecay} minutes", level: LogLevel.Debug);
+                await _logger.Log($"Adding scheduled job to remove role {roleId} from user {userId} at {time.Time}", level: LogLevel.Debug);
                 Dictionary<string, string> fields = new Dictionary<string, string>
                 {
                     { "roleId", roleId.ToString() },
