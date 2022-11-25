@@ -277,7 +277,7 @@ public class ConfigHelperTests
         AssertDictsOfListsAreEqual(new Dictionary<string, List<string>> { { "jinxies", new List<string> { "mayonnaise", "magic", "wing", "feather" } } }, cfg.FilteredWords);
         AssertDictsOfListsAreEqual(new Dictionary<string, List<string>> { { "jinxies", new List<string> { "mayonnaise", "magic", "wing", "feather" } } }, ConfigHelper.GetStringListDictionary<Config>(cfg, "FilteredWords"));
         Assert.IsTrue(ConfigHelper.DoesStringListDictionaryKeyExist<Config>(cfg, "FilteredWords", "jinxies"));
-        AssertListsAreEqual(new List<string> { "horseradish", "magic", "wing", "feather" }, ConfigHelper.GetStringListDictionaryValue<Config>(cfg, "FilteredWords", "jinxies"));
+        AssertListsAreEqual(new List<string> { "mayonnaise", "magic", "wing", "feather" }, ConfigHelper.GetStringListDictionaryValue<Config>(cfg, "FilteredWords", "jinxies"));
 
         await ConfigHelper.RemoveFromStringListDictionaryValue<Config>(cfg, "FilteredWords", "jinxies", "mayonnaise");
         await ConfigHelper.RemoveFromStringListDictionaryValue<Config>(cfg, "FilteredWords", "jinxies", "magic");
