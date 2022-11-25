@@ -81,7 +81,7 @@ public static class DiscordHelper
             '"', '\'', 'ʺ', '˝', 'ˮ', '˶', 'ײ', '״', '᳓', '“', '”', '‟', '″', '‶', '〃', '＂'
         };
 
-        var needToStrip = quotes.Contains(str.First()) && quotes.Contains(str.Last());
+        var needToStrip = str.Length > 0 && quotes.Contains(str.First()) && quotes.Contains(str.Last());
 
         return needToStrip ? str[new Range(1, ^1)] : str;
     }
