@@ -1,5 +1,8 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using Izzy_Moonbot.Modules;
+using Izzy_Moonbot.Types;
 
 namespace Izzy_Moonbot.Settings;
 
@@ -20,6 +23,9 @@ public class Config
         DiscordActivityName = "you all soon";
         DiscordActivityWatching = true;
         Aliases = new Dictionary<string, string>();
+        
+        // Server settings
+        _enumTest = DevModule.TestEnum.None;
 
         // Mod settings
         ModRole = 0;
@@ -88,6 +94,22 @@ public class Config
     public string? DiscordActivityName { get; set; }
     public bool DiscordActivityWatching { get; set; }
     public Dictionary<string, string> Aliases { get; set; }
+    
+    // Server settings
+    public event EventHandler<ConfigValueChangeEvent> Changed;
+    private DevModule.TestEnum _enumTest { get; set; }
+    public DevModule.TestEnum EnumTest {
+        get => _enumTest;
+        set
+        {
+            var eventData = new ConfigValueChangeEvent();
+            eventData.Name = "EnumTest";
+            eventData.Original = _enumTest;
+            eventData.Current = value;
+            Changed?.Invoke(this, eventData);
+            _enumTest = value;
+        }
+    }
 
     // Moderation settings
     public ulong ModRole { get; set; }

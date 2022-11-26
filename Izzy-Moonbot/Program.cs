@@ -86,6 +86,7 @@ public class Program
             services.AddSingleton(services);
             
             // EventListeners
+            services.AddSingleton<ConfigListener>();
             services.AddSingleton<UserListener>();
             
             // Misc

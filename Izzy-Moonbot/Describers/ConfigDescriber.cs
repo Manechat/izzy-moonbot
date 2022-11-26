@@ -54,6 +54,12 @@ public class ConfigDescriber
             new ConfigItem(ConfigItemType.StringDictionary,
                 "Shorthand commands which can be used as an alternative to executing a different, often longer, command.",
                 ConfigItemCategory.Core));
+        
+        // Server settings
+        _config.Add("EnumTest",
+            new ConfigItem(ConfigItemType.Enum,
+                "Testing enums!",
+                ConfigItemCategory.Server));
 
         // Mod settings
         _config.Add("ModRole",
@@ -264,6 +270,9 @@ public class ConfigDescriber
         {
             case "core":
                 return ConfigItemCategory.Core;
+            case "server":
+            case "guild":
+                return ConfigItemCategory.Server;
             case "moderation":
             case "mod":
                 return ConfigItemCategory.Moderation;
@@ -297,6 +306,8 @@ public class ConfigDescriber
         {
             case ConfigItemCategory.Core:
                 return "Core";
+            case ConfigItemCategory.Server:
+                return "Server";
             case ConfigItemCategory.Moderation:
                 return "Moderation";
             case ConfigItemCategory.Debug:
@@ -328,6 +339,8 @@ public class ConfigDescriber
                 return "Integer";
             case ConfigItemType.Double:
                 return "Double";
+            case ConfigItemType.Enum:
+                return "Enum";
             case ConfigItemType.User:
                 return "User";
             case ConfigItemType.Role:
@@ -342,6 +355,8 @@ public class ConfigDescriber
                 return "List of Booleans";
             case ConfigItemType.IntegerList:
                 return "List of Integers";
+            //case ConfigItemType.EnumList: // Note: Implement when needed
+            //    return "List of Enums";
             case ConfigItemType.DoubleList:
                 return "List of Doubles";
             case ConfigItemType.UserList:
@@ -352,35 +367,39 @@ public class ConfigDescriber
                 return "List of Channels";
             case ConfigItemType.StringDictionary:
                 return "Map of String";
-            //case SettingsItemType.CharDictionary: // Note: Implement when needed
+            //case ConfigItemType.CharDictionary: // Note: Implement when needed
             //    return "Map of Character";
             case ConfigItemType.BooleanDictionary:
                 return "Map of Boolean";
-            //case SettingsItemType.IntegerDictionary: // Note: Implement when needed
+            //case ConfigItemType.IntegerDictionary: // Note: Implement when needed
             //    return "Map of Integer";
-            //case SettingsItemType.DoubleDictionary: // Note: Implement when needed
+            //case ConfigItemType.DoubleDictionary: // Note: Implement when needed
             //    return "Map of Double";
-            //case SettingsItemType.UserDictionary: // Note: Implement when needed
+            //case ConfigItemType.EnumDictionary: // Note: Implement when needed
+            //    return "Map of Enums";
+            //case ConfigItemType.UserDictionary: // Note: Implement when needed
             //    return "Map of User";
-            //case SettingsItemType.RoleDictionary: // Note: Implement when needed
+            //case ConfigItemType.RoleDictionary: // Note: Implement when needed
             //    return "Map of Role";
-            //case SettingsItemType.ChannelDictionary: // Note: Implement when needed
+            //case ConfigItemType.ChannelDictionary: // Note: Implement when needed
             //    return "Map of Channel";
             case ConfigItemType.StringListDictionary:
                 return "Map of Lists of Strings";
-            //case SettingsItemType.CharListDictionary: // Note: Implement when needed
+            //case ConfigItemType.CharListDictionary: // Note: Implement when needed
             //    return "Map of Lists of Characters";
-            //case SettingsItemType.BooleanListDictionary: // Note: Implement when needed
+            //case ConfigItemType.BooleanListDictionary: // Note: Implement when needed
             //    return "Map of Lists of Booleans";
-            //case SettingsItemType.IntegerListDictionary: // Note: Implement when needed
+            //case ConfigItemType.IntegerListDictionary: // Note: Implement when needed
             //    return "Map of Lists of Integers";
-            //case SettingsItemType.DoubleListDictionary: // Note: Implement when needed
+            //case ConfigItemType.DoubleListDictionary: // Note: Implement when needed
             //    return "Map of Lists of Doubles";
-            //case SettingsItemType.UserListDictionary: // Note: Implement when needed
+            //case ConfigItemType.EnumListDictionary: // Note: Implement when needed
+            //    return "Map of Lists of Enums";
+            //case ConfigItemType.UserListDictionary: // Note: Implement when needed
             //    return "Map of Lists of Users";
-            //case SettingsItemType.RoleListDictionary: // Note: Implement when needed
+            //case ConfigItemType.RoleListDictionary: // Note: Implement when needed
             //    return "Map of Lists of Roles";
-            //case SettingsItemType.ChannelListDictionary: // Note: Implement when needed
+            //case ConfigItemType.ChannelListDictionary: // Note: Implement when needed
             //    return "Map of Lists of Channels";
             default:
                 return "<UNKNOWN>";
@@ -394,6 +413,7 @@ public class ConfigDescriber
             type == ConfigItemType.Boolean ||
             type == ConfigItemType.Integer ||
             type == ConfigItemType.Double ||
+            type == ConfigItemType.Enum ||
             type == ConfigItemType.User ||
             type == ConfigItemType.Role ||
             type == ConfigItemType.Channel) return true;
@@ -407,6 +427,7 @@ public class ConfigDescriber
             type == ConfigItemType.BooleanList ||
             type == ConfigItemType.IntegerList ||
             type == ConfigItemType.DoubleList ||
+            //type == ConfigItemType.EnumList || // Note: Implement when needed
             type == ConfigItemType.UserList ||
             type == ConfigItemType.RoleList ||
             type == ConfigItemType.ChannelList) return true;
@@ -416,26 +437,28 @@ public class ConfigDescriber
     public bool TypeIsDictionaryValue(ConfigItemType type)
     {
         if (type == ConfigItemType.StringDictionary ||
-            //type == SettingsItemType.CharDictionary || // Note: Implement when needed
+            //type == ConfigItemType.CharDictionary || // Note: Implement when needed
             type == ConfigItemType.BooleanDictionary /*|| 
-                type == SettingsItemType.IntegerDictionary || // Note: Implement when needed
-                type == SettingsItemType.DoubleDictionary || // Note: Implement when needed
-                type == SettingsItemType.UserDictionary || // Note: Implement when needed
-                type == SettingsItemType.RoleDictionary || // Note: Implement when needed
-                type == SettingsItemType.ChannelDictionary*/) return true; // Note: Implement when needed
+                type == ConfigItemType.IntegerDictionary || // Note: Implement when needed
+                type == ConfigItemType.DoubleDictionary || // Note: Implement when needed
+                type == ConfigItemType.EnumDictionary || // Note: Implement when needed
+                type == ConfigItemType.UserDictionary || // Note: Implement when needed
+                type == ConfigItemType.RoleDictionary || // Note: Implement when needed
+                type == ConfigItemType.ChannelDictionary*/) return true; // Note: Implement when needed
         return false;
     }
 
     public bool TypeIsDictionaryList(ConfigItemType type)
     {
         if (type == ConfigItemType.StringListDictionary /*||
-                type == SettingsItemType.CharListDictionary || // Note: Implement when needed
-                type == SettingsItemType.BooleanListDictionary || // Note: Implement when needed
-                type == SettingsItemType.IntegerListDictionary || // Note: Implement when needed
-                type == SettingsItemType.DoubleListDictionary || // Note: Implement when needed
-                type == SettingsItemType.UserListDictionary || // Note: Implement when needed
-                type == SettingsItemType.RoleListDictionary || // Note: Implement when needed
-                type == SettingsItemType.ChannelListDictionary*/) return true; // Note: Implement when needed
+                type == ConfigItemType.CharListDictionary || // Note: Implement when needed
+                type == ConfigItemType.BooleanListDictionary || // Note: Implement when needed
+                type == ConfigItemType.IntegerListDictionary || // Note: Implement when needed
+                type == ConfigItemType.DoubleListDictionary || // Note: Implement when needed
+                type == ConfigItemType.EnumListDictionary || // Note: Implement when needed
+                type == ConfigItemType.UserListDictionary || // Note: Implement when needed
+                type == ConfigItemType.RoleListDictionary || // Note: Implement when needed
+                type == ConfigItemType.ChannelListDictionary*/) return true; // Note: Implement when needed
         return false;
     }
 }
