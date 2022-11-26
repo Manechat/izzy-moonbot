@@ -21,15 +21,17 @@ public class AdminModule : ModuleBase<SocketCommandContext>
     private readonly State _state;
     private readonly ScheduleService _schedule;
     private readonly Dictionary<ulong, User> _users;
+    private readonly ModService _mod;
 
     public AdminModule(LoggingService logger, Config config, Dictionary<ulong, User> users,
-        State state, ScheduleService schedule)
+        State state, ScheduleService schedule, ModService mod)
     {
         _logger = logger;
         _config = config;
         _state = state;
         _schedule = schedule;
         _users = users;
+        _mod = mod;
     }
 
     [Command("panic")]
@@ -600,6 +602,146 @@ public class AdminModule : ModuleBase<SocketCommandContext>
                     $"Names: {(_users.ContainsKey(userId) ? string.Join(", ", _users[userId].Aliases) : "None (user isn't known by Izzy)")}{Environment.NewLine}" +
                     $"```");
             }
+        }
+    }
+
+    [Command("assignrole")]
+    [Summary(
+        "Assigns a role to a user, and optionally schedules removing that role. If the user already has that role, this will only schedule removal.")]
+    [Remarks("Note that an \"indefinite\" role assignment, with no scheduled removal, is the same as assigning a role with the regular Discord UI.")]
+    [RequireContext(ContextType.Guild)]
+    [ModCommand(Group = "Permissions")]
+    [DevCommand(Group = "Permissions")]
+    [Parameter("user", ParameterType.User, "The user to assign the role.")]
+    [Parameter("role", ParameterType.Role, "The role to assign.")]
+    [Parameter("duration", ParameterType.DateTime, "How long the role should last, e.g. \"2 weeks\" or \"6 months\". Omit for an indefinite role assignment.", true)]
+    public async Task AssignRoleCommandAsync(
+        [Remainder] string argsString = "")
+    {
+        if (argsString == "")
+        {
+            await ReplyAsync($"Please provide a user and a role to assign. Refer to `{_config.Prefix}help assignrole` for more information.");
+            return;
+        }
+
+        var args = DiscordHelper.GetArguments(argsString);
+
+        var userResolvable = args.Arguments[0];
+        var roleResolvable = args.Arguments[1];
+        var duration = string.Join("", argsString.Skip(args.Indices[1]));
+
+        duration = DiscordHelper.StripQuotes(duration);
+
+        var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(userResolvable, Context);
+        if (userId == 0)
+        {
+            await ReplyAsync("I couldn't find that user, sorry!");
+            return;
+        }
+        var maybeMember = Context.Guild.GetUser(userId);
+
+        var roleId = DiscordHelper.GetRoleIdIfAccessAsync(roleResolvable, Context);
+        if (roleId == 0)
+        {
+            await ReplyAsync("I couldn't find that role, sorry!");
+            return;
+        }
+        var role = Context.Guild.GetRole(roleId);
+
+        // Comprehend time
+        TimeHelperResponse? time = null;
+        try
+        {
+            if (duration != "")
+                time = TimeHelper.Convert(duration);
+        }
+        catch (FormatException exception)
+        {
+            await ReplyAsync($"I encountered an error while attempting to comprehend time: {exception.Message.Split(": ")[1]}");
+            return;
+        }
+
+        if (time is { Repeats: true })
+        {
+            await ReplyAsync("I can't assign a role repeatedly! Please give me a time that isn't repeating.");
+            return;
+        }
+
+        if (maybeMember is SocketGuildUser member)
+        {
+            if (role.Position >= Context.Guild.GetUser(Context.Client.CurrentUser.Id).Hierarchy)
+            {
+                await ReplyAsync(
+                    "That role is either at the same level or higher than me in the role hierarchy, I cannot assign it. <:izzynothoughtsheadempty:910198222255972382>");
+                return;
+            }
+
+            // Actually add the role, if they don't have it already.
+            var alreadyHasRole = member.Roles.Select(role => role.Id).Contains(roleId);
+            if (!alreadyHasRole)
+            {
+                await _mod.AddRoles(member, new[] { roleId }, "Role applied through .assignrole command.");
+            }
+
+            var message = alreadyHasRole ? $"<@{userId}> already has that role." : $"I've given <@&{roleId}> to <@{userId}>.";
+
+            // Delete any existing scheduled removals for this user and role
+            var getRoleRemoval = new Func<ScheduledJob, bool>(job =>
+                job.Action.Type == ScheduledJobActionType.RemoveRole &&
+                job.Action.Fields["userId"] == member.Id.ToString() &&
+                job.Action.Fields["roleId"] == roleId.ToString());
+
+            var hasExistingRemovalJob = _schedule.GetScheduledJobs(getRoleRemoval).Any();
+            if (hasExistingRemovalJob)
+            {
+                var jobs = _schedule.GetScheduledJobs(getRoleRemoval);
+                foreach (var job in jobs)
+                {
+                    await _schedule.DeleteScheduledJob(job);
+                }
+            }
+
+            // If a duration was provided, schedule removal.
+            if (time is not null)
+            {
+                await _logger.Log($"Adding scheduled job to remove role {roleId} from user {userId} at {time.Time}", level: LogLevel.Debug);
+                Dictionary<string, string> fields = new Dictionary<string, string>
+                {
+                    { "roleId", roleId.ToString() },
+                    { "userId", member.Id.ToString() },
+                    {
+                        "reason",
+                        $".assignrole command for user {member.Id} and role {roleId} with duration {duration}."
+                    }
+                };
+                var action = new ScheduledJobAction(ScheduledJobActionType.RemoveRole, fields);
+                var task = new ScheduledJob(DateTimeOffset.UtcNow, time.Time, action);
+                await _schedule.CreateScheduledJob(task);
+                await _logger.Log($"Added scheduled job for new user", level: LogLevel.Debug);
+
+                if (hasExistingRemovalJob)
+                {
+                    message += $" I've replaced an existing removal job with a new one scheduled <t:{time.Time.ToUnixTimeSeconds()}:R>.";
+                }
+                else
+                {
+                    message += $" I've scheduled a removal <t:{time.Time.ToUnixTimeSeconds()}:R>.";
+                }
+            }
+            else
+            {
+                if (hasExistingRemovalJob)
+                {
+                    message += $" I've removed a previously scheduled role removal.";
+                }
+            }
+
+            await ReplyAsync(message, allowedMentions: AllowedMentions.None);
+        }
+        else
+        {
+            await ReplyAsync("I couldn't find that user, sorry!");
+            return;
         }
     }
 }
