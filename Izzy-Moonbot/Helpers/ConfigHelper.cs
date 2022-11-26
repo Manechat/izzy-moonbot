@@ -171,6 +171,33 @@ public static class ConfigHelper
             return doubleResolvable;
         }
     }
+    
+    public static async Task<Enum?> SetEnumValue<T>(Config settings, string key, Enum? enumResolvable)
+        where T : Config
+    {
+        if (!DoesValueExist<Config>(settings, key))
+            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
+
+        if (enumResolvable == null)
+        {
+            // spain without the `s`
+            var t = typeof(T);
+
+            t.GetProperty(key).SetValue(settings, null);
+
+            await FileHelper.SaveConfigAsync(settings);
+            return null;
+        }
+        else
+        {
+            var t = typeof(T);
+
+            t.GetProperty(key).SetValue(settings, enumResolvable);
+
+            await FileHelper.SaveConfigAsync(settings);
+            return enumResolvable;
+        }
+    }
 
     public static async Task<SocketGuildUser?> SetUserValue<T>(Config settings, string key,
         string? userResolvable, SocketCommandContext context) where T : Config
