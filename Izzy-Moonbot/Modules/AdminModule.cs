@@ -832,8 +832,16 @@ public class AdminModule : ModuleBase<SocketCommandContext>
         }
 
         // Actually do the deletion
-        await _logger.Log($"Deleting {messageIdsToDelete.Count} messages from channel {channelName}");
-        await channel.DeleteMessagesAsync(messageIdsToDelete);
+        var messagesToDeleteCount = messageIdsToDelete.Count;
+        await _logger.Log($"Deleting {messagesToDeleteCount} messages from channel {channelName}");
+        var discordBulkDeletionLimit = 100;
+        while (messageIdsToDelete.Any())
+        {
+            var messageIdsBatch = messageIdsToDelete.Take(discordBulkDeletionLimit);
+            messageIdsToDelete.RemoveRange(0, Math.Min(messageIdsToDelete.Count, discordBulkDeletionLimit));
+
+            await channel.DeleteMessagesAsync(messageIdsBatch);
+        }
 
         // Finally, post a bulk deletion log in LogChannel
         var logChannelId = _config.LogChannel;
@@ -849,12 +857,12 @@ public class AdminModule : ModuleBase<SocketCommandContext>
             return;
         }
 
-        await _logger.Log($"Assembling a bulk deletion log from the content of {bulkDeletionLog.Count} deleted messages");
+        await _logger.Log($"Assembling a bulk deletion log from the content of {messagesToDeleteCount} deleted messages");
         var bulkDeletionLogString = string.Join(Environment.NewLine + Environment.NewLine, bulkDeletionLog);
         var s = new MemoryStream(Encoding.UTF8.GetBytes(bulkDeletionLogString));
         var fa = new FileAttachment(s, $"{channel.Name}_bulk_deletion_log_{DateTimeOffset.UtcNow.ToString()}.txt");
         await logChannel.SendFileAsync(fa, $"Finished wiping {channelName}, here's the bulk deletion log:");
 
-        await ReplyAsync($"Finished wiping {channelName}. {messageIdsToDelete.Count} messages were deleted.");
+        await ReplyAsync($"Finished wiping {channelName}. {messagesToDeleteCount} messages were deleted.");
     }
 }
