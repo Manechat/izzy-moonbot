@@ -832,9 +832,7 @@ public class AdminModule : ModuleBase<SocketCommandContext>
                     }
 
                     messageIdsToDelete.Add(message.Id);
-                    bulkDeletionLog.Add(
-                        $"{message.Author.Username} {message.CreatedAt}{Environment.NewLine}" +
-                        $"{message.Content}");
+                    bulkDeletionLog.Add($"[{message.CreatedAt}] {message.Author.Username}: {message.Content}");
                 }
             }
         };
