@@ -780,6 +780,14 @@ public class AdminModule : ModuleBase<SocketCommandContext>
             return;
         }
 
+        var izzyGuildUser = Context.Guild.GetUser(Context.Client.CurrentUser.Id);
+        var izzysPermsInChannel = izzyGuildUser.GetPermissions(channel);
+        if (!izzysPermsInChannel.Has(ChannelPermission.ManageMessages))
+        {
+            await ReplyAsync("Sorry, I don't have permission to manage/delete messages there.");
+            return;
+        }
+
         // Comprehend time
         TimeHelperResponse? time = null;
         try
