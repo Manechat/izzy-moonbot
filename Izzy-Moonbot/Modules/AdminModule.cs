@@ -841,7 +841,7 @@ public class AdminModule : ModuleBase<SocketCommandContext>
         var discordBulkDeletionLimit = 100;
         while (messageIdsToDelete.Any())
         {
-            var messageIdsBatch = messageIdsToDelete.Take(discordBulkDeletionLimit);
+            var messageIdsBatch = messageIdsToDelete.Take(discordBulkDeletionLimit).ToList();
             messageIdsToDelete.RemoveRange(0, Math.Min(messageIdsToDelete.Count, discordBulkDeletionLimit));
 
             await channel.DeleteMessagesAsync(messageIdsBatch);
