@@ -817,30 +817,18 @@ public class AdminModule : ModuleBase<SocketCommandContext>
         // Gather up all the messages we need to delete and log.
         var messageIdsToDelete = new List<ulong>();
         var bulkDeletionLog = new List<string>();
-        var doneGathering = false;
 
-        Func<IAsyncEnumerable<IReadOnlyCollection<IMessage>>, Task> gatherRecentMessages = async asyncRecentMessages =>
+        // Because snowflake ids correspond to datetime moments, we can use a snowflake to directly ask for all messages
+        // after a certain moment, even if that snowflake is not the actual id of any message in the channel.
+        var snowflakeWipeThreshold = SnowflakeUtils.ToSnowflake(wipeThreshold);
+        var asyncRecentMessages = channel.GetMessagesAsync(snowflakeWipeThreshold, Direction.After);
+        await foreach (var recentMessages in asyncRecentMessages)
         {
-            await foreach (var recentMessages in asyncRecentMessages)
+            foreach (var message in recentMessages)
             {
-                foreach (var message in recentMessages)
-                {
-                    if (message.CreatedAt < wipeThreshold)
-                    {
-                        doneGathering = true;
-                        break;
-                    }
-
-                    messageIdsToDelete.Add(message.Id);
-                    bulkDeletionLog.Add($"[{message.CreatedAt}] {message.Author.Username}: {message.Content}");
-                }
+                messageIdsToDelete.Add(message.Id);
+                bulkDeletionLog.Add($"[{message.CreatedAt}] {message.Author.Username}: {message.Content}");
             }
-        };
-
-        await gatherRecentMessages(channel.GetMessagesAsync(20));
-        while (!doneGathering)
-        {
-            await gatherRecentMessages(channel.GetMessagesAsync(messageIdsToDelete.Last(), Direction.Before, 20));
         }
 
         // Actually do the deletion
@@ -862,7 +850,6 @@ public class AdminModule : ModuleBase<SocketCommandContext>
         }
 
         await _logger.Log($"Assembling a bulk deletion log from the content of {bulkDeletionLog.Count} deleted messages");
-        bulkDeletionLog.Reverse();
         var bulkDeletionLogString = string.Join(Environment.NewLine + Environment.NewLine, bulkDeletionLog);
         var s = new MemoryStream(Encoding.UTF8.GetBytes(bulkDeletionLogString));
         var fa = new FileAttachment(s, $"{channel.Name}_bulk_deletion_log_{DateTimeOffset.UtcNow.ToString()}.txt");
