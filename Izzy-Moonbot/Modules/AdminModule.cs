@@ -754,7 +754,8 @@ public class AdminModule : ModuleBase<SocketCommandContext>
     [ModCommand(Group = "Permissions")]
     [DevCommand(Group = "Permissions")]
     [Parameter("channel", ParameterType.Channel, "The channel to wipe.")]
-    [Parameter("duration", ParameterType.DateTime, "How far back to wipe messages, e.g. \"2 weeks\" or \"6 months\". Defaults to 24 hours.", true)]
+    [Parameter("duration", ParameterType.DateTime, "How far back to wipe messages, e.g. \"5 minutes\" or \"10 days\". " +
+        "Defaults to 24 hours. Note that Discord doesn't support bulk deleting messages older than 14 days.", true)]
     public async Task WipeCommandAsync(
         [Remainder] string argsString = "")
     {
