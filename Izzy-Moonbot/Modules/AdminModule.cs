@@ -750,6 +750,7 @@ public class AdminModule : ModuleBase<SocketCommandContext>
 
     [Command("wipe")]
     [Summary("Deletes all messages in a channel sent within a certain amount of time.")]
+    [Remarks("Then posts a 'bulk deletion log' as a text file in LogChannel.")]
     [RequireContext(ContextType.Guild)]
     [ModCommand(Group = "Permissions")]
     [DevCommand(Group = "Permissions")]
