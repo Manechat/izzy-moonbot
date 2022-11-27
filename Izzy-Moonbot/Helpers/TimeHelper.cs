@@ -33,7 +33,7 @@ public static class TimeHelper
     public static TimeHelperResponse Convert(string input)
     {
         var timeFormatRegex = new Regex(
-            "^(?<query1>every |in |on |on the |at |)(?<weekday>monday|tuesday|wednesday|thursday|friday|saturday|sunday|mon|tue|wed|thu|fri|sat|sun|)(?<query2>(?<date>a |\\d\\d |\\d |\\d\\dst |\\dst |\\d\\dnd |\\dnd |\\d\\drd |\\drd |\\d\\dth |\\dth |)| at )(of )?(?<month>years|year|months|month|days|day|weeks|week|days|day|hours|hour|minutes|minute|seconds|second|january|february|march|april|june|july|august|september|october|november|december|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|)(?<year> \\d\\d| \\d\\d\\d\\d|)(?<query3> at |)(?<time>\\d\\d:\\d\\d|\\d:\\d\\d|\\d\\d|\\d|\\dpm|\\d:\\d\\dpm|\\d\\d:\\d\\dpm|\\d\\dpm|\\dam|\\d:\\d\\dam|\\d\\dam|\\d\\d:\\d\\dam|)$",
+            "^(?<query1>every |in |on |on the |at |)(?<weekday>monday|tuesday|wednesday|thursday|friday|saturday|sunday|mon|tue|wed|thu|fri|sat|sun|)(?<query2>(?<date>a |\\d\\d\\d\\d |\\d\\d\\d |\\d\\d |\\d |\\d\\dst |\\dst |\\d\\dnd |\\dnd |\\d\\drd |\\drd |\\d\\dth |\\dth |)| at )(of )?(?<month>years|year|months|month|days|day|weeks|week|days|day|hours|hour|minutes|minute|seconds|second|january|february|march|april|june|july|august|september|october|november|december|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|)(?<year> \\d\\d| \\d\\d\\d\\d|)(?<query3> at |)(?<time>\\d\\d:\\d\\d|\\d:\\d\\d|\\d\\d|\\d|\\dpm|\\d:\\d\\dpm|\\d\\d:\\d\\dpm|\\d\\dpm|\\dam|\\d:\\d\\dam|\\d\\dam|\\d\\d:\\d\\dam|)$",
             RegexOptions.IgnoreCase);
 
         var relativeMonths = new[]
