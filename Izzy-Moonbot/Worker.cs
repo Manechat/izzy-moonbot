@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Metrics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -20,6 +21,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 
 namespace Izzy_Moonbot
 {
@@ -167,6 +169,94 @@ namespace Izzy_Moonbot
             }
 
             ResyncUsers();
+
+            _client.SlashCommandExecuted += SlashCommandHandler;
+            _client.MessageCommandExecuted += MessageCommandHandler;
+            _client.UserCommandExecuted += UserCommandHandler;
+
+            var guildId = DiscordHelper.DefaultGuild();
+            var gacs = await _client.Rest.GetGuildApplicationCommands(guildId);
+            gacs = gacs.ToList();
+
+            var slashCommand = new SlashCommandBuilder()
+                .WithName("first-command")
+                .WithDescription("This is my first guild slash command!")
+                .AddOption("userrr", ApplicationCommandOptionType.User, "a user")
+                .AddOption("role", ApplicationCommandOptionType.Role, "a role")
+                .AddOption("text", ApplicationCommandOptionType.String, "some text")
+                .AddOption("attrrrr", ApplicationCommandOptionType.Attachment, "attach me");
+
+            var guildUserCommand = new UserCommandBuilder()
+                .WithName(".userinfo (ephemeral)");
+            var guildMessageCommand = new MessageCommandBuilder()
+                .WithName("Guild Message Command");
+            try
+            {
+                await _client.Rest.CreateGuildCommand(slashCommand.Build(), guildId);
+                await _client.Rest.CreateGuildCommand(guildUserCommand.Build(), guildId);
+                await _client.Rest.CreateGuildCommand(guildMessageCommand.Build(), guildId);
+            }
+            catch (HttpException exception)
+            {
+                var json = JsonConvert.SerializeObject(exception.Errors, Formatting.Indented);
+                Console.WriteLine(json);
+            }
+        }
+
+        private async Task SlashCommandHandler(SocketSlashCommand command)
+        {
+            await command.RespondAsync($"You executed {command.CommandName} / {command.Data.Name} - {string.Join(" ", command.Data.Options.Select(opt => $"{opt.Name}: {opt.Value}"))}", ephemeral: true);
+        }
+
+        private async Task MessageCommandHandler(SocketMessageCommand command)
+        {
+            await command.RespondAsync($"You executed {command.CommandName} / {command.Data.Name} on {command.Channel}", ephemeral: true);
+        }
+
+        private async Task UserCommandHandler(SocketUserCommand command)
+        {
+            var output = $"";
+
+            var discordUser = command.User;
+
+            var member = _client.GetGuild(DiscordHelper.DefaultGuild())?.GetUser(discordUser.Id);
+            if (member == null)
+            {
+                output += $"**User:** `<@{member.Id}>` {member.Username} ({member.Id}){Environment.NewLine}";
+                output += $"**Names:** {string.Join(", ", _users[member.Id].Aliases)}{Environment.NewLine}";
+                output +=
+                    $"**Roles:** {string.Join(", ", member.Roles.Where(role => role.Id != DiscordHelper.DefaultGuild()).Select(role => role.Name))}{Environment.NewLine}";
+                output += $"**History:** ";
+                output += $"Created <t:{member.CreatedAt.ToUnixTimeSeconds()}:R>";
+                if (member.JoinedAt.HasValue)
+                {
+                    output +=
+                        $", joined <t:{member.JoinedAt.Value.ToUnixTimeSeconds()}:R>";
+                }
+
+                output += $", last seen <t:{_users[member.Id].Timestamp.ToUnixTimeSeconds()}:R>{Environment.NewLine}";
+                output += $"**Avatar(s):** {Environment.NewLine}";
+                output += $"    Server: {member.GetGuildAvatarUrl() ?? "No server avatar found."}{Environment.NewLine}";
+                output += $"    Global: {member.GetAvatarUrl() ?? "No global avatar found."}";
+            }
+            else
+            {
+                output += $"**User:** `<@{discordUser.Id}>` {discordUser.Username} ({discordUser.Id}){Environment.NewLine}";
+                output += _users.ContainsKey(discordUser.Id)
+                    ? $"**Names:** {string.Join(", ", _users[discordUser.Id].Aliases)}{Environment.NewLine}"
+                    : $"**Names:** None (user isn't known by Izzy){Environment.NewLine}";
+                output += $"**Roles:** None (user isn't in this server){Environment.NewLine}";
+                output += "**History:** ";
+                output += $"Created <t:{discordUser.CreatedAt.ToUnixTimeSeconds()}:R>";
+                output += _users.ContainsKey(discordUser.Id)
+                    ? $", last seen <t:{_users[discordUser.Id].Timestamp.ToUnixTimeSeconds()}:R>{Environment.NewLine}"
+                    : Environment.NewLine;
+                output += $"**Avatar(s):** {Environment.NewLine}";
+                output += $"    Server: User is not in this server.{Environment.NewLine}";
+                output += $"    Global: {discordUser.GetAvatarUrl() ?? "No global avatar found."}";
+            }
+
+            await command.RespondAsync($"You executed {command.CommandName} on {command.User} in {command.Channel} and got:{Environment.NewLine}{Environment.NewLine}{output}", ephemeral: true);
         }
 
         private void ResyncUsers()
