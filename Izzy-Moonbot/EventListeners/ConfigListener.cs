@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Discord.WebSocket;
+using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Service;
 using Izzy_Moonbot.Settings;
 using Izzy_Moonbot.Types;
@@ -22,19 +24,19 @@ public class ConfigListener
         _schedule = schedule;
     }
 
-    public void RegisterEvents()
+    public void RegisterEvents(DiscordSocketClient client)
     {
-        _config.Changed += (thing, e) => Task.Run(async () => { await ConfigChangeEvent(e); });
+        _config.Changed += (thing, e) => Task.Run(async () => { await ConfigChangeEvent(e, client); });
     }
 
-    public async Task ConfigChangeEvent(ConfigValueChangeEvent e)
+    public async Task ConfigChangeEvent(ConfigValueChangeEvent e, DiscordSocketClient client)
     {
         await _logger.Log($"Config value change: {e.Name} from {e.Original} to {e.Current}", level: LogLevel.Debug);
 
         switch (e.Name)
         {
             case "BannerMode":
-                await Handle_BannerMode(e);
+                await Handle_BannerMode(e, client);
                 break;
             case "BannerInterval":
                 await Handle_BannerInterval(e);
@@ -44,7 +46,7 @@ public class ConfigListener
         }
     }
 
-    private async Task Handle_BannerMode(ConfigValueChangeEvent e)
+    private async Task Handle_BannerMode(ConfigValueChangeEvent e, DiscordSocketClient client)
     {
         /*
          * If BannerMode is `None`, Izzy deletes the internal repeating task.
@@ -65,6 +67,7 @@ public class ConfigListener
             var task = new ScheduledJob(currentTime, executeTime, action, ScheduledJobRepeatType.Relative);
             await _schedule.CreateScheduledJob(task);
             await _logger.Log($"Added scheduled job.", level: LogLevel.Debug);
+            await _schedule.Unicycle_BannerRotation(task, client.GetGuild(DiscordHelper.DefaultGuild()), client);
         }
         else if (original != BannerMode.None && current == BannerMode.None)
         {
@@ -75,6 +78,17 @@ public class ConfigListener
             foreach (var scheduledJob in scheduledJobs)
             {
                 await _schedule.DeleteScheduledJob(scheduledJob);
+            }
+        }
+
+        if ((original == BannerMode.ManebooruFeatured && current == BannerMode.CustomRotation) ||
+            (original == BannerMode.CustomRotation && current == BannerMode.ManebooruFeatured))
+        {
+            var scheduledJobs = _schedule.GetScheduledJobs(job => job.Action.Type == ScheduledJobActionType.BannerRotation);
+
+            foreach (var scheduledJob in scheduledJobs)
+            {
+                await _schedule.Unicycle_BannerRotation(scheduledJob, client.GetGuild(DiscordHelper.DefaultGuild()), client);
             }
         }
     }
