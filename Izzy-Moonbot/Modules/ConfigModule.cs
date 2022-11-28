@@ -129,7 +129,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                         allowedMentions: AllowedMentions.None);
                     break;
                 case ConfigItemType.Enum:
-                    // Figure out what it's values are.
+                    // Figure out what its values are.
                     var enumValue = ConfigHelper.GetValue<Config>(_config, configItemKey) as Enum;
                     var enumType = enumValue.GetType();
                     var possibleEnumNames = enumType.GetEnumNames().Select(s => $"`{s}`").ToArray();
