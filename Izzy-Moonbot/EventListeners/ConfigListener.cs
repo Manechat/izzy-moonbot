@@ -80,7 +80,7 @@ public class ConfigListener
                 await _schedule.DeleteScheduledJob(scheduledJob);
             }
         }
-
+         // If we're managing the banner, make sure the banner is immediately updated to match the new mode
         if ((original == BannerMode.ManebooruFeatured && current == BannerMode.CustomRotation) ||
             (original == BannerMode.CustomRotation && current == BannerMode.ManebooruFeatured))
         {
