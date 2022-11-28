@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Izzy_Moonbot.Attributes;
+using Izzy_Moonbot.EventListeners;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Service;
 using Izzy_Moonbot.Settings;
@@ -24,6 +25,33 @@ public class MiscModule : ModuleBase<SocketCommandContext>
         _config = config;
         _schedule = schedule;
         _logger = logger;
+    }
+
+    [Command("banner")]
+    [Summary("Get the current banner of Manechat.")]
+    [Alias("getbanner", "currentbanner")]
+    public async Task BannerCommandAsync()
+    {
+        if (_config.BannerMode == ConfigListener.BannerMode.ManebooruFeatured)
+        {
+            await ReplyAsync("I'm currently syncing the banner with the Manebooru featured image");
+            await ReplyAsync(";featured");
+            return;
+        }
+
+        if (Context.Guild.BannerUrl == null)
+        {
+            await ReplyAsync("No banner is currently set.");
+            return;
+        }
+
+        var message = "";
+        if (_config.BannerMode == ConfigListener.BannerMode.None)
+            message += $"I'm not currently managing the banner, but here's the current server's banner.{Environment.NewLine}";
+
+        message += Context.Guild.BannerUrl;
+
+        await ReplyAsync(message);
     }
 
     [Command("snowflaketime")]

@@ -1,9 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
+using Flurl.Http;
+using Izzy_Moonbot.EventListeners;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Settings;
 using Microsoft.Extensions.Logging;
@@ -21,18 +24,20 @@ public class ScheduleService
     private readonly LoggingService _logger;
     private readonly ModService _mod;
     private readonly ModLoggingService _modLogging;
+    private State _state;
 
     private readonly List<ScheduledJob> _scheduledJobs;
 
     private bool _alreadyInitiated;
 
-    public ScheduleService(Config config, ModService mod, ModLoggingService modLogging, LoggingService logger, 
+    public ScheduleService(Config config, ModService mod, ModLoggingService modLogging, LoggingService logger, State state,
         List<ScheduledJob> scheduledJobs)
     {
         _config = config;
         _logger = logger;
         _mod = mod;
         _modLogging = modLogging;
+        _state = state;
         _scheduledJobs = scheduledJobs;
     }
 
@@ -95,6 +100,9 @@ public class ScheduleService
                     break;
                 case Echo:
                     await Unicycle_Echo(job, client.GetGuild(DiscordHelper.DefaultGuild()), client);
+                    break;
+                case BannerRotation:
+                    await Unicycle_BannerRotation(job, client.GetGuild(DiscordHelper.DefaultGuild()), client);
                     break;
                 default:
                     throw new NotSupportedException($"{job.Action.Type} is currently not supported.");
@@ -234,6 +242,10 @@ public class ScheduleService
                 if (action.Split(" ")[3] != "content") throw new FormatException("Invalid action format");
                 fields.Add("content", string.Join(" ", action.Split(" ").Skip(4)));
                 break;
+            case "banner-rotation":
+                // banner-rotation
+                actionType = BannerRotation;
+                break;
             default:
                 throw new FormatException("Invalid action type");
         }
@@ -267,6 +279,9 @@ public class ScheduleService
                 output += "echo in ";
                 output += $"{action.Fields["channelId"]} content ";
                 output += $"{action.Fields["content"]}";
+                break;
+            case BannerRotation:
+                output += "banner-rotation";
                 break;
             default:
                 throw new FormatException("Invalid action type");
@@ -362,5 +377,170 @@ public class ScheduleService
         }
 
         await channel.SendMessageAsync(job.Action.Fields["content"]);
+    }
+
+    private async Task Unicycle_BannerRotation(ScheduledJob job, SocketGuild guild, DiscordSocketClient client)
+    {
+        if (_config.BannerMode == ConfigListener.BannerMode.None) return;
+        if (_config.BannerMode == ConfigListener.BannerMode.CustomRotation && _config.BannerImages.Count == 0) return;
+
+        if (_config.BannerMode == ConfigListener.BannerMode.CustomRotation)
+        {
+            try
+            {
+                // Rotate through banners.
+                var rand = new Random();
+                var number = rand.Next(_config.BannerImages.Count);
+                var url = _config.BannerImages.ToList()[number];
+                Stream stream;
+                try
+                {
+                    stream = await url
+                        .WithHeader("user-agent", $"Izzy-Moonbot (Linux x86_64) Flurl.Http/3.2.4 DotNET/6.0")
+                        .GetStreamAsync();
+                }
+                catch (FlurlHttpException ex)
+                {
+                    await _logger.Log($"Recieved HTTP exception when executing Banner Rotation: {ex.Message}");
+                    return;
+                }
+
+                var image = new Image(stream);
+
+                await guild.ModifyAsync(properties => properties.Banner = image);
+
+                await _modLogging.CreateModLog(guild)
+                    .SetContent(
+                        $"Changed banner to <{url}> for banner rotation.")
+                    .SetFileLogContent(
+                        $"Changed banner to {url} for banner rotation.")
+                    .Send();
+            }
+            catch (FlurlHttpTimeoutException ex)
+            {
+                await _modLogging.CreateModLog(guild)
+                    .SetContent(
+                        $"Tried to change banner but the host server didn't respond fast enough, is it down? If so please run `.config BannerMode None` to avoid unnecessarily pinging Manebooru.")
+                    .SetFileLogContent(
+                        $"Tried to change banner but the host server didn't respond fast enough, is it down? If so please run `.config BannerMode None` to avoid unnecessarily pinging Manebooru.")
+                    .Send();
+                await _logger.Log(
+                    $"Encountered HTTP timeout exception when trying to change banner: {ex.Message}{Environment.NewLine}{ex.StackTrace}");
+            }
+            catch (FlurlHttpException ex)
+            {
+                // Http request failure.
+                await _modLogging.CreateModLog(guild)
+                    .SetContent(
+                        $"Tried to change banner and received a {ex.StatusCode} status code when attempting to ask the host server for the image. Doing nothing.")
+                    .SetFileLogContent(
+                        $"Tried to change banner and received a {ex.StatusCode} status code when attempting to ask the host server for the image. Doing nothing.")
+                    .Send();
+                await _logger.Log(
+                    $"Encountered HTTP exception when trying to change banner: {ex.Message}{Environment.NewLine}{ex.StackTrace}");
+            }
+            catch (Exception ex)
+            {
+                await _modLogging.CreateModLog(guild)
+                    .SetContent(
+                        $"Tried to change banner and received a general error when attempting to ask the host server for the image. Doing nothing.")
+                    .SetFileLogContent(
+                        $"Tried to change banner and received a general error when attempting to ask the host server for the image. Doing nothing.")
+                    .Send();
+                await _logger.Log(
+                    $"Encountered exception when trying to change banner: {ex.Message}{Environment.NewLine}{ex.StackTrace}");
+            }
+        }
+        else if (_config.BannerMode == ConfigListener.BannerMode.ManebooruFeatured)
+        {
+            // Set to Manebooru featured.
+            try
+            {
+                var image = await BooruHelper.GetFeaturedImage();
+
+                if (_state.CurrentBooruFeaturedImage != null)
+                {
+                    if (image.Id == _state.CurrentBooruFeaturedImage.Id)
+                    {
+                        // Update the cache in case of change, but return
+                        _state.CurrentBooruFeaturedImage =
+                            image; // Cache to not anger CULTPONY or Twilight (API docs say to cache)
+                        return;
+                    }
+                }
+
+                _state.CurrentBooruFeaturedImage =
+                    image; // Cache to not anger CULTPONY or Twilight (API docs say to cache)
+
+                // Don't check the images if they're not ready yet!
+                if (!image.ThumbnailsGenerated || image.Representations == null)
+                {
+                    await _modLogging.CreateModLog(guild)
+                        .SetContent(
+                            $"Tried to change banner to <https://manebooru.art/images/{image.Id}> but that image hasn't fully been generated yet. Doing nothing and trying again in {_config.BannerInterval} minutes.")
+                        .SetFileLogContent(
+                            $"Tried to change banner to https://manebooru.art/images/{image.Id} but that image hasn't fully been generated yet. Doing nothing and trying again in {_config.BannerInterval} minutes.")
+                        .Send();
+                    return;
+                }
+
+                if (image.Spoilered)
+                {
+                    // Image is blocked by current filter, complain.
+                    await _modLogging.CreateModLog(guild)
+                        .SetContent(
+                            $"Tried to change banner to <https://manebooru.art/images/{image.Id}> but that image is blocked by my filter! Doing nothing.")
+                        .SetFileLogContent(
+                            $"Tried to change banner to https://manebooru.art/images/{image.Id} but that image is blocked by my filter! Doing nothing.")
+                        .Send();
+                    return;
+                }
+
+                var imageStream = await image.Representations.Full.GetStreamAsync();
+
+                await guild.ModifyAsync(properties => properties.Banner = new Image(imageStream));
+                
+                await _modLogging.CreateModLog(guild)
+                    .SetContent(
+                        $"Changed banner to <https://manebooru.art/images/{image.Id}> for Manebooru featured image.")
+                    .SetFileLogContent(
+                        $"Changed banner to https://manebooru.art/images/{image.Id} for Manebooru featured image.")
+                    .Send();
+            }
+            catch (FlurlHttpTimeoutException ex)
+            {
+                await _modLogging.CreateModLog(guild)
+                    .SetContent(
+                        $"Tried to change banner but Manebooru didn't respond fast enough, is it down? If so please run `.config BannerMode None` to avoid unnecessarily pinging Manebooru.")
+                    .SetFileLogContent(
+                        $"Tried to change banner but Manebooru didn't respond fast enough, is it down? If so please run `.config BannerMode None` to avoid unnecessarily pinging Manebooru.")
+                    .Send();
+                await _logger.Log(
+                    $"Encountered HTTP timeout exception when trying to change banner: {ex.Message}{Environment.NewLine}{ex.StackTrace}");
+            }
+            catch (FlurlHttpException ex)
+            {
+                // Http request failure.
+                await _modLogging.CreateModLog(guild)
+                    .SetContent(
+                        $"Tried to change banner and received a {ex.StatusCode} status code when attempting to ask Manebooru for the featured image. Doing nothing.")
+                    .SetFileLogContent(
+                        $"Tried to change banner and recieved a {ex.StatusCode} status code when attempting to ask Manebooru for the featured image. Doing nothing.")
+                    .Send();
+                await _logger.Log(
+                    $"Encountered HTTP exception when trying to change banner: {ex.Message}{Environment.NewLine}{ex.StackTrace}");
+            }
+            catch (Exception ex)
+            {
+                await _modLogging.CreateModLog(guild)
+                    .SetContent(
+                        $"Tried to change banner and received a general error when attempting to ask Manebooru for the featured image. Doing nothing.")
+                    .SetFileLogContent(
+                        $"Tried to change banner and received a general error when attempting to ask Manebooru for the featured image. Doing nothing.")
+                    .Send();
+                await _logger.Log(
+                    $"Encountered exception when trying to change banner: {ex.Message}{Environment.NewLine}{ex.StackTrace}");
+            }
+        }
     }
 }

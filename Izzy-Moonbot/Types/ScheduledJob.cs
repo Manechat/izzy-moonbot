@@ -41,7 +41,8 @@ public enum ScheduledJobActionType
     RemoveRole,
     AddRole,
     Unban,
-    Echo
+    Echo,
+    BannerRotation
 }
 
 public enum ScheduledJobRepeatType

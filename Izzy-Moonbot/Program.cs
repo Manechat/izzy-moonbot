@@ -58,6 +58,7 @@ public class Program
             // Configuration
             var discordSettings = hostContext.Configuration;
             services.Configure<DiscordSettings>(discordSettings.GetSection(nameof(DiscordSettings)));
+            services.Configure<BooruSettings>(discordSettings.GetSection(nameof(BooruSettings)));
             var config = FileHelper.LoadConfigAsync().GetAwaiter().GetResult();
             services.AddSingleton(config);
             var users = FileHelper.LoadUsersAsync().GetAwaiter().GetResult();
@@ -86,6 +87,7 @@ public class Program
             services.AddSingleton(services);
             
             // EventListeners
+            services.AddSingleton<ConfigListener>();
             services.AddSingleton<UserListener>();
             
             // Misc

@@ -16,6 +16,7 @@ using Izzy_Moonbot.EventListeners;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Service;
 using Izzy_Moonbot.Settings;
+using Izzy_Moonbot.Types;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -37,6 +38,7 @@ namespace Izzy_Moonbot
         private readonly IServiceCollection _services;
         private readonly Config _config;
         private readonly Dictionary<ulong, User> _users;
+        private readonly ConfigListener _configListener;
         private readonly UserListener _userListener;
         private DiscordSocketClient _client;
         public bool hasProgrammingSocks = true;
@@ -44,7 +46,7 @@ namespace Izzy_Moonbot
 
         public Worker(ILogger<Worker> logger, ModLoggingService modLog, IServiceCollection services, ModService modService, RaidService raidService,
             FilterService filterService, ScheduleService scheduleService, IOptions<DiscordSettings> discordSettings,
-            Config config, Dictionary<ulong, User> users, UserListener userListener, SpamService spamService)
+            Config config, Dictionary<ulong, User> users, UserListener userListener, SpamService spamService, ConfigListener configListener)
         {
             _logger = logger;
             _modLog = modLog;
@@ -59,6 +61,7 @@ namespace Izzy_Moonbot
             _users = users;
             _userListener = userListener;
             _spamService = spamService;
+            _configListener = configListener;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -89,6 +92,7 @@ namespace Izzy_Moonbot
 
                 await InstallCommandsAsync();
                 
+                _configListener.RegisterEvents();
                 _userListener.RegisterEvents(_client);
                 
                 _spamService.RegisterEvents(_client);

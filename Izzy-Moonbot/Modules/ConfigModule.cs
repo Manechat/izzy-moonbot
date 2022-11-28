@@ -128,6 +128,20 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                         $"Run `{_config.Prefix}config {configItemKey} <value>` to set this value. {nullableString}",
                         allowedMentions: AllowedMentions.None);
                     break;
+                case ConfigItemType.Enum:
+                    // Figure out what its values are.
+                    var enumValue = ConfigHelper.GetValue<Config>(_config, configItemKey) as Enum;
+                    var enumType = enumValue.GetType();
+                    var possibleEnumNames = enumType.GetEnumNames().Select(s => $"`{s}`").ToArray();
+                    
+                    await ReplyAsync(
+                        $"**{configItemKey}** - {_configDescriber.TypeToString(configItem.Type)} - {_configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
+                        $"*{configItem.Description}*{Environment.NewLine}" +
+                        $"Possible values are: {string.Join(", ", possibleEnumNames)}{Environment.NewLine}" +
+                        $"Current value: `{enumType.GetEnumName(enumValue)}`{Environment.NewLine}" +
+                        $"Run `{_config.Prefix}config {configItemKey} <value>` to set this value. {nullableString}",
+                        allowedMentions: AllowedMentions.None);
+                    break;
                 case ConfigItemType.User:
                     await ReplyAsync(
                         $"**{configItemKey}** - {_configDescriber.TypeToString(configItem.Type)} - {_configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
@@ -318,6 +332,34 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                 allowedMentions: AllowedMentions.None);
                         }
 
+                        break;
+                    case ConfigItemType.Enum:
+                        if (configItem.Nullable && value == "<nothing>") value = null;
+
+                        var enumValue = ConfigHelper.GetValue<Config>(_config, configItemKey) as Enum;
+                        var enumType = enumValue.GetType();
+
+                        try
+                        {
+                            Enum? output = null;
+                            if (value != null)
+                            {
+                                if (!Enum.TryParse(enumType, value, out var res))
+                                    throw new FormatException(); // Trip "invalid content" catch below.
+                                output = res as Enum;
+                            }
+
+                            var resultDouble =
+                                await ConfigHelper.SetEnumValue<Config>(_config, configItemKey, output);
+                            await ReplyAsync($"I've set `{configItemKey}` to the following content: {resultDouble}",
+                                allowedMentions: AllowedMentions.None);
+                        }
+                        catch (FormatException)
+                        {
+                            await ReplyAsync(
+                                $"I couldn't set `{configItemKey}` to the content provided because you provided content that I couldn't turn into this specific enum type ({enumType.Name}). Please try again.",
+                                allowedMentions: AllowedMentions.None);
+                        }
                         break;
                     case ConfigItemType.User:
                         if (configItem.Nullable && value == "<nothing>") value = null;

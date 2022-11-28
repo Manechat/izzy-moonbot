@@ -1,10 +1,16 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using Izzy_Moonbot.EventListeners;
+using Izzy_Moonbot.Modules;
+using Izzy_Moonbot.Types;
 
 namespace Izzy_Moonbot.Settings;
 
 public class Config
 {
+    public event EventHandler<ConfigValueChangeEvent> Changed;
+    
     public Config()
     {
         // Core settings
@@ -20,6 +26,11 @@ public class Config
         DiscordActivityName = "you all soon";
         DiscordActivityWatching = true;
         Aliases = new Dictionary<string, string>();
+        
+        // Server settings
+        _bannerMode = ConfigListener.BannerMode.None;
+        _bannerInterval = 60;
+        BannerImages = new List<string>();
 
         // Mod settings
         ModRole = 0;
@@ -88,6 +99,37 @@ public class Config
     public string? DiscordActivityName { get; set; }
     public bool DiscordActivityWatching { get; set; }
     public Dictionary<string, string> Aliases { get; set; }
+    
+    // Server settings
+    private ConfigListener.BannerMode _bannerMode { get; set; }
+    public ConfigListener.BannerMode BannerMode {
+        get => _bannerMode;
+        set
+        {
+            var eventData = new ConfigValueChangeEvent();
+            eventData.Name = "BannerMode";
+            eventData.Original = _bannerMode;
+            eventData.Current = value;
+            Changed?.Invoke(this, eventData);
+            _bannerMode = value;
+        }
+    }
+    private double _bannerInterval { get; set; }
+    public double BannerInterval
+    {
+        get => _bannerInterval;
+        set
+        {
+            var eventData = new ConfigValueChangeEvent();
+            eventData.Name = "BannerInterval";
+            eventData.Original = _bannerInterval;
+            eventData.Current = value;
+            Changed?.Invoke(this, eventData);
+            _bannerInterval = value;
+        }
+    }
+    public List<string> BannerImages { get; set; }
+    
 
     // Moderation settings
     public ulong ModRole { get; set; }
