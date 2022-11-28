@@ -21,8 +21,6 @@ public static class BooruHelper
             .GetAsync()
             .ReceiveJson();
         
-        Console.WriteLine(results.image.created_at);
-
         var image = new BooruImage
         {
             CreatedAt = results.image.created_at,
