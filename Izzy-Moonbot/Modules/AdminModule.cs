@@ -615,8 +615,8 @@ public class AdminModule : ModuleBase<SocketCommandContext>
     [RequireContext(ContextType.Guild)]
     [ModCommand(Group = "Permissions")]
     [DevCommand(Group = "Permissions")]
-    [Parameter("user", ParameterType.User, "The user to assign the role.")]
     [Parameter("role", ParameterType.Role, "The role to assign.")]
+    [Parameter("user", ParameterType.User, "The user to assign the role.")]
     [Parameter("duration", ParameterType.DateTime, "How long the role should last, e.g. \"2 weeks\" or \"6 months\". Omit for an indefinite role assignment.", true)]
     public async Task AssignRoleCommandAsync(
         [Remainder] string argsString = "")
@@ -629,19 +629,11 @@ public class AdminModule : ModuleBase<SocketCommandContext>
 
         var args = DiscordHelper.GetArguments(argsString);
 
-        var userResolvable = args.Arguments[0];
-        var roleResolvable = args.Arguments[1];
+        var roleResolvable = args.Arguments[0];
+        var userResolvable = args.Arguments[1];
         var duration = string.Join("", argsString.Skip(args.Indices[1]));
 
         duration = DiscordHelper.StripQuotes(duration);
-
-        var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(userResolvable, Context);
-        if (userId == 0)
-        {
-            await ReplyAsync("I couldn't find that user, sorry!");
-            return;
-        }
-        var maybeMember = Context.Guild.GetUser(userId);
 
         var roleId = DiscordHelper.GetRoleIdIfAccessAsync(roleResolvable, Context);
         if (roleId == 0)
@@ -650,6 +642,14 @@ public class AdminModule : ModuleBase<SocketCommandContext>
             return;
         }
         var role = Context.Guild.GetRole(roleId);
+
+        var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(userResolvable, Context);
+        if (userId == 0)
+        {
+            await ReplyAsync("I couldn't find that user, sorry!");
+            return;
+        }
+        var maybeMember = Context.Guild.GetUser(userId);
 
         // Comprehend time
         TimeHelperResponse? time = null;
