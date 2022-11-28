@@ -187,7 +187,8 @@ namespace Izzy_Moonbot
                 .AddOption("attrrrr", ApplicationCommandOptionType.Attachment, "attach me");
 
             var guildUserCommand = new UserCommandBuilder()
-                .WithName(".userinfo (ephemeral)");
+                .WithName(".userinfo (ephemeral)")
+                .WithDefaultMemberPermissions(null);
             var guildMessageCommand = new MessageCommandBuilder()
                 .WithName("Guild Message Command");
             try
