@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Service;
 
 namespace Izzy_Moonbot.Settings;
@@ -19,4 +20,7 @@ public class State
 
     // RaidService
     public List<ulong> RecentJoins = new();
+    
+    // Banner management
+    public BooruImage? CurrentBooruFeaturedImage = null;
 }
