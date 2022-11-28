@@ -62,8 +62,7 @@ public class ConfigListener
             await _logger.Log($"Adding scheduled job to run the banner rotation job in {_config.BannerInterval} minutes", level: LogLevel.Debug);
             Dictionary<string, string> fields = new Dictionary<string, string>();
             var action = new ScheduledJobAction(ScheduledJobActionType.BannerRotation, fields);
-            var task = new ScheduledJob(currentTime, 
-                executeTime, action, ScheduledJobRepeatType.Relative);
+            var task = new ScheduledJob(currentTime, executeTime, action, ScheduledJobRepeatType.Relative);
             await _schedule.CreateScheduledJob(task);
             await _logger.Log($"Added scheduled job.", level: LogLevel.Debug);
         }
