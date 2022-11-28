@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
@@ -612,8 +615,8 @@ public class AdminModule : ModuleBase<SocketCommandContext>
     [RequireContext(ContextType.Guild)]
     [ModCommand(Group = "Permissions")]
     [DevCommand(Group = "Permissions")]
-    [Parameter("user", ParameterType.User, "The user to assign the role.")]
     [Parameter("role", ParameterType.Role, "The role to assign.")]
+    [Parameter("user", ParameterType.User, "The user to assign the role.")]
     [Parameter("duration", ParameterType.DateTime, "How long the role should last, e.g. \"2 weeks\" or \"6 months\". Omit for an indefinite role assignment.", true)]
     public async Task AssignRoleCommandAsync(
         [Remainder] string argsString = "")
@@ -626,19 +629,11 @@ public class AdminModule : ModuleBase<SocketCommandContext>
 
         var args = DiscordHelper.GetArguments(argsString);
 
-        var userResolvable = args.Arguments[0];
-        var roleResolvable = args.Arguments[1];
+        var roleResolvable = args.Arguments[0];
+        var userResolvable = args.Arguments[1];
         var duration = string.Join("", argsString.Skip(args.Indices[1]));
 
         duration = DiscordHelper.StripQuotes(duration);
-
-        var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(userResolvable, Context);
-        if (userId == 0)
-        {
-            await ReplyAsync("I couldn't find that user, sorry!");
-            return;
-        }
-        var maybeMember = Context.Guild.GetUser(userId);
 
         var roleId = DiscordHelper.GetRoleIdIfAccessAsync(roleResolvable, Context);
         if (roleId == 0)
@@ -647,6 +642,14 @@ public class AdminModule : ModuleBase<SocketCommandContext>
             return;
         }
         var role = Context.Guild.GetRole(roleId);
+
+        var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(userResolvable, Context);
+        if (userId == 0)
+        {
+            await ReplyAsync("I couldn't find that user, sorry!");
+            return;
+        }
+        var maybeMember = Context.Guild.GetUser(userId);
 
         // Comprehend time
         TimeHelperResponse? time = null;
@@ -743,5 +746,140 @@ public class AdminModule : ModuleBase<SocketCommandContext>
             await ReplyAsync("I couldn't find that user, sorry!");
             return;
         }
+    }
+
+    [Command("wipe")]
+    [Summary("Deletes all messages in a channel sent within a certain amount of time.")]
+    [Remarks("Then posts a 'bulk deletion log' as a text file in LogChannel.")]
+    [RequireContext(ContextType.Guild)]
+    [ModCommand(Group = "Permissions")]
+    [DevCommand(Group = "Permissions")]
+    [Parameter("channel", ParameterType.Channel, "The channel to wipe.")]
+    [Parameter("duration", ParameterType.DateTime, "How far back to wipe messages, e.g. \"5 minutes\" or \"10 days\". " +
+        "Defaults to 24 hours. Note that Discord doesn't support bulk deleting messages older than 14 days.", true)]
+    public async Task WipeCommandAsync(
+        [Remainder] string argsString = "")
+    {
+        if (argsString == "")
+        {
+            await ReplyAsync($"Please provide a channel to wipe. Refer to `{_config.Prefix}help wipe` for more information.");
+            return;
+        }
+
+        var args = DiscordHelper.GetArguments(argsString);
+
+        var channelName = args.Arguments[0];
+        var duration = string.Join("", argsString.Skip(args.Indices[0]));
+
+        duration = DiscordHelper.StripQuotes(duration);
+
+        var channelId = await DiscordHelper.GetChannelIdIfAccessAsync(channelName, Context);
+        var channel = (channelId != 0) ? Context.Guild.GetTextChannel(channelId) : null;
+        if (channel == null)
+        {
+            await ReplyAsync("I can't send a message there.");
+            return;
+        }
+
+        var izzyGuildUser = Context.Guild.GetUser(Context.Client.CurrentUser.Id);
+        var izzysPermsInChannel = izzyGuildUser.GetPermissions(channel);
+        if (!izzysPermsInChannel.Has(ChannelPermission.ManageMessages))
+        {
+            await ReplyAsync("Sorry, I don't have permission to manage/delete messages there.");
+            return;
+        }
+
+        // Comprehend time
+        TimeHelperResponse? time = null;
+        try
+        {
+            if (duration != "")
+                time = TimeHelper.Convert(duration);
+        }
+        catch (FormatException exception)
+        {
+            await ReplyAsync($"I encountered an error while attempting to comprehend time: {exception.Message.Split(": ")[1]}");
+            return;
+        }
+
+        if (time is { Repeats: true })
+        {
+            await ReplyAsync("I can't wipe a channel repeatedly! Please give me a time that isn't repeating.");
+            return;
+        }
+
+        var wipeThreshold = (time == null) ?
+            // default to wiping the last 24 hours
+            DateTimeOffset.UtcNow.AddHours(-24) :
+            // unfortunately TimeHelper assumes user input is always talking about a future time, but we want a past time
+            // TODO: rethink the TimeHelper API to avoid hacks like this
+            (DateTimeOffset.UtcNow - (time.Time - DateTimeOffset.UtcNow));
+
+        if ((DateTimeOffset.UtcNow - wipeThreshold).TotalDays > 14)
+        {
+            await ReplyAsync("I can't delete messages older than 14 days, sorry!");
+            return;
+        }
+
+        await _logger.Log($"Parsed .wipe command arguments. Scanning for messages in channel {channelName} more recent than {wipeThreshold}");
+
+        // Gather up all the messages we need to delete and log.
+
+        var messageIdsToDelete = new List<ulong>();
+
+        // We've seen GetMessagesAsync return the messages in both chronological and reverse chronological order,
+        // so we need to remember the message creation times in order to do our own sorting at the end.
+        var bulkDeletionLog = new List<(DateTimeOffset, string)>();
+
+        // Because snowflake ids correspond to datetime moments, we can use a snowflake to directly ask for all messages
+        // after a certain moment, even if that snowflake is not the actual id of any message in the channel.
+        var snowflakeWipeThreshold = SnowflakeUtils.ToSnowflake(wipeThreshold);
+        var asyncRecentMessages = channel.GetMessagesAsync(snowflakeWipeThreshold, Direction.After);
+        await foreach (var recentMessages in asyncRecentMessages)
+        {
+            foreach (var message in recentMessages)
+            {
+                messageIdsToDelete.Add(message.Id);
+                bulkDeletionLog.Add((message.CreatedAt, $"[{message.CreatedAt}] {message.Author.Username}: {message.Content}"));
+            }
+        }
+
+        // Actually do the deletion
+        var messagesToDeleteCount = messageIdsToDelete.Count;
+        await _logger.Log($"Deleting {messagesToDeleteCount} messages from channel {channelName}");
+        var discordBulkDeletionLimit = 100;
+        while (messageIdsToDelete.Any())
+        {
+            var messageIdsBatch = messageIdsToDelete.Take(discordBulkDeletionLimit).ToList();
+            messageIdsToDelete.RemoveRange(0, Math.Min(messageIdsToDelete.Count, discordBulkDeletionLimit));
+
+            await channel.DeleteMessagesAsync(messageIdsBatch);
+        }
+
+        // Finally, post a bulk deletion log in LogChannel
+        var logChannelId = _config.LogChannel;
+        if (logChannelId == 0)
+        {
+            await ReplyAsync("I can't post a bulk deletion log, because .config LogChannel hasn't been set.");
+            return;
+        }
+        var logChannel = Context.Guild.GetTextChannel(logChannelId);
+        if (logChannel == null)
+        {
+            await ReplyAsync("Something went wrong trying to access LogChannel.");
+            return;
+        }
+
+        await _logger.Log($"Assembling a bulk deletion log from the content of {messagesToDeleteCount} deleted messages");
+        bulkDeletionLog.Sort((x, y) => x.Item1.CompareTo(y.Item1));
+        var bulkDeletionLogString = string.Join(
+            Environment.NewLine + Environment.NewLine,
+            bulkDeletionLog.Select(logElement => logElement.Item2)
+        );
+        var s = new MemoryStream(Encoding.UTF8.GetBytes(bulkDeletionLogString));
+        var fa = new FileAttachment(s, $"{channel.Name}_bulk_deletion_log_{DateTimeOffset.UtcNow.ToString()}.txt");
+        await logChannel.SendFileAsync(fa, $"Finished wiping {channelName}, here's the bulk deletion log:");
+
+        await ReplyAsync($"Finished wiping {channelName}. {messagesToDeleteCount} messages were deleted.");
     }
 }

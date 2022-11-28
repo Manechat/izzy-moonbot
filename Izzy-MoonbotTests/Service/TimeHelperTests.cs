@@ -90,4 +90,21 @@ public class TimeHelperTests
             TimeHelper.Convert("every day at 12:30")
         );
     }
+
+    // TODO: refactor the impl regex so we can just accept arbitrarily long numbers without hacks
+    [TestMethod()]
+    public void Convert_MultipleDigitsTests()
+    {
+        AssertTimeHelperResponsesAreWithinOneSecond(
+            new TimeHelperResponse(DateTimeOffset.UtcNow.AddSeconds(123), false, null),
+            TimeHelper.Convert("in 123 seconds")
+        );
+
+        AssertTimeHelperResponsesAreWithinOneSecond(
+            new TimeHelperResponse(DateTimeOffset.UtcNow.AddSeconds(1234), false, null),
+            TimeHelper.Convert("in 1234 seconds")
+        );
+
+        Assert.ThrowsException<FormatException>(() => TimeHelper.Convert("12345"));
+    }
 }
