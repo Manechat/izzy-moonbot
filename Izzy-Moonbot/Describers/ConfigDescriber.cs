@@ -56,9 +56,17 @@ public class ConfigDescriber
                 ConfigItemCategory.Core));
         
         // Server settings
-        _config.Add("EnumTest",
+        _config.Add("BannerMode",
             new ConfigItem(ConfigItemType.Enum,
-                "Testing enums!",
+                "The mode I will use when setting banners.",
+                ConfigItemCategory.Server));
+        _config.Add("BannerInterval",
+            new ConfigItem(ConfigItemType.Double,
+                "The interval I'll change the banner (if `BannerMode` is not `None`) in minutes.",
+                ConfigItemCategory.Server));
+        _config.Add("BannerImages",
+            new ConfigItem(ConfigItemType.StringList,
+                "The list of banners I'll rotate through (if `BannerMode` is set to `CustomRotation`).",
                 ConfigItemCategory.Server));
 
         // Mod settings
