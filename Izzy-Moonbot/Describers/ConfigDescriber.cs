@@ -64,7 +64,7 @@ public class ConfigDescriber
                 "The channel I will post raid notifications and template action logs in.",
                 ConfigItemCategory.Moderation));
         _config.Add("LogChannel",
-            new ConfigItem(ConfigItemType.Channel, "The channel I will post my own action logs in.",
+            new ConfigItem(ConfigItemType.Channel, "The channel where I will post verbose message edit/deletion logs.",
                 ConfigItemCategory.Moderation));
 
         // User based settings
