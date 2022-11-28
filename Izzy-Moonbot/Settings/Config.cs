@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using Izzy_Moonbot.EventListeners;
 using Izzy_Moonbot.Modules;
 using Izzy_Moonbot.Types;
 
@@ -8,6 +9,8 @@ namespace Izzy_Moonbot.Settings;
 
 public class Config
 {
+    public event EventHandler<ConfigValueChangeEvent> Changed;
+    
     public Config()
     {
         // Core settings
@@ -25,7 +28,9 @@ public class Config
         Aliases = new Dictionary<string, string>();
         
         // Server settings
-        _enumTest = DevModule.TestEnum.None;
+        _bannerMode = ConfigListener.BannerMode.None;
+        _bannerInterval = 60;
+        BannerImages = new List<string>();
 
         // Mod settings
         ModRole = 0;
@@ -96,20 +101,35 @@ public class Config
     public Dictionary<string, string> Aliases { get; set; }
     
     // Server settings
-    public event EventHandler<ConfigValueChangeEvent> Changed;
-    private DevModule.TestEnum _enumTest { get; set; }
-    public DevModule.TestEnum EnumTest {
-        get => _enumTest;
+    private ConfigListener.BannerMode _bannerMode { get; set; }
+    public ConfigListener.BannerMode BannerMode {
+        get => _bannerMode;
         set
         {
             var eventData = new ConfigValueChangeEvent();
-            eventData.Name = "EnumTest";
-            eventData.Original = _enumTest;
+            eventData.Name = "BannerMode";
+            eventData.Original = _bannerMode;
             eventData.Current = value;
             Changed?.Invoke(this, eventData);
-            _enumTest = value;
+            _bannerMode = value;
         }
     }
+    private double _bannerInterval { get; set; }
+    public double BannerInterval
+    {
+        get => _bannerInterval;
+        set
+        {
+            var eventData = new ConfigValueChangeEvent();
+            eventData.Name = "BannerInterval";
+            eventData.Original = _bannerInterval;
+            eventData.Current = value;
+            Changed?.Invoke(this, eventData);
+            _bannerInterval = value;
+        }
+    }
+    public List<string> BannerImages { get; set; }
+    
 
     // Moderation settings
     public ulong ModRole { get; set; }
