@@ -1188,19 +1188,19 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                 if (configItem.Nullable)
                                 {
                                     keys = ConfigHelper
-                                        .GetNullableStringDictionary<Config>(_config, configItemKey, Context)
+                                        .GetNullableStringDictionary<Config>(_config, configItemKey)
                                         .Keys.ToList();
                                     values = ConfigHelper
-                                        .GetNullableStringDictionary<Config>(_config, configItemKey, Context)
+                                        .GetNullableStringDictionary<Config>(_config, configItemKey)
                                         .Values.ToList();
                                 }
                                 else
                                 {
                                     keys = ConfigHelper
-                                        .GetStringDictionary<Config>(_config, configItemKey, Context)
+                                        .GetStringDictionary<Config>(_config, configItemKey)
                                         .Keys.ToList();
                                     values = ConfigHelper
-                                        .GetStringDictionary<Config>(_config, configItemKey, Context)
+                                        .GetStringDictionary<Config>(_config, configItemKey)
                                         .Values.Select(t => (string?)t).ToList();
                                 }
 
@@ -1252,11 +1252,11 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             try
                             {
                                 var keys = ConfigHelper
-                                    .GetBooleanDictionary<Config>(_config, configItemKey, Context).Keys
+                                    .GetBooleanDictionary<Config>(_config, configItemKey).Keys
                                     .ToList();
 
                                 var values = ConfigHelper
-                                    .GetBooleanDictionary<Config>(_config, configItemKey, Context).Values
+                                    .GetBooleanDictionary<Config>(_config, configItemKey).Values
                                     .ToList();
 
                                 if (keys.Count > 10)
@@ -1320,11 +1320,11 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                 if (configItem.Nullable)
                                     contents = ConfigHelper.GetNullableStringDictionaryValue<Config>(
                                         _config,
-                                        configItemKey, value, Context);
+                                        configItemKey, value);
                                 else
                                     contents = (string?)ConfigHelper.GetStringDictionaryValue<Config>(
                                         _config,
-                                        configItemKey, value, Context);
+                                        configItemKey, value);
 
                                 await ReplyAsync(
                                     $"**{value}** contains the following value: `{contents.Replace("`", "\\`")}`");
@@ -1352,7 +1352,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             try
                             {
                                 var contents = ConfigHelper.GetBooleanDictionaryValue<Config>(_config,
-                                    configItemKey, value, Context);
+                                    configItemKey, value);
 
                                 await ReplyAsync(
                                     $"**{value}** contains the following value: `{contents}`");
@@ -1398,22 +1398,22 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                     if (value == "<nothing>") value = null;
                                     
                                     if (ConfigHelper.DoesNullableStringDictionaryKeyExist<Config>(_config,
-                                            configItemKey, key, Context))
+                                            configItemKey, key))
                                         result = await ConfigHelper.SetNullableStringDictionaryValue<Config>(_config,
-                                            configItemKey, key, value, Context);
+                                            configItemKey, key, value);
                                     else
                                         result = await ConfigHelper.CreateNullableStringDictionaryKey<Config>(_config,
-                                            configItemKey, key, value, Context);
+                                            configItemKey, key, value);
                                 }
                                 else
                                 {
                                     if (ConfigHelper.DoesStringDictionaryKeyExist<Config>(_config,
-                                            configItemKey, key, Context))
+                                            configItemKey, key))
                                         result = await ConfigHelper.SetStringDictionaryValue<Config>(_config,
-                                            configItemKey, key, value, Context);
+                                            configItemKey, key, value);
                                     else
                                         result = await ConfigHelper.CreateStringDictionaryKey<Config>(_config,
-                                            configItemKey, key, value, Context);
+                                            configItemKey, key, value);
                                 }
 
                                 if (result.Item2 == null)
@@ -1445,12 +1445,12 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                 (string, bool?, bool) result = ("", null, false);
                                 
                                 if (ConfigHelper.DoesBooleanDictionaryKeyExist<Config>(_config,
-                                        configItemKey, key, Context))
+                                        configItemKey, key))
                                     result = await ConfigHelper.SetBooleanDictionaryValue<Config>(_config,
-                                        configItemKey, key, value, Context);
+                                        configItemKey, key, value);
                                 else
                                     result = await ConfigHelper.CreateBooleanDictionaryKey<Config>(_config,
-                                        configItemKey, key, value, Context);
+                                        configItemKey, key, value);
 
                                 if (result.Item2 == null)
                                 {
@@ -1495,10 +1495,10 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             {
                                 if (configItem.Nullable)
                                     await ConfigHelper.RemoveNullableStringDictionaryKey<Config>(_config,
-                                        configItemKey, value, Context);
+                                        configItemKey, value);
                                 else
                                     await ConfigHelper.RemoveStringDictionaryKey<Config>(_config,
-                                        configItemKey, value, Context);
+                                        configItemKey, value);
 
                                 await ReplyAsync(
                                     $"I removed the string with the following key from the `{configItemKey}` map: `{value}`");
@@ -1519,7 +1519,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             try
                             {
                                 await ConfigHelper.RemoveBooleanDictionaryKey<Config>(_config, configItemKey,
-                                    value, Context);
+                                    value);
 
                                 await ReplyAsync(
                                     $"I removed the boolean with the following key from the `{configItemKey}` map: `{value}`");
@@ -1561,11 +1561,11 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             try
                             {
                                 var keys = ConfigHelper
-                                    .GetStringListDictionary<Config>(_config, configItemKey, Context).Keys
+                                    .GetStringListDictionary<Config>(_config, configItemKey).Keys
                                     .ToList();
 
                                 var values = ConfigHelper
-                                    .GetStringListDictionary<Config>(_config, configItemKey, Context).Values
+                                    .GetStringListDictionary<Config>(_config, configItemKey).Values
                                     .ToList();
 
                                 if (keys.Count > 10)
@@ -1636,7 +1636,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             {
                                 var stringList =
                                     ConfigHelper.GetStringListDictionaryValue<Config>(_config, configItemKey,
-                                        value, Context);
+                                        value);
 
                                 if (stringList.Count > 10)
                                 {
@@ -1695,10 +1695,10 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             try
                             {
                                 var output =
-                                    ConfigHelper.DoesStringListDictionaryKeyExist<Config>(_config, configItemKey, key, Context)
+                                    ConfigHelper.DoesStringListDictionaryKeyExist<Config>(_config, configItemKey, key)
                                     ? await ConfigHelper.AddToStringListDictionaryValue<Config>(_config,
-                                        configItemKey, key, value, Context)
-                                    : await ConfigHelper.CreateStringListDictionaryKey<Config>(_config, configItemKey, key, value, Context);
+                                        configItemKey, key, value)
+                                    : await ConfigHelper.CreateStringListDictionaryKey<Config>(_config, configItemKey, key, value);
 
                                 await ReplyAsync(
                                     $"I added the following string to the `{output.Item1}` string list in the `{configItemKey}` map: `{output.Item2}`",
@@ -1728,7 +1728,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             {
                                 var output =
                                     await ConfigHelper.RemoveFromStringListDictionaryValue<Config>(
-                                        _config, configItemKey, key, value, Context);
+                                        _config, configItemKey, key, value);
 
                                 await ReplyAsync(
                                     $"I removed the following content from the `{output.Item1}` string list in the `{configItemKey}` map: `{output.Item2}`",
@@ -1755,7 +1755,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             try
                             {
                                 await ConfigHelper.RemoveStringListDictionaryKey<Config>(_config,
-                                    configItemKey, value, Context);
+                                    configItemKey, value);
 
                                 await ReplyAsync(
                                     $"I deleted the string list with the following key from the `{configItemKey}` map: {value}");
