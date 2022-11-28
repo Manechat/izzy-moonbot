@@ -386,33 +386,70 @@ public class ScheduleService
 
         if (_config.BannerMode == ConfigListener.BannerMode.CustomRotation)
         {
-            // Rotate through banners.
-            var rand = new Random();
-            var number = rand.Next(_config.BannerImages.Count);
-            var url = _config.BannerImages.ToList()[number];
-            Stream stream;
             try
             {
-                stream = await url
-                    .WithHeader("user-agent", $"Izzy-Moonbot (Linux x86_64) Flurl.Http/3.2.4 DotNET/6.0")
-                    .GetStreamAsync();
+                // Rotate through banners.
+                var rand = new Random();
+                var number = rand.Next(_config.BannerImages.Count);
+                var url = _config.BannerImages.ToList()[number];
+                Stream stream;
+                try
+                {
+                    stream = await url
+                        .WithHeader("user-agent", $"Izzy-Moonbot (Linux x86_64) Flurl.Http/3.2.4 DotNET/6.0")
+                        .GetStreamAsync();
+                }
+                catch (FlurlHttpException ex)
+                {
+                    await _logger.Log($"Recieved HTTP exception when executing Banner Rotation: {ex.Message}");
+                    return;
+                }
+
+                var image = new Image(stream);
+
+                await guild.ModifyAsync(properties => properties.Banner = image);
+
+                await _modLogging.CreateModLog(guild)
+                    .SetContent(
+                        $"Changed banner to <{url}> for banner rotation.")
+                    .SetFileLogContent(
+                        $"Changed banner to {url} for banner rotation.")
+                    .Send();
+            }
+            catch (FlurlHttpTimeoutException ex)
+            {
+                await _modLogging.CreateModLog(guild)
+                    .SetContent(
+                        $"Tried to change banner but the host server didn't respond fast enough, is it down? If so please run `.config BannerMode None` to avoid unnecessarily pinging Manebooru.")
+                    .SetFileLogContent(
+                        $"Tried to change banner but the host server didn't respond fast enough, is it down? If so please run `.config BannerMode None` to avoid unnecessarily pinging Manebooru.")
+                    .Send();
+                await _logger.Log(
+                    $"Encountered HTTP timeout exception when trying to change banner: {ex.Message}{Environment.NewLine}{ex.StackTrace}");
             }
             catch (FlurlHttpException ex)
             {
-                await _logger.Log($"Recieved HTTP exception when executing Banner Rotation: {ex.Message}");
-                return;
+                // Http request failure.
+                await _modLogging.CreateModLog(guild)
+                    .SetContent(
+                        $"Tried to change banner and received a {ex.StatusCode} status code when attempting to ask the host server for the image. Doing nothing.")
+                    .SetFileLogContent(
+                        $"Tried to change banner and received a {ex.StatusCode} status code when attempting to ask the host server for the image. Doing nothing.")
+                    .Send();
+                await _logger.Log(
+                    $"Encountered HTTP exception when trying to change banner: {ex.Message}{Environment.NewLine}{ex.StackTrace}");
             }
-
-            var image = new Image(stream);
-
-            await guild.ModifyAsync(properties => properties.Banner = image);
-            
-            await _modLogging.CreateModLog(guild)
-                .SetContent(
-                    $"Changed banner to <{url}> for banner rotation.")
-                .SetFileLogContent(
-                    $"Changed banner to {url} for banner rotation.")
-                .Send();
+            catch (Exception ex)
+            {
+                await _modLogging.CreateModLog(guild)
+                    .SetContent(
+                        $"Tried to change banner and received a general error when attempting to ask the host server for the image. Doing nothing.")
+                    .SetFileLogContent(
+                        $"Tried to change banner and received a general error when attempting to ask the host server for the image. Doing nothing.")
+                    .Send();
+                await _logger.Log(
+                    $"Encountered exception when trying to change banner: {ex.Message}{Environment.NewLine}{ex.StackTrace}");
+            }
         }
         else if (_config.BannerMode == ConfigListener.BannerMode.ManebooruFeatured)
         {
