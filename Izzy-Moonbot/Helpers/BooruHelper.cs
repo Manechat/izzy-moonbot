@@ -79,7 +79,7 @@ public static class BooruHelper
         return image;
     }
     
-    private static BooruSettings _getDiscordSettings()
+    private static BooruSettings _getBooruSettings()
     {
         var config = new ConfigurationBuilder()
             #if DEBUG
