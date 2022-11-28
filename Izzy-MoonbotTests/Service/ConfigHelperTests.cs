@@ -1,5 +1,6 @@
 ﻿using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Settings;
+using Izzy_Moonbot.EventListeners;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
@@ -56,6 +57,10 @@ public class ConfigHelperTests
         Assert.AreEqual(10.0, cfg.SpamBasePressure);
         await ConfigHelper.SetDoubleValue(cfg, "SpamBasePressure", 0.5);
         Assert.AreEqual(0.5, cfg.SpamBasePressure);
+
+        Assert.AreEqual(ConfigListener.BannerMode.None, cfg.BannerMode);
+        await ConfigHelper.SetEnumValue(cfg, "BannerMode", ConfigListener.BannerMode.ManebooruFeatured);
+        Assert.AreEqual(ConfigListener.BannerMode.ManebooruFeatured, cfg.BannerMode);
     }
 
     // TODO: figure out Discord.NET test doubles to enable testing users, roles, channels, etc
@@ -83,6 +88,9 @@ public class ConfigHelperTests
 
         Assert.ThrowsExceptionAsync<KeyNotFoundException>(() => ConfigHelper.SetDoubleValue(cfg, "foo", 1.0));
         Assert.ThrowsExceptionAsync<ArgumentException>(() => ConfigHelper.SetDoubleValue(cfg, "Aliases", 1.0));
+
+        Assert.ThrowsExceptionAsync<KeyNotFoundException>(() => ConfigHelper.SetEnumValue(cfg, "foo", ConfigListener.BannerMode.ManebooruFeatured));
+        Assert.ThrowsExceptionAsync<ArgumentException>(() => ConfigHelper.SetEnumValue(cfg, "Aliases", ConfigListener.BannerMode.ManebooruFeatured));
     }
 
     // The built-in Assert.AreEqual and CollectionsAssert.AreEqual have error messages so bad it was worth writing my own asserts
