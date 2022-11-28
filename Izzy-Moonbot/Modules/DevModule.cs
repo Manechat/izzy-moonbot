@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using Flurl;
+using Flurl.Http;
 using Izzy_Moonbot.Attributes;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Service;
@@ -390,6 +392,11 @@ public class DevModule : ModuleBase<SocketCommandContext>
                 }
 
                 await ReplyAsync($"Parse success. `{testEnum}`");
+                break;
+            case "parseImage":
+                var attachment = new FileAttachment(args[0].GetStreamAsync().Result, "test.png");
+
+                await Context.Channel.SendFileAsync(attachment, "Test Success");
                 break;
             default:
                 Context.Message.ReplyAsync("Unknown test.");
