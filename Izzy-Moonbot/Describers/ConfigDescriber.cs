@@ -62,7 +62,7 @@ public class ConfigDescriber
                 ConfigItemCategory.Server));
         _config.Add("BannerInterval",
             new ConfigItem(ConfigItemType.Double,
-                "The interval I'll change the banner (if `BannerMode` is not `None`) in minutes.",
+                "How often I'll change the banner in minutes. If `BannerMode` is `None`, this has no effect. In `CustomRotation` mode, this is how often I'll randomly select a new image from `BannerImages`. In `ManebooruFeatured` mode, this is how often I'll poll Manebooru's featured image.",
                 ConfigItemCategory.Server));
         _config.Add("BannerImages",
             new ConfigItem(ConfigItemType.StringList,
