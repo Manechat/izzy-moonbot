@@ -13,7 +13,7 @@ public static class BooruHelper
 {
     public static async Task<BooruImage> GetFeaturedImage()
     {
-        var booruSettings = _getDiscordSettings();
+        var booruSettings = _getBooruSettings();
 
         var results = await $"{booruSettings.Endpoint}/api/{booruSettings.Version}/json/images/featured"
             .WithHeader("user-agent", $"Izzy-Moonbot (Linux x86_64) Flurl.Http/3.2.4 DotNET/6.0")
