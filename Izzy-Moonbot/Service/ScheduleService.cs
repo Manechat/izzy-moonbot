@@ -379,7 +379,7 @@ public class ScheduleService
         await channel.SendMessageAsync(job.Action.Fields["content"]);
     }
 
-    private async Task Unicycle_BannerRotation(ScheduledJob job, SocketGuild guild, DiscordSocketClient client)
+    public async Task Unicycle_BannerRotation(ScheduledJob job, SocketGuild guild, DiscordSocketClient client)
     {
         if (_config.BannerMode == ConfigListener.BannerMode.None) return;
         if (_config.BannerMode == ConfigListener.BannerMode.CustomRotation && _config.BannerImages.Count == 0) return;

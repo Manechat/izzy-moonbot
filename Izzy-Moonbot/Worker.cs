@@ -92,7 +92,7 @@ namespace Izzy_Moonbot
 
                 await InstallCommandsAsync();
                 
-                _configListener.RegisterEvents();
+                _configListener.RegisterEvents(_client);
                 _userListener.RegisterEvents(_client);
                 
                 _spamService.RegisterEvents(_client);
