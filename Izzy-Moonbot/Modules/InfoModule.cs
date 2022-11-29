@@ -172,6 +172,10 @@ public class InfoModule : ModuleBase<SocketCommandContext>
         var parameters = commandInfo.Attributes.OfType<ParameterAttribute>();
         if (parameters.Any())
         {
+            ponyReadable += $"Syntax: `{prefix}{commandInfo.Name}";
+            ponyReadable = parameters.Aggregate(ponyReadable, (current, parameter) => current + $" {(parameter.Optional ? $"[{parameter.Name}]" : parameter.Name)}");
+            ponyReadable += $"`{Environment.NewLine}";
+
             ponyReadable += $"```{Environment.NewLine}";
             ponyReadable = parameters.Aggregate(ponyReadable, (current, parameter) => current + $"{parameter}{Environment.NewLine}");
             ponyReadable += $"```";
