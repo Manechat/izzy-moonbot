@@ -169,13 +169,13 @@ public class InfoModule : ModuleBase<SocketCommandContext>
         ponyReadable += $"*{commandInfo.Summary}*{Environment.NewLine}";
         if (commandInfo.Remarks != null) ponyReadable += $"*{commandInfo.Remarks}*{Environment.NewLine}";
 
-        ponyReadable += $"```{Environment.NewLine}";
-
         var parameters = commandInfo.Attributes.OfType<ParameterAttribute>();
-
-        ponyReadable = parameters.Aggregate(ponyReadable, (current, parameter) => current + $"{parameter}{Environment.NewLine}");
-
-        ponyReadable += $"```";
+        if (parameters.Any())
+        {
+            ponyReadable += $"```{Environment.NewLine}";
+            ponyReadable = parameters.Aggregate(ponyReadable, (current, parameter) => current + $"{parameter}{Environment.NewLine}");
+            ponyReadable += $"```";
+        }
 
         if (commandInfo.Aliases.Any(alternate => alternate.ToLower() != commandInfo.Name.ToLower() && alternate.ToLower() != command.ToLower()))
             ponyReadable += $"{Environment.NewLine}" +
