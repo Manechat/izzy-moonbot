@@ -6,6 +6,7 @@ using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using Izzy_Moonbot.Settings;
+using Izzy_Moonbot.Adapters;
 using Microsoft.Extensions.Configuration;
 
 namespace Izzy_Moonbot.Helpers;
@@ -13,6 +14,10 @@ namespace Izzy_Moonbot.Helpers;
 public static class DiscordHelper
 {
     public static bool ShouldExecuteInPrivate(bool externalUsageAllowedFlag, SocketCommandContext context)
+    {
+        return ShouldExecuteInPrivate(externalUsageAllowedFlag, new SocketCommandContextAdapter(context));
+    }
+    public static bool ShouldExecuteInPrivate(bool externalUsageAllowedFlag, IIzzyContext context)
     {
         var settings = GetDiscordSettings();
 
@@ -25,6 +30,10 @@ public static class DiscordHelper
     }
 
     public static bool IsDefaultGuild(SocketCommandContext context)
+    {
+        return IsDefaultGuild(new SocketCommandContextAdapter(context));
+    }
+    public static bool IsDefaultGuild(IIzzyContext context)
     {
         var settings = GetDiscordSettings();
 
@@ -176,6 +185,10 @@ public static class DiscordHelper
 
     public static async Task<ulong> GetChannelIdIfAccessAsync(string channelName, SocketCommandContext context)
     {
+        return await GetChannelIdIfAccessAsync(channelName, new SocketCommandContextAdapter(context));
+    }
+    public static async Task<ulong> GetChannelIdIfAccessAsync(string channelName, IIzzyContext context)
+    {
         var id = ConvertChannelPingToId(channelName);
         if (id > 0) return await CheckIfChannelExistsAsync(id, context);
 
@@ -184,12 +197,21 @@ public static class DiscordHelper
 
     public static ulong GetRoleIdIfAccessAsync(string roleName, SocketCommandContext context)
     {
+        return GetRoleIdIfAccessAsync(roleName, new SocketCommandContextAdapter(context));
+    }
+    public static ulong GetRoleIdIfAccessAsync(string roleName, IIzzyContext context)
+    {
         var id = ConvertRolePingToId(roleName);
         return id > 0 ? CheckIfRoleExistsAsync(id, context) : CheckIfRoleExistsAsync(roleName, context);
     }
 
     public static async Task<ulong> GetUserIdFromPingOrIfOnlySearchResultAsync(string userName,
         SocketCommandContext context, bool searchDefaultGuild = false)
+    {
+        return await GetUserIdFromPingOrIfOnlySearchResultAsync(userName, new SocketCommandContextAdapter(context), searchDefaultGuild);
+    }
+    public static async Task<ulong> GetUserIdFromPingOrIfOnlySearchResultAsync(string userName,
+        IIzzyContext context, bool searchDefaultGuild = false)
     {
         var userId = ConvertUserPingToId(userName);
         if (userId > 0) return userId;
@@ -202,6 +224,10 @@ public static class DiscordHelper
 
     private static async Task<ulong> CheckIfChannelExistsAsync(string channelName, SocketCommandContext context)
     {
+        return await CheckIfChannelExistsAsync(channelName, new SocketCommandContextAdapter(context));
+    }
+    private static async Task<ulong> CheckIfChannelExistsAsync(string channelName, IIzzyContext context)
+    {
         var izzyMoonbot = await context.Channel.GetUserAsync(context.Client.CurrentUser.Id);
         if (context.IsPrivate) return 0;
 
@@ -213,6 +239,10 @@ public static class DiscordHelper
     }
 
     private static async Task<ulong> CheckIfChannelExistsAsync(ulong channelId, SocketCommandContext context)
+    {
+        return await CheckIfChannelExistsAsync(channelId, new SocketCommandContextAdapter(context));
+    }
+    private static async Task<ulong> CheckIfChannelExistsAsync(ulong channelId, IIzzyContext context)
     {
         var izzyMoonbot = await context.Channel.GetUserAsync(context.Client.CurrentUser.Id);
         if (context.IsPrivate) return 0;
@@ -256,6 +286,10 @@ public static class DiscordHelper
 
     private static ulong CheckIfRoleExistsAsync(string roleName, SocketCommandContext context)
     {
+        return CheckIfRoleExistsAsync(roleName, new SocketCommandContextAdapter(context));
+    }
+    private static ulong CheckIfRoleExistsAsync(string roleName, IIzzyContext context)
+    {
         if (context.IsPrivate) return 0;
 
         foreach (var role in context.Guild.Roles)
@@ -266,6 +300,10 @@ public static class DiscordHelper
     }
 
     private static ulong CheckIfRoleExistsAsync(ulong roleId, SocketCommandContext context)
+    {
+        return CheckIfRoleExistsAsync(roleId, new SocketCommandContextAdapter(context));
+    }
+    private static ulong CheckIfRoleExistsAsync(ulong roleId, IIzzyContext context)
     {
         if (context.IsPrivate) return 0;
 
