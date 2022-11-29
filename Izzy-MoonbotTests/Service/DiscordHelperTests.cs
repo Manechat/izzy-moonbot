@@ -155,13 +155,14 @@ public class DiscordHelperTests
         Assert.AreEqual("x", SkippedArgsString(argsString, 2)); // TODO: Incorrect
     }
 
-    public TestIzzyContext DefaultTestContext()
+    public StubClient DefaultTestClient()
     {
         // Unrealistic assumptions made here include but are not limited to:
         // - There is only one guild/server the bot ever sees
         // - All users are present in all channels
 
         var izzyHerself = new TestUser("Izzy Moonbot", 1);
+
         var users = new List<TestUser>{
             izzyHerself,
             new TestUser("Sunny", 2)
@@ -170,21 +171,19 @@ public class DiscordHelperTests
         var roles = new List<TestRole> {
             new TestRole("Alicorn", 1)
         };
-        var channels = new List<TestTextChannel>{
-            new TestTextChannel("general", 1, () => users)
-        };
 
-        var guild = new TestGuild(1, users, channels, roles);
-        var client = new TestClient(izzyHerself, new[] { guild });
+        var generalChannel = new StubChannel(1, "general");
+        var channels = new List<StubChannel> { generalChannel };
 
-        Func<ulong, Task<IIzzyUser>> userGetter = (ulong id) => Task.FromResult((IIzzyUser)users.Where(user => user.Id == id).Single());
-        return new TestIzzyContext(false, guild, client, new TestMessageChannel("general", 1, userGetter), null);
+        var guild = new StubGuild(1, roles, users, channels);
+        return new StubClient(izzyHerself, new List<StubGuild> { guild });
     }
 
     [TestMethod()]
     public async Task UserRoleChannel_GettersTests()
     {
-        var context = DefaultTestContext();
+        var client = DefaultTestClient();
+        var context = client.AddMessage(1, 1, 1, "hello");
 
         Assert.AreEqual(1ul, await GetChannelIdIfAccessAsync("1", context));
         Assert.AreEqual(0ul, await GetChannelIdIfAccessAsync("999", context));
