@@ -362,6 +362,6 @@ public class ConfigHelperTests
         Assert.AreEqual(cfg.Prefix, '*');
 
         Assert.AreEqual(2, contextChannel.Messages.Count);
-        Assert.AreEqual("I've set `Prefix` to the following content: *", contextChannel.Messages[1].Item2);
+        Assert.AreEqual("I've set `Prefix` to the following content: ?", contextChannel.Messages[1].Item2);
     }
 }
