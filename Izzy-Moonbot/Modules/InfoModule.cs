@@ -155,7 +155,7 @@ public class InfoModule : ModuleBase<SocketCommandContext>
 
     private string PonyReadableCommandHelp(char prefix, string command, CommandInfo commandInfo, string? alternateName = null)
     {
-        var ponyReadable = (alternateName == null ? $"**{prefix}{commandInfo.Name}**" : $"**{prefix}{alternateName}** (alternate name of **{commandInfo.Name}**)") +
+        var ponyReadable = (alternateName == null ? $"**{prefix}{commandInfo.Name}**" : $"**{prefix}{alternateName}** (alternate name of **{prefix}{commandInfo.Name}**)") +
             $" - {commandInfo.Module.Name.Replace("Module", "").Replace("Submodule", "")} category{Environment.NewLine}";
 
         if (commandInfo.Preconditions.Any(attribute => attribute is ModCommandAttribute) &&
@@ -187,9 +187,10 @@ public class InfoModule : ModuleBase<SocketCommandContext>
         else if (examples.Count() > 1)
             ponyReadable += $"Examples: {string.Join(",  ", examples.Select(e => $"`{e}`"))}";
 
-        if (commandInfo.Aliases.Any(alternate => alternate.ToLower() != commandInfo.Name.ToLower() && alternate.ToLower() != command.ToLower()))
+        var remainingAlternates = commandInfo.Aliases.Where(alternate => alternate.ToLower() != commandInfo.Name.ToLower() && alternate.ToLower() != command.ToLower());
+        if (remainingAlternates.Any())
             ponyReadable += $"{Environment.NewLine}" +
-                        $"Alternate names: {string.Join(", ", commandInfo.Aliases.Where(alternate => alternate.ToLower() != commandInfo.Name.ToLower() && alternate.ToLower() != command.ToLower()))}";
+                $"Alternate names: {string.Join(", ", remainingAlternates.Select(alt => $"{prefix}{alt}"))}";
 
         return ponyReadable;
     }
