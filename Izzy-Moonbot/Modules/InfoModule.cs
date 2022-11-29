@@ -56,108 +56,99 @@ public class InfoModule : ModuleBase<SocketCommandContext>
                 $"```{Environment.NewLine}{string.Join(Environment.NewLine, moduleList)}{Environment.NewLine}```{Environment.NewLine}" +
                 $"ℹ  **See also: `{prefix}config`. Run `{prefix}help config` for more information.**");
         }
-        else
+        // Module.
+        else if (_commands.Modules.Any(module => module.Name.ToLower() == item.ToLower() ||
+                                                 module.Name.ToLower() == item.ToLower() + "module" ||
+                                                 module.Name.ToLower() == item.ToLower() + "submodule"))
         {
-            if (_commands.Commands.Any(command => command.Name.ToLower() == item.ToLower()))
+            // It's a module!
+            var moduleInfo = _commands.Modules.Single<ModuleInfo>(module =>
+                module.Name.ToLower() == item.ToLower() ||
+                module.Name.ToLower() == item.ToLower() + "module" ||
+                module.Name.ToLower() == item.ToLower() + "submodule");
+
+            var commands = moduleInfo.Commands.Select<CommandInfo, string>(command =>
+                $"{prefix}{command.Name} - {command.Summary}"
+            ).ToList();
+
+            if (commands.Count > 10)
             {
-                // It's a command!
-                var commandInfo = _commands.Commands.Single<CommandInfo>(command => command.Name.ToLower() == item.ToLower());
-                var ponyReadable = PonyReadableCommandHelp(prefix, item, commandInfo);
-                await ReplyAsync(ponyReadable);
-                return;
-            }
-            else
-            {
-                // Module.
-                if (_commands.Modules.Any(module => module.Name.ToLower() == item.ToLower() ||
-                                                    module.Name.ToLower() == item.ToLower() + "module" ||
-                                                    module.Name.ToLower() == item.ToLower() + "submodule"))
+                // Use pagination
+                var pages = new List<string>();
+                var pageNumber = -1;
+                for (var i = 0; i < commands.Count; i++)
                 {
-                    // It's a module!
-                    var moduleInfo = _commands.Modules.Single<ModuleInfo>(module => 
-                        module.Name.ToLower() == item.ToLower() ||
-                        module.Name.ToLower() == item.ToLower() + "module" ||
-                        module.Name.ToLower() == item.ToLower() + "submodule");
-
-                    var commands = moduleInfo.Commands.Select<CommandInfo, string>(command => 
-                        $"{prefix}{command.Name} - {command.Summary}"
-                    ).ToList();
-
-                    if (commands.Count > 10)
+                    if (i % 10 == 0)
                     {
-                        // Use pagination
-                        var pages = new List<string>();
-                        var pageNumber = -1;
-                        for (var i = 0; i < commands.Count; i++)
-                        {
-                            if (i % 10 == 0)
-                            {
-                                pageNumber += 1;
-                                pages.Add("");
-                            }
+                        pageNumber += 1;
+                        pages.Add("");
+                    }
 
-                            pages[pageNumber] += commands[i] + Environment.NewLine;
-                        }
+                    pages[pageNumber] += commands[i] + Environment.NewLine;
+                }
 
-                        var potentialAliases = _commands.Commands.Where(command =>
-                            command.Aliases.Select(alias => alias.ToLower()).Contains(item.ToLower())).ToArray();
-                        
-                        string[] staticParts =
-                        {
+                var potentialAliases = _commands.Commands.Where(command =>
+                    command.Aliases.Select(alias => alias.ToLower()).Contains(item.ToLower())).ToArray();
+
+                string[] staticParts =
+                {
                             $"Hii! Here's a list of all the commands I could find in the {moduleInfo.Name.Replace("Module", "").Replace("Submodule", "")} category!",
                             $"Run `{prefix}help <command>` for help regarding a specific command!" +
                             $"{(potentialAliases.Length != 0 ? $"{Environment.NewLine}ℹ  This category shares a name with an alias. For information regarding this alias, run `{prefix}help {potentialAliases.First().Name.ToLower()}`.": "")}"
                         };
 
-                        var paginationMessage = new PaginationHelper(Context, pages.ToArray(), staticParts);
-                        return;
-                    }
-                    else
-                    {
-                        var potentialAliases = _commands.Commands.Where(command =>
-                            command.Aliases.Select(alias => alias.ToLower()).Contains(item.ToLower())).ToArray();
+                var paginationMessage = new PaginationHelper(Context, pages.ToArray(), staticParts);
+            }
+            else
+            {
+                var potentialAliases = _commands.Commands.Where(command =>
+                    command.Aliases.Select(alias => alias.ToLower()).Contains(item.ToLower())).ToArray();
 
-                        await ReplyAsync(
-                            $"Hii! Here's a list of all the commands I could find in the {moduleInfo.Name.Replace("Module", "").Replace("Submodule", "")} category!{Environment.NewLine}" +
-                            $"```{Environment.NewLine}{string.Join(Environment.NewLine, commands)}{Environment.NewLine}```{Environment.NewLine}" +
-                            $"Run `{prefix}help <command>` for help regarding a specific command!" +
-                            $"{(potentialAliases.Length != 0 ? $"{Environment.NewLine}ℹ  This category shares a name with an alias. For information regarding this alias, run `{prefix}help {potentialAliases.First().Name.ToLower()}`.": "")}");
-                        return;
-                    }
-                }
-                // Try alternate command names
-                if (_commands.Commands.Any(command =>
-                        command.Aliases.Select(alias => alias.ToLower()).Contains(item.ToLower())))
-                {
-                    // Alternate detected!
-                    var commandInfo = _commands.Commands.Single<CommandInfo>(command => command.Aliases.Select(alias => alias.ToLower()).Contains(item.ToLower()));
-                    var alternateName = commandInfo.Aliases.Single(alias => alias.ToLower() == item.ToLower());
-                    var ponyReadable = PonyReadableCommandHelp(prefix, item, commandInfo, alternateName);
-                    await ReplyAsync(ponyReadable);
-                    return;
-                }
-                // Try aliases
-                if (_config.Aliases.Any(alias => alias.Key.ToLower() == item.ToLower()))
-                {
-                    var alias = _config.Aliases.First(alias => alias.Key.ToLower() == item.ToLower());
-                    var ponyReadable = $"**{prefix}{alias.Key}** is an alias for **{prefix}{alias.Value}** (see {prefix}config Aliases){Environment.NewLine}{Environment.NewLine}";
+                await ReplyAsync(
+                    $"Hii! Here's a list of all the commands I could find in the {moduleInfo.Name.Replace("Module", "").Replace("Submodule", "")} category!{Environment.NewLine}" +
+                    $"```{Environment.NewLine}{string.Join(Environment.NewLine, commands)}{Environment.NewLine}```{Environment.NewLine}" +
+                    $"Run `{prefix}help <command>` for help regarding a specific command!" +
+                    $"{(potentialAliases.Length != 0 ? $"{Environment.NewLine}ℹ  This category shares a name with an alias. For information regarding this alias, run `{prefix}help {potentialAliases.First().Name.ToLower()}`." : "")}");
+            }
+        }
+        else if (_commands.Commands.Any(command => command.Name.ToLower() == item.ToLower()))
+        {
+            // It's a command!
+            var commandInfo = _commands.Commands.Single<CommandInfo>(command => command.Name.ToLower() == item.ToLower());
+            var ponyReadable = PonyReadableCommandHelp(prefix, item, commandInfo);
+            await ReplyAsync(ponyReadable);
+        }
+        // Try alternate command names
+        else if (_commands.Commands.Any(command =>
+            command.Aliases.Select(alias => alias.ToLower()).Contains(item.ToLower())))
+        {
+            // Alternate detected!
+            var commandInfo = _commands.Commands.Single<CommandInfo>(command => command.Aliases.Select(alias => alias.ToLower()).Contains(item.ToLower()));
+            var alternateName = commandInfo.Aliases.Single(alias => alias.ToLower() == item.ToLower());
+            var ponyReadable = PonyReadableCommandHelp(prefix, item, commandInfo, alternateName);
+            await ReplyAsync(ponyReadable);
+        }
+        // Try aliases
+        else if (_config.Aliases.Any(alias => alias.Key.ToLower() == item.ToLower()))
+        {
+            var alias = _config.Aliases.First(alias => alias.Key.ToLower() == item.ToLower());
+            var ponyReadable = $"**{prefix}{alias.Key}** is an alias for **{prefix}{alias.Value}** (see {prefix}config Aliases){Environment.NewLine}{Environment.NewLine}";
 
-                    var commandInfo = _commands.Commands.FirstOrDefault(command => command.Name.ToLower() == alias.Value.Split(" ")[0].ToLower());
+            var commandInfo = _commands.Commands.FirstOrDefault(command => command.Name.ToLower() == alias.Value.Split(" ")[0].ToLower());
 
-                    if (commandInfo != null)
-                    {
-                        ponyReadable += PonyReadableCommandHelp(prefix, item, commandInfo);
-                        await ReplyAsync(ponyReadable);
-                        return;
-                    }
-
-                    // Complain
-                    await ReplyAsync(
-                        $"**Warning!** This alias directs to a non-existent command!{Environment.NewLine}Please remove this alias or redirect it to an existing command.");
-                    return;
-                }
+            if (commandInfo != null)
+            {
+                ponyReadable += PonyReadableCommandHelp(prefix, item, commandInfo);
+                await ReplyAsync(ponyReadable);
+                return;
             }
 
+            // Complain
+            await ReplyAsync(
+                $"**Warning!** This alias directs to a non-existent command!{Environment.NewLine}Please remove this alias or redirect it to an existing command.");
+        }
+        else
+        {
             await ReplyAsync($"Sorry, I was unable to find \"{item}\" as either a command, category, or alias.");
         }
     }
