@@ -51,6 +51,18 @@ public class TestTextChannel : IIzzySocketTextChannel
     public IReadOnlyCollection<IIzzyUser> Users { get => _usersGetter(); }
 }
 
+public class TestGuildChannel : IIzzySocketGuildChannel
+{
+    public string Name { get; }
+    public ulong Id { get; }
+
+    public TestGuildChannel(string name, ulong id)
+    {
+        Name = name;
+        Id = id;
+    }
+}
+
 public class TestMessageChannel : IIzzySocketMessageChannel
 {
     public string Name { get; }

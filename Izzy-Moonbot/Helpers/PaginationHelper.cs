@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using Izzy_Moonbot.Adapters;
 
 namespace Izzy_Moonbot.Helpers;
 
@@ -11,19 +12,26 @@ public class PaginationHelper
 {
     private readonly AllowedMentions _allowedMentions;
 
-    private readonly DiscordSocketClient _client;
+    private readonly IIzzyClient _client;
     private readonly RequestOptions _options;
     private readonly string[] _staticParts;
 
     private readonly bool _useCodeBlock;
     private ulong _authorId;
     private bool _easterEgg;
-    private IUserMessage _message;
+    private IIzzyMessage _message;
     public DateTime ExpiresAt;
     public int PageNumber;
     public string[] Pages;
 
     public PaginationHelper(SocketCommandContext context, string[] pages, string[] staticParts, int pageNumber = 0,
+    bool codeblock = true,
+    AllowedMentions allowedMentions = null,
+    RequestOptions options = null)
+        : this(new SocketCommandContextAdapter(context), pages, staticParts, pageNumber, codeblock, allowedMentions, options)
+    { }
+
+    public PaginationHelper(IIzzyContext context, string[] pages, string[] staticParts, int pageNumber = 0,
         bool codeblock = true,
         AllowedMentions allowedMentions = null,
         RequestOptions options = null)
@@ -43,7 +51,7 @@ public class PaginationHelper
         CreatePaginationMessage(context);
     }
 
-    private async void CreatePaginationMessage(SocketCommandContext context)
+    private async void CreatePaginationMessage(IIzzyContext context)
     {
         var builder = new ComponentBuilder()
             .WithButton(customId: "goto-start", emote: Emoji.Parse(":track_previous:"), disabled: false)
@@ -58,8 +66,8 @@ public class PaginationHelper
             $"{_staticParts[0]}{Environment.NewLine}{Environment.NewLine}<a:rdloop:910875692785336351> Pagination is loading. Please wait...{Environment.NewLine}{Environment.NewLine}{_staticParts[1]}",
             components: builder.Build(), allowedMentions: _allowedMentions, options: _options);
 
-        _client.ButtonExecuted += ButtonEvent;
-        _client.MessageDeleted += MessageDeletedEvent;
+        //_client.ButtonExecuted += ButtonEvent;
+        //_client.MessageDeleted += MessageDeletedEvent;
 
         RedrawPagination();
 
@@ -69,7 +77,7 @@ public class PaginationHelper
 
             if (_message == null) return;
             
-            _client.ButtonExecuted -= ButtonEvent; // Remove the event listener
+            //_client.ButtonExecuted -= ButtonEvent; // Remove the event listener
 
             RedrawPagination();
         });
@@ -87,8 +95,8 @@ public class PaginationHelper
             var codeBlock = "";
             if (_useCodeBlock) codeBlock = "```";
 
-            msg.Content =
-                $"{_staticParts[0]}{Environment.NewLine}{codeBlock}{Environment.NewLine}{Pages[PageNumber]}{Environment.NewLine}{codeBlock}`Page {PageNumber + 1} out of {Pages.Length}`{Environment.NewLine}{_staticParts[1]}{Environment.NewLine}{Environment.NewLine}{expireMessage}";
+            //msg.Content =
+            //    $"{_staticParts[0]}{Environment.NewLine}{codeBlock}{Environment.NewLine}{Pages[PageNumber]}{Environment.NewLine}{codeBlock}`Page {PageNumber + 1} out of {Pages.Length}`{Environment.NewLine}{_staticParts[1]}{Environment.NewLine}{Environment.NewLine}{expireMessage}";
 
             if (_easterEgg)
             {
@@ -99,7 +107,7 @@ public class PaginationHelper
                         emote: Emote.Parse("<:izzyohyou:967943490698887258>"), style: ButtonStyle.Success)
                     .WithButton(customId: "goto-next", emote: Emoji.Parse(":arrow_forward:"))
                     .WithButton(customId: "goto-end", emote: Emoji.Parse(":track_next:"));
-                msg.Components = builder.Build();
+                //msg.Components = builder.Build();
             }
 
             if (ExpiresAt <= DateTime.UtcNow)
@@ -114,7 +122,7 @@ public class PaginationHelper
                             disabled: true)
                         .WithButton(customId: "goto-next", emote: Emoji.Parse(":arrow_forward:"), disabled: true)
                         .WithButton(customId: "goto-end", emote: Emoji.Parse(":track_next:"), disabled: true);
-                    msg.Components = builder.Build();
+                    //msg.Components = builder.Build();
                 }
                 else
                 {
@@ -125,7 +133,7 @@ public class PaginationHelper
                             disabled: true)
                         .WithButton(customId: "goto-next", emote: Emoji.Parse(":arrow_forward:"), disabled: true)
                         .WithButton(customId: "goto-end", emote: Emoji.Parse(":track_next:"), disabled: true);
-                    msg.Components = builder.Build();
+                    //msg.Components = builder.Build();
                 }
             }
         });
@@ -168,8 +176,8 @@ public class PaginationHelper
     {
         if (_message.Id == message.Id)
         {
-            _client.ButtonExecuted -= ButtonEvent;
-            _client.MessageDeleted -= MessageDeletedEvent;
+            //_client.ButtonExecuted -= ButtonEvent;
+            //_client.MessageDeleted -= MessageDeletedEvent;
 
             _message = null;
         }

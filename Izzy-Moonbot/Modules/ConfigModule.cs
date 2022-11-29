@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
+using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Attributes;
 using Izzy_Moonbot.Describers;
 using Izzy_Moonbot.Helpers;
@@ -36,6 +37,22 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
     public async Task ConfigCommandAsync(
         [Summary("The item to get/modify.")] string configItemKey = "",
         [Summary("")] [Remainder] string? value = "")
+    {
+        await TestableConfigCommandAsync(
+            new SocketCommandContextAdapter(Context),
+            _config,
+            _configDescriber,
+            configItemKey,
+            value
+        );
+    }
+
+    public static async Task TestableConfigCommandAsync(
+        IIzzyContext Context, // TODO: naming style
+        Config _config, // TODO: naming style
+        ConfigDescriber _configDescriber, // TODO: naming style
+        string configItemKey = "",
+        string? value = "")
     {
         if (configItemKey == "")
         {
@@ -95,7 +112,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                 }
                 else
                 {
-                    await ReplyAsync(
+                    await Context.Channel.SendMessageAsync(
                         $"Hii!! Here's a list of all the config items I could find in the {_configDescriber.CategoryToString(category)} category!" +
                         $"{Environment.NewLine}```{Environment.NewLine}{string.Join(Environment.NewLine, itemList)}{Environment.NewLine}```{Environment.NewLine}" +
                         $"Run `{_config.Prefix}config <item>` to view information about an item! Please note that config items are *case sensitive*.");
@@ -104,7 +121,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                 return;
             }
 
-            await ReplyAsync($"Sorry, I couldn't find a config value or category called `{configItemKey}`!");
+            await Context.Channel.SendMessageAsync($"Sorry, I couldn't find a config value or category called `{configItemKey}`!");
             return;
         }
 
@@ -121,7 +138,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                 case ConfigItemType.Boolean:
                 case ConfigItemType.Integer:
                 case ConfigItemType.Double:
-                    await ReplyAsync(
+                    await Context.Channel.SendMessageAsync(
                         $"**{configItemKey}** - {_configDescriber.TypeToString(configItem.Type)} - {_configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
                         $"*{configItem.Description}*{Environment.NewLine}" +
                         $"Current value: `{ConfigHelper.GetValue(_config, configItemKey)}`{Environment.NewLine}" +
@@ -134,7 +151,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                     var enumType = enumValue.GetType();
                     var possibleEnumNames = enumType.GetEnumNames().Select(s => $"`{s}`").ToArray();
                     
-                    await ReplyAsync(
+                    await Context.Channel.SendMessageAsync(
                         $"**{configItemKey}** - {_configDescriber.TypeToString(configItem.Type)} - {_configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
                         $"*{configItem.Description}*{Environment.NewLine}" +
                         $"Possible values are: {string.Join(", ", possibleEnumNames)}{Environment.NewLine}" +
@@ -143,7 +160,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                         allowedMentions: AllowedMentions.None);
                     break;
                 case ConfigItemType.User:
-                    await ReplyAsync(
+                    await Context.Channel.SendMessageAsync(
                         $"**{configItemKey}** - {_configDescriber.TypeToString(configItem.Type)} - {_configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
                         $"*{configItem.Description}*{Environment.NewLine}" +
                         $"Current value: <@{ConfigHelper.GetValue(_config, configItemKey)}>{Environment.NewLine}" +
@@ -151,7 +168,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                         allowedMentions: AllowedMentions.None);
                     break;
                 case ConfigItemType.Role:
-                    await ReplyAsync(
+                    await Context.Channel.SendMessageAsync(
                         $"**{configItemKey}** - {_configDescriber.TypeToString(configItem.Type)} - {_configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
                         $"*{configItem.Description}*{Environment.NewLine}" +
                         $"Current value: <@&{ConfigHelper.GetValue(_config, configItemKey)}>{Environment.NewLine}" +
@@ -159,7 +176,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                         allowedMentions: AllowedMentions.None);
                     break;
                 case ConfigItemType.Channel:
-                    await ReplyAsync(
+                    await Context.Channel.SendMessageAsync(
                         $"**{configItemKey}** - {_configDescriber.TypeToString(configItem.Type)} - {_configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
                         $"*{configItem.Description}*{Environment.NewLine}" +
                         $"Current value: <#{ConfigHelper.GetValue(_config, configItemKey)}>{Environment.NewLine}" +
@@ -174,7 +191,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                 case ConfigItemType.UserList:
                 case ConfigItemType.RoleList:
                 case ConfigItemType.ChannelList:
-                    await ReplyAsync(
+                    await Context.Channel.SendMessageAsync(
                         $"**{configItemKey}** - {_configDescriber.TypeToString(configItem.Type)} - {_configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
                         $"*{configItem.Description}*{Environment.NewLine}" +
                         $"Run `{_config.Prefix}config {configItemKey} list` to view the contents of this list.{Environment.NewLine}" +
@@ -190,7 +207,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                 //case SettingsItemType.UserDictionary: // Note: Implement when needed
                 //case SettingsItemType.RoleDictionary: // Note: Implement when needed
                 //case SettingsItemType.ChannelDictionary: // Note: Implement when needed
-                    await ReplyAsync(
+                    await Context.Channel.SendMessageAsync(
                         $"**{configItemKey}** - {_configDescriber.TypeToString(configItem.Type)} - {_configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
                         $"*{configItem.Description}*{Environment.NewLine}" +
                         $"Run `{_config.Prefix}config {configItemKey} list` to view a list of keys in this map.{Environment.NewLine}" +
@@ -207,7 +224,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                     //case SettingsItemType.UserListDictionary: // Note: Implement when needed
                     //case SettingsItemType.RoleListDictionary: // Note: Implement when needed
                     //case SettingsItemType.ChannelListDictionary: // Note: Implement when needed
-                    await ReplyAsync(
+                    await Context.Channel.SendMessageAsync(
                         $"**{configItemKey}** - {_configDescriber.TypeToString(configItem.Type)} - {_configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
                         $"*{configItem.Description}*{Environment.NewLine}" +
                         $"Run `{_config.Prefix}config {configItemKey} list` to view a list of keys in this map.{Environment.NewLine}" +
@@ -218,7 +235,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                         allowedMentions: AllowedMentions.None);
                     break;
                 default:
-                    await ReplyAsync("I seem to have encountered a setting type that I do not know about.");
+                    await Context.Channel.SendMessageAsync("I seem to have encountered a setting type that I do not know about.");
                     break;
             }
         }
@@ -234,7 +251,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
 
                         var resultString =
                             await ConfigHelper.SetStringValue(_config, configItemKey, value);
-                        await ReplyAsync($"I've set `{configItemKey}` to the following content: {resultString}",
+                        await Context.Channel.SendMessageAsync($"I've set `{configItemKey}` to the following content: {resultString}",
                             allowedMentions: AllowedMentions.None);
                         break;
                     case ConfigItemType.Char:
@@ -252,12 +269,12 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
 
                             var resultChar =
                                 await ConfigHelper.SetCharValue(_config, configItemKey, output);
-                            await ReplyAsync($"I've set `{configItemKey}` to the following content: {resultChar}",
+                            await Context.Channel.SendMessageAsync($"I've set `{configItemKey}` to the following content: {resultChar}",
                                 allowedMentions: AllowedMentions.None);
                         }
                         catch (FormatException)
                         {
-                            await ReplyAsync(
+                            await Context.Channel.SendMessageAsync(
                                 $"I couldn't set `{configItemKey}` to the content provided because you provided content that I couldn't turn into a character. Please try again.",
                                 allowedMentions: AllowedMentions.None);
                         }
@@ -270,12 +287,12 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                         {
                             var resultBoolean =
                                 await ConfigHelper.SetBooleanValue(_config, configItemKey, value);
-                            await ReplyAsync($"I've set `{configItemKey}` to the following content: {resultBoolean}",
+                            await Context.Channel.SendMessageAsync($"I've set `{configItemKey}` to the following content: {resultBoolean}",
                                 allowedMentions: AllowedMentions.None);
                         }
                         catch (FormatException)
                         {
-                            await ReplyAsync(
+                            await Context.Channel.SendMessageAsync(
                                 $"I couldn't set `{configItemKey}` to the content provided because you provided content that I couldn't turn into a boolean. Please try again.",
                                 allowedMentions: AllowedMentions.None);
                         }
@@ -296,12 +313,12 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
 
                             var resultInteger =
                                 await ConfigHelper.SetIntValue(_config, configItemKey, output);
-                            await ReplyAsync($"I've set `{configItemKey}` to the following content: {resultInteger}",
+                            await Context.Channel.SendMessageAsync($"I've set `{configItemKey}` to the following content: {resultInteger}",
                                 allowedMentions: AllowedMentions.None);
                         }
                         catch (FormatException)
                         {
-                            await ReplyAsync(
+                            await Context.Channel.SendMessageAsync(
                                 $"I couldn't set `{configItemKey}` to the content provided because you provided content that I couldn't turn into a integer. Please try again.",
                                 allowedMentions: AllowedMentions.None);
                         }
@@ -322,12 +339,12 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
 
                             var resultDouble =
                                 await ConfigHelper.SetDoubleValue(_config, configItemKey, output);
-                            await ReplyAsync($"I've set `{configItemKey}` to the following content: {resultDouble}",
+                            await Context.Channel.SendMessageAsync($"I've set `{configItemKey}` to the following content: {resultDouble}",
                                 allowedMentions: AllowedMentions.None);
                         }
                         catch (FormatException)
                         {
-                            await ReplyAsync(
+                            await Context.Channel.SendMessageAsync(
                                 $"I couldn't set `{configItemKey}` to the content provided because you provided content that I couldn't turn into a double. Please try again.",
                                 allowedMentions: AllowedMentions.None);
                         }
@@ -351,12 +368,12 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
 
                             var resultDouble =
                                 await ConfigHelper.SetEnumValue(_config, configItemKey, output);
-                            await ReplyAsync($"I've set `{configItemKey}` to the following content: {resultDouble}",
+                            await Context.Channel.SendMessageAsync($"I've set `{configItemKey}` to the following content: {resultDouble}",
                                 allowedMentions: AllowedMentions.None);
                         }
                         catch (FormatException)
                         {
-                            await ReplyAsync(
+                            await Context.Channel.SendMessageAsync(
                                 $"I couldn't set `{configItemKey}` to the content provided because you provided content that I couldn't turn into this specific enum type ({enumType.Name}). Please try again.",
                                 allowedMentions: AllowedMentions.None);
                         }
@@ -370,11 +387,11 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                     Context);
                             var response = "`null`";
                             if (result != null) response = $"<@{result.Id}>";
-                            await ReplyAsync($"I've set `{configItemKey}` to the following content: {response}");
+                            await Context.Channel.SendMessageAsync($"I've set `{configItemKey}` to the following content: {response}");
                         }
                         catch (MemberAccessException)
                         {
-                            await ReplyAsync(
+                            await Context.Channel.SendMessageAsync(
                                 $"I couldn't set `{configItemKey}` to the content provided because you provided content that I couldn't turn into a user. Please try again.",
                                 allowedMentions: AllowedMentions.None);
                         }
@@ -389,12 +406,12 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                     Context);
                             var response = "`null`";
                             if (result != null) response = $"<@&{result.Id}>";
-                            await ReplyAsync($"I've set `{configItemKey}` to the following content: {response}",
+                            await Context.Channel.SendMessageAsync($"I've set `{configItemKey}` to the following content: {response}",
                                 allowedMentions: AllowedMentions.None);
                         }
                         catch (MemberAccessException)
                         {
-                            await ReplyAsync(
+                            await Context.Channel.SendMessageAsync(
                                 $"I couldn't set `{configItemKey}` to the content provided because you provided content that I couldn't turn into a role. Please try again.",
                                 allowedMentions: AllowedMentions.None);
                         }
@@ -409,19 +426,19 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                     Context);
                             var response = "`null`";
                             if (result != null) response = $"<#{result.Id}>";
-                            await ReplyAsync($"I've set `{configItemKey}` to the following content: {response}",
+                            await Context.Channel.SendMessageAsync($"I've set `{configItemKey}` to the following content: {response}",
                                 allowedMentions: AllowedMentions.None);
                         }
                         catch (MemberAccessException)
                         {
-                            await ReplyAsync(
+                            await Context.Channel.SendMessageAsync(
                                 $"I couldn't set `{configItemKey}` to the content provided because you provided content that I couldn't turn into a channel. Please try again.",
                                 allowedMentions: AllowedMentions.None);
                         }
 
                         break;
                     default:
-                        await ReplyAsync("I seem to have encountered a setting type that I do not know about.");
+                        await Context.Channel.SendMessageAsync("I seem to have encountered a setting type that I do not know about.");
                         break;
                 }
             }
@@ -438,7 +455,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
 
                             if (stringList == null)
                             {
-                                await ReplyAsync("Somehow, the entire list is null.");
+                                await Context.Channel.SendMessageAsync("Somehow, the entire list is null.");
                                 return;
                             }
 
@@ -469,7 +486,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             }
                             else
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"**{configItemKey}** contains the following values:{Environment.NewLine}```{Environment.NewLine}{string.Join(", ", stringList)}{Environment.NewLine}```",
                                     allowedMentions: AllowedMentions.None);
                             }
@@ -480,7 +497,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
 
                             if (charList == null)
                             {
-                                await ReplyAsync("Somehow, the entire list is null.");
+                                await Context.Channel.SendMessageAsync("Somehow, the entire list is null.");
                                 return;
                             }
 
@@ -511,7 +528,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             }
                             else
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"**{configItemKey}** contains the following values:{Environment.NewLine}```{Environment.NewLine}{string.Join(", ", charList)}{Environment.NewLine}```",
                                     allowedMentions: AllowedMentions.None);
                             }
@@ -522,7 +539,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
 
                             if (booleanList == null)
                             {
-                                await ReplyAsync("Somehow, the entire list is null.");
+                                await Context.Channel.SendMessageAsync("Somehow, the entire list is null.");
                                 return;
                             }
 
@@ -553,7 +570,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             }
                             else
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"**{configItemKey}** contains the following values:{Environment.NewLine}```{Environment.NewLine}{string.Join(", ", booleanList)}{Environment.NewLine}```",
                                     allowedMentions: AllowedMentions.None);
                             }
@@ -564,7 +581,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
 
                             if (intList == null)
                             {
-                                await ReplyAsync("Somehow, the entire list is null.");
+                                await Context.Channel.SendMessageAsync("Somehow, the entire list is null.");
                                 return;
                             }
 
@@ -595,7 +612,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             }
                             else
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"**{configItemKey}** contains the following values:{Environment.NewLine}```{Environment.NewLine}{string.Join(", ", intList)}{Environment.NewLine}```",
                                     allowedMentions: AllowedMentions.None);
                             }
@@ -606,7 +623,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
 
                             if (doubleList == null)
                             {
-                                await ReplyAsync("Somehow, the entire list is null.");
+                                await Context.Channel.SendMessageAsync("Somehow, the entire list is null.");
                                 return;
                             }
 
@@ -637,7 +654,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             }
                             else
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"**{configItemKey}** contains the following values:{Environment.NewLine}```{Environment.NewLine}{string.Join(", ", doubleList)}{Environment.NewLine}```",
                                     allowedMentions: AllowedMentions.None);
                             }
@@ -677,7 +694,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             }
                             else
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"**{configItemKey}** contains the following values:{Environment.NewLine}{string.Join(", ", userMentionList)}");
                             }
 
@@ -716,7 +733,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             }
                             else
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"**{configItemKey}** contains the following values:{Environment.NewLine}{string.Join(", ", roleMentionList)}",
                                     allowedMentions: AllowedMentions.None);
                             }
@@ -757,14 +774,14 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             }
                             else
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"**{configItemKey}** contains the following values:{Environment.NewLine}{string.Join(", ", channelMentionList)}",
                                     allowedMentions: AllowedMentions.None);
                             }
 
                             break;
                         default:
-                            await ReplyAsync("I seem to have encountered a setting type that I do not know about.");
+                            await Context.Channel.SendMessageAsync("I seem to have encountered a setting type that I do not know about.");
                             break;
                     }
                 else if (action == "add")
@@ -776,13 +793,13 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                 var output =
                                     await ConfigHelper.AddToStringList(_config, configItemKey, value);
 
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I added the following content to the `{configItemKey}` string list:{Environment.NewLine}```{Environment.NewLine}{output}{Environment.NewLine}```",
                                     allowedMentions: AllowedMentions.None);
                             }
                             catch (ArgumentException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't add your content to the `{configItemKey}` list because the `{configItemKey}` config item isn't a list. There is likely a misconfiguration in the config item describer.");
                             }
 
@@ -796,19 +813,19 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                     await ConfigHelper.AddToCharList(_config, configItemKey,
                                         charValue);
 
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I added the following content to the `{configItemKey}` character list:{Environment.NewLine}```{Environment.NewLine}{output}{Environment.NewLine}```",
                                     allowedMentions: AllowedMentions.None);
                             }
                             catch (FormatException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't add the content you provided to the `{configItemKey}` list because you provided content that I couldn't turn into a single character. Please try again.",
                                     allowedMentions: AllowedMentions.None);
                             }
                             catch (ArgumentException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't add the content you provided to the `{configItemKey}` list because the `{configItemKey}` config item isn't a list. There is likely a misconfiguration in the config item describer.");
                             }
 
@@ -820,19 +837,19 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                     await ConfigHelper.AddToBooleanList(_config, configItemKey,
                                         value);
 
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I added the following content to the `{configItemKey}` boolean list:{Environment.NewLine}```{Environment.NewLine}{output}{Environment.NewLine}```",
                                     allowedMentions: AllowedMentions.None);
                             }
                             catch (FormatException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't add the content you provided to the `{configItemKey}` list because you provided content that I couldn't turn into a boolean. Please try again.",
                                     allowedMentions: AllowedMentions.None);
                             }
                             catch (ArgumentException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't add the content you provided to the `{configItemKey}` list because the `{configItemKey}` config item isn't a list. There is likely a misconfiguration in the config item describer.");
                             }
 
@@ -845,19 +862,19 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                 var output =
                                     await ConfigHelper.AddToIntList(_config, configItemKey, intValue);
 
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I added the following content to the `{configItemKey}` integer list:{Environment.NewLine}```{Environment.NewLine}{output}{Environment.NewLine}```",
                                     allowedMentions: AllowedMentions.None);
                             }
                             catch (FormatException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't add the content you provided to the `{configItemKey}` list because you provided content that I couldn't turn into an integer. Please try again.",
                                     allowedMentions: AllowedMentions.None);
                             }
                             catch (ArgumentException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't add the content you provided to the `{configItemKey}` list because the `{configItemKey}` config item isn't a list. There is likely a misconfiguration in the config item describer.");
                             }
 
@@ -871,19 +888,19 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                     await ConfigHelper.AddToDoubleList(_config, configItemKey,
                                         doubleValue);
 
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I added the following content to the `{configItemKey}` double list:{Environment.NewLine}```{Environment.NewLine}{output}{Environment.NewLine}```",
                                     allowedMentions: AllowedMentions.None);
                             }
                             catch (FormatException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't add the content you provided to the `{configItemKey}` list because you provided content that I couldn't turn into a double. Please try again.",
                                     allowedMentions: AllowedMentions.None);
                             }
                             catch (ArgumentException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't add the content you provided to the `{configItemKey}` list because the `{configItemKey}` config item isn't a list. There is likely a misconfiguration in the config item describer.");
                             }
 
@@ -895,23 +912,23 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                     await ConfigHelper.AddToUserList(_config, configItemKey, value,
                                         Context);
 
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I added the following content to the `{configItemKey}` user list:{Environment.NewLine}{output}");
                             }
                             catch (MemberAccessException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't add the content you provided to the `{configItemKey}` list because you provided content that I couldn't turn into a user I know about. Please try again.",
                                     allowedMentions: AllowedMentions.None);
                             }
                             catch (ArgumentOutOfRangeException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't add the user you provided to the `{configItemKey}` list because the user is already in that list.");
                             }
                             catch (ArgumentException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't add the content you provided to the `{configItemKey}` list because the `{configItemKey}` config item isn't a list. There is likely a misconfiguration in the config item describer.");
                             }
 
@@ -923,23 +940,23 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                     await ConfigHelper.AddToRoleList(_config, configItemKey, value,
                                         Context);
 
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I added the following content to the `{configItemKey}` role list:{Environment.NewLine}{output}");
                             }
                             catch (MemberAccessException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't add the content you provided to the `{configItemKey}` list because you provided content that I couldn't turn into a role I know about. Please try again.",
                                     allowedMentions: AllowedMentions.None);
                             }
                             catch (ArgumentOutOfRangeException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't add the role you provided to the `{configItemKey}` list because the role is already in that list.");
                             }
                             catch (ArgumentException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't add the content you provided to the `{configItemKey}` list because the `{configItemKey}` config item isn't a list. There is likely a misconfiguration in the config item describer.");
                             }
 
@@ -951,29 +968,29 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                     await ConfigHelper.AddToChannelList(_config, configItemKey, value,
                                         Context);
 
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I added the following content to the `{configItemKey}` channel list:{Environment.NewLine}{output}");
                             }
                             catch (MemberAccessException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't add the content you provided to the `{configItemKey}` list because you provided content that I couldn't turn into a channel I know about. Please try again.",
                                     allowedMentions: AllowedMentions.None);
                             }
                             catch (ArgumentOutOfRangeException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't add the channel you provided to the `{configItemKey}` list because the channel is already in that list.");
                             }
                             catch (ArgumentException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't add the content you provided to the `{configItemKey}` list because the `{configItemKey}` config item isn't a list. There is likely a misconfiguration in the config item describer.");
                             }
 
                             break;
                         default:
-                            await ReplyAsync("I seem to have encountered a setting type that I do not know about.");
+                            await Context.Channel.SendMessageAsync("I seem to have encountered a setting type that I do not know about.");
                             break;
                     }
                 else if (action == "remove")
@@ -986,18 +1003,18 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                     await ConfigHelper.RemoveFromStringList(_config, configItemKey,
                                         value);
 
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I removed the following content from the `{configItemKey}` string list:{Environment.NewLine}```{Environment.NewLine}{output}{Environment.NewLine}```",
                                     allowedMentions: AllowedMentions.None);
                             }
                             catch (ArgumentOutOfRangeException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't remove the content you provided from the `{configItemKey}` list because the content isn't in that list to begin with.");
                             }
                             catch (ArgumentException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't remove the content you provided from the `{configItemKey}` list because the `{configItemKey}` config item isn't a list. There is likely a misconfiguration in the config item describer.");
                             }
 
@@ -1011,24 +1028,24 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                     await ConfigHelper.AddToCharList(_config, configItemKey,
                                         charValue);
 
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I removed the following content from the `{configItemKey}` character list:{Environment.NewLine}```{Environment.NewLine}{output}{Environment.NewLine}```",
                                     allowedMentions: AllowedMentions.None);
                             }
                             catch (FormatException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't remove the content you provided from the `{configItemKey}` list because you provided content that I couldn't turn into a character. Please try again.",
                                     allowedMentions: AllowedMentions.None);
                             }
                             catch (ArgumentOutOfRangeException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't remove the content you provided from the `{configItemKey}` list because the content isn't in that list to begin with.");
                             }
                             catch (ArgumentException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't remove the content you provided from the `{configItemKey}` list because the `{configItemKey}` config item isn't a list. There is likely a misconfiguration in the config item describer.");
                             }
 
@@ -1040,24 +1057,24 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                     await ConfigHelper.RemoveFromBooleanList(_config, configItemKey,
                                         value);
 
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I removed the following content from the `{configItemKey}` boolean list:{Environment.NewLine}```{Environment.NewLine}{output}{Environment.NewLine}```",
                                     allowedMentions: AllowedMentions.None);
                             }
                             catch (FormatException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't remove the content you provided from the `{configItemKey}` list because you provided content that I couldn't turn into a boolean. Please try again.",
                                     allowedMentions: AllowedMentions.None);
                             }
                             catch (ArgumentOutOfRangeException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't remove the content you provided from the `{configItemKey}` list because the content isn't in that list to begin with.");
                             }
                             catch (ArgumentException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't remove the content you provided from the `{configItemKey}` list because the `{configItemKey}` config item isn't a list. There is likely a misconfiguration in the config item describer.");
                             }
 
@@ -1071,24 +1088,24 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                     await ConfigHelper.RemoveFromIntList(_config, configItemKey,
                                         intValue);
 
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I removed the following content from the `{configItemKey}` integer list:{Environment.NewLine}```{Environment.NewLine}{output}{Environment.NewLine}```",
                                     allowedMentions: AllowedMentions.None);
                             }
                             catch (FormatException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't remove the content you provided from the `{configItemKey}` list because you provided content that I couldn't turn into a integer. Please try again.",
                                     allowedMentions: AllowedMentions.None);
                             }
                             catch (ArgumentOutOfRangeException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't remove the content you provided from the `{configItemKey}` list because the content isn't in that list to begin with.");
                             }
                             catch (ArgumentException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't remove the content you provided from the `{configItemKey}` list because the `{configItemKey}` config item isn't a list. There is likely a misconfiguration in the config item describer.");
                             }
 
@@ -1102,24 +1119,24 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                     await ConfigHelper.RemoveFromDoubleList(_config, configItemKey,
                                         doubleValue);
 
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I removed the following content from the `{configItemKey}` double list:{Environment.NewLine}```{Environment.NewLine}{output}{Environment.NewLine}```",
                                     allowedMentions: AllowedMentions.None);
                             }
                             catch (FormatException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't remove the content you provided from the `{configItemKey}` list because you provided content that I couldn't turn into a double. Please try again.",
                                     allowedMentions: AllowedMentions.None);
                             }
                             catch (ArgumentOutOfRangeException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't remove the content you provided from the `{configItemKey}` list because the content isn't in that list to begin with.");
                             }
                             catch (ArgumentException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't remove the content you provided from the `{configItemKey}` list because the `{configItemKey}` config item isn't a list. There is likely a misconfiguration in the config item describer.");
                             }
 
@@ -1131,23 +1148,23 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                     await ConfigHelper.RemoveFromUserList(_config, configItemKey,
                                         value, Context);
 
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I removed the following content from the `{configItemKey}` user list:{Environment.NewLine}{output}");
                             }
                             catch (MemberAccessException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't remove the content you provided from the `{configItemKey}` list because you provided content that I couldn't turn into a user I know about. Please try again.",
                                     allowedMentions: AllowedMentions.None);
                             }
                             catch (ArgumentOutOfRangeException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't remove the user you provided from the `{configItemKey}` list because the user isn't in that list to begin with.");
                             }
                             catch (ArgumentException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't remove the content you provided from the `{configItemKey}` list because the `{configItemKey}` config item isn't a list. There is likely a misconfiguration in the config item describer.");
                             }
 
@@ -1159,23 +1176,23 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                     await ConfigHelper.RemoveFromRoleList(_config, configItemKey,
                                         value, Context);
 
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I removed the following content from the `{configItemKey}` role list:{Environment.NewLine}{output}");
                             }
                             catch (MemberAccessException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't remove the content you provided from the `{configItemKey}` list because you provided content that I couldn't turn into a role I know about. Please try again.",
                                     allowedMentions: AllowedMentions.None);
                             }
                             catch (ArgumentOutOfRangeException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't remove the role you provided from the `{configItemKey}` list because the role isn't in that list to begin with.");
                             }
                             catch (ArgumentException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't remove the content you provided from the `{configItemKey}` list because the `{configItemKey}` config item isn't a list. There is likely a misconfiguration in the config item describer.");
                             }
 
@@ -1187,29 +1204,29 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                     await ConfigHelper.RemoveFromChannelList(_config, configItemKey,
                                         value, Context);
 
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I removed the following content from the `{configItemKey}` channel list:{Environment.NewLine}{output}");
                             }
                             catch (MemberAccessException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't remove the content you provided from the `{configItemKey}` list because you provided content that I couldn't turn into a channel I know about. Please try again.",
                                     allowedMentions: AllowedMentions.None);
                             }
                             catch (ArgumentOutOfRangeException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't remove the channel you provided from the `{configItemKey}` list because the channel isn't in that list to begin with.");
                             }
                             catch (ArgumentException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't remove the content you provided from the `{configItemKey}` list because the `{configItemKey}` config item isn't a list. There is likely a misconfiguration in the config item describer.");
                             }
 
                             break;
                         default:
-                            await ReplyAsync("I seem to have encountered a setting type that I do not know about.");
+                            await Context.Channel.SendMessageAsync("I seem to have encountered a setting type that I do not know about.");
                             break;
                     }
             }
@@ -1274,18 +1291,18 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                 {
                                     var listString = keys.Select((t, i) => $"{t} = {values[i]}").ToList();
                                     
-                                    await ReplyAsync(
+                                    await Context.Channel.SendMessageAsync(
                                         $"**{configItemKey}** contains the following keys:{Environment.NewLine}```{Environment.NewLine}{string.Join($"{Environment.NewLine}", listString)}{Environment.NewLine}```");
                                 }
                             }
                             catch (ArgumentOutOfRangeException ex)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't list the keys in the `{configItemKey}` map? {ex.Message}");
                             }
                             catch (ArgumentException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't list the keys in the `{configItemKey}` map because the `{configItemKey}` config item isn't a map. There is likely a misconfiguration in the config item describer.");
                             }
 
@@ -1329,24 +1346,24 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                 {
                                     var listString = keys.Select((t, i) => $"{t} = {values[i]}").ToList();
 
-                                    await ReplyAsync(
+                                    await Context.Channel.SendMessageAsync(
                                         $"**{configItemKey}** contains the following keys:{Environment.NewLine}```{Environment.NewLine}{string.Join($"{Environment.NewLine}", listString)}{Environment.NewLine}```");
                                 }
                             }
                             catch (ArgumentOutOfRangeException ex)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't list the keys in the `{configItemKey}` map? {ex.Message}");
                             }
                             catch (ArgumentException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't list the keys in the `{configItemKey}` map because the `{configItemKey}` config item isn't a map. There is likely a misconfiguration in the config item describer.");
                             }
 
                             break;
                         default:
-                            await ReplyAsync("I seem to have encountered a setting type that I do not know about.");
+                            await Context.Channel.SendMessageAsync("I seem to have encountered a setting type that I do not know about.");
                             break;
                     }
                 }
@@ -1368,24 +1385,24 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                         _config,
                                         configItemKey, value);
 
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"**{value}** contains the following value: `{contents.Replace("`", "\\`")}`");
                             }
                             catch (ArgumentOutOfRangeException ex)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't get the value in the `{value}` key from the `{configItemKey}` map? {ex.Message}");
                             }
                             catch (KeyNotFoundException ex)
                             {
                                 if (ex.Message.Contains(value))
                                 {
-                                    await ReplyAsync("The key you provided does not exist within the map.");
+                                    await Context.Channel.SendMessageAsync("The key you provided does not exist within the map.");
                                 }
                             }
                             catch (ArgumentException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't get the value in the `{value}` key from the `{configItemKey}` map because the `{configItemKey}` config item isn't a map. There is likely a misconfiguration in the config item describer.");
                             }
 
@@ -1396,30 +1413,30 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                 var contents = ConfigHelper.GetBooleanDictionaryValue(_config,
                                     configItemKey, value);
 
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"**{value}** contains the following value: `{contents}`");
                             }
                             catch (ArgumentOutOfRangeException ex)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't get the value in the `{value}` key from the `{configItemKey}` map? {ex.Message}");
                             }
                             catch (KeyNotFoundException ex)
                             {
                                 if (ex.Message.Contains(value))
                                 {
-                                    await ReplyAsync("The key you provided does not exist within the map.");
+                                    await Context.Channel.SendMessageAsync("The key you provided does not exist within the map.");
                                 }
                             }
                             catch (ArgumentException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't get the value in the `{value}` key from the `{configItemKey}` map because the `{configItemKey}` config item isn't a map. There is likely a misconfiguration in the config item describer.");
                             }
 
                             break;
                         default:
-                            await ReplyAsync("I seem to have encountered a setting type that I do not know about.");
+                            await Context.Channel.SendMessageAsync("I seem to have encountered a setting type that I do not know about.");
                             break;
                     }
                 }
@@ -1460,23 +1477,23 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
 
                                 if (result.Item2 == null)
                                 {
-                                    await ReplyAsync(
+                                    await Context.Channel.SendMessageAsync(
                                         $"I added the following string to the `{result.Item1}` map key in the `{configItemKey}` map: `{result.Item3.Replace("`", "\\`")}`");
                                 }
                                 else
                                 {
-                                    await ReplyAsync(
+                                    await Context.Channel.SendMessageAsync(
                                         $"I changed the string in the `{result.Item1}` map key in the `{configItemKey}` map from `{result.Item2.Replace("`", "\\`")}` to `{result.Item3.Replace("`", "\\`")}`");
                                 }
                             }
                             catch (ArgumentOutOfRangeException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't create the string you wanted in the `{configItemKey}` map because the `{key}` key already exists.");
                             }
                             catch (ArgumentException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't create the string you wanted in the `{configItemKey}` map because the `{configItemKey}` config item isn't a map. There is likely a misconfiguration in the config item describer.");
                             }
 
@@ -1496,35 +1513,35 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
 
                                 if (result.Item2 == null)
                                 {
-                                    await ReplyAsync(
+                                    await Context.Channel.SendMessageAsync(
                                         $"I added the following boolean to the `{result.Item1}` map key in the `{configItemKey}` map: `{result.Item3}`");
                                 }
                                 else
                                 {
-                                    await ReplyAsync(
+                                    await Context.Channel.SendMessageAsync(
                                         $"I changed the boolean in the `{result.Item1}` map key in the `{configItemKey}` map from `{result.Item2}` to `{result.Item3}`");
                                 }
                             }
                             catch (ArgumentOutOfRangeException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't create the boolean you wanted in the `{configItemKey}` map because the `{key}` key already exists.");
                             }
                             catch (FormatException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't set `{key}` to the content provided because you provided content that I couldn't turn into a boolean. Please try again.",
                                     allowedMentions: AllowedMentions.None);
                             }
                             catch (ArgumentException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't create the boolean you wanted in the `{configItemKey}` map because the `{configItemKey}` config item isn't a map. There is likely a misconfiguration in the config item describer.");
                             }
 
                             break;
                         default:
-                            await ReplyAsync("I seem to have encountered a setting type that I do not know about.");
+                            await Context.Channel.SendMessageAsync("I seem to have encountered a setting type that I do not know about.");
                             break;
                     }
                 }
@@ -1542,17 +1559,17 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                     await ConfigHelper.RemoveStringDictionaryKey(_config,
                                         configItemKey, value);
 
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I removed the string with the following key from the `{configItemKey}` map: `{value}`");
                             }
                             catch (ArgumentOutOfRangeException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't remove the string you wanted from the `{configItemKey}` map because the `{value}` key already doesn't exist.");
                             }
                             catch (ArgumentException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't remove the string you wanted from the `{configItemKey}` map because the `{configItemKey}` config item isn't a map. There is likely a misconfiguration in the config item describer.");
                             }
 
@@ -1563,29 +1580,29 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                 await ConfigHelper.RemoveBooleanDictionaryKey(_config, configItemKey,
                                     value);
 
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I removed the boolean with the following key from the `{configItemKey}` map: `{value}`");
                             }
                             catch (ArgumentOutOfRangeException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't remove the boolean you wanted from the `{configItemKey}` map because the `{value}` key already exists.");
                             }
                             catch (ArgumentException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't remove the boolean you wanted from the `{configItemKey}` map because the `{configItemKey}` config item isn't a map. There is likely a misconfiguration in the config item describer.");
                             }
 
                             break;
                         default:
-                            await ReplyAsync("I seem to have encountered a setting type that I do not know about.");
+                            await Context.Channel.SendMessageAsync("I seem to have encountered a setting type that I do not know about.");
                             break;
                     }
                 }
                 else
                 {
-                    await ReplyAsync(
+                    await Context.Channel.SendMessageAsync(
                         "The action you wanted to take isn't supported for this type of config item, the available actions are `list`, `get`, `set`, and `delete`.");
                     return;
                 }
@@ -1642,24 +1659,24 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                     var listString = keys.Select((t, i) =>
                                         $"{t} ({values[i].Count} entries){Environment.NewLine}").ToList();
 
-                                    await ReplyAsync(
+                                    await Context.Channel.SendMessageAsync(
                                         $"**{configItemKey}** contains the following keys:{Environment.NewLine}```{Environment.NewLine}{string.Join($"{Environment.NewLine}", listString)}{Environment.NewLine}```");
                                 }
                             }
                             catch (ArgumentOutOfRangeException ex)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't list the keys in the `{configItemKey}` map? {ex.Message}");
                             }
                             catch (ArgumentException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't list the keys in the `{configItemKey}` map because the `{configItemKey}` config item isn't a map. There is likely a misconfiguration in the config item describer.");
                             }
 
                             break;
                         default:
-                            await ReplyAsync("I seem to have encountered a setting type that I do not know about.");
+                            await Context.Channel.SendMessageAsync("I seem to have encountered a setting type that I do not know about.");
                             break;
                     }
                 }
@@ -1667,7 +1684,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                 {
                     if (value == "")
                     {
-                        await ReplyAsync("Please provide a key to get.");
+                        await Context.Channel.SendMessageAsync("Please provide a key to get.");
                         return;
                     }
                     
@@ -1706,7 +1723,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                 }
                                 else
                                 {
-                                    await ReplyAsync(
+                                    await Context.Channel.SendMessageAsync(
                                         $"**{value}** contains the following values:{Environment.NewLine}```{Environment.NewLine}{string.Join(", ", stringList)}{Environment.NewLine}```",
                                         allowedMentions: AllowedMentions.None);
                                 }
@@ -1715,14 +1732,14 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             {
                                 if (ex.Message.Contains(value))
                                 {
-                                    await ReplyAsync("The key you provided does not exist within the map.");
+                                    await Context.Channel.SendMessageAsync("The key you provided does not exist within the map.");
                                 }
                             }
 
                             break;
                         // Other types, I don't see any reason to add them until I need them.
                         default:
-                            await ReplyAsync("I seem to have encountered a setting type that I do not know about.");
+                            await Context.Channel.SendMessageAsync("I seem to have encountered a setting type that I do not know about.");
                             break;
                     }
                 }
@@ -1742,20 +1759,20 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                         configItemKey, key, value)
                                     : await ConfigHelper.CreateStringListDictionaryKey(_config, configItemKey, key, value);
 
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I added the following string to the `{output.Item1}` string list in the `{configItemKey}` map: `{output.Item2}`",
                                     allowedMentions: AllowedMentions.None);
                             }
                             catch (ArgumentException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't add your content to the `{key}` string list in the `{configItemKey}` map because the `{configItemKey}` config item isn't a map. There is likely a misconfiguration in the config item describer.");
                             }
 
                             break;
                         // Other types, I don't see any reason to add them until I need them.
                         default:
-                            await ReplyAsync("I seem to have encountered a setting type that I do not know about.");
+                            await Context.Channel.SendMessageAsync("I seem to have encountered a setting type that I do not know about.");
                             break;
                     }                    
                 }
@@ -1772,20 +1789,20 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                     await ConfigHelper.RemoveFromStringListDictionaryValue(
                                         _config, configItemKey, key, value);
 
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I removed the following content from the `{output.Item1}` string list in the `{configItemKey}` map: `{output.Item2}`",
                                     allowedMentions: AllowedMentions.None);
                             }
                             catch (ArgumentException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't remove your content from the `{key}` string list in the `{configItemKey}` map because the `{configItemKey}` config item isn't a map. There is likely a misconfiguration in the config item describer.");
                             }
 
                             break;
                         // Other types, I don't see any reason to add them until I need them.
                         default:
-                            await ReplyAsync("I seem to have encountered a setting type that I do not know about.");
+                            await Context.Channel.SendMessageAsync("I seem to have encountered a setting type that I do not know about.");
                             break;
                     }
                 }
@@ -1799,24 +1816,24 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                 await ConfigHelper.RemoveStringListDictionaryKey(_config,
                                     configItemKey, value);
 
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I deleted the string list with the following key from the `{configItemKey}` map: {value}");
                             }
                             catch (ArgumentOutOfRangeException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't delete the string list you wanted from the `{configItemKey}` map because the `{value}` key already doesn't exist.");
                             }
                             catch (ArgumentException)
                             {
-                                await ReplyAsync(
+                                await Context.Channel.SendMessageAsync(
                                     $"I couldn't delete the string list you wanted from the `{configItemKey}` map because the `{configItemKey}` config item isn't a map. There is likely a misconfiguration in the config item describer.");
                             }
 
                             break;
                         // Other types, I don't see any reason to add them until I need them.
                         default:
-                            await ReplyAsync("I seem to have encountered a setting type that I do not know about.");
+                            await Context.Channel.SendMessageAsync("I seem to have encountered a setting type that I do not know about.");
                             break;
                     }
                 }
