@@ -56,6 +56,14 @@ public class InfoModule : ModuleBase<SocketCommandContext>
                 $"```{Environment.NewLine}{string.Join(Environment.NewLine, moduleList)}{Environment.NewLine}```{Environment.NewLine}" +
                 $"ℹ  **See also: `{prefix}config`. Run `{prefix}help config` for more information.**");
         }
+        else if (_commands.Commands.Any(command => command.Name.ToLower() == item.ToLower()))
+        {
+            // It's a command!
+            var commandInfo = _commands.Commands.Single<CommandInfo>(command => command.Name.ToLower() == item.ToLower());
+            var ponyReadable = PonyReadableCommandHelp(prefix, item, commandInfo);
+            ponyReadable += PonyReadableRelevantAliases(prefix, item);
+            await ReplyAsync(ponyReadable);
+        }
         // Module.
         else if (_commands.Modules.Any(module => module.Name.ToLower() == item.ToLower() ||
                                                  module.Name.ToLower() == item.ToLower() + "module" ||
@@ -110,14 +118,6 @@ public class InfoModule : ModuleBase<SocketCommandContext>
                     $"Run `{prefix}help <command>` for help regarding a specific command!" +
                     $"{(potentialAliases.Length != 0 ? $"{Environment.NewLine}ℹ  This category shares a name with an alias. For information regarding this alias, run `{prefix}help {potentialAliases.First().Name.ToLower()}`." : "")}");
             }
-        }
-        else if (_commands.Commands.Any(command => command.Name.ToLower() == item.ToLower()))
-        {
-            // It's a command!
-            var commandInfo = _commands.Commands.Single<CommandInfo>(command => command.Name.ToLower() == item.ToLower());
-            var ponyReadable = PonyReadableCommandHelp(prefix, item, commandInfo);
-            ponyReadable += PonyReadableRelevantAliases(prefix, item);
-            await ReplyAsync(ponyReadable);
         }
         // Try alternate command names
         else if (_commands.Commands.Any(command =>
