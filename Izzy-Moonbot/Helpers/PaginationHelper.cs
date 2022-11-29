@@ -4,6 +4,8 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using Izzy_Moonbot.Adapters;
+using static Izzy_Moonbot.Adapters.IIzzyClient;
 
 namespace Izzy_Moonbot.Helpers;
 
@@ -11,19 +13,26 @@ public class PaginationHelper
 {
     private readonly AllowedMentions _allowedMentions;
 
-    private readonly DiscordSocketClient _client;
+    private readonly IIzzyClient _client;
     private readonly RequestOptions _options;
     private readonly string[] _staticParts;
 
     private readonly bool _useCodeBlock;
     private ulong _authorId;
     private bool _easterEgg;
-    private IUserMessage _message;
+    private IIzzyMessage _message;
     public DateTime ExpiresAt;
     public int PageNumber;
     public string[] Pages;
 
     public PaginationHelper(SocketCommandContext context, string[] pages, string[] staticParts, int pageNumber = 0,
+        bool codeblock = true,
+        AllowedMentions allowedMentions = null,
+        RequestOptions options = null)
+        : this(new SocketCommandContextAdapter(context), pages, staticParts, pageNumber, codeblock, allowedMentions, options)
+    { }
+
+    public PaginationHelper(IIzzyContext context, string[] pages, string[] staticParts, int pageNumber = 0,
         bool codeblock = true,
         AllowedMentions allowedMentions = null,
         RequestOptions options = null)
@@ -43,7 +52,7 @@ public class PaginationHelper
         CreatePaginationMessage(context);
     }
 
-    private async void CreatePaginationMessage(SocketCommandContext context)
+    private async void CreatePaginationMessage(IIzzyContext context)
     {
         var builder = new ComponentBuilder()
             .WithButton(customId: "goto-start", emote: Emoji.Parse(":track_previous:"), disabled: false)
@@ -163,8 +172,7 @@ public class PaginationHelper
         await component.DeferAsync();
     }
 
-    private async Task MessageDeletedEvent(Cacheable<IMessage, ulong> message,
-        Cacheable<IMessageChannel, ulong> channel)
+    private async Task MessageDeletedEvent(IIzzyHasId message, IIzzyHasId channel)
     {
         if (_message.Id == message.Id)
         {

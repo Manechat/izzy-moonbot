@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
+using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Attributes;
 using Izzy_Moonbot.Describers;
 using Izzy_Moonbot.Helpers;
@@ -36,6 +37,22 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
     public async Task ConfigCommandAsync(
         [Summary("The item to get/modify.")] string configItemKey = "",
         [Summary("")] [Remainder] string? value = "")
+    {
+        await TestableConfigCommandAsync(
+            new SocketCommandContextAdapter(Context),
+            _config,
+            _configDescriber,
+            configItemKey,
+            value
+        );
+    }
+
+    public static async Task TestableConfigCommandAsync(
+        IIzzyContext Context, // TODO: naming style
+        Config _config, // TODO: naming style
+        ConfigDescriber _configDescriber, // TODO: naming style
+        string configItemKey = "",
+        string? value = "")
     {
         if (configItemKey == "")
         {
