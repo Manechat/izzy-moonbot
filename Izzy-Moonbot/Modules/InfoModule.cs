@@ -82,9 +82,9 @@ public class InfoModule : ModuleBase<SocketCommandContext>
 
                 ponyReadable += $"```";
                 
-                if (commandInfo.Aliases.Any(alternative => alternative.ToLower() != commandInfo.Name.ToLower() && alternative.ToLower() != item.ToLower()))
+                if (commandInfo.Aliases.Any(alternate => alternate.ToLower() != commandInfo.Name.ToLower() && alternate.ToLower() != item.ToLower()))
                     ponyReadable += $"{Environment.NewLine}" +
-                                    $"Alternative names: {string.Join(", ", commandInfo.Aliases.Where(alternative => alternative.ToLower() != commandInfo.Name.ToLower() && alternative.ToLower() != item.ToLower()))}";
+                                    $"Alternate names: {string.Join(", ", commandInfo.Aliases.Where(alternate => alternate.ToLower() != commandInfo.Name.ToLower() && alternate.ToLower() != item.ToLower()))}";
 
                 await ReplyAsync(ponyReadable);
                 return;
@@ -174,9 +174,9 @@ public class InfoModule : ModuleBase<SocketCommandContext>
                     
                     ponyReadable += $"```";
                 
-                    if (commandInfo.Aliases.Any(alternative => alternative.ToLower() != commandInfo.Name.ToLower() && alternative.ToLower() != item.ToLower()))
+                    if (commandInfo.Aliases.Any(alternate => alternate.ToLower() != commandInfo.Name.ToLower() && alternate.ToLower() != item.ToLower()))
                         ponyReadable += $"{Environment.NewLine}" +
-                                        $"Alternate names: {string.Join(", ", commandInfo.Aliases.Where(alternative => alternative.ToLower() != commandInfo.Name.ToLower() && alternative.ToLower() != item.ToLower()))}";
+                                        $"Alternate names: {string.Join(", ", commandInfo.Aliases.Where(alternate => alternate.ToLower() != commandInfo.Name.ToLower() && alternate.ToLower() != item.ToLower()))}";
 
                     await ReplyAsync(ponyReadable);
                     return;
@@ -211,9 +211,9 @@ public class InfoModule : ModuleBase<SocketCommandContext>
                     
                         ponyReadable += $"```";
                 
-                        if (commandInfo.Aliases.Any(alternative => alternative.ToLower() != commandInfo.Name.ToLower() && alternative.ToLower() != item.ToLower()))
+                        if (commandInfo.Aliases.Any(alternate => alternate.ToLower() != commandInfo.Name.ToLower() && alternate.ToLower() != item.ToLower()))
                             ponyReadable += $"{Environment.NewLine}" +
-                                        $"Alternate names: {string.Join(", ", commandInfo.Aliases.Where(alternative => alternative.ToLower() != commandInfo.Name.ToLower() && alternative.ToLower() != item.ToLower()))}";
+                                        $"Alternate names: {string.Join(", ", commandInfo.Aliases.Where(alternate => alternate.ToLower() != commandInfo.Name.ToLower() && alternate.ToLower() != item.ToLower()))}";
 
                         await ReplyAsync(ponyReadable);
                         return;
