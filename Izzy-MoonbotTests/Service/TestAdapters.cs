@@ -1,8 +1,5 @@
 ﻿using Discord;
 using Discord.WebSocket;
-using Izzy_Moonbot.Settings;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Threading.Channels;
 using static Izzy_Moonbot.Adapters.IIzzyClient;
 
 namespace Izzy_Moonbot.Adapters;
@@ -33,6 +30,8 @@ public class TestRole : IIzzyRole
         Name = name;
         Id = id;
     }
+
+    public override string ToString() => Name;
 }
 
 public class StubMessage
@@ -101,6 +100,8 @@ public class TestGuildChannel : IIzzySocketGuildChannel
         Name = name;
         Id = id;
     }
+
+    public override string ToString() => Name;
 }
 
 public class TestTextChannel : IIzzySocketTextChannel
