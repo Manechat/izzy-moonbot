@@ -116,6 +116,7 @@ public class InfoModule : ModuleBase<SocketCommandContext>
             // It's a command!
             var commandInfo = _commands.Commands.Single<CommandInfo>(command => command.Name.ToLower() == item.ToLower());
             var ponyReadable = PonyReadableCommandHelp(prefix, item, commandInfo);
+            ponyReadable += PonyReadableRelevantAliases(prefix, item);
             await ReplyAsync(ponyReadable);
         }
         // Try alternate command names
@@ -126,6 +127,7 @@ public class InfoModule : ModuleBase<SocketCommandContext>
             var commandInfo = _commands.Commands.Single<CommandInfo>(command => command.Aliases.Select(alias => alias.ToLower()).Contains(item.ToLower()));
             var alternateName = commandInfo.Aliases.Single(alias => alias.ToLower() == item.ToLower());
             var ponyReadable = PonyReadableCommandHelp(prefix, item, commandInfo, alternateName);
+            ponyReadable += PonyReadableRelevantAliases(prefix, item);
             await ReplyAsync(ponyReadable);
         }
         // Try aliases
@@ -193,6 +195,15 @@ public class InfoModule : ModuleBase<SocketCommandContext>
                 $"Alternate names: {string.Join(", ", remainingAlternates.Select(alt => $"{prefix}{alt}"))}";
 
         return ponyReadable;
+    }
+
+    private string PonyReadableRelevantAliases(char prefix, string command)
+    {
+        var relevantAliases = _config.Aliases.Where(alias => alias.Value.ToLower().StartsWith(command));
+        if (relevantAliases.Any())
+            return $"{Environment.NewLine}Relevant aliases: {string.Join(", ", relevantAliases.Select(alias => $"{prefix}{alias.Key}"))}";
+        else
+            return "";
     }
 
     [Command("about")]
