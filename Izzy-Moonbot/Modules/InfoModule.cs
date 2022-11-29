@@ -181,6 +181,12 @@ public class InfoModule : ModuleBase<SocketCommandContext>
             ponyReadable += $"```";
         }
 
+        var examples = commandInfo.Attributes.OfType<ExampleAttribute>();
+        if (examples.Count() == 1)
+            ponyReadable += $"Example: `{examples.Single()}`";
+        else if (examples.Count() > 1)
+            ponyReadable += $"Examples: {string.Join(",  ", examples.Select(e => $"`{e}`"))}";
+
         if (commandInfo.Aliases.Any(alternate => alternate.ToLower() != commandInfo.Name.ToLower() && alternate.ToLower() != command.ToLower()))
             ponyReadable += $"{Environment.NewLine}" +
                         $"Alternate names: {string.Join(", ", commandInfo.Aliases.Where(alternate => alternate.ToLower() != commandInfo.Name.ToLower() && alternate.ToLower() != command.ToLower()))}";
