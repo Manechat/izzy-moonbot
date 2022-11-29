@@ -178,7 +178,7 @@ public class DiscordHelperTests
         var client = new TestClient(izzyHerself, new[] { guild });
 
         Func<ulong, Task<IIzzyUser>> userGetter = (ulong id) => Task.FromResult((IIzzyUser)users.Where(user => user.Id == id).Single());
-        return new TestIzzyContext(false, guild, client, new TestMessageChannel("general", 1, userGetter));
+        return new TestIzzyContext(false, guild, client, new TestMessageChannel("general", 1, userGetter), null);
     }
 
     [TestMethod()]

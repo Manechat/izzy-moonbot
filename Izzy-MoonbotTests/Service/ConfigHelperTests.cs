@@ -308,7 +308,7 @@ public class ConfigHelperTests
         Assert.ThrowsException<ArgumentException>(() => ConfigHelper.GetStringListDictionary(cfg, "Prefix"));
     }
 
-    public TestIzzyContext DefaultTestContext(string commandMessage)
+    public TestIzzyContext DefaultTestContext()
     {
         // Unrealistic assumptions made here include but are not limited to:
         // - There is only one guild/server the bot ever sees
@@ -323,9 +323,8 @@ public class ConfigHelperTests
         var roles = new List<TestRole> {
             new TestRole("Alicorn", 1)
         };
-        var generalChannel = new TestTextChannel("general", 1, () => users);
         var channels = new List<TestTextChannel>{
-            generalChannel
+            new TestTextChannel("general", 1, () => users)
         };
 
         var guild = new TestGuild(1, users, channels, roles);
@@ -334,22 +333,35 @@ public class ConfigHelperTests
         // TODO: where/how do we store the actual messages???
 
         Func<ulong, Task<IIzzyUser>> userGetter = (ulong id) => Task.FromResult((IIzzyUser)users.Where(user => user.Id == id).Single());
-        return new TestIzzyContext(false, guild, client, new TestMessageChannel("general", 1, userGetter));
+        return new TestIzzyContext(
+            false,
+            guild,
+            client,
+            new TestMessageChannel("general", 1, userGetter),
+            new TestMessage(0, "", izzyHerself, async (string replyMessage) => { })
+        );
     }
 
     [TestMethod()]
     public async Task ConfigCommand_TestsAsync()
     {
         var context = DefaultTestContext();
+        var contextChannel = (TestMessageChannel)context.Channel;
         var cfg = new Config();
         var cd = new ConfigDescriber();
 
         Assert.AreEqual(cfg.Prefix, '.');
-        await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "prefix", "*");
+        await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "prefix", "*"); // .config prefix *
         Assert.AreEqual(cfg.Prefix, '.');
 
+        Assert.AreEqual(1, contextChannel.Messages.Count);
+        Assert.AreEqual("Sorry, I couldn't find a config value or category called `prefix`!", contextChannel.Messages[0].Item2);
+
         Assert.AreEqual(cfg.Prefix, '.');
-        await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "Prefix", "*");
+        await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "Prefix", "*"); // .config Prefix *
         Assert.AreEqual(cfg.Prefix, '*');
+
+        Assert.AreEqual(2, contextChannel.Messages.Count);
+        Assert.AreEqual("I've set `Prefix` to the following content: *", contextChannel.Messages[1].Item2);
     }
 }
