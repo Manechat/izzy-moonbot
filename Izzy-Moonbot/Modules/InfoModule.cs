@@ -214,7 +214,8 @@ public class InfoModule : ModuleBase<SocketCommandContext>
         await ReplyAsync(
             $"Izzy Moonbot{Environment.NewLine}" +
             $"Programmed in C# with Virtual Studio and JetBrains Rider{Environment.NewLine}" +
-            $"Programmed by Dr. Romulus#4444 and Cloudburst#0001 (Twi/Leah) and Ixrec#7992{Environment.NewLine}" +
+            $"Programmed by Dr. Romulus#4444, Cloudburst#0001 (Twi/Leah) and Ixrec#7992{Environment.NewLine}" +
+
             $"Supervisor programmed by Raindrops#2245{Environment.NewLine}" +
             $"{Environment.NewLine}" +
             $"Profile picture by confetticakez#7352 (Confetti){Environment.NewLine}" +
