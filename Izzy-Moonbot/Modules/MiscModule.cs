@@ -87,6 +87,8 @@ public class MiscModule : ModuleBase<SocketCommandContext>
         "How long to wait until sending the message, e.g. \"5 days\" or \"2 hours\".")]
     [Parameter("message", ParameterType.String, "The reminder message to DM.")]
     [ExternalUsageAllowed]
+    [Example(".remindme 2 hours join stream")]
+    [Example(".remindme 6 months rethink life")]
     public async Task RemindMeCommandAsync([Remainder] string argsString = "")
     {
         if (argsString == "")
@@ -705,6 +707,8 @@ public class MiscModule : ModuleBase<SocketCommandContext>
         [DevCommand(Group="Permission")]
         [Parameter("user", ParameterType.User, "The user to add the quote to.")]
         [Parameter("content", ParameterType.String, "The quote content to add.")]
+        [Example(".addquote @UserName hello there")]
+        [Example(".addquote \"Izzy Moonbot\" belizzle it")]
         public async Task AddQuoteCommandAsync(
             [Remainder] string argsString = "")
         {
