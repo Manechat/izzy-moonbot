@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using Izzy_Moonbot.Settings;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -30,6 +31,31 @@ public class TestRole : IIzzyRole
     {
         Name = name;
         Id = id;
+    }
+}
+
+public class TestMessage : IIzzyMessage
+{
+    public ulong Id { get; }
+    public string Content { get; }
+    public IIzzyUser Author { get; }
+
+    private readonly Func<string, Task> _replier;
+
+    public TestMessage(ulong id, string content, IIzzyUser author, Func<string, Task> replier)
+    {
+        Id = id;
+        Content = content;
+        Author = author;
+
+        _replier = replier;
+    }
+
+    public Task ReplyAsync(string message) => _replier(message);
+
+    public Task ModifyAsync(Action<object> action)
+    {
+        throw new NotImplementedException();
     }
 }
 
@@ -68,17 +94,37 @@ public class TestMessageChannel : IIzzySocketMessageChannel
     public string Name { get; }
     public ulong Id { get; }
 
+    // Test-only API
+    public List<(ulong, string, IIzzyUser?)> Messages { get; }
+
     private readonly Func<ulong, Task<IIzzyUser>> _userGetter;
 
     public TestMessageChannel(string name, ulong id, Func<ulong, Task<IIzzyUser>> userGetter)
     {
         Name = name;
         Id = id;
+        Messages = new List<(ulong, string, IIzzyUser?)>();
 
         _userGetter = userGetter;
     }
 
     public async Task<IIzzyUser> GetUserAsync(ulong userId) => await _userGetter(userId);
+
+    private void AddMessageToChannel(string message)
+    {
+        Messages.Add((0ul, message, null));
+    }
+
+    public async Task<IIzzyMessage> SendMessageAsync(
+        string message,
+        AllowedMentions? allowedMentions = null,
+        MessageComponent? components = null,
+        RequestOptions? options = null
+    )
+    {
+        AddMessageToChannel(message);
+        return new TestMessage(0ul, message, null, async (replyMessage) => AddMessageToChannel(replyMessage));
+    }
 }
 
 public class TestGuild : IIzzyGuild
@@ -101,6 +147,14 @@ public class TestGuild : IIzzyGuild
     {
         return Task.FromResult((IReadOnlyCollection<IIzzyUser>)_users.Where(user => user.Name.StartsWith(userSearchQuery)).ToList());
     }
+
+    public IIzzyUser GetUser(ulong userId) => _users.Where(user => user.Id == userId).Single();
+    public IIzzyRole GetRole(ulong roleId) => Roles.Where(role => role.Id == roleId).Single();
+    public IIzzySocketGuildChannel GetChannel(ulong channelId)
+    {
+        var tc = TextChannels.Where(tc => tc.Id == channelId).Single();
+        return new TestGuildChannel(tc.Name, tc.Id);
+    }
 }
 
 public class TestClient: IIzzyClient
@@ -121,12 +175,14 @@ public class TestIzzyContext : IIzzyContext
     public IIzzyGuild Guild { get; }
     public IIzzyClient Client { get; }
     public IIzzySocketMessageChannel Channel { get; }
+    public IIzzyMessage Message { get; }
 
-    public TestIzzyContext(bool isPrivate, TestGuild guild, TestClient client, TestMessageChannel messageChannel)
+    public TestIzzyContext(bool isPrivate, TestGuild guild, TestClient client, TestMessageChannel messageChannel, IIzzyMessage message)
     {
         IsPrivate = isPrivate;
         Guild = guild;
         Client = client;
         Channel = messageChannel;
+        Message = message;
     }
 }

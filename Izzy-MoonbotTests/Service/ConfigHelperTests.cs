@@ -1,4 +1,5 @@
 ﻿using Izzy_Moonbot.Helpers;
+using Izzy_Moonbot.Modules;
 using Izzy_Moonbot.Settings;
 using Izzy_Moonbot.EventListeners;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -7,6 +8,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Izzy_Moonbot.Describers;
+using Izzy_Moonbot.Adapters;
 
 namespace Izzy_MoonbotTests.Helper;
 
@@ -303,5 +306,50 @@ public class ConfigHelperTests
 
         Assert.ThrowsException<KeyNotFoundException>(() => ConfigHelper.GetStringListDictionary(cfg, "foo"));
         Assert.ThrowsException<ArgumentException>(() => ConfigHelper.GetStringListDictionary(cfg, "Prefix"));
+    }
+
+    public TestIzzyContext DefaultTestContext(string commandMessage)
+    {
+        // Unrealistic assumptions made here include but are not limited to:
+        // - There is only one guild/server the bot ever sees
+        // - All users are present in all channels
+
+        var izzyHerself = new TestUser("Izzy Moonbot", 1);
+        var users = new List<TestUser>{
+            izzyHerself,
+            new TestUser("Sunny", 2)
+        };
+
+        var roles = new List<TestRole> {
+            new TestRole("Alicorn", 1)
+        };
+        var generalChannel = new TestTextChannel("general", 1, () => users);
+        var channels = new List<TestTextChannel>{
+            generalChannel
+        };
+
+        var guild = new TestGuild(1, users, channels, roles);
+        var client = new TestClient(izzyHerself, new[] { guild });
+
+        // TODO: where/how do we store the actual messages???
+
+        Func<ulong, Task<IIzzyUser>> userGetter = (ulong id) => Task.FromResult((IIzzyUser)users.Where(user => user.Id == id).Single());
+        return new TestIzzyContext(false, guild, client, new TestMessageChannel("general", 1, userGetter));
+    }
+
+    [TestMethod()]
+    public async Task ConfigCommand_TestsAsync()
+    {
+        var context = DefaultTestContext();
+        var cfg = new Config();
+        var cd = new ConfigDescriber();
+
+        Assert.AreEqual(cfg.Prefix, '.');
+        await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "prefix", "*");
+        Assert.AreEqual(cfg.Prefix, '.');
+
+        Assert.AreEqual(cfg.Prefix, '.');
+        await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "Prefix", "*");
+        Assert.AreEqual(cfg.Prefix, '*');
     }
 }
