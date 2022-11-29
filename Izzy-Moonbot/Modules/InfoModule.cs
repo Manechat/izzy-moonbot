@@ -34,7 +34,6 @@ public class InfoModule : ModuleBase<SocketCommandContext>
 
         if (item == "")
         {
-            Context.Client.GetUser(4);
             // List modules.
             var moduleList = new List<string>();
 
