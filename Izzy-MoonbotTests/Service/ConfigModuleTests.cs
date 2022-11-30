@@ -169,13 +169,6 @@ public class ConfigModuleTests
         Assert.AreEqual(cfg.SafeMode, false);
         Assert.AreEqual("I've set `SafeMode` to the following content: False", generalChannel.Messages.Last().Content);
 
-        // post ".config ThreadOnlyMode false"
-        Assert.AreEqual(cfg.ThreadOnlyMode, true);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config ThreadOnlyMode false");
-        await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "ThreadOnlyMode", "false");
-        Assert.AreEqual(cfg.ThreadOnlyMode, false);
-        Assert.AreEqual("I've set `ThreadOnlyMode` to the following content: False", generalChannel.Messages.Last().Content);
-
         // post ".config BatchSendLogs true"
         Assert.AreEqual(cfg.BatchSendLogs, false);
         context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config BatchSendLogs true");
@@ -326,13 +319,6 @@ public class ConfigModuleTests
         Assert.AreEqual(cfg.FilterEnabled, false);
         Assert.AreEqual("I've set `FilterEnabled` to the following content: False", generalChannel.Messages.Last().Content);
 
-        // post ".config FilterMonitorEdits false"
-        Assert.AreEqual(cfg.FilterMonitorEdits, true);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config FilterMonitorEdits false");
-        await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "FilterMonitorEdits", "false");
-        Assert.AreEqual(cfg.FilterMonitorEdits, false);
-        Assert.AreEqual("I've set `FilterMonitorEdits` to the following content: False", generalChannel.Messages.Last().Content);
-
         // post ".config FilterIgnoredChannels add <#2>"
         AssertSetsAreEqual(new HashSet<ulong>(), cfg.FilterIgnoredChannels);
         context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config FilterIgnoredChannels add <#2>");
@@ -392,13 +378,6 @@ public class ConfigModuleTests
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "SpamEnabled", "false");
         Assert.AreEqual(cfg.SpamEnabled, false);
         Assert.AreEqual("I've set `SpamEnabled` to the following content: False", generalChannel.Messages.Last().Content);
-
-        // post ".config SpamMonitorEdits false"
-        Assert.AreEqual(cfg.SpamMonitorEdits, true);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config SpamMonitorEdits false");
-        await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "SpamMonitorEdits", "false");
-        Assert.AreEqual(cfg.SpamMonitorEdits, false);
-        Assert.AreEqual("I've set `SpamMonitorEdits` to the following content: False", generalChannel.Messages.Last().Content);
 
         // post ".config SpamEditReprocessThreshold 20"
         Assert.AreEqual(cfg.SpamEditReprocessThreshold, 10);
@@ -576,7 +555,7 @@ public class ConfigModuleTests
         // Ensure we can't forget to keep this test up to date
         var configPropsCount = typeof(Config).GetProperties().Length;
 
-        Assert.AreEqual(58, configPropsCount,
+        Assert.AreEqual(55, configPropsCount,
             $"{Environment.NewLine}If you just added or removed a config item, then this test is probably out of date");
 
         Assert.AreEqual(configPropsCount * 2, generalChannel.Messages.Count(),

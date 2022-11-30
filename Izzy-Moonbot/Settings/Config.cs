@@ -17,7 +17,6 @@ public class Config
         Prefix = '.';
         UnicycleInterval = 100;
         SafeMode = true;
-        ThreadOnlyMode = true;
         BatchSendLogs = false;
         BatchLogsSendRate = 10;
         MentionResponseEnabled = false;
@@ -46,7 +45,6 @@ public class Config
 
         // Filter Settings
         FilterEnabled = true;
-        FilterMonitorEdits = true;
         FilterIgnoredChannels = new HashSet<ulong>();
         FilterBypassRoles = new HashSet<ulong>();
         FilterDevBypass = true;
@@ -57,7 +55,6 @@ public class Config
 
         // Pressure settings
         SpamEnabled = true;
-        SpamMonitorEdits = true;
         SpamEditReprocessThreshold = 10;
         SpamBypassRoles = new HashSet<ulong>();
         SpamIgnoredChannels = new HashSet<ulong>();
@@ -90,7 +87,6 @@ public class Config
     public char Prefix { get; set; }
     public int UnicycleInterval { get; set; }
     public bool SafeMode { get; set; }
-    public bool ThreadOnlyMode { get; set; }
     public bool BatchSendLogs { get; set; }
     public double BatchLogsSendRate { get; set; }
     public bool MentionResponseEnabled { get; set; }
@@ -145,7 +141,6 @@ public class Config
 
     // Filter settings
     public bool FilterEnabled { get; set; }
-    public bool FilterMonitorEdits { get; set; }
     public HashSet<ulong> FilterIgnoredChannels { get; set; }
     public HashSet<ulong> FilterBypassRoles { get; set; }
     public bool FilterDevBypass { get; set; }
@@ -156,7 +151,6 @@ public class Config
 
     // Pressure settings
     public bool SpamEnabled { get; set; }
-    public bool SpamMonitorEdits { get; set; }
     public int SpamEditReprocessThreshold { get; set; }
     public HashSet<ulong> SpamBypassRoles { get; set; }
     public HashSet<ulong> SpamIgnoredChannels { get; set; }

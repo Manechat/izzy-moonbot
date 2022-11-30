@@ -22,10 +22,6 @@ public class ConfigDescriber
             new ConfigItem(ConfigItemType.Boolean,
                 "If set to true, I will not preform any moderation actions. This is best used when testing moderation functions in case of potentially broken code.",
                 ConfigItemCategory.Core));
-        _config.Add("ThreadOnlyMode",
-            new ConfigItem(ConfigItemType.Boolean,
-                "If set to true, I will not process any pressure, or check messages for filtered words for any channels which are not threads. This is used for gradual rollout of Izzy Moonbot.",
-                ConfigItemCategory.Core));
         _config.Add("BatchSendLogs",
             new ConfigItem(ConfigItemType.Boolean,
                 "If set to true, I will batch send mod/action logs instead of sending them immediately. This is managed automatically by the Raid service to prevent me from being ratelimited.",
@@ -108,10 +104,6 @@ public class ConfigDescriber
         _config.Add("FilterEnabled",
             new ConfigItem(ConfigItemType.Boolean,
                 "Whether I will filter messages for words in the `FilteredWords` list.", ConfigItemCategory.Filter));
-        _config.Add("FilterMonitorEdits",
-            new ConfigItem(ConfigItemType.Boolean,
-                "Whether I will refilter edited messages for words in the `FilteredWords` list.",
-                ConfigItemCategory.Filter));
         _config.Add("FilterIgnoredChannels",
             new ConfigItem(ConfigItemType.ChannelList, "The list of channels I will not filter messages in.",
                 ConfigItemCategory.Filter));
@@ -144,13 +136,9 @@ public class ConfigDescriber
         _config.Add("SpamEnabled",
             new ConfigItem(ConfigItemType.Boolean,
                 "Whether I will process messages and apply pressure to users.", ConfigItemCategory.Spam));
-        _config.Add("SpamMonitorEdits",
-            new ConfigItem(ConfigItemType.Boolean,
-                "Whether I will reprocess edited messages for pressure. This only happens if the message is `SpamEditReprocessThreshold` more characters than the original message and I still know what the previous message was.",
-                ConfigItemCategory.Spam));
         _config.Add("SpamEditReprocessThreshold",
             new ConfigItem(ConfigItemType.Integer,
-                "The amount of differences in characters needed on a message edit to reprocess the edited message for pressure, if `SpamMonitorEdits` is set to `true`.",
+                "The amount of differences in characters needed on a message edit to reprocess the edited message for pressure.",
                 ConfigItemCategory.Spam));
         _config.Add("SpamBypassRoles",
             new ConfigItem(ConfigItemType.RoleList,
