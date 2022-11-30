@@ -351,13 +351,6 @@ public class ConfigModuleTests
         AssertDictsOfListsAreEqual(new Dictionary<string, List<string>> { { "slurs", new List<string> { "mudpony" } } }, cfg.FilteredWords);
         Assert.AreEqual("I added the following string to the `slurs` string list in the `FilteredWords` map: `mudpony`", generalChannel.Messages.Last().Content);
 
-        // post ".config FilterResponseDelete set slurs true"
-        AssertDictionariesAreEqual(new Dictionary<string, bool>(), cfg.FilterResponseDelete);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config FilterResponseDelete set slurs true");
-        await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "FilterResponseDelete", "set slurs true");
-        AssertDictionariesAreEqual(new Dictionary<string, bool> { { "slurs", true } }, cfg.FilterResponseDelete);
-        Assert.AreEqual("I added the following boolean to the `slurs` map key in the `FilterResponseDelete` map: `True`", generalChannel.Messages.Last().Content);
-
         // post ".config FilterResponseMessages set slurs true"
         AssertDictionariesAreEqual(new Dictionary<string, string?>(), cfg.FilterResponseMessages);
         context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config FilterResponseMessages set slurs that wasn't very nice");
@@ -378,13 +371,6 @@ public class ConfigModuleTests
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "SpamEnabled", "false");
         Assert.AreEqual(cfg.SpamEnabled, false);
         Assert.AreEqual("I've set `SpamEnabled` to the following content: False", generalChannel.Messages.Last().Content);
-
-        // post ".config SpamEditReprocessThreshold 20"
-        Assert.AreEqual(cfg.SpamEditReprocessThreshold, 10);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config SpamEditReprocessThreshold 20");
-        await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "SpamEditReprocessThreshold", "20");
-        Assert.AreEqual(cfg.SpamEditReprocessThreshold, 20);
-        Assert.AreEqual("I've set `SpamEditReprocessThreshold` to the following content: 20", generalChannel.Messages.Last().Content);
 
         // post ".config SpamBypassRoles add <@&1>"
         AssertSetsAreEqual(new HashSet<ulong>(), cfg.SpamBypassRoles);
@@ -481,20 +467,6 @@ public class ConfigModuleTests
         Assert.AreEqual(cfg.RaidProtectionEnabled, false);
         Assert.AreEqual("I've set `RaidProtectionEnabled` to the following content: False", generalChannel.Messages.Last().Content);
 
-        // post ".config NormalVerificationLevel 1"
-        Assert.AreEqual(cfg.NormalVerificationLevel, 3);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config NormalVerificationLevel 1");
-        await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "NormalVerificationLevel", "1");
-        Assert.AreEqual(cfg.NormalVerificationLevel, 1);
-        Assert.AreEqual("I've set `NormalVerificationLevel` to the following content: 1", generalChannel.Messages.Last().Content);
-
-        // post ".config RaidVerificationLevel 5"
-        Assert.AreEqual(cfg.RaidVerificationLevel, 4);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config RaidVerificationLevel 5");
-        await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "RaidVerificationLevel", "5");
-        Assert.AreEqual(cfg.RaidVerificationLevel, 5);
-        Assert.AreEqual("I've set `RaidVerificationLevel` to the following content: 5", generalChannel.Messages.Last().Content);
-
         // post ".config AutoSilenceNewJoins true"
         Assert.AreEqual(cfg.AutoSilenceNewJoins, false);
         context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config AutoSilenceNewJoins true");
@@ -555,7 +527,7 @@ public class ConfigModuleTests
         // Ensure we can't forget to keep this test up to date
         var configPropsCount = typeof(Config).GetProperties().Length;
 
-        Assert.AreEqual(55, configPropsCount,
+        Assert.AreEqual(51, configPropsCount,
             $"{Environment.NewLine}If you just added or removed a config item, then this test is probably out of date");
 
         Assert.AreEqual(configPropsCount * 2, generalChannel.Messages.Count(),

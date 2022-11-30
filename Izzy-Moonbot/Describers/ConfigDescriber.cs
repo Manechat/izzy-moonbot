@@ -119,10 +119,6 @@ public class ConfigDescriber
             new ConfigItem(ConfigItemType.StringListDictionary,
                 "The map of the list of words I will filter. Each key is a separate filter category.",
                 ConfigItemCategory.Filter));
-        _config.Add("FilterResponseDelete",
-            new ConfigItem(ConfigItemType.BooleanDictionary,
-                "The map containing if I'll delete a message on filter violation depending on which filter category was violated.",
-                ConfigItemCategory.Filter));
         _config.Add("FilterResponseMessages",
             new ConfigItem(ConfigItemType.StringDictionary,
                 "The map of messages I will send on a filter violation depending on which filter category was violated.",
@@ -136,10 +132,6 @@ public class ConfigDescriber
         _config.Add("SpamEnabled",
             new ConfigItem(ConfigItemType.Boolean,
                 "Whether I will process messages and apply pressure to users.", ConfigItemCategory.Spam));
-        _config.Add("SpamEditReprocessThreshold",
-            new ConfigItem(ConfigItemType.Integer,
-                "The amount of differences in characters needed on a message edit to reprocess the edited message for pressure.",
-                ConfigItemCategory.Spam));
         _config.Add("SpamBypassRoles",
             new ConfigItem(ConfigItemType.RoleList,
                 "The roles I will not silence if they exceed `SpamMaxPressure`. Please note that I __will still process pressure for roles in this value__, I just won't silence them and I'll just log that it occured.",
@@ -191,14 +183,6 @@ public class ConfigDescriber
             new ConfigItem(ConfigItemType.Boolean,
                 "Whether or not I will protect this server against raids. It's best to disable if you anticipate a large increase in member count over a few days (3000 in 4 days for example)",
                 ConfigItemCategory.Raid));
-        _config.Add("NormalVerificationLevel",
-            new ConfigItem(ConfigItemType.Integer,
-                $"The verification level I will set when a raid ends. Values not specified below will result in this feature being disabled.{Environment.NewLine}0 - Unrestricted{Environment.NewLine}1 - Verified email{Environment.NewLine}2 - Account age older than 5 minutes{Environment.NewLine}3 - Member of server for longer than 10 minutes.{Environment.NewLine}4 - Must have verified phone.",
-                ConfigItemCategory.Raid, true));
-        _config.Add("RaidVerificationLevel",
-            new ConfigItem(ConfigItemType.Integer,
-                $"The verification level I will set when I detect a raid. Values not specified below will result in this feature being disabled.{Environment.NewLine}0 - Unrestricted{Environment.NewLine}1 - Verified email{Environment.NewLine}2 - Account age older than 5 minutes{Environment.NewLine}3 - Member of server for longer than 10 minutes.{Environment.NewLine}4 - Must have verified phone.",
-                ConfigItemCategory.Raid, true));
         _config.Add("AutoSilenceNewJoins",
             new ConfigItem(ConfigItemType.Boolean,
                 "Whether or not I should automatically silence new users joining the server. Usually toggled on and off by the `ass` and `assoff` commands respectivly.",

@@ -49,13 +49,11 @@ public class Config
         FilterBypassRoles = new HashSet<ulong>();
         FilterDevBypass = true;
         FilteredWords = new Dictionary<string, List<string>>();
-        FilterResponseDelete = new Dictionary<string, bool>();
         FilterResponseMessages = new Dictionary<string, string?>();
         FilterResponseSilence = new Dictionary<string, bool>();
 
         // Pressure settings
         SpamEnabled = true;
-        SpamEditReprocessThreshold = 10;
         SpamBypassRoles = new HashSet<ulong>();
         SpamIgnoredChannels = new HashSet<ulong>();
         SpamDevBypass = true;
@@ -71,8 +69,6 @@ public class Config
 
         // Raid settings
         RaidProtectionEnabled = true;
-        NormalVerificationLevel = 3;
-        RaidVerificationLevel = 4;
         AutoSilenceNewJoins = false;
         SmallRaidSize = 3;
         SmallRaidTime = 180;
@@ -145,13 +141,11 @@ public class Config
     public HashSet<ulong> FilterBypassRoles { get; set; }
     public bool FilterDevBypass { get; set; }
     public Dictionary<string, List<string>> FilteredWords { get; set; }
-    public Dictionary<string, bool> FilterResponseDelete { get; set; }
     public Dictionary<string, string?> FilterResponseMessages { get; set; }
     public Dictionary<string, bool> FilterResponseSilence { get; set; }
 
     // Pressure settings
     public bool SpamEnabled { get; set; }
-    public int SpamEditReprocessThreshold { get; set; }
     public HashSet<ulong> SpamBypassRoles { get; set; }
     public HashSet<ulong> SpamIgnoredChannels { get; set; }
     public bool SpamDevBypass { get; set; }
@@ -167,8 +161,6 @@ public class Config
 
     // Raid settings
     public bool RaidProtectionEnabled { get; set; }
-    public int? NormalVerificationLevel { get; set; }
-    public int? RaidVerificationLevel { get; set; }
     public bool AutoSilenceNewJoins { get; set; }
     public int SmallRaidSize { get; set; }
     public double SmallRaidTime { get; set; }

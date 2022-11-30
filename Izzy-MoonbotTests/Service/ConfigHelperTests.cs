@@ -209,31 +209,31 @@ public class ConfigHelperTests
         Assert.ThrowsException<KeyNotFoundException>(() => ConfigHelper.GetNullableStringDictionary(cfg, "foo"));
         Assert.ThrowsException<ArgumentException>(() => ConfigHelper.GetNullableStringDictionary(cfg, "Prefix"));
 
-        // FilterResponseDelete and FilterResponseSilence are the only Dict<string, bool>s in Config
+        // FilterResponseSilence is the only Dict<string, bool> in Config
 
-        AssertDictionariesAreEqual(new Dictionary<string, bool>(), cfg.FilterResponseDelete);
-        AssertDictionariesAreEqual(new Dictionary<string, bool>(), ConfigHelper.GetBooleanDictionary(cfg, "FilterResponseDelete"));
-        Assert.IsFalse(ConfigHelper.DoesStringDictionaryKeyExist(cfg, "FilterResponseDelete", "spam"));
+        AssertDictionariesAreEqual(new Dictionary<string, bool>(), cfg.FilterResponseSilence);
+        AssertDictionariesAreEqual(new Dictionary<string, bool>(), ConfigHelper.GetBooleanDictionary(cfg, "FilterResponseSilence"));
+        Assert.IsFalse(ConfigHelper.DoesStringDictionaryKeyExist(cfg, "FilterResponseSilence", "spam"));
 
-        await ConfigHelper.CreateBooleanDictionaryKey(cfg, "FilterResponseDelete", "spam", "true");
+        await ConfigHelper.CreateBooleanDictionaryKey(cfg, "FilterResponseSilence", "spam", "true");
 
-        AssertDictionariesAreEqual(new Dictionary<string, bool> { { "spam", true } }, cfg.FilterResponseDelete);
-        AssertDictionariesAreEqual(new Dictionary<string, bool> { { "spam", true } }, ConfigHelper.GetBooleanDictionary(cfg, "FilterResponseDelete"));
-        Assert.IsTrue(ConfigHelper.DoesBooleanDictionaryKeyExist(cfg, "FilterResponseDelete", "spam"));
-        Assert.IsTrue(ConfigHelper.GetBooleanDictionaryValue(cfg, "FilterResponseDelete", "spam"));
+        AssertDictionariesAreEqual(new Dictionary<string, bool> { { "spam", true } }, cfg.FilterResponseSilence);
+        AssertDictionariesAreEqual(new Dictionary<string, bool> { { "spam", true } }, ConfigHelper.GetBooleanDictionary(cfg, "FilterResponseSilence"));
+        Assert.IsTrue(ConfigHelper.DoesBooleanDictionaryKeyExist(cfg, "FilterResponseSilence", "spam"));
+        Assert.IsTrue(ConfigHelper.GetBooleanDictionaryValue(cfg, "FilterResponseSilence", "spam"));
 
-        await ConfigHelper.SetBooleanDictionaryValue(cfg, "FilterResponseDelete", "spam", "false");
+        await ConfigHelper.SetBooleanDictionaryValue(cfg, "FilterResponseSilence", "spam", "false");
 
-        AssertDictionariesAreEqual(new Dictionary<string, bool> { { "spam", false } }, cfg.FilterResponseDelete);
-        AssertDictionariesAreEqual(new Dictionary<string, bool> { { "spam", false } }, ConfigHelper.GetBooleanDictionary(cfg, "FilterResponseDelete"));
-        Assert.IsTrue(ConfigHelper.DoesBooleanDictionaryKeyExist(cfg, "FilterResponseDelete", "spam"));
-        Assert.IsFalse(ConfigHelper.GetBooleanDictionaryValue(cfg, "FilterResponseDelete", "spam"));
+        AssertDictionariesAreEqual(new Dictionary<string, bool> { { "spam", false } }, cfg.FilterResponseSilence);
+        AssertDictionariesAreEqual(new Dictionary<string, bool> { { "spam", false } }, ConfigHelper.GetBooleanDictionary(cfg, "FilterResponseSilence"));
+        Assert.IsTrue(ConfigHelper.DoesBooleanDictionaryKeyExist(cfg, "FilterResponseSilence", "spam"));
+        Assert.IsFalse(ConfigHelper.GetBooleanDictionaryValue(cfg, "FilterResponseSilence", "spam"));
 
-        await ConfigHelper.RemoveBooleanDictionaryKey(cfg, "FilterResponseDelete", "spam");
+        await ConfigHelper.RemoveBooleanDictionaryKey(cfg, "FilterResponseSilence", "spam");
 
-        AssertDictionariesAreEqual(new Dictionary<string, bool>(), cfg.FilterResponseDelete);
-        AssertDictionariesAreEqual(new Dictionary<string, bool>(), ConfigHelper.GetBooleanDictionary(cfg, "FilterResponseDelete"));
-        Assert.IsFalse(ConfigHelper.DoesBooleanDictionaryKeyExist(cfg, "FilterResponseDelete", "spam"));
+        AssertDictionariesAreEqual(new Dictionary<string, bool>(), cfg.FilterResponseSilence);
+        AssertDictionariesAreEqual(new Dictionary<string, bool>(), ConfigHelper.GetBooleanDictionary(cfg, "FilterResponseSilence"));
+        Assert.IsFalse(ConfigHelper.DoesBooleanDictionaryKeyExist(cfg, "FilterResponseSilence", "spam"));
 
         Assert.ThrowsException<KeyNotFoundException>(() => ConfigHelper.GetBooleanDictionary(cfg, "foo"));
         Assert.ThrowsException<ArgumentException>(() => ConfigHelper.GetBooleanDictionary(cfg, "Prefix"));
