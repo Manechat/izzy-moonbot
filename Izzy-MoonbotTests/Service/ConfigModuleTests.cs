@@ -108,8 +108,8 @@ public class ConfigModuleTests
         );
     }
 
-    // even my AssertDictionariesAreEqual helper falls apart on List values
-    void AssertDictsOfListsAreEqual<K, V>(IDictionary<K, List<V>>? expected, IDictionary<K, List<V>>? actual, string message = "")
+    // even my AssertDictionariesAreEqual helper falls apart on Set values
+    void AssertDictsOfSetsAreEqual<K, V>(IDictionary<K, HashSet<V>>? expected, IDictionary<K, HashSet<V>>? actual, string message = "")
     {
         if (expected is null || actual is null)
         {
@@ -120,7 +120,7 @@ public class ConfigModuleTests
             Assert.AreEqual(expected, actual, $"\nCount() mismatch: {expected.Count()} != {actual.Count()}");
         foreach (var kv in expected)
         {
-            AssertListsAreEqual(expected[kv.Key], actual[kv.Key], $"\nKey {kv.Key}" + message);
+            AssertSetsAreEqual(expected[kv.Key], actual[kv.Key], $"\nKey {kv.Key}" + message);
         }
     }
 
@@ -345,10 +345,10 @@ public class ConfigModuleTests
         Assert.AreEqual("I've set `FilterDevBypass` to the following content: False", generalChannel.Messages.Last().Content);
 
         // post ".config FilteredWords add slurs mudpony"
-        AssertDictsOfListsAreEqual(new Dictionary<string, List<string>>(), cfg.FilteredWords);
+        AssertDictsOfSetsAreEqual(new Dictionary<string, HashSet<string>>(), cfg.FilteredWords);
         context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config FilteredWords add slurs mudpony");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "FilteredWords", "add slurs mudpony");
-        AssertDictsOfListsAreEqual(new Dictionary<string, List<string>> { { "slurs", new List<string> { "mudpony" } } }, cfg.FilteredWords);
+        AssertDictsOfSetsAreEqual(new Dictionary<string, HashSet<string>> { { "slurs", new HashSet<string> { "mudpony" } } }, cfg.FilteredWords);
         Assert.AreEqual("I added the following string to the `slurs` string list in the `FilteredWords` map: `mudpony`", generalChannel.Messages.Last().Content);
 
         // post ".config FilterResponseMessages set slurs true"

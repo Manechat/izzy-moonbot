@@ -205,13 +205,6 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                         allowedMentions: AllowedMentions.None);
                     break;
                 case ConfigItemType.StringListDictionary:
-                    //case SettingsItemType.CharListDictionary: // Note: Implement when needed
-                    //case SettingsItemType.BooleanListDictionary: // Note: Implement when needed
-                    //case SettingsItemType.IntegerListDictionary: // Note: Implement when needed
-                    //case SettingsItemType.DoubleListDictionary: // Note: Implement when needed
-                    //case SettingsItemType.UserListDictionary: // Note: Implement when needed
-                    //case SettingsItemType.RoleListDictionary: // Note: Implement when needed
-                    //case SettingsItemType.ChannelListDictionary: // Note: Implement when needed
                     await context.Channel.SendMessageAsync(
                         $"**{configItemKey}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
                         $"*{configItem.Description}*{Environment.NewLine}" +
@@ -977,11 +970,11 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             try
                             {
                                 var keys = ConfigHelper
-                                    .GetStringListDictionary(config, configItemKey).Keys
+                                    .GetStringSetDictionary(config, configItemKey).Keys
                                     .ToList();
 
                                 var values = ConfigHelper
-                                    .GetStringListDictionary(config, configItemKey).Values
+                                    .GetStringSetDictionary(config, configItemKey).Values
                                     .ToList();
 
                                 if (keys.Count > 10)
@@ -1050,15 +1043,16 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                         case ConfigItemType.StringListDictionary:
                             try
                             {
-                                var stringList =
-                                    ConfigHelper.GetStringListDictionaryValue(config, configItemKey,
+                                var stringSet =
+                                    ConfigHelper.GetStringSetDictionaryValue(config, configItemKey,
                                         value);
 
-                                if (stringList.Count > 10)
+                                if (stringSet.Count > 10)
                                 {
                                     // Use pagination
                                     var pages = new List<string>();
                                     var pageNumber = -1;
+                                    var stringList = stringSet.OrderBy(x => x).ToList();
                                     for (var i = 0; i < stringList.Count; i++)
                                     {
                                         if (i % 10 == 0)
@@ -1081,7 +1075,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                 else
                                 {
                                     await context.Channel.SendMessageAsync(
-                                        $"**{value}** contains the following values:{Environment.NewLine}```{Environment.NewLine}{string.Join(", ", stringList)}{Environment.NewLine}```",
+                                        $"**{value}** contains the following values:{Environment.NewLine}```{Environment.NewLine}{string.Join(", ", stringSet)}{Environment.NewLine}```",
                                         allowedMentions: AllowedMentions.None);
                                 }
                             }
@@ -1111,10 +1105,10 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             try
                             {
                                 var output =
-                                    ConfigHelper.DoesStringListDictionaryKeyExist(config, configItemKey, key)
-                                    ? await ConfigHelper.AddToStringListDictionaryValue(config,
+                                    ConfigHelper.DoesStringSetDictionaryKeyExist(config, configItemKey, key)
+                                    ? await ConfigHelper.AddToStringSetDictionaryValue(config,
                                         configItemKey, key, value)
-                                    : await ConfigHelper.CreateStringListDictionaryKey(config, configItemKey, key, value);
+                                    : await ConfigHelper.CreateStringSetDictionaryKey(config, configItemKey, key, value);
 
                                 await context.Channel.SendMessageAsync(
                                     $"I added the following string to the `{output.Item1}` string list in the `{configItemKey}` map: `{output.Item2}`",
@@ -1143,7 +1137,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             try
                             {
                                 var output =
-                                    await ConfigHelper.RemoveFromStringListDictionaryValue(
+                                    await ConfigHelper.RemoveFromStringSetDictionaryValue(
                                         config, configItemKey, key, value);
 
                                 await context.Channel.SendMessageAsync(
@@ -1170,7 +1164,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                         case ConfigItemType.StringListDictionary:
                             try
                             {
-                                await ConfigHelper.RemoveStringListDictionaryKey(config,
+                                await ConfigHelper.RemoveStringSetDictionaryKey(config,
                                     configItemKey, value);
 
                                 await context.Channel.SendMessageAsync(

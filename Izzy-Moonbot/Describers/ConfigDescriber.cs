@@ -337,22 +337,6 @@ public class ConfigDescriber
                 return "Map of String";
             case ConfigItemType.StringListDictionary:
                 return "Map of Lists of Strings";
-            //case ConfigItemType.CharListDictionary: // Note: Implement when needed
-            //    return "Map of Lists of Characters";
-            //case ConfigItemType.BooleanListDictionary: // Note: Implement when needed
-            //    return "Map of Lists of Booleans";
-            //case ConfigItemType.IntegerListDictionary: // Note: Implement when needed
-            //    return "Map of Lists of Integers";
-            //case ConfigItemType.DoubleListDictionary: // Note: Implement when needed
-            //    return "Map of Lists of Doubles";
-            //case ConfigItemType.EnumListDictionary: // Note: Implement when needed
-            //    return "Map of Lists of Enums";
-            //case ConfigItemType.UserListDictionary: // Note: Implement when needed
-            //    return "Map of Lists of Users";
-            //case ConfigItemType.RoleListDictionary: // Note: Implement when needed
-            //    return "Map of Lists of Roles";
-            //case ConfigItemType.ChannelListDictionary: // Note: Implement when needed
-            //    return "Map of Lists of Channels";
             default:
                 return "<UNKNOWN>";
         }
@@ -384,15 +368,7 @@ public class ConfigDescriber
 
     public bool TypeIsDictionaryList(ConfigItemType type)
     {
-        if (type == ConfigItemType.StringListDictionary /*||
-                type == ConfigItemType.CharListDictionary || // Note: Implement when needed
-                type == ConfigItemType.BooleanListDictionary || // Note: Implement when needed
-                type == ConfigItemType.IntegerListDictionary || // Note: Implement when needed
-                type == ConfigItemType.DoubleListDictionary || // Note: Implement when needed
-                type == ConfigItemType.EnumListDictionary || // Note: Implement when needed
-                type == ConfigItemType.UserListDictionary || // Note: Implement when needed
-                type == ConfigItemType.RoleListDictionary || // Note: Implement when needed
-                type == ConfigItemType.ChannelListDictionary*/) return true; // Note: Implement when needed
+        if (type == ConfigItemType.StringListDictionary) return true;
         return false;
     }
 }

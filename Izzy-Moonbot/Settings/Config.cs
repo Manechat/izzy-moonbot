@@ -48,7 +48,7 @@ public class Config
         FilterIgnoredChannels = new HashSet<ulong>();
         FilterBypassRoles = new HashSet<ulong>();
         FilterDevBypass = true;
-        FilteredWords = new Dictionary<string, List<string>>();
+        FilteredWords = new Dictionary<string, HashSet<string>>();
         FilterResponseMessages = new Dictionary<string, string?>();
         FilterResponseSilence = new HashSet<string>();
 
@@ -140,7 +140,7 @@ public class Config
     public HashSet<ulong> FilterIgnoredChannels { get; set; }
     public HashSet<ulong> FilterBypassRoles { get; set; }
     public bool FilterDevBypass { get; set; }
-    public Dictionary<string, List<string>> FilteredWords { get; set; }
+    public Dictionary<string, HashSet<string>> FilteredWords { get; set; }
     public Dictionary<string, string?> FilterResponseMessages { get; set; }
     public HashSet<string> FilterResponseSilence { get; set; }
 

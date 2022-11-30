@@ -178,7 +178,7 @@ public class DevModule : ModuleBase<SocketCommandContext>
                         await msg.RemoveAllReactionsAsync();
                         await msg.ModifyAsync(message => message.Content = "⚠  **Importing. Please wait...**");
 
-                        _config.FilteredWords[args[1]].AddRange(toFilter);
+                        _config.FilteredWords[args[1]].UnionWith(toFilter);
 
                         await FileHelper.SaveConfigAsync(_config);
                         await msg.ModifyAsync(message => message.Content = "⚠  **Done!**");
