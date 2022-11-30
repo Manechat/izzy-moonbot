@@ -174,6 +174,12 @@ public class SocketGuildAdapter : IIzzyGuild
     public IIzzySocketGuildChannel GetChannel(ulong channelId) => new SocketGuildChannelAdapter(_guild.GetChannel(channelId));
 }
 
+public class IdHaver : IIzzyHasId
+{
+    public ulong Id { get; }
+    public IdHaver(ulong id) => Id = id;
+}
+
 public class DiscordSocketClientAdapter : IIzzyClient
 {
     private readonly DiscordSocketClient _client;
@@ -181,6 +187,15 @@ public class DiscordSocketClientAdapter : IIzzyClient
     public DiscordSocketClientAdapter(DiscordSocketClient client)
     {
         _client = client;
+
+        _client.ButtonExecuted += async (SocketMessageComponent arg) =>
+        {
+            ButtonExecuted?.Invoke(arg);
+        };
+        _client.MessageDeleted += async (message, channel) =>
+        {
+            MessageDeleted?.Invoke(new IdHaver(message.Id), new IdHaver(channel.Id));
+        };
     }
 
     public IIzzyUser CurrentUser { get => new DiscordNetUserAdapter(_client.CurrentUser); }
@@ -189,8 +204,8 @@ public class DiscordSocketClientAdapter : IIzzyClient
         get => _client.Guilds.Select(guild => new SocketGuildAdapter(guild)).ToList();
     }
 
-    public event Func<SocketMessageComponent, Task> ButtonExecuted;
-    public event Func<IIzzyHasId, IIzzyHasId, Task> MessageDeleted;
+    public event Func<SocketMessageComponent, Task>? ButtonExecuted;
+    public event Func<IIzzyHasId, IIzzyHasId, Task>? MessageDeleted;
 }
 
 public class SocketCommandContextAdapter : IIzzyContext
