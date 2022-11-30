@@ -321,8 +321,6 @@ public class ConfigDescriber
                 return "Double";
             case ConfigItemType.Enum:
                 return "Enum";
-            case ConfigItemType.User:
-                return "User";
             case ConfigItemType.Role:
                 return "Role";
             case ConfigItemType.Channel:
@@ -352,7 +350,6 @@ public class ConfigDescriber
             type == ConfigItemType.Integer ||
             type == ConfigItemType.Double ||
             type == ConfigItemType.Enum ||
-            type == ConfigItemType.User ||
             type == ConfigItemType.Role ||
             type == ConfigItemType.Channel) return true;
         return false;

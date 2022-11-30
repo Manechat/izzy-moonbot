@@ -38,7 +38,6 @@ public enum ConfigItemType
     Integer,
     Double,
     Enum,
-    User,
     Role,
     Channel,
     

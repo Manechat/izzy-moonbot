@@ -159,14 +159,6 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                         $"Run `{config.Prefix}config {configItemKey} <value>` to set this value. {nullableString}",
                         allowedMentions: AllowedMentions.None);
                     break;
-                case ConfigItemType.User:
-                    await context.Channel.SendMessageAsync(
-                        $"**{configItemKey}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
-                        $"*{configItem.Description}*{Environment.NewLine}" +
-                        $"Current value: <@{ConfigHelper.GetValue(config, configItemKey)}>{Environment.NewLine}" +
-                        $"Run `{config.Prefix}config {configItemKey} <value>` to set this value. {nullableString}",
-                        allowedMentions: AllowedMentions.None);
-                    break;
                 case ConfigItemType.Role:
                     await context.Channel.SendMessageAsync(
                         $"**{configItemKey}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
@@ -358,25 +350,6 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                 $"I couldn't set `{configItemKey}` to the content provided because you provided content that I couldn't turn into this specific enum type ({enumType.Name}). Please try again.",
                                 allowedMentions: AllowedMentions.None);
                         }
-                        break;
-                    case ConfigItemType.User:
-                        if (configItem.Nullable && value == "<nothing>") value = null;
-                        try
-                        {
-                            var result =
-                                await ConfigHelper.SetUserValue(config, configItemKey, value,
-                                    context);
-                            var response = "`null`";
-                            if (result != null) response = $"<@{result.Id}>";
-                            await context.Channel.SendMessageAsync($"I've set `{configItemKey}` to the following content: {response}");
-                        }
-                        catch (MemberAccessException)
-                        {
-                            await context.Channel.SendMessageAsync(
-                                $"I couldn't set `{configItemKey}` to the content provided because you provided content that I couldn't turn into a user. Please try again.",
-                                allowedMentions: AllowedMentions.None);
-                        }
-
                         break;
                     case ConfigItemType.Role:
                         if (configItem.Nullable && value == "<nothing>") value = null;

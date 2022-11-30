@@ -120,36 +120,8 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<IIzzyUser?> SetUserValue(Config settings, string key,
-        string? userResolvable, IIzzyContext context)
-    {
-        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
-        {
-            IIzzyUser? user = null;
-            if (userResolvable is not null)
-            {
-                var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(userResolvable, context);
-
-                if (userId == 0) throw new MemberAccessException($"Couldn't find user using resolvable `{userResolvable}`");
-
-                user = context.Guild.GetUser(userId);
-
-                pinfo.SetValue(settings, userId, null);
-            }
-            else
-            {
-                pinfo.SetValue(settings, null);
-            }
-
-            await FileHelper.SaveConfigAsync(settings);
-            return user;
-        }
-
-        throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
-    }
-
-        public static async Task<IIzzyRole?> SetRoleValue(Config settings, string key, string? roleResolvable,
-        IIzzyContext context)
+    public static async Task<IIzzyRole?> SetRoleValue(Config settings, string key, string? roleResolvable,
+    IIzzyContext context)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
