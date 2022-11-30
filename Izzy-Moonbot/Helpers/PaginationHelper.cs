@@ -21,23 +21,22 @@ public class PaginationHelper
     private bool _easterEgg;
     private IIzzyMessage _message;
     public DateTime ExpiresAt;
-    public int PageNumber;
+    private int _pageNumber = 0;
     public string[] Pages;
 
-    public PaginationHelper(SocketCommandContext context, string[] pages, string[] staticParts, int pageNumber = 0,
+    public PaginationHelper(SocketCommandContext context, string[] pages, string[] staticParts,
         bool codeblock = true,
         AllowedMentions allowedMentions = null)
-        : this(new SocketCommandContextAdapter(context), pages, staticParts, pageNumber, codeblock, allowedMentions)
+        : this(new SocketCommandContextAdapter(context), pages, staticParts, codeblock, allowedMentions)
     { }
 
-    public PaginationHelper(IIzzyContext context, string[] pages, string[] staticParts, int pageNumber = 0,
+    public PaginationHelper(IIzzyContext context, string[] pages, string[] staticParts,
         bool codeblock = true,
         AllowedMentions allowedMentions = null)
     {
         _client = context.Client;
         _authorId = context.Message.Author.Id;
         Pages = pages;
-        PageNumber = pageNumber;
         _staticParts = staticParts;
         _easterEgg = false;
         _useCodeBlock = codeblock;
@@ -93,7 +92,7 @@ public class PaginationHelper
             if (_useCodeBlock) codeBlock = "```";
 
             msg.Content =
-                $"{_staticParts[0]}{Environment.NewLine}{codeBlock}{Environment.NewLine}{Pages[PageNumber]}{Environment.NewLine}{codeBlock}`Page {PageNumber + 1} out of {Pages.Length}`{Environment.NewLine}{_staticParts[1]}{Environment.NewLine}{Environment.NewLine}{expireMessage}";
+                $"{_staticParts[0]}{Environment.NewLine}{codeBlock}{Environment.NewLine}{Pages[_pageNumber]}{Environment.NewLine}{codeBlock}`Page {_pageNumber + 1} out of {Pages.Length}`{Environment.NewLine}{_staticParts[1]}{Environment.NewLine}{Environment.NewLine}{expireMessage}";
 
             if (_easterEgg)
             {
@@ -144,19 +143,19 @@ public class PaginationHelper
         switch (component.Data.CustomId)
         {
             case "goto-start":
-                PageNumber = 0;
+                _pageNumber = 0;
                 RedrawPagination();
                 break;
             case "goto-previous":
-                if (PageNumber >= 1) PageNumber -= 1;
+                if (_pageNumber >= 1) _pageNumber -= 1;
                 RedrawPagination();
                 break;
             case "goto-next":
-                if (PageNumber < Pages.Length - 1) PageNumber += 1;
+                if (_pageNumber < Pages.Length - 1) _pageNumber += 1;
                 RedrawPagination();
                 break;
             case "goto-end":
-                PageNumber = Pages.Length - 1;
+                _pageNumber = Pages.Length - 1;
                 RedrawPagination();
                 break;
             case "trigger-easteregg":
