@@ -364,7 +364,7 @@ public class AdminModule : ModuleBase<SocketCommandContext>
 
         var random = new Random();
         var index = random.Next(_config.MentionResponses.Count);
-        var response = _config.MentionResponses[index]; // Random response
+        var response = _config.MentionResponses.ElementAt(index); // Random response
 
         _state.LastMentionResponse = DateTimeOffset.UtcNow;
 

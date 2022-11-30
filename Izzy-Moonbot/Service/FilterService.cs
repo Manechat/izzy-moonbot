@@ -112,11 +112,9 @@ public class FilterService
         {
             if (!_config.FilterResponseMessages.ContainsKey(category))
                 _config.FilterResponseMessages[category] = null;
-            if (!_config.FilterResponseSilence.ContainsKey(category))
-                _config.FilterResponseSilence[category] = false;
 
             var messageResponse = _config.FilterResponseMessages[category];
-            var shouldSilence = _config.FilterResponseSilence[category];
+            var shouldSilence = _config.FilterResponseSilence.Contains(category);
             
             if (_config.FilterBypassRoles.Overlaps(roleIds) || 
                 (DiscordHelper.IsDev(context.User.Id) && _config.FilterDevBypass))

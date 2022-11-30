@@ -44,25 +44,11 @@ public enum ConfigItemType
     
     // Lists
     StringList,
-    CharList,
-    BooleanList,
-    IntegerList,
-    DoubleList,
-    //EnumList, // Note: Implement when needed
-    UserList,
     RoleList,
     ChannelList,
     
     // Dictionaries
     StringDictionary,
-    //CharDictionary, // Note: Implement when needed
-    BooleanDictionary,
-    //IntegerDictionary, // Note: Implement when needed
-    //DoubleDictionary, // Note: Implement when needed
-    //EnumDictionary, // Note: Implement when needed
-    //UserDictionary, // Note: Implement when needed
-    //RoleDictionary, // Note: Implement when needed
-    //ChannelDictionary, // Note: Implement when needed
     
     // Dictionaries of lists
     StringListDictionary

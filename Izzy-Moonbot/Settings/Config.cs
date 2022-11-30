@@ -20,7 +20,7 @@ public class Config
         BatchSendLogs = false;
         BatchLogsSendRate = 10;
         MentionResponseEnabled = false;
-        MentionResponses = new List<string>();
+        MentionResponses = new HashSet<string>();
         MentionResponseCooldown = 600;
         DiscordActivityName = "you all soon";
         DiscordActivityWatching = true;
@@ -29,7 +29,7 @@ public class Config
         // Server settings
         _bannerMode = ConfigListener.BannerMode.None;
         _bannerInterval = 60;
-        BannerImages = new List<string>();
+        BannerImages = new HashSet<string>();
 
         // Mod settings
         ModRole = 0;
@@ -50,7 +50,7 @@ public class Config
         FilterDevBypass = true;
         FilteredWords = new Dictionary<string, List<string>>();
         FilterResponseMessages = new Dictionary<string, string?>();
-        FilterResponseSilence = new Dictionary<string, bool>();
+        FilterResponseSilence = new HashSet<string>();
 
         // Pressure settings
         SpamEnabled = true;
@@ -86,7 +86,7 @@ public class Config
     public bool BatchSendLogs { get; set; }
     public double BatchLogsSendRate { get; set; }
     public bool MentionResponseEnabled { get; set; }
-    public List<string> MentionResponses { get; set; }
+    public HashSet<string> MentionResponses { get; set; }
     public double MentionResponseCooldown { get; set; }
     public string? DiscordActivityName { get; set; }
     public bool DiscordActivityWatching { get; set; }
@@ -120,7 +120,7 @@ public class Config
             _bannerInterval = value;
         }
     }
-    public List<string> BannerImages { get; set; }
+    public HashSet<string> BannerImages { get; set; }
     
 
     // Moderation settings
@@ -142,7 +142,7 @@ public class Config
     public bool FilterDevBypass { get; set; }
     public Dictionary<string, List<string>> FilteredWords { get; set; }
     public Dictionary<string, string?> FilterResponseMessages { get; set; }
-    public Dictionary<string, bool> FilterResponseSilence { get; set; }
+    public HashSet<string> FilterResponseSilence { get; set; }
 
     // Pressure settings
     public bool SpamEnabled { get; set; }

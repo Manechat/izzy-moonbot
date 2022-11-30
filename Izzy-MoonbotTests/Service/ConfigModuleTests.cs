@@ -191,10 +191,10 @@ public class ConfigModuleTests
         Assert.AreEqual("I've set `MentionResponseEnabled` to the following content: True", generalChannel.Messages.Last().Content);
 
         // post ".config MentionResponses add yes i am bot"
-        AssertListsAreEqual(new List<string>(), cfg.MentionResponses);
+        AssertSetsAreEqual(new HashSet<string>(), cfg.MentionResponses);
         context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config MentionResponses add yes i am bot");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "MentionResponses", "add yes i am bot");
-        AssertListsAreEqual(new List<string> { "yes i am bot" }, cfg.MentionResponses);
+        AssertSetsAreEqual(new HashSet<string> { "yes i am bot" }, cfg.MentionResponses);
         Assert.AreEqual($"I added the following content to the `MentionResponses` string list:{Environment.NewLine}" +
             $"```{Environment.NewLine}" +
             $"yes i am bot{Environment.NewLine}" +
@@ -244,10 +244,10 @@ public class ConfigModuleTests
         Assert.AreEqual("I've set `BannerInterval` to the following content: 1", generalChannel.Messages.Last().Content);
 
         // post ".config BannerImages add https://static.manebooru.art/img/2022/11/23/4025857/large.png"
-        AssertListsAreEqual(new List<string>(), cfg.BannerImages);
+        AssertSetsAreEqual(new HashSet<string>(), cfg.BannerImages);
         context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config BannerImages add https://static.manebooru.art/img/2022/11/23/4025857/large.png");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "BannerImages", "add https://static.manebooru.art/img/2022/11/23/4025857/large.png");
-        AssertListsAreEqual(new List<string> { "https://static.manebooru.art/img/2022/11/23/4025857/large.png" }, cfg.BannerImages);
+        AssertSetsAreEqual(new HashSet<string> { "https://static.manebooru.art/img/2022/11/23/4025857/large.png" }, cfg.BannerImages);
         Assert.AreEqual($"I added the following content to the `BannerImages` string list:{Environment.NewLine}" +
             $"```{Environment.NewLine}" +
             $"https://static.manebooru.art/img/2022/11/23/4025857/large.png{Environment.NewLine}" +
@@ -359,11 +359,15 @@ public class ConfigModuleTests
         Assert.AreEqual("I added the following string to the `slurs` map key in the `FilterResponseMessages` map: `that wasn't very nice`", generalChannel.Messages.Last().Content);
 
         // post ".config FilterResponseSilence set slurs true"
-        AssertDictionariesAreEqual(new Dictionary<string, bool>(), cfg.FilterResponseSilence);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config FilterResponseSilence set slurs true");
-        await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "FilterResponseSilence", "set slurs true");
-        AssertDictionariesAreEqual(new Dictionary<string, bool> { { "slurs", true } }, cfg.FilterResponseSilence);
-        Assert.AreEqual("I added the following boolean to the `slurs` map key in the `FilterResponseSilence` map: `True`", generalChannel.Messages.Last().Content);
+        AssertSetsAreEqual(new HashSet<string>(), cfg.FilterResponseSilence);
+        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config FilterResponseSilence add slurs");
+        await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "FilterResponseSilence", "add slurs");
+        AssertSetsAreEqual(new HashSet<string> { "slurs" }, cfg.FilterResponseSilence);
+        Assert.AreEqual($"I added the following content to the `FilterResponseSilence` string list:{Environment.NewLine}" +
+            $"```{Environment.NewLine}" +
+            $"slurs{Environment.NewLine}" +
+            $"```",
+            generalChannel.Messages.Last().Content);
 
         // post ".config SpamEnabled false"
         Assert.AreEqual(cfg.SpamEnabled, true);

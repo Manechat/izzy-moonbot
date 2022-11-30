@@ -124,8 +124,8 @@ public class ConfigDescriber
                 "The map of messages I will send on a filter violation depending on which filter category was violated.",
                 ConfigItemCategory.Filter, true));
         _config.Add("FilterResponseSilence",
-            new ConfigItem(ConfigItemType.BooleanDictionary,
-                "The map containing if I'll silence a user on a filter violation depending on which filter category was violated.",
+            new ConfigItem(ConfigItemType.StringList,
+                "The list of filter categories that will cause me to silence a user on a filter violation.",
                 ConfigItemCategory.Filter));
 
         // Pressure settings
@@ -329,40 +329,12 @@ public class ConfigDescriber
                 return "Channel";
             case ConfigItemType.StringList:
                 return "List of Strings";
-            case ConfigItemType.CharList:
-                return "List of Characters";
-            case ConfigItemType.BooleanList:
-                return "List of Booleans";
-            case ConfigItemType.IntegerList:
-                return "List of Integers";
-            //case ConfigItemType.EnumList: // Note: Implement when needed
-            //    return "List of Enums";
-            case ConfigItemType.DoubleList:
-                return "List of Doubles";
-            case ConfigItemType.UserList:
-                return "List of Users";
             case ConfigItemType.RoleList:
                 return "List of Roles";
             case ConfigItemType.ChannelList:
                 return "List of Channels";
             case ConfigItemType.StringDictionary:
                 return "Map of String";
-            //case ConfigItemType.CharDictionary: // Note: Implement when needed
-            //    return "Map of Character";
-            case ConfigItemType.BooleanDictionary:
-                return "Map of Boolean";
-            //case ConfigItemType.IntegerDictionary: // Note: Implement when needed
-            //    return "Map of Integer";
-            //case ConfigItemType.DoubleDictionary: // Note: Implement when needed
-            //    return "Map of Double";
-            //case ConfigItemType.EnumDictionary: // Note: Implement when needed
-            //    return "Map of Enums";
-            //case ConfigItemType.UserDictionary: // Note: Implement when needed
-            //    return "Map of User";
-            //case ConfigItemType.RoleDictionary: // Note: Implement when needed
-            //    return "Map of Role";
-            //case ConfigItemType.ChannelDictionary: // Note: Implement when needed
-            //    return "Map of Channel";
             case ConfigItemType.StringListDictionary:
                 return "Map of Lists of Strings";
             //case ConfigItemType.CharListDictionary: // Note: Implement when needed
@@ -403,30 +375,12 @@ public class ConfigDescriber
     public bool TypeIsList(ConfigItemType type)
     {
         if (type == ConfigItemType.StringList ||
-            type == ConfigItemType.CharList ||
-            type == ConfigItemType.BooleanList ||
-            type == ConfigItemType.IntegerList ||
-            type == ConfigItemType.DoubleList ||
-            //type == ConfigItemType.EnumList || // Note: Implement when needed
-            type == ConfigItemType.UserList ||
             type == ConfigItemType.RoleList ||
             type == ConfigItemType.ChannelList) return true;
         return false;
     }
 
-    public bool TypeIsDictionaryValue(ConfigItemType type)
-    {
-        if (type == ConfigItemType.StringDictionary ||
-            //type == ConfigItemType.CharDictionary || // Note: Implement when needed
-            type == ConfigItemType.BooleanDictionary /*|| 
-                type == ConfigItemType.IntegerDictionary || // Note: Implement when needed
-                type == ConfigItemType.DoubleDictionary || // Note: Implement when needed
-                type == ConfigItemType.EnumDictionary || // Note: Implement when needed
-                type == ConfigItemType.UserDictionary || // Note: Implement when needed
-                type == ConfigItemType.RoleDictionary || // Note: Implement when needed
-                type == ConfigItemType.ChannelDictionary*/) return true; // Note: Implement when needed
-        return false;
-    }
+    public bool TypeIsDictionaryValue(ConfigItemType type) => type == ConfigItemType.StringDictionary;
 
     public bool TypeIsDictionaryList(ConfigItemType type)
     {

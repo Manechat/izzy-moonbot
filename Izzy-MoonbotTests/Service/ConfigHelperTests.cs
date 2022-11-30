@@ -102,34 +102,42 @@ public class ConfigHelperTests
             Assert.AreEqual(expected[i], actual[i], $"\nItem {i}" + message);
     }
 
+    void AssertSetsAreEqual<T>(ISet<T>? expected, ISet<T>? actual, string message = "")
+    {
+        if (expected is null || actual is null)
+        {
+            Assert.AreEqual(expected, actual);
+            return;
+        }
+        if (expected.Count() != actual.Count())
+            Assert.AreEqual(expected, actual, $"\nCount() mismatch: {expected.Count()} != {actual.Count()}");
+        foreach (var value in expected)
+            Assert.IsTrue(actual.Contains(value), $"\nValue {value}" + message);
+    }
+
     [TestMethod()]
-    public async Task Config_Lists_TestsAsync()
+    public async Task Config_HashSets_TestsAsync()
     {
         var cfg = new Config();
 
-        // Apparently we have only one List in Config: MentionResponses
-        // So only the *StringList methods are non-dead and have a testable success path
+        AssertSetsAreEqual(new HashSet<string>(), cfg.FilterResponseSilence);
+        AssertSetsAreEqual(new HashSet<string>(), ConfigHelper.GetStringSet(cfg, "FilterResponseSilence"));
+        Assert.IsFalse(ConfigHelper.DoesStringDictionaryKeyExist(cfg, "FilterResponseSilence", "spam"));
 
-        // Also don't test HasValueInList because it's both broken and dead
+        await ConfigHelper.AddToStringSet(cfg, "FilterResponseSilence", "spam");
 
-        AssertListsAreEqual(new List<string>(), cfg.MentionResponses);
-        AssertListsAreEqual(new List<string>(), ConfigHelper.GetStringList(cfg, "MentionResponses"));
+        AssertSetsAreEqual(new HashSet<string> { "spam" }, cfg.FilterResponseSilence);
+        AssertSetsAreEqual(new HashSet<string> { "spam" }, ConfigHelper.GetStringSet(cfg, "FilterResponseSilence"));
+        Assert.IsTrue(ConfigHelper.HasValueInSet(cfg, "FilterResponseSilence", "spam"));
 
-        await ConfigHelper.AddToStringList(cfg, "MentionResponses", "hello there");
+        await ConfigHelper.RemoveFromStringSet(cfg, "FilterResponseSilence", "spam");
 
-        AssertListsAreEqual(new List<string> { "hello there" }, cfg.MentionResponses);
-        AssertListsAreEqual(new List<string> { "hello there" }, ConfigHelper.GetStringList(cfg, "MentionResponses"));
+        AssertSetsAreEqual(new HashSet<string>(), cfg.FilterResponseSilence);
+        AssertSetsAreEqual(new HashSet<string>(), ConfigHelper.GetStringSet(cfg, "FilterResponseSilence"));
+        Assert.IsFalse(ConfigHelper.HasValueInSet(cfg, "FilterResponseSilence", "spam"));
 
-        await ConfigHelper.RemoveFromStringList(cfg, "MentionResponses", "hello there");
-
-        AssertListsAreEqual(new List<string>(), cfg.MentionResponses);
-        AssertListsAreEqual(new List<string>(), ConfigHelper.GetStringList(cfg, "MentionResponses"));
-
-        await Assert.ThrowsExceptionAsync<KeyNotFoundException>(() => ConfigHelper.AddToStringList(cfg, "foo", "bar"));
-        await Assert.ThrowsExceptionAsync<ArgumentException>(() => ConfigHelper.AddToStringList(cfg, "Aliases", "bar"));
-
-        await Assert.ThrowsExceptionAsync<KeyNotFoundException>(() => ConfigHelper.AddToBooleanList(cfg, "foo", "bar"));
-        await Assert.ThrowsExceptionAsync<ArgumentException>(() => ConfigHelper.AddToBooleanList(cfg, "Aliases", "bar"));
+        Assert.ThrowsException<KeyNotFoundException>(() => ConfigHelper.GetStringSet(cfg, "foo"));
+        Assert.ThrowsException<ArgumentException>(() => ConfigHelper.GetStringSet(cfg, "Prefix"));
     }
 
     // The built-in Assert.AreEqual and CollectionsAssert.AreEqual don't even work on Dictionaries, so everyone has to write their own
@@ -208,35 +216,6 @@ public class ConfigHelperTests
 
         Assert.ThrowsException<KeyNotFoundException>(() => ConfigHelper.GetNullableStringDictionary(cfg, "foo"));
         Assert.ThrowsException<ArgumentException>(() => ConfigHelper.GetNullableStringDictionary(cfg, "Prefix"));
-
-        // FilterResponseSilence is the only Dict<string, bool> in Config
-
-        AssertDictionariesAreEqual(new Dictionary<string, bool>(), cfg.FilterResponseSilence);
-        AssertDictionariesAreEqual(new Dictionary<string, bool>(), ConfigHelper.GetBooleanDictionary(cfg, "FilterResponseSilence"));
-        Assert.IsFalse(ConfigHelper.DoesStringDictionaryKeyExist(cfg, "FilterResponseSilence", "spam"));
-
-        await ConfigHelper.CreateBooleanDictionaryKey(cfg, "FilterResponseSilence", "spam", "true");
-
-        AssertDictionariesAreEqual(new Dictionary<string, bool> { { "spam", true } }, cfg.FilterResponseSilence);
-        AssertDictionariesAreEqual(new Dictionary<string, bool> { { "spam", true } }, ConfigHelper.GetBooleanDictionary(cfg, "FilterResponseSilence"));
-        Assert.IsTrue(ConfigHelper.DoesBooleanDictionaryKeyExist(cfg, "FilterResponseSilence", "spam"));
-        Assert.IsTrue(ConfigHelper.GetBooleanDictionaryValue(cfg, "FilterResponseSilence", "spam"));
-
-        await ConfigHelper.SetBooleanDictionaryValue(cfg, "FilterResponseSilence", "spam", "false");
-
-        AssertDictionariesAreEqual(new Dictionary<string, bool> { { "spam", false } }, cfg.FilterResponseSilence);
-        AssertDictionariesAreEqual(new Dictionary<string, bool> { { "spam", false } }, ConfigHelper.GetBooleanDictionary(cfg, "FilterResponseSilence"));
-        Assert.IsTrue(ConfigHelper.DoesBooleanDictionaryKeyExist(cfg, "FilterResponseSilence", "spam"));
-        Assert.IsFalse(ConfigHelper.GetBooleanDictionaryValue(cfg, "FilterResponseSilence", "spam"));
-
-        await ConfigHelper.RemoveBooleanDictionaryKey(cfg, "FilterResponseSilence", "spam");
-
-        AssertDictionariesAreEqual(new Dictionary<string, bool>(), cfg.FilterResponseSilence);
-        AssertDictionariesAreEqual(new Dictionary<string, bool>(), ConfigHelper.GetBooleanDictionary(cfg, "FilterResponseSilence"));
-        Assert.IsFalse(ConfigHelper.DoesBooleanDictionaryKeyExist(cfg, "FilterResponseSilence", "spam"));
-
-        Assert.ThrowsException<KeyNotFoundException>(() => ConfigHelper.GetBooleanDictionary(cfg, "foo"));
-        Assert.ThrowsException<ArgumentException>(() => ConfigHelper.GetBooleanDictionary(cfg, "Prefix"));
     }
 
     // even my AssertDictionariesAreEqual helper falls apart on List values
