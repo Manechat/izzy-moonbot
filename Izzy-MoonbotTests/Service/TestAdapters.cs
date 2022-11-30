@@ -48,6 +48,12 @@ public class StubMessage
     }
 }
 
+public class StubMessageProperties : IIzzyMessageProperties
+{
+    public Optional<string> Content { get; set; } = new Optional<string>();
+    public Optional<MessageComponent> Components { get; set; } = new Optional<MessageComponent>();
+}
+
 public class TestMessage : IIzzyMessage
 {
     public ulong Id { get; }
@@ -70,9 +76,17 @@ public class TestMessage : IIzzyMessage
         _channelBackref.Messages.Add(new StubMessage(lastId + 1, message, Author.Id));
     }
 
-    public Task ModifyAsync(Action<MessageProperties> action)
+    public Task ModifyAsync(Action<IIzzyMessageProperties> action)
     {
-        throw new NotImplementedException();
+        var messageBackref = _channelBackref.Messages.Where(m => m.Id == Id).Single();
+        var stubProps = new StubMessageProperties();
+        action(stubProps);
+        if (stubProps.Content.IsSpecified)
+        {
+            messageBackref.Content = stubProps.Content.Value;
+        }
+        // TODO: message.Components not implemented yet
+        return Task.CompletedTask;
     }
 }
 

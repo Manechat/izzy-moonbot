@@ -47,6 +47,19 @@ public class DiscordNetRoleAdapter : IIzzyRole
     }
 }
 
+class MessagePropertiesAdapter : IIzzyMessageProperties
+{
+    public Optional<string> Content { set => _msg.Content = value; }
+    public Optional<MessageComponent> Components { set => _msg.Components = value; }
+
+    private MessageProperties _msg;
+
+    public MessagePropertiesAdapter(MessageProperties msg)
+    {
+        _msg = msg;
+    }
+};
+
 public class SocketUserMessageAdapter : IIzzyMessage
 {
     private readonly SocketUserMessage _message;
@@ -63,9 +76,11 @@ public class SocketUserMessageAdapter : IIzzyMessage
     {
         await _message.ReplyAsync(message);
     }
-    public async Task ModifyAsync(Action<MessageProperties> action)
+    public async Task ModifyAsync(Action<IIzzyMessageProperties> action)
     {
-        await _message.ModifyAsync(action);
+        await _message.ModifyAsync(msg => {
+            action(new MessagePropertiesAdapter(msg));
+        });
     }
 }
 
@@ -87,9 +102,11 @@ public class RestUserMessageAdapter : IIzzyMessage
     {
         await _message.ReplyAsync(message);
     }
-    public async Task ModifyAsync(Action<MessageProperties> action)
+    public async Task ModifyAsync(Action<IIzzyMessageProperties> action)
     {
-        await _message.ModifyAsync(action);
+        await _message.ModifyAsync(msg => {
+            action(new MessagePropertiesAdapter(msg));
+        });
     }
 }
 
