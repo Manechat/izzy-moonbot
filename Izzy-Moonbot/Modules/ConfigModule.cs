@@ -716,19 +716,19 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                 if (configItem.Nullable)
                                 {
                                     keys = ConfigHelper
-                                        .GetNullableStringDictionary(config, configItemKey)
+                                        .GetDictionary<string?>(config, configItemKey)
                                         .Keys.ToList();
                                     values = ConfigHelper
-                                        .GetNullableStringDictionary(config, configItemKey)
+                                        .GetDictionary<string?>(config, configItemKey)
                                         .Values.ToList();
                                 }
                                 else
                                 {
                                     keys = ConfigHelper
-                                        .GetStringDictionary(config, configItemKey)
+                                        .GetDictionary<string>(config, configItemKey)
                                         .Keys.ToList();
                                     values = ConfigHelper
-                                        .GetStringDictionary(config, configItemKey)
+                                        .GetDictionary<string>(config, configItemKey)
                                         .Values.Select(t => (string?)t).ToList();
                                 }
 
@@ -791,11 +791,11 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                 var contents = "";
 
                                 if (configItem.Nullable)
-                                    contents = ConfigHelper.GetNullableStringDictionaryValue(
+                                    contents = ConfigHelper.GetDictionaryValue<string?>(
                                         config,
                                         configItemKey, value);
                                 else
-                                    contents = (string?)ConfigHelper.GetStringDictionaryValue(
+                                    contents = (string?)ConfigHelper.GetDictionaryValue<string>(
                                         config,
                                         configItemKey, value);
 
@@ -842,22 +842,22 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                 {
                                     if (value == "<nothing>") value = null;
                                     
-                                    if (ConfigHelper.DoesNullableStringDictionaryKeyExist(config,
+                                    if (ConfigHelper.DoesDictionaryKeyExist<string?>(config,
                                             configItemKey, key))
                                         result = await ConfigHelper.SetNullableStringDictionaryValue(config,
                                             configItemKey, key, value);
                                     else
-                                        result = await ConfigHelper.CreateNullableStringDictionaryKey(config,
+                                        result = await ConfigHelper.CreateDictionaryKey<string?>(config,
                                             configItemKey, key, value);
                                 }
                                 else
                                 {
-                                    if (ConfigHelper.DoesStringDictionaryKeyExist(config,
+                                    if (ConfigHelper.DoesDictionaryKeyExist<string>(config,
                                             configItemKey, key))
                                         result = await ConfigHelper.SetStringDictionaryValue(config,
                                             configItemKey, key, value);
                                     else
-                                        result = await ConfigHelper.CreateStringDictionaryKey(config,
+                                        result = await ConfigHelper.CreateDictionaryKey<string>(config,
                                             configItemKey, key, value);
                                 }
 
@@ -897,10 +897,10 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             try
                             {
                                 if (configItem.Nullable)
-                                    await ConfigHelper.RemoveNullableStringDictionaryKey(config,
+                                    await ConfigHelper.RemoveDictionaryKey<string?>(config,
                                         configItemKey, value);
                                 else
-                                    await ConfigHelper.RemoveStringDictionaryKey(config,
+                                    await ConfigHelper.RemoveDictionaryKey<string>(config,
                                         configItemKey, value);
 
                                 await context.Channel.SendMessageAsync(
@@ -943,11 +943,11 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             try
                             {
                                 var keys = ConfigHelper
-                                    .GetStringSetDictionary(config, configItemKey).Keys
+                                    .GetDictionary<HashSet<string>>(config, configItemKey).Keys
                                     .ToList();
 
                                 var values = ConfigHelper
-                                    .GetStringSetDictionary(config, configItemKey).Values
+                                    .GetDictionary<HashSet<string>>(config, configItemKey).Values
                                     .ToList();
 
                                 if (keys.Count > 10)
@@ -1017,7 +1017,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             try
                             {
                                 var stringSet =
-                                    ConfigHelper.GetStringSetDictionaryValue(config, configItemKey,
+                                    ConfigHelper.GetDictionaryValue<HashSet<string>>(config, configItemKey,
                                         value);
 
                                 if (stringSet.Count > 10)
@@ -1078,7 +1078,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             try
                             {
                                 var output =
-                                    ConfigHelper.DoesStringSetDictionaryKeyExist(config, configItemKey, key)
+                                    ConfigHelper.DoesDictionaryKeyExist<HashSet<string>>(config, configItemKey, key)
                                     ? await ConfigHelper.AddToStringSetDictionaryValue(config,
                                         configItemKey, key, value)
                                     : await ConfigHelper.CreateStringSetDictionaryKey(config, configItemKey, key, value);
@@ -1137,7 +1137,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                         case ConfigItemType.StringSetDictionary:
                             try
                             {
-                                await ConfigHelper.RemoveStringSetDictionaryKey(config,
+                                await ConfigHelper.RemoveDictionaryKey<HashSet<string>>(config,
                                     configItemKey, value);
 
                                 await context.Channel.SendMessageAsync(

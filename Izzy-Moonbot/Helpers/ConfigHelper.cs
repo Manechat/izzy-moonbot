@@ -8,6 +8,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Settings;
+using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Newtonsoft.Json.Linq;
 
 namespace Izzy_Moonbot.Helpers;
@@ -455,11 +456,11 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static IDictionary<string, string> GetStringDictionary(Config settings, string key)
+    public static IDictionary<string, VALUE> GetDictionary<VALUE>(Config settings, string key)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
-            if (pinfo.GetValue(settings) is IDictionary<string, string> dict)
+            if (pinfo.GetValue(settings) is IDictionary<string, VALUE> dict)
             {
                 return dict;
             }
@@ -468,12 +469,12 @@ public static class ConfigHelper
 
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
-    
-    public static bool DoesStringDictionaryKeyExist(Config settings, string key, string dictionaryKey)
+
+    public static bool DoesDictionaryKeyExist<VALUE>(Config settings, string key, string dictionaryKey)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
-            if (pinfo.GetValue(settings) is IDictionary<string, string> dict)
+            if (pinfo.GetValue(settings) is IDictionary<string, VALUE> dict)
             {
                 return dict.ContainsKey(dictionaryKey);
             }
@@ -483,12 +484,12 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<(string, string?, string)> CreateStringDictionaryKey(Config settings, string key,
-        string dictionaryKey, string value)
+    public static async Task<(string, string?, VALUE)> CreateDictionaryKey<VALUE>(Config settings, string key,
+        string dictionaryKey, VALUE value)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
-            if (pinfo.GetValue(settings) is IDictionary<string, string> dict)
+            if (pinfo.GetValue(settings) is IDictionary<string, VALUE> dict)
             {
                 try
                 {
@@ -503,18 +504,18 @@ public static class ConfigHelper
                     throw new ArgumentOutOfRangeException($"'{dictionaryKey}' is already present within the Dictionary.");
                 }
             }
-            throw new ArgumentException($"'{key}' is not a Dictionary<string, string>.");
+            throw new ArgumentException($"'{key}' is not a Dictionary.");
         }
 
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<string> RemoveStringDictionaryKey(Config settings, string key,
+    public static async Task<string> RemoveDictionaryKey<VALUE>(Config settings, string key,
         string dictionaryKey)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
-            if (pinfo.GetValue(settings) is IDictionary<string, string> dict)
+            if (pinfo.GetValue(settings) is IDictionary<string, VALUE> dict)
             {
                 var result = dict.Remove(dictionaryKey);
                 if (!result) throw new ArgumentOutOfRangeException($"'{dictionaryKey}' was not in the Dictionary to begin with.");
@@ -523,22 +524,23 @@ public static class ConfigHelper
                 await FileHelper.SaveConfigAsync(settings);
                 return dictionaryKey;
             }
-            throw new ArgumentException($"'{key}' is not a Dictionary<string, string>.");
+            throw new ArgumentException($"'{key}' is not a Dictionary.");
         }
 
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
-    public static string GetStringDictionaryValue(Config settings, string key, string dictionaryKey)
+
+    public static VALUE GetDictionaryValue<VALUE>(Config settings, string key, string dictionaryKey)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
-            if (pinfo.GetValue(settings) is IDictionary<string, string> dict)
+            if (pinfo.GetValue(settings) is IDictionary<string, VALUE> dict)
             {
                 if (!dict.ContainsKey(dictionaryKey)) throw new KeyNotFoundException($"'{dictionaryKey}' is not in '{key}'");
 
                 return dict[dictionaryKey];
             }
-            throw new ArgumentException($"'{key}' is not a Dictionary<string, string>.");
+            throw new ArgumentException($"'{key}' is not a Dictionary.");
         }
 
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
@@ -565,96 +567,6 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static IDictionary<string, string?> GetNullableStringDictionary(Config settings, string key)
-    {
-        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
-        {
-            if (pinfo.GetValue(settings) is IDictionary<string, string?> dict)
-            {
-                return dict;
-            }
-            throw new ArgumentException($"'{key}' is not a Dictionary<string, string?>.");
-        }
-
-        throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
-    }
-
-    public static bool DoesNullableStringDictionaryKeyExist(Config settings, string key, string dictionaryKey)
-    {
-        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
-        {
-            if (pinfo.GetValue(settings) is IDictionary<string, string?> dict)
-            {
-                return dict.ContainsKey(dictionaryKey);
-            }
-            return false;
-        }
-
-        throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
-    }
-
-    public static async Task<(string, string?, string?)> CreateNullableStringDictionaryKey(Config settings, string key,
-        string dictionaryKey, string? value)
-    {
-        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
-        {
-            if (pinfo.GetValue(settings) is IDictionary<string, string?> dict)
-            {
-                try
-                {
-                    dict.Add(dictionaryKey, value);
-
-                    pinfo.SetValue(settings, dict);
-                    await FileHelper.SaveConfigAsync(settings);
-                    return (dictionaryKey, null, value);
-                }
-                catch (ArgumentException)
-                {
-                    throw new ArgumentOutOfRangeException($"'{dictionaryKey}' is already present within the Dictionary.");
-                }
-            }
-            throw new ArgumentException($"'{key}' is not a Dictionary<string, string?>.");
-        }
-
-        throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
-    }
-
-    public static async Task<string> RemoveNullableStringDictionaryKey(Config settings, string key,
-        string dictionaryKey)
-    {
-        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
-        {
-            if (pinfo.GetValue(settings) is IDictionary<string, string?> dict)
-            {
-                var result = dict.Remove(dictionaryKey);
-                if (!result) throw new ArgumentOutOfRangeException($"'{dictionaryKey}' was not in the Dictionary to begin with.");
-
-                pinfo.SetValue(settings, dict);
-                await FileHelper.SaveConfigAsync(settings);
-                return dictionaryKey;
-            }
-            throw new ArgumentException($"'{key}' is not a Dictionary<string, string?>.");
-        }
-
-        throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
-    }
-
-    public static string? GetNullableStringDictionaryValue(Config settings, string key, string dictionaryKey)
-    {
-        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
-        {
-            if (pinfo.GetValue(settings) is IDictionary<string, string?> dict)
-            {
-                if (!dict.ContainsKey(dictionaryKey)) throw new KeyNotFoundException($"'{dictionaryKey}' is not in '{key}'");
-
-                return dict[dictionaryKey];
-            }
-            throw new ArgumentException($"'{key}' is not a Dictionary<string, string?>.");
-        }
-
-        throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
-    }
-
     public static async Task<(string, string?, string?)> SetNullableStringDictionaryValue(Config settings, string key,
         string dictionaryKey, string? value)
     {
@@ -671,34 +583,6 @@ public static class ConfigHelper
                 return (dictionaryKey, oldValue, value);
             }
             throw new ArgumentException($"'{key}' is not a Dictionary<string, string?>.");
-        }
-
-        throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
-    }
-
-    public static IDictionary<string, HashSet<string>> GetStringSetDictionary(Config settings, string key)
-    {
-        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
-        {
-            if (pinfo.GetValue(settings) is IDictionary<string, HashSet<string>> dict)
-            {
-                return dict;
-            }
-            throw new ArgumentException($"'{key}' is not a Dictionary<string, HashSet<string>>.");
-        }
-
-        throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
-    }
-    
-    public static bool DoesStringSetDictionaryKeyExist(Config settings, string key, string dictionaryKey)
-    {
-        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
-        {
-            if (pinfo.GetValue(settings) is IDictionary<string, HashSet<string>> dict)
-            {
-                return dict.ContainsKey(dictionaryKey);
-            }
-            return false;
         }
 
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
@@ -723,43 +607,6 @@ public static class ConfigHelper
                 {
                     throw new ArgumentOutOfRangeException($"'{dictionaryKey}' is already present within the Dictionary.");
                 }
-            }
-            throw new ArgumentException($"'{key}' is not a Dictionary<string, HashSet<string>>.");
-        }
-
-        throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
-    }
-
-    public static async Task<string> RemoveStringSetDictionaryKey(Config settings, string key,
-        string dictionaryKey)
-    {
-        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
-        {
-            if (pinfo.GetValue(settings) is IDictionary<string, HashSet<string>> dict)
-            {
-                var result = dict.Remove(dictionaryKey);
-                if (!result) throw new ArgumentOutOfRangeException($"'{dictionaryKey}' was not in the Dictionary to begin with.");
-
-                pinfo.SetValue(settings, dict);
-                await FileHelper.SaveConfigAsync(settings);
-                return dictionaryKey;
-            }
-            throw new ArgumentException($"'{key}' is not a Dictionary<string, HashSet<string>>.");
-        }
-
-        throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
-    }
-
-    public static HashSet<string> GetStringSetDictionaryValue(Config settings, string key,
-        string dictionaryKey)
-    {
-        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
-        {
-            if (pinfo.GetValue(settings) is IDictionary<string, HashSet<string>> dict)
-            {
-                if (!dict.ContainsKey(dictionaryKey)) throw new KeyNotFoundException($"'{dictionaryKey}' does not exist within '{key}'");
-
-                return dict[dictionaryKey];
             }
             throw new ArgumentException($"'{key}' is not a Dictionary<string, HashSet<string>>.");
         }
