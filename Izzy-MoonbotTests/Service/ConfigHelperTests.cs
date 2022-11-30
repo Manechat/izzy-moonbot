@@ -3,7 +3,7 @@ using Izzy_Moonbot.Settings;
 using Izzy_Moonbot.EventListeners;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Izzy_MoonbotTests.Helper;
+namespace Izzy_Moonbot_Tests.Helpers;
 
 [TestClass()]
 public class ConfigHelperTests

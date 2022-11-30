@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using static Izzy_Moonbot.Helpers.DiscordHelper;
 
-namespace Izzy_MoonbotTests.Helpers;
+namespace Izzy_Moonbot_Tests.Helpers;
 
 [TestClass()]
 public class TimeHelperTests
