@@ -232,7 +232,7 @@ public static class DiscordHelper
         if (context.IsPrivate) return 0;
 
         foreach (var channel in context.Guild.TextChannels)
-            if (channel.Name == channelName && channel.Users.Contains(izzyMoonbot))
+            if (channel.Name == channelName && channel.Users.Any(u => u.Id == izzyMoonbot.Id))
                 return channel.Id;
 
         return 0;
@@ -248,7 +248,7 @@ public static class DiscordHelper
         if (context.IsPrivate) return 0;
 
         foreach (var channel in context.Guild.TextChannels)
-            if (channel.Id == channelId && channel.Users.Contains(izzyMoonbot))
+            if (channel.Id == channelId && channel.Users.Any(u => u.Id == izzyMoonbot.Id))
                 return channel.Id;
 
         return 0;
