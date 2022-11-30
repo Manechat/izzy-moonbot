@@ -6,6 +6,7 @@ using System.Threading.Channels;
 using System.Threading.Tasks;
 using Discord.Commands;
 using Discord.WebSocket;
+using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Settings;
 using Newtonsoft.Json.Linq;
 
@@ -119,12 +120,12 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<SocketGuildUser?> SetUserValue(Config settings, string key,
-        string? userResolvable, SocketCommandContext context)
+    public static async Task<IIzzyUser?> SetUserValue(Config settings, string key,
+        string? userResolvable, IIzzyContext context)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
-            SocketGuildUser? user = null;
+            IIzzyUser? user = null;
             if (userResolvable is not null)
             {
                 var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(userResolvable, context);
@@ -147,12 +148,12 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
     }
 
-        public static async Task<SocketRole?> SetRoleValue(Config settings, string key, string? roleResolvable,
-        SocketCommandContext context)
+        public static async Task<IIzzyRole?> SetRoleValue(Config settings, string key, string? roleResolvable,
+        IIzzyContext context)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
-            SocketRole? role = null;
+            IIzzyRole? role = null;
             if (roleResolvable is not null)
             {
                 var roleId = DiscordHelper.GetRoleIdIfAccessAsync(roleResolvable, context);
@@ -175,12 +176,12 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<SocketGuildChannel?> SetChannelValue(Config settings, string key,
-        string? channelResolvable, SocketCommandContext context)
+    public static async Task<IIzzySocketGuildChannel?> SetChannelValue(Config settings, string key,
+        string? channelResolvable, IIzzyContext context)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
-            SocketGuildChannel? channel = null;
+            IIzzySocketGuildChannel? channel = null;
             if (channelResolvable is not null)
             {
                 var channelId = await DiscordHelper.GetChannelIdIfAccessAsync(channelResolvable, context);
@@ -523,17 +524,17 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
     }
 
-    private static HashSet<SocketGuildUser> UserIdToUser(HashSet<ulong> list, SocketCommandContext context)
+    private static HashSet<IIzzyUser> UserIdToUser(HashSet<ulong> list, IIzzyContext context)
     {
-        HashSet<SocketGuildUser> finalList = new();
+        HashSet<IIzzyUser> finalList = new();
 
         foreach (var user in list) finalList.Add(context.Guild.GetUser(user));
 
         return finalList;
     }
 
-    public static HashSet<SocketGuildUser> GetUserList(Config settings, string key,
-        SocketCommandContext context)
+    public static HashSet<IIzzyUser> GetUserList(Config settings, string key,
+        IIzzyContext context)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -550,8 +551,8 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<SocketGuildUser> AddToUserList(Config settings, string key,
-        string userResolvable, SocketCommandContext context)
+    public static async Task<IIzzyUser> AddToUserList(Config settings, string key,
+        string userResolvable, IIzzyContext context)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -578,8 +579,8 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<SocketGuildUser> RemoveFromUserList(Config settings, string key,
-        string userResolvable, SocketCommandContext context)
+    public static async Task<IIzzyUser> RemoveFromUserList(Config settings, string key,
+        string userResolvable, IIzzyContext context)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -606,16 +607,16 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    private static HashSet<SocketRole> RoleIdToRole(HashSet<ulong> list, SocketCommandContext context)
+    private static HashSet<IIzzyRole> RoleIdToRole(HashSet<ulong> list, IIzzyContext context)
     {
-        HashSet<SocketRole> finalList = new();
+        HashSet<IIzzyRole> finalList = new();
 
         foreach (var role in list) finalList.Add(context.Guild.GetRole(role));
 
         return finalList;
     }
 
-    public static HashSet<SocketRole> GetRoleList(Config settings, string key, SocketCommandContext context)
+    public static HashSet<IIzzyRole> GetRoleList(Config settings, string key, IIzzyContext context)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -632,8 +633,8 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<SocketRole> AddToRoleList(Config settings, string key, string roleResolvable,
-        SocketCommandContext context)
+    public static async Task<IIzzyRole> AddToRoleList(Config settings, string key, string roleResolvable,
+        IIzzyContext context)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -660,8 +661,8 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<SocketRole> RemoveFromRoleList(Config settings, string key,
-        string roleResolvable, SocketCommandContext context)
+    public static async Task<IIzzyRole> RemoveFromRoleList(Config settings, string key,
+        string roleResolvable, IIzzyContext context)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -688,17 +689,17 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    private static HashSet<SocketGuildChannel> ChannelIdToChannel(HashSet<ulong> list, SocketCommandContext context)
+    private static HashSet<IIzzySocketGuildChannel> ChannelIdToChannel(HashSet<ulong> list, IIzzyContext context)
     {
-        HashSet<SocketGuildChannel> finalList = new();
+        HashSet<IIzzySocketGuildChannel> finalList = new();
 
         foreach (var channel in list) finalList.Add(context.Guild.GetChannel(channel));
 
         return finalList;
     }
 
-    public static HashSet<SocketGuildChannel> GetChannelList(Config settings, string key,
-        SocketCommandContext context)
+    public static HashSet<IIzzySocketGuildChannel> GetChannelList(Config settings, string key,
+        IIzzyContext context)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -715,8 +716,8 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<SocketGuildChannel> AddToChannelList(Config settings, string key,
-        string channelResolvable, SocketCommandContext context)
+    public static async Task<IIzzySocketGuildChannel> AddToChannelList(Config settings, string key,
+        string channelResolvable, IIzzyContext context)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -743,8 +744,8 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<SocketGuildChannel> RemoveFromChannelList(Config settings, string key,
-        string channelResolvable, SocketCommandContext context)
+    public static async Task<IIzzySocketGuildChannel> RemoveFromChannelList(Config settings, string key,
+        string channelResolvable, IIzzyContext context)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
