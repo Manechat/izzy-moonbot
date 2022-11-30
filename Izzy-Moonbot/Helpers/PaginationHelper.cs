@@ -14,7 +14,6 @@ public class PaginationHelper
     private readonly AllowedMentions _allowedMentions;
 
     private readonly IIzzyClient _client;
-    private readonly RequestOptions _options;
     private readonly string[] _staticParts;
 
     private readonly bool _useCodeBlock;
@@ -27,15 +26,13 @@ public class PaginationHelper
 
     public PaginationHelper(SocketCommandContext context, string[] pages, string[] staticParts, int pageNumber = 0,
         bool codeblock = true,
-        AllowedMentions allowedMentions = null,
-        RequestOptions options = null)
-        : this(new SocketCommandContextAdapter(context), pages, staticParts, pageNumber, codeblock, allowedMentions, options)
+        AllowedMentions allowedMentions = null)
+        : this(new SocketCommandContextAdapter(context), pages, staticParts, pageNumber, codeblock, allowedMentions)
     { }
 
     public PaginationHelper(IIzzyContext context, string[] pages, string[] staticParts, int pageNumber = 0,
         bool codeblock = true,
-        AllowedMentions allowedMentions = null,
-        RequestOptions options = null)
+        AllowedMentions allowedMentions = null)
     {
         _client = context.Client;
         _authorId = context.Message.Author.Id;
@@ -45,7 +42,6 @@ public class PaginationHelper
         _easterEgg = false;
         _useCodeBlock = codeblock;
         _allowedMentions = allowedMentions;
-        _options = options;
 
         ExpiresAt = DateTime.UtcNow + TimeSpan.FromMinutes(5);
 
@@ -65,7 +61,7 @@ public class PaginationHelper
 
         _message = await context.Channel.SendMessageAsync(
             $"{_staticParts[0]}{Environment.NewLine}{Environment.NewLine}<a:rdloop:910875692785336351> Pagination is loading. Please wait...{Environment.NewLine}{Environment.NewLine}{_staticParts[1]}",
-            components: builder.Build(), allowedMentions: _allowedMentions, options: _options);
+            components: builder.Build(), allowedMentions: _allowedMentions);
 
         _client.ButtonExecuted += ButtonEvent;
         _client.MessageDeleted += MessageDeletedEvent;
