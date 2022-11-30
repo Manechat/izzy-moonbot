@@ -49,7 +49,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
         if (_config.BannerMode == ConfigListener.BannerMode.None)
             message += $"I'm not currently managing the banner, but here's the current server's banner.{Environment.NewLine}";
 
-        message += Context.Guild.BannerUrl;
+        message += $"{Context.Guild.BannerUrl}?size=4096";
 
         await ReplyAsync(message);
     }
