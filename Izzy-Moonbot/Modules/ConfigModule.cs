@@ -183,9 +183,9 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                         $"Run `{config.Prefix}config {configItemKey} <value>` to set this value. {nullableString}",
                         allowedMentions: AllowedMentions.None);
                     break;
-                case ConfigItemType.StringList:
-                case ConfigItemType.RoleList:
-                case ConfigItemType.ChannelList:
+                case ConfigItemType.StringSet:
+                case ConfigItemType.RoleSet:
+                case ConfigItemType.ChannelSet:
                     await context.Channel.SendMessageAsync(
                         $"**{configItemKey}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
                         $"*{configItem.Description}*{Environment.NewLine}" +
@@ -204,7 +204,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                         $"Run `{config.Prefix}config {configItemKey} delete <key>` to delete a key from this map.",
                         allowedMentions: AllowedMentions.None);
                     break;
-                case ConfigItemType.StringListDictionary:
+                case ConfigItemType.StringSetDictionary:
                     await context.Channel.SendMessageAsync(
                         $"**{configItemKey}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
                         $"*{configItem.Description}*{Environment.NewLine}" +
@@ -423,7 +423,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                         break;
                 }
             }
-            else if (configDescriber.TypeIsList(configItem.Type))
+            else if (configDescriber.TypeIsSet(configItem.Type))
             {
                 var action = value.Split(' ')[0].ToLower();
                 value = value.Replace(action + " ", "");
@@ -431,7 +431,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                 if (action == "list")
                     switch (configItem.Type)
                     {
-                        case ConfigItemType.StringList:
+                        case ConfigItemType.StringSet:
                             var stringSet = ConfigHelper.GetStringSet(config, configItemKey);
 
                             if (stringSet == null)
@@ -474,11 +474,11 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             }
 
                             break;
-                        case ConfigItemType.RoleList:
-                            var roleList = ConfigHelper.GetRoleList(config, configItemKey, context);
+                        case ConfigItemType.RoleSet:
+                            var roleSet = ConfigHelper.GetRoleSet(config, configItemKey, context);
 
                             var roleMentionList = new List<string>();
-                            foreach (var role in roleList) roleMentionList.Add(role.Mention);
+                            foreach (var role in roleSet) roleMentionList.Add(role.Mention);
 
                             if (roleMentionList.Count > 10)
                             {
@@ -514,12 +514,12 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             }
 
                             break;
-                        case ConfigItemType.ChannelList:
-                            var channelList =
-                                ConfigHelper.GetChannelList(config, configItemKey, context);
+                        case ConfigItemType.ChannelSet:
+                            var channelSet =
+                                ConfigHelper.GetChannelSet(config, configItemKey, context);
 
                             var channelMentionList = new List<string>();
-                            foreach (var channel in channelList) channelMentionList.Add($"<#{channel.Id}>");
+                            foreach (var channel in channelSet) channelMentionList.Add($"<#{channel.Id}>");
 
                             if (channelMentionList.Count > 10)
                             {
@@ -562,7 +562,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                 else if (action == "add")
                     switch (configItem.Type)
                     {
-                        case ConfigItemType.StringList:
+                        case ConfigItemType.StringSet:
                             try
                             {
                                 var output =
@@ -579,11 +579,11 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             }
 
                             break;
-                        case ConfigItemType.RoleList:
+                        case ConfigItemType.RoleSet:
                             try
                             {
                                 var output =
-                                    await ConfigHelper.AddToRoleList(config, configItemKey, value,
+                                    await ConfigHelper.AddToRoleSet(config, configItemKey, value,
                                         context);
 
                                 await context.Channel.SendMessageAsync(
@@ -607,11 +607,11 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             }
 
                             break;
-                        case ConfigItemType.ChannelList:
+                        case ConfigItemType.ChannelSet:
                             try
                             {
                                 var output =
-                                    await ConfigHelper.AddToChannelList(config, configItemKey, value,
+                                    await ConfigHelper.AddToChannelSet(config, configItemKey, value,
                                         context);
 
                                 await context.Channel.SendMessageAsync(
@@ -642,7 +642,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                 else if (action == "remove")
                     switch (configItem.Type)
                     {
-                        case ConfigItemType.StringList:
+                        case ConfigItemType.StringSet:
                             try
                             {
                                 var output =
@@ -665,11 +665,11 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             }
 
                             break;
-                        case ConfigItemType.RoleList:
+                        case ConfigItemType.RoleSet:
                             try
                             {
                                 var output =
-                                    await ConfigHelper.RemoveFromRoleList(config, configItemKey,
+                                    await ConfigHelper.RemoveFromRoleSet(config, configItemKey,
                                         value, context);
 
                                 await context.Channel.SendMessageAsync(
@@ -693,11 +693,11 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             }
 
                             break;
-                        case ConfigItemType.ChannelList:
+                        case ConfigItemType.ChannelSet:
                             try
                             {
                                 var output =
-                                    await ConfigHelper.RemoveFromChannelList(config, configItemKey,
+                                    await ConfigHelper.RemoveFromChannelSet(config, configItemKey,
                                         value, context);
 
                                 await context.Channel.SendMessageAsync(
@@ -957,7 +957,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                     return;
                 }
             }
-            else if (configDescriber.TypeIsDictionaryList(configItem.Type))
+            else if (configDescriber.TypeIsDictionarySet(configItem.Type))
             {
                 var action = value.Split(' ')[0].ToLower();
                 value = value.Replace(action + " ", "");
@@ -966,7 +966,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                 {
                     switch (configItem.Type)
                     {
-                        case ConfigItemType.StringListDictionary:
+                        case ConfigItemType.StringSetDictionary:
                             try
                             {
                                 var keys = ConfigHelper
@@ -1040,7 +1040,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                     
                     switch (configItem.Type)
                     {
-                        case ConfigItemType.StringListDictionary:
+                        case ConfigItemType.StringSetDictionary:
                             try
                             {
                                 var stringSet =
@@ -1101,7 +1101,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                     
                     switch (configItem.Type)
                     {
-                        case ConfigItemType.StringListDictionary:
+                        case ConfigItemType.StringSetDictionary:
                             try
                             {
                                 var output =
@@ -1133,7 +1133,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                     value = value.Replace(key + " ", "");
                     switch (configItem.Type)
                     {
-                        case ConfigItemType.StringListDictionary:
+                        case ConfigItemType.StringSetDictionary:
                             try
                             {
                                 var output =
@@ -1161,7 +1161,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                 {
                     switch (configItem.Type)
                     {
-                        case ConfigItemType.StringListDictionary:
+                        case ConfigItemType.StringSetDictionary:
                             try
                             {
                                 await ConfigHelper.RemoveStringSetDictionaryKey(config,

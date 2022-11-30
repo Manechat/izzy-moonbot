@@ -42,14 +42,14 @@ public enum ConfigItemType
     Role,
     Channel,
     
-    // Lists
-    StringList,
-    RoleList,
-    ChannelList,
+    // Sets
+    StringSet,
+    RoleSet,
+    ChannelSet,
     
     // Dictionaries
     StringDictionary,
     
-    // Dictionaries of lists
-    StringListDictionary
+    // Dictionaries of Sets
+    StringSetDictionary
 }

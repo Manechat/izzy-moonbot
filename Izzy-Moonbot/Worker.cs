@@ -299,7 +299,7 @@ namespace Izzy_Moonbot
                     $"Resynced users. {guild.Users.Count} users found, {newUserCount} unknown, {reloadUserCount} required update, {knownUserCount} up to date.");
                 
                 // Get stowaways
-                var stowawayList = new HashSet<SocketGuildUser>();
+                var stowawaySet = new HashSet<SocketGuildUser>();
         
                 await foreach (var socketGuildUser in guild.Users.ToAsyncEnumerable())
                 {
@@ -309,14 +309,14 @@ namespace Izzy_Moonbot
                     if (!socketGuildUser.Roles.Select(role => role.Id).Contains((ulong)_config.MemberRole))
                     {
                         // Doesn't have member role, add to stowaway list.
-                        stowawayList.Add(socketGuildUser);
+                        stowawaySet.Add(socketGuildUser);
                     }
                 }
 
-                if (stowawayList.Count != 0)
+                if (stowawaySet.Count != 0)
                 {
-                    var stowawayStringList = stowawayList.Select(user => $"<@{user.Id}>");
-                    var stowawayStringFileList = stowawayList.Select(user => $"{user.Username}#{user.Discriminator}");
+                    var stowawayStringList = stowawaySet.Select(user => $"<@{user.Id}>");
+                    var stowawayStringFileList = stowawaySet.Select(user => $"{user.Username}#{user.Discriminator}");
                     
                     await _modLog.CreateModLog(guild)
                         .SetContent($"I found these stowaways after I rebooted, cannot tell if they're new users:{Environment.NewLine}" +

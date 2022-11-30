@@ -283,16 +283,16 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
     }
 
-    private static HashSet<IIzzyUser> UserIdToUser(HashSet<ulong> list, IIzzyContext context)
+    private static HashSet<IIzzyUser> UserIdToUser(HashSet<ulong> set, IIzzyContext context)
     {
-        HashSet<IIzzyUser> finalList = new();
+        HashSet<IIzzyUser> finalSet = new();
 
-        foreach (var user in list) finalList.Add(context.Guild.GetUser(user));
+        foreach (var user in set) finalSet.Add(context.Guild.GetUser(user));
 
-        return finalList;
+        return finalSet;
     }
 
-    public static HashSet<IIzzyUser> GetUserList(Config settings, string key,
+    public static HashSet<IIzzyUser> GetUserSet(Config settings, string key,
         IIzzyContext context)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
@@ -310,7 +310,7 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<IIzzyUser> AddToUserList(Config settings, string key,
+    public static async Task<IIzzyUser> AddToUserSet(Config settings, string key,
         string userResolvable, IIzzyContext context)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
@@ -338,7 +338,7 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<IIzzyUser> RemoveFromUserList(Config settings, string key,
+    public static async Task<IIzzyUser> RemoveFromUserSet(Config settings, string key,
         string userResolvable, IIzzyContext context)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
@@ -366,16 +366,16 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    private static HashSet<IIzzyRole> RoleIdToRole(HashSet<ulong> list, IIzzyContext context)
+    private static HashSet<IIzzyRole> RoleIdToRole(HashSet<ulong> set, IIzzyContext context)
     {
-        HashSet<IIzzyRole> finalList = new();
+        HashSet<IIzzyRole> finalSet = new();
 
-        foreach (var role in list) finalList.Add(context.Guild.GetRole(role));
+        foreach (var role in set) finalSet.Add(context.Guild.GetRole(role));
 
-        return finalList;
+        return finalSet;
     }
 
-    public static HashSet<IIzzyRole> GetRoleList(Config settings, string key, IIzzyContext context)
+    public static HashSet<IIzzyRole> GetRoleSet(Config settings, string key, IIzzyContext context)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
@@ -392,7 +392,7 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<IIzzyRole> AddToRoleList(Config settings, string key, string roleResolvable,
+    public static async Task<IIzzyRole> AddToRoleSet(Config settings, string key, string roleResolvable,
         IIzzyContext context)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
@@ -420,7 +420,7 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<IIzzyRole> RemoveFromRoleList(Config settings, string key,
+    public static async Task<IIzzyRole> RemoveFromRoleSet(Config settings, string key,
         string roleResolvable, IIzzyContext context)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
@@ -448,16 +448,16 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    private static HashSet<IIzzySocketGuildChannel> ChannelIdToChannel(HashSet<ulong> list, IIzzyContext context)
+    private static HashSet<IIzzySocketGuildChannel> ChannelIdToChannel(HashSet<ulong> set, IIzzyContext context)
     {
-        HashSet<IIzzySocketGuildChannel> finalList = new();
+        HashSet<IIzzySocketGuildChannel> finalSet = new();
 
-        foreach (var channel in list) finalList.Add(context.Guild.GetChannel(channel));
+        foreach (var channel in set) finalSet.Add(context.Guild.GetChannel(channel));
 
-        return finalList;
+        return finalSet;
     }
 
-    public static HashSet<IIzzySocketGuildChannel> GetChannelList(Config settings, string key,
+    public static HashSet<IIzzySocketGuildChannel> GetChannelSet(Config settings, string key,
         IIzzyContext context)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
@@ -475,7 +475,7 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<IIzzySocketGuildChannel> AddToChannelList(Config settings, string key,
+    public static async Task<IIzzySocketGuildChannel> AddToChannelSet(Config settings, string key,
         string channelResolvable, IIzzyContext context)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
@@ -503,7 +503,7 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<IIzzySocketGuildChannel> RemoveFromChannelList(Config settings, string key,
+    public static async Task<IIzzySocketGuildChannel> RemoveFromChannelSet(Config settings, string key,
         string channelResolvable, IIzzyContext context)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)

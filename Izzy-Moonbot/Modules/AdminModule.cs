@@ -389,7 +389,7 @@ public class AdminModule : ModuleBase<SocketCommandContext>
         {
             if (!Context.Guild.HasAllMembers) await Context.Guild.DownloadUsersAsync();
 
-            var stowawayList = new HashSet<SocketGuildUser>();
+            var stowawaySet = new HashSet<SocketGuildUser>();
             
             await foreach (var socketGuildUser in Context.Guild.Users.ToAsyncEnumerable())
             {
@@ -398,19 +398,19 @@ public class AdminModule : ModuleBase<SocketCommandContext>
 
                 if (!socketGuildUser.Roles.Select(role => role.Id).Contains((ulong)_config.MemberRole))
                 {
-                    // Doesn't have member role, add to stowaway list.
-                    stowawayList.Add(socketGuildUser);
+                    // Doesn't have member role, add to stowaway set.
+                    stowawaySet.Add(socketGuildUser);
                 }
             }
 
-            if (stowawayList.Count == 0)
+            if (stowawaySet.Count == 0)
             {
                 // There's no stowaways
                 await ReplyAsync("I didn't find any stowaways.");
             }
             else
             {
-                var stowawayStringList = stowawayList.Select(user => $"<@{user.Id}>");
+                var stowawayStringList = stowawaySet.Select(user => $"<@{user.Id}>");
 
                 await ReplyAsync(
                     $"I found these following stowaways:{Environment.NewLine}{string.Join(", ", stowawayStringList)}");
