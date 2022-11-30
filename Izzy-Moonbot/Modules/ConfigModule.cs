@@ -223,7 +223,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                         if (configItem.Nullable && value == "<nothing>") value = null;
 
                         var resultString =
-                            await ConfigHelper.SetStringValue(config, configItemKey, value);
+                            await ConfigHelper.SetSimpleValue(config, configItemKey, value);
                         await context.Channel.SendMessageAsync($"I've set `{configItemKey}` to the following content: {resultString}",
                             allowedMentions: AllowedMentions.None);
                         break;
@@ -241,7 +241,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             }
 
                             var resultChar =
-                                await ConfigHelper.SetCharValue(config, configItemKey, output);
+                                await ConfigHelper.SetSimpleValue(config, configItemKey, output);
                             await context.Channel.SendMessageAsync($"I've set `{configItemKey}` to the following content: {resultChar}",
                                 allowedMentions: AllowedMentions.None);
                         }
@@ -285,7 +285,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             }
 
                             var resultInteger =
-                                await ConfigHelper.SetIntValue(config, configItemKey, output);
+                                await ConfigHelper.SetSimpleValue(config, configItemKey, output);
                             await context.Channel.SendMessageAsync($"I've set `{configItemKey}` to the following content: {resultInteger}",
                                 allowedMentions: AllowedMentions.None);
                         }
@@ -311,7 +311,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             }
 
                             var resultDouble =
-                                await ConfigHelper.SetDoubleValue(config, configItemKey, output);
+                                await ConfigHelper.SetSimpleValue(config, configItemKey, output);
                             await context.Channel.SendMessageAsync($"I've set `{configItemKey}` to the following content: {resultDouble}",
                                 allowedMentions: AllowedMentions.None);
                         }
@@ -340,7 +340,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             }
 
                             var resultDouble =
-                                await ConfigHelper.SetEnumValue(config, configItemKey, output);
+                                await ConfigHelper.SetSimpleValue(config, configItemKey, output);
                             await context.Channel.SendMessageAsync($"I've set `{configItemKey}` to the following content: {resultDouble}",
                                 allowedMentions: AllowedMentions.None);
                         }

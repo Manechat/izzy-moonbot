@@ -46,25 +46,13 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config.");
     }
 
-    public static async Task<string?> SetStringValue(Config settings, string key, string? stringResolvable)
+    public static async Task<T?> SetSimpleValue<T>(Config settings, string key, T? valueResolvable)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
-            pinfo.SetValue(settings, stringResolvable);
+            pinfo.SetValue(settings, valueResolvable);
             await FileHelper.SaveConfigAsync(settings);
-            return stringResolvable;
-        }
-
-        throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config.");
-    }
-
-    public static async Task<char?> SetCharValue(Config settings, string key, char? charResolvable)
-    {
-        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
-        {
-            pinfo.SetValue(settings, charResolvable);
-            await FileHelper.SaveConfigAsync(settings);
-            return charResolvable;
+            return valueResolvable;
         }
 
         throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config.");
@@ -82,42 +70,6 @@ public static class ConfigHelper
         }
 
         throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config.");
-    }
-
-    public static async Task<int?> SetIntValue(Config settings, string key, int? intResolvable)
-    {
-        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
-        {
-            pinfo.SetValue(settings, intResolvable);
-            await FileHelper.SaveConfigAsync(settings);
-            return intResolvable;
-        }
-
-        throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
-    }
-
-    public static async Task<double?> SetDoubleValue(Config settings, string key, double? doubleResolvable)
-    {
-        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
-        {
-            pinfo.SetValue(settings, doubleResolvable);
-            await FileHelper.SaveConfigAsync(settings);
-            return doubleResolvable;
-        }
-
-        throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
-    }
-    
-    public static async Task<Enum?> SetEnumValue(Config settings, string key, Enum? enumResolvable)
-    {
-        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
-        {
-            pinfo.SetValue(settings, enumResolvable);
-            await FileHelper.SaveConfigAsync(settings);
-            return enumResolvable;
-        }
-
-        throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
     }
 
     public static async Task<IIzzyRole?> SetRoleValue(Config settings, string key, string? roleResolvable,

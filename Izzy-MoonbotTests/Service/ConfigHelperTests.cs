@@ -28,11 +28,11 @@ public class ConfigHelperTests
         var cfg = new Config();
 
         Assert.AreEqual("you all soon", cfg.DiscordActivityName);
-        await ConfigHelper.SetStringValue(cfg, "DiscordActivityName", "the hoofball game");
+        await ConfigHelper.SetSimpleValue(cfg, "DiscordActivityName", "the hoofball game");
         Assert.AreEqual("the hoofball game", cfg.DiscordActivityName);
 
         Assert.AreEqual('.', cfg.Prefix);
-        await ConfigHelper.SetCharValue(cfg, "Prefix", '!');
+        await ConfigHelper.SetSimpleValue(cfg, "Prefix", '!');
         Assert.AreEqual('!', cfg.Prefix);
 
         Assert.AreEqual(true, cfg.ManageNewUserRoles);
@@ -46,15 +46,15 @@ public class ConfigHelperTests
         Assert.AreEqual(true, cfg.ManageNewUserRoles);
 
         Assert.AreEqual(100, cfg.UnicycleInterval);
-        await ConfigHelper.SetIntValue(cfg, "UnicycleInterval", 42);
+        await ConfigHelper.SetSimpleValue(cfg, "UnicycleInterval", 42);
         Assert.AreEqual(42, cfg.UnicycleInterval);
 
         Assert.AreEqual(10.0, cfg.SpamBasePressure);
-        await ConfigHelper.SetDoubleValue(cfg, "SpamBasePressure", 0.5);
+        await ConfigHelper.SetSimpleValue(cfg, "SpamBasePressure", 0.5);
         Assert.AreEqual(0.5, cfg.SpamBasePressure);
 
         Assert.AreEqual(ConfigListener.BannerMode.None, cfg.BannerMode);
-        await ConfigHelper.SetEnumValue(cfg, "BannerMode", ConfigListener.BannerMode.ManebooruFeatured);
+        await ConfigHelper.SetSimpleValue(cfg, "BannerMode", ConfigListener.BannerMode.ManebooruFeatured);
         Assert.AreEqual(ConfigListener.BannerMode.ManebooruFeatured, cfg.BannerMode);
     }
 
@@ -69,23 +69,23 @@ public class ConfigHelperTests
     {
         var cfg = new Config();
 
-        Assert.ThrowsExceptionAsync<KeyNotFoundException>(() => ConfigHelper.SetStringValue(cfg, "foo", "bar"));
-        Assert.ThrowsExceptionAsync<ArgumentException>(() => ConfigHelper.SetStringValue(cfg, "Aliases", "bar"));
+        Assert.ThrowsExceptionAsync<KeyNotFoundException>(() => ConfigHelper.SetSimpleValue(cfg, "foo", "bar"));
+        Assert.ThrowsExceptionAsync<ArgumentException>(() => ConfigHelper.SetSimpleValue(cfg, "Aliases", "bar"));
 
-        Assert.ThrowsExceptionAsync<KeyNotFoundException>(() => ConfigHelper.SetCharValue(cfg, "foo", 'b'));
-        Assert.ThrowsExceptionAsync<ArgumentException>(() => ConfigHelper.SetCharValue(cfg, "Aliases", 'b'));
+        Assert.ThrowsExceptionAsync<KeyNotFoundException>(() => ConfigHelper.SetSimpleValue(cfg, "foo", 'b'));
+        Assert.ThrowsExceptionAsync<ArgumentException>(() => ConfigHelper.SetSimpleValue(cfg, "Aliases", 'b'));
 
         Assert.ThrowsExceptionAsync<KeyNotFoundException>(() => ConfigHelper.SetBooleanValue(cfg, "foo", "bar"));
         Assert.ThrowsExceptionAsync<ArgumentException>(() => ConfigHelper.SetBooleanValue(cfg, "Aliases", "bar"));
 
-        Assert.ThrowsExceptionAsync<KeyNotFoundException>(() => ConfigHelper.SetIntValue(cfg, "foo", 42));
-        Assert.ThrowsExceptionAsync<ArgumentException>(() => ConfigHelper.SetIntValue(cfg, "Aliases", 42));
+        Assert.ThrowsExceptionAsync<KeyNotFoundException>(() => ConfigHelper.SetSimpleValue(cfg, "foo", 42));
+        Assert.ThrowsExceptionAsync<ArgumentException>(() => ConfigHelper.SetSimpleValue(cfg, "Aliases", 42));
 
-        Assert.ThrowsExceptionAsync<KeyNotFoundException>(() => ConfigHelper.SetDoubleValue(cfg, "foo", 1.0));
-        Assert.ThrowsExceptionAsync<ArgumentException>(() => ConfigHelper.SetDoubleValue(cfg, "Aliases", 1.0));
+        Assert.ThrowsExceptionAsync<KeyNotFoundException>(() => ConfigHelper.SetSimpleValue(cfg, "foo", 1.0));
+        Assert.ThrowsExceptionAsync<ArgumentException>(() => ConfigHelper.SetSimpleValue(cfg, "Aliases", 1.0));
 
-        Assert.ThrowsExceptionAsync<KeyNotFoundException>(() => ConfigHelper.SetEnumValue(cfg, "foo", ConfigListener.BannerMode.ManebooruFeatured));
-        Assert.ThrowsExceptionAsync<ArgumentException>(() => ConfigHelper.SetEnumValue(cfg, "Aliases", ConfigListener.BannerMode.ManebooruFeatured));
+        Assert.ThrowsExceptionAsync<KeyNotFoundException>(() => ConfigHelper.SetSimpleValue(cfg, "foo", ConfigListener.BannerMode.ManebooruFeatured));
+        Assert.ThrowsExceptionAsync<ArgumentException>(() => ConfigHelper.SetSimpleValue(cfg, "Aliases", ConfigListener.BannerMode.ManebooruFeatured));
     }
 
     // The built-in Assert.AreEqual and CollectionsAssert.AreEqual have error messages so bad it was worth writing my own asserts
