@@ -135,7 +135,7 @@ public class PaginationHelper
         });
     }
 
-    private async Task ButtonEvent(SocketMessageComponent component)
+    private async Task ButtonEvent(IIzzySocketMessageComponent component)
     {
         if (component.User.Id != _authorId) return;
         if (component.Message.Id != _message.Id) return;
