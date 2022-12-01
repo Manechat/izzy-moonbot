@@ -21,6 +21,11 @@ public class DiscordNetUserAdapter : IIzzyUser
     }
 
     public ulong Id { get => _user.Id; }
+
+    public override string? ToString()
+    {
+        return _user.ToString();
+    }
 }
 
 public class DiscordNetRoleAdapter : IIzzyRole
@@ -35,6 +40,11 @@ public class DiscordNetRoleAdapter : IIzzyRole
     public string Name { get => _role.Name; }
 
     public ulong Id { get => _role.Id; }
+
+    public override string? ToString()
+    {
+        return _role.ToString();
+    }
 }
 
 public class SocketUserMessageAdapter : IIzzyMessage
@@ -72,6 +82,7 @@ public class RestUserMessageAdapter : IIzzyMessage
     public ulong Id { get => _message.Id; }
     public string Content { get => _message.Content; }
     public IIzzyUser Author { get => new DiscordNetUserAdapter(_message.Author); }
+
     public async Task ReplyAsync(string message)
     {
         await _message.ReplyAsync(message);
@@ -97,6 +108,11 @@ public class SocketTextChannelAdapter : IIzzySocketTextChannel
 
     public IReadOnlyCollection<IIzzyUser> Users {
         get => _channel.Users.Select(user => new DiscordNetUserAdapter(user)).ToList();
+    }
+
+    public override string? ToString()
+    {
+        return _channel.ToString();
     }
 }
 
@@ -128,6 +144,11 @@ public class SocketMessageChannelAdapter : IIzzySocketMessageChannel
         var sentMesssage = await _channel.SendMessageAsync(message, allowedMentions: allowedMentions, components: components, options: options);
         return new RestUserMessageAdapter(sentMesssage);
     }
+
+    public override string? ToString()
+    {
+        return _channel.ToString();
+    }
 }
 
 public class SocketGuildChannelAdapter : IIzzySocketGuildChannel
@@ -142,6 +163,11 @@ public class SocketGuildChannelAdapter : IIzzySocketGuildChannel
     public ulong Id { get => _channel.Id; }
 
     public string Name { get => _channel.Name; }
+
+    public override string? ToString()
+    {
+        return _channel.ToString();
+    }
 }
 
 public class SocketGuildAdapter : IIzzyGuild

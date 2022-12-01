@@ -15,7 +15,7 @@ public interface IIzzyRole
 {
     string Name { get; }
     ulong Id { get; }
-    string Mention { get => $"<@&{Name}>"; }
+    string Mention { get => $"<@&{Id}>"; }
 }
 
 public interface IIzzyMessage
