@@ -38,40 +38,17 @@ public enum ConfigItemType
     Integer,
     Double,
     Enum,
-    User,
     Role,
     Channel,
     
-    // Lists
-    StringList,
-    CharList,
-    BooleanList,
-    IntegerList,
-    DoubleList,
-    //EnumList, // Note: Implement when needed
-    UserList,
-    RoleList,
-    ChannelList,
+    // Sets
+    StringSet,
+    RoleSet,
+    ChannelSet,
     
     // Dictionaries
     StringDictionary,
-    //CharDictionary, // Note: Implement when needed
-    BooleanDictionary,
-    //IntegerDictionary, // Note: Implement when needed
-    //DoubleDictionary, // Note: Implement when needed
-    //EnumDictionary, // Note: Implement when needed
-    //UserDictionary, // Note: Implement when needed
-    //RoleDictionary, // Note: Implement when needed
-    //ChannelDictionary, // Note: Implement when needed
     
-    // Dictionaries of lists
-    StringListDictionary
-    //CharListDictionary, // Note: Implement when needed
-    //BooleanListDictionary, // Note: Implement when needed
-    //IntegerListDictionary, // Note: Implement when needed
-    //DoubleListDictionary, // Note: Implement when needed
-    //EnumListDictionary, // Note: Implement when needed
-    //UserListDictionary, // Note: Implement when needed
-    //RoleListDictionary, // Note: Implement when needed
-    //ChannelListDictionary // Note: Implement when needed
+    // Dictionaries of Sets
+    StringSetDictionary
 }

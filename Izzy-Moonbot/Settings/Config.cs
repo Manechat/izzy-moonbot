@@ -17,11 +17,10 @@ public class Config
         Prefix = '.';
         UnicycleInterval = 100;
         SafeMode = true;
-        ThreadOnlyMode = true;
         BatchSendLogs = false;
         BatchLogsSendRate = 10;
         MentionResponseEnabled = false;
-        MentionResponses = new List<string>();
+        MentionResponses = new HashSet<string>();
         MentionResponseCooldown = 600;
         DiscordActivityName = "you all soon";
         DiscordActivityWatching = true;
@@ -30,7 +29,7 @@ public class Config
         // Server settings
         _bannerMode = ConfigListener.BannerMode.None;
         _bannerInterval = 60;
-        BannerImages = new List<string>();
+        BannerImages = new HashSet<string>();
 
         // Mod settings
         ModRole = 0;
@@ -46,19 +45,15 @@ public class Config
 
         // Filter Settings
         FilterEnabled = true;
-        FilterMonitorEdits = true;
         FilterIgnoredChannels = new HashSet<ulong>();
         FilterBypassRoles = new HashSet<ulong>();
         FilterDevBypass = true;
-        FilteredWords = new Dictionary<string, List<string>>();
-        FilterResponseDelete = new Dictionary<string, bool>();
+        FilteredWords = new Dictionary<string, HashSet<string>>();
         FilterResponseMessages = new Dictionary<string, string?>();
-        FilterResponseSilence = new Dictionary<string, bool>();
+        FilterResponseSilence = new HashSet<string>();
 
         // Pressure settings
         SpamEnabled = true;
-        SpamMonitorEdits = true;
-        SpamEditReprocessThreshold = 10;
         SpamBypassRoles = new HashSet<ulong>();
         SpamIgnoredChannels = new HashSet<ulong>();
         SpamDevBypass = true;
@@ -74,8 +69,6 @@ public class Config
 
         // Raid settings
         RaidProtectionEnabled = true;
-        NormalVerificationLevel = 3;
-        RaidVerificationLevel = 4;
         AutoSilenceNewJoins = false;
         SmallRaidSize = 3;
         SmallRaidTime = 180;
@@ -90,11 +83,10 @@ public class Config
     public char Prefix { get; set; }
     public int UnicycleInterval { get; set; }
     public bool SafeMode { get; set; }
-    public bool ThreadOnlyMode { get; set; }
     public bool BatchSendLogs { get; set; }
     public double BatchLogsSendRate { get; set; }
     public bool MentionResponseEnabled { get; set; }
-    public List<string> MentionResponses { get; set; }
+    public HashSet<string> MentionResponses { get; set; }
     public double MentionResponseCooldown { get; set; }
     public string? DiscordActivityName { get; set; }
     public bool DiscordActivityWatching { get; set; }
@@ -128,7 +120,7 @@ public class Config
             _bannerInterval = value;
         }
     }
-    public List<string> BannerImages { get; set; }
+    public HashSet<string> BannerImages { get; set; }
     
 
     // Moderation settings
@@ -145,19 +137,15 @@ public class Config
 
     // Filter settings
     public bool FilterEnabled { get; set; }
-    public bool FilterMonitorEdits { get; set; }
     public HashSet<ulong> FilterIgnoredChannels { get; set; }
     public HashSet<ulong> FilterBypassRoles { get; set; }
     public bool FilterDevBypass { get; set; }
-    public Dictionary<string, List<string>> FilteredWords { get; set; }
-    public Dictionary<string, bool> FilterResponseDelete { get; set; }
+    public Dictionary<string, HashSet<string>> FilteredWords { get; set; }
     public Dictionary<string, string?> FilterResponseMessages { get; set; }
-    public Dictionary<string, bool> FilterResponseSilence { get; set; }
+    public HashSet<string> FilterResponseSilence { get; set; }
 
     // Pressure settings
     public bool SpamEnabled { get; set; }
-    public bool SpamMonitorEdits { get; set; }
-    public int SpamEditReprocessThreshold { get; set; }
     public HashSet<ulong> SpamBypassRoles { get; set; }
     public HashSet<ulong> SpamIgnoredChannels { get; set; }
     public bool SpamDevBypass { get; set; }
@@ -173,8 +161,6 @@ public class Config
 
     // Raid settings
     public bool RaidProtectionEnabled { get; set; }
-    public int? NormalVerificationLevel { get; set; }
-    public int? RaidVerificationLevel { get; set; }
     public bool AutoSilenceNewJoins { get; set; }
     public int SmallRaidSize { get; set; }
     public double SmallRaidTime { get; set; }

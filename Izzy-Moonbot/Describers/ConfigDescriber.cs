@@ -22,10 +22,6 @@ public class ConfigDescriber
             new ConfigItem(ConfigItemType.Boolean,
                 "If set to true, I will not preform any moderation actions. This is best used when testing moderation functions in case of potentially broken code.",
                 ConfigItemCategory.Core));
-        _config.Add("ThreadOnlyMode",
-            new ConfigItem(ConfigItemType.Boolean,
-                "If set to true, I will not process any pressure, or check messages for filtered words for any channels which are not threads. This is used for gradual rollout of Izzy Moonbot.",
-                ConfigItemCategory.Core));
         _config.Add("BatchSendLogs",
             new ConfigItem(ConfigItemType.Boolean,
                 "If set to true, I will batch send mod/action logs instead of sending them immediately. This is managed automatically by the Raid service to prevent me from being ratelimited.",
@@ -37,7 +33,7 @@ public class ConfigDescriber
             new ConfigItem(ConfigItemType.Boolean, "Whether I will respond to someone mentioning me.",
                 ConfigItemCategory.Core));
         _config.Add("MentionResponses",
-            new ConfigItem(ConfigItemType.StringList,
+            new ConfigItem(ConfigItemType.StringSet,
                 "A list of responses I will send whenever someone mentions me.", ConfigItemCategory.Core));
         _config.Add("MentionResponseCooldown",
             new ConfigItem(ConfigItemType.Double,
@@ -65,7 +61,7 @@ public class ConfigDescriber
                 "How often I'll change the banner in minutes. If `BannerMode` is `None`, this has no effect. In `CustomRotation` mode, this is how often I'll randomly select a new image from `BannerImages`. In `ManebooruFeatured` mode, this is how often I'll poll Manebooru's featured image.",
                 ConfigItemCategory.Server));
         _config.Add("BannerImages",
-            new ConfigItem(ConfigItemType.StringList,
+            new ConfigItem(ConfigItemType.StringSet,
                 "The list of banners I'll rotate through (if `BannerMode` is set to `CustomRotation`).",
                 ConfigItemCategory.Server));
 
@@ -99,7 +95,7 @@ public class ConfigDescriber
                 "The amount of minutes I'll wait before removing `NewMemberRole` from a user.",
                 ConfigItemCategory.User));
         _config.Add("RolesToReapplyOnRejoin",
-            new ConfigItem(ConfigItemType.RoleList,
+            new ConfigItem(ConfigItemType.RoleSet,
                 "The roles I'll reapply to a user when they join **if they had that role when they left**.",
                 ConfigItemCategory.User));
 
@@ -108,15 +104,11 @@ public class ConfigDescriber
         _config.Add("FilterEnabled",
             new ConfigItem(ConfigItemType.Boolean,
                 "Whether I will filter messages for words in the `FilteredWords` list.", ConfigItemCategory.Filter));
-        _config.Add("FilterMonitorEdits",
-            new ConfigItem(ConfigItemType.Boolean,
-                "Whether I will refilter edited messages for words in the `FilteredWords` list.",
-                ConfigItemCategory.Filter));
         _config.Add("FilterIgnoredChannels",
-            new ConfigItem(ConfigItemType.ChannelList, "The list of channels I will not filter messages in.",
+            new ConfigItem(ConfigItemType.ChannelSet, "The list of channels I will not filter messages in.",
                 ConfigItemCategory.Filter));
         _config.Add("FilterBypassRoles",
-            new ConfigItem(ConfigItemType.RoleList,
+            new ConfigItem(ConfigItemType.RoleSet,
                 "The list of roles I will not take action against when I detect a slur. Please note that I __will still check for filter violations for roles in this value__. I just won't try to delete the message or silence the user.",
                 ConfigItemCategory.Filter));
         _config.Add("FilterDevBypass",
@@ -124,40 +116,28 @@ public class ConfigDescriber
                 "Whether I will not take action against my developers when I detect a slur. Please note that I __will still check for filter violations for developers__. I just won't try to delete the message or silence the user.",
                 ConfigItemCategory.Filter));
         _config.Add("FilteredWords",
-            new ConfigItem(ConfigItemType.StringListDictionary,
+            new ConfigItem(ConfigItemType.StringSetDictionary,
                 "The map of the list of words I will filter. Each key is a separate filter category.",
-                ConfigItemCategory.Filter));
-        _config.Add("FilterResponseDelete",
-            new ConfigItem(ConfigItemType.BooleanDictionary,
-                "The map containing if I'll delete a message on filter violation depending on which filter category was violated.",
                 ConfigItemCategory.Filter));
         _config.Add("FilterResponseMessages",
             new ConfigItem(ConfigItemType.StringDictionary,
                 "The map of messages I will send on a filter violation depending on which filter category was violated.",
                 ConfigItemCategory.Filter, true));
         _config.Add("FilterResponseSilence",
-            new ConfigItem(ConfigItemType.BooleanDictionary,
-                "The map containing if I'll silence a user on a filter violation depending on which filter category was violated.",
+            new ConfigItem(ConfigItemType.StringSet,
+                "The list of filter categories that will cause me to silence a user on a filter violation.",
                 ConfigItemCategory.Filter));
 
         // Pressure settings
         _config.Add("SpamEnabled",
             new ConfigItem(ConfigItemType.Boolean,
                 "Whether I will process messages and apply pressure to users.", ConfigItemCategory.Spam));
-        _config.Add("SpamMonitorEdits",
-            new ConfigItem(ConfigItemType.Boolean,
-                "Whether I will reprocess edited messages for pressure. This only happens if the message is `SpamEditReprocessThreshold` more characters than the original message and I still know what the previous message was.",
-                ConfigItemCategory.Spam));
-        _config.Add("SpamEditReprocessThreshold",
-            new ConfigItem(ConfigItemType.Integer,
-                "The amount of differences in characters needed on a message edit to reprocess the edited message for pressure, if `SpamMonitorEdits` is set to `true`.",
-                ConfigItemCategory.Spam));
         _config.Add("SpamBypassRoles",
-            new ConfigItem(ConfigItemType.RoleList,
+            new ConfigItem(ConfigItemType.RoleSet,
                 "The roles I will not silence if they exceed `SpamMaxPressure`. Please note that I __will still process pressure for roles in this value__, I just won't silence them and I'll just log that it occured.",
                 ConfigItemCategory.Spam));
         _config.Add("SpamIgnoredChannels",
-            new ConfigItem(ConfigItemType.ChannelList,
+            new ConfigItem(ConfigItemType.ChannelSet,
                 "The channels I will not process pressure for. Best used for channels where spam is allowed.",
                 ConfigItemCategory.Spam));
         _config.Add("SpamDevBypass",
@@ -203,14 +183,6 @@ public class ConfigDescriber
             new ConfigItem(ConfigItemType.Boolean,
                 "Whether or not I will protect this server against raids. It's best to disable if you anticipate a large increase in member count over a few days (3000 in 4 days for example)",
                 ConfigItemCategory.Raid));
-        _config.Add("NormalVerificationLevel",
-            new ConfigItem(ConfigItemType.Integer,
-                $"The verification level I will set when a raid ends. Values not specified below will result in this feature being disabled.{Environment.NewLine}0 - Unrestricted{Environment.NewLine}1 - Verified email{Environment.NewLine}2 - Account age older than 5 minutes{Environment.NewLine}3 - Member of server for longer than 10 minutes.{Environment.NewLine}4 - Must have verified phone.",
-                ConfigItemCategory.Raid, true));
-        _config.Add("RaidVerificationLevel",
-            new ConfigItem(ConfigItemType.Integer,
-                $"The verification level I will set when I detect a raid. Values not specified below will result in this feature being disabled.{Environment.NewLine}0 - Unrestricted{Environment.NewLine}1 - Verified email{Environment.NewLine}2 - Account age older than 5 minutes{Environment.NewLine}3 - Member of server for longer than 10 minutes.{Environment.NewLine}4 - Must have verified phone.",
-                ConfigItemCategory.Raid, true));
         _config.Add("AutoSilenceNewJoins",
             new ConfigItem(ConfigItemType.Boolean,
                 "Whether or not I should automatically silence new users joining the server. Usually toggled on and off by the `ass` and `assoff` commands respectivly.",
@@ -349,66 +321,22 @@ public class ConfigDescriber
                 return "Double";
             case ConfigItemType.Enum:
                 return "Enum";
-            case ConfigItemType.User:
-                return "User";
             case ConfigItemType.Role:
                 return "Role";
             case ConfigItemType.Channel:
                 return "Channel";
-            case ConfigItemType.StringList:
+            // Keep calling them "lists" in the UI, since "list means order matters, set means it doesn't"
+            // is a programmer thing our users won't expect. It also goes better with the `list` action.
+            case ConfigItemType.StringSet:
                 return "List of Strings";
-            case ConfigItemType.CharList:
-                return "List of Characters";
-            case ConfigItemType.BooleanList:
-                return "List of Booleans";
-            case ConfigItemType.IntegerList:
-                return "List of Integers";
-            //case ConfigItemType.EnumList: // Note: Implement when needed
-            //    return "List of Enums";
-            case ConfigItemType.DoubleList:
-                return "List of Doubles";
-            case ConfigItemType.UserList:
-                return "List of Users";
-            case ConfigItemType.RoleList:
+            case ConfigItemType.RoleSet:
                 return "List of Roles";
-            case ConfigItemType.ChannelList:
+            case ConfigItemType.ChannelSet:
                 return "List of Channels";
             case ConfigItemType.StringDictionary:
                 return "Map of String";
-            //case ConfigItemType.CharDictionary: // Note: Implement when needed
-            //    return "Map of Character";
-            case ConfigItemType.BooleanDictionary:
-                return "Map of Boolean";
-            //case ConfigItemType.IntegerDictionary: // Note: Implement when needed
-            //    return "Map of Integer";
-            //case ConfigItemType.DoubleDictionary: // Note: Implement when needed
-            //    return "Map of Double";
-            //case ConfigItemType.EnumDictionary: // Note: Implement when needed
-            //    return "Map of Enums";
-            //case ConfigItemType.UserDictionary: // Note: Implement when needed
-            //    return "Map of User";
-            //case ConfigItemType.RoleDictionary: // Note: Implement when needed
-            //    return "Map of Role";
-            //case ConfigItemType.ChannelDictionary: // Note: Implement when needed
-            //    return "Map of Channel";
-            case ConfigItemType.StringListDictionary:
+            case ConfigItemType.StringSetDictionary:
                 return "Map of Lists of Strings";
-            //case ConfigItemType.CharListDictionary: // Note: Implement when needed
-            //    return "Map of Lists of Characters";
-            //case ConfigItemType.BooleanListDictionary: // Note: Implement when needed
-            //    return "Map of Lists of Booleans";
-            //case ConfigItemType.IntegerListDictionary: // Note: Implement when needed
-            //    return "Map of Lists of Integers";
-            //case ConfigItemType.DoubleListDictionary: // Note: Implement when needed
-            //    return "Map of Lists of Doubles";
-            //case ConfigItemType.EnumListDictionary: // Note: Implement when needed
-            //    return "Map of Lists of Enums";
-            //case ConfigItemType.UserListDictionary: // Note: Implement when needed
-            //    return "Map of Lists of Users";
-            //case ConfigItemType.RoleListDictionary: // Note: Implement when needed
-            //    return "Map of Lists of Roles";
-            //case ConfigItemType.ChannelListDictionary: // Note: Implement when needed
-            //    return "Map of Lists of Channels";
             default:
                 return "<UNKNOWN>";
         }
@@ -422,51 +350,24 @@ public class ConfigDescriber
             type == ConfigItemType.Integer ||
             type == ConfigItemType.Double ||
             type == ConfigItemType.Enum ||
-            type == ConfigItemType.User ||
             type == ConfigItemType.Role ||
             type == ConfigItemType.Channel) return true;
         return false;
     }
 
-    public bool TypeIsList(ConfigItemType type)
+    public bool TypeIsSet(ConfigItemType type)
     {
-        if (type == ConfigItemType.StringList ||
-            type == ConfigItemType.CharList ||
-            type == ConfigItemType.BooleanList ||
-            type == ConfigItemType.IntegerList ||
-            type == ConfigItemType.DoubleList ||
-            //type == ConfigItemType.EnumList || // Note: Implement when needed
-            type == ConfigItemType.UserList ||
-            type == ConfigItemType.RoleList ||
-            type == ConfigItemType.ChannelList) return true;
+        if (type == ConfigItemType.StringSet ||
+            type == ConfigItemType.RoleSet ||
+            type == ConfigItemType.ChannelSet) return true;
         return false;
     }
 
-    public bool TypeIsDictionaryValue(ConfigItemType type)
-    {
-        if (type == ConfigItemType.StringDictionary ||
-            //type == ConfigItemType.CharDictionary || // Note: Implement when needed
-            type == ConfigItemType.BooleanDictionary /*|| 
-                type == ConfigItemType.IntegerDictionary || // Note: Implement when needed
-                type == ConfigItemType.DoubleDictionary || // Note: Implement when needed
-                type == ConfigItemType.EnumDictionary || // Note: Implement when needed
-                type == ConfigItemType.UserDictionary || // Note: Implement when needed
-                type == ConfigItemType.RoleDictionary || // Note: Implement when needed
-                type == ConfigItemType.ChannelDictionary*/) return true; // Note: Implement when needed
-        return false;
-    }
+    public bool TypeIsDictionaryValue(ConfigItemType type) => type == ConfigItemType.StringDictionary;
 
-    public bool TypeIsDictionaryList(ConfigItemType type)
+    public bool TypeIsDictionarySet(ConfigItemType type)
     {
-        if (type == ConfigItemType.StringListDictionary /*||
-                type == ConfigItemType.CharListDictionary || // Note: Implement when needed
-                type == ConfigItemType.BooleanListDictionary || // Note: Implement when needed
-                type == ConfigItemType.IntegerListDictionary || // Note: Implement when needed
-                type == ConfigItemType.DoubleListDictionary || // Note: Implement when needed
-                type == ConfigItemType.EnumListDictionary || // Note: Implement when needed
-                type == ConfigItemType.UserListDictionary || // Note: Implement when needed
-                type == ConfigItemType.RoleListDictionary || // Note: Implement when needed
-                type == ConfigItemType.ChannelListDictionary*/) return true; // Note: Implement when needed
+        if (type == ConfigItemType.StringSetDictionary) return true;
         return false;
     }
 }

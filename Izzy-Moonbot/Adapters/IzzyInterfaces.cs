@@ -18,13 +18,19 @@ public interface IIzzyRole
     string Mention { get => $"<@&{Id}>"; }
 }
 
+public interface IIzzyMessageProperties
+{
+    public Optional<string> Content { set; }
+    public Optional<MessageComponent> Components { set; }
+}
+
 public interface IIzzyMessage
 {
     ulong Id { get; }
     string Content { get; }
     IIzzyUser Author { get; }
     Task ReplyAsync(string message);
-    Task ModifyAsync(Action<MessageProperties> action);
+    Task ModifyAsync(Action<IIzzyMessageProperties> action);
 }
 
 public interface IIzzySocketMessageChannel

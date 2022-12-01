@@ -112,11 +112,9 @@ public class FilterService
         {
             if (!_config.FilterResponseMessages.ContainsKey(category))
                 _config.FilterResponseMessages[category] = null;
-            if (!_config.FilterResponseSilence.ContainsKey(category))
-                _config.FilterResponseSilence[category] = false;
 
             var messageResponse = _config.FilterResponseMessages[category];
-            var shouldSilence = _config.FilterResponseSilence[category];
+            var shouldSilence = _config.FilterResponseSilence.Contains(category);
             
             if (_config.FilterBypassRoles.Overlaps(roleIds) || 
                 (DiscordHelper.IsDev(context.User.Id) && _config.FilterDevBypass))
@@ -159,7 +157,7 @@ public class FilterService
     {
         if (newMessage.Author.Id == client.CurrentUser.Id) return; // Don't process self.
         
-        if (!_config.FilterEnabled || !_config.FilterMonitorEdits) return;
+        if (!_config.FilterEnabled) return;
         if (newMessage.Author.IsBot) return; // Don't listen to bots
         if (!DiscordHelper.IsInGuild(newMessage)) return;
         if (!DiscordHelper.IsProcessableMessage(newMessage)) return; // Not processable
@@ -168,10 +166,6 @@ public class FilterService
         
         if (!DiscordHelper.IsDefaultGuild(context)) return;
         
-        if (_config.ThreadOnlyMode &&
-            (message.Channel.GetChannelType() != ChannelType.PublicThread &&
-             message.Channel.GetChannelType() != ChannelType.PrivateThread)) return; // Not a thread, in thread only mode
-
         if (_config.FilterIgnoredChannels.Contains(context.Channel.Id)) return;
         foreach (var (category, words) in _config.FilteredWords)
         {
@@ -208,10 +202,6 @@ public class FilterService
         
         if (!DiscordHelper.IsDefaultGuild(context)) return;
         
-        if (_config.ThreadOnlyMode &&
-            (message.Channel.GetChannelType() != ChannelType.PublicThread &&
-             message.Channel.GetChannelType() != ChannelType.PrivateThread)) return; // Not a thread, in thread only mode
-
         if (_config.FilterIgnoredChannels.Contains(context.Channel.Id)) return;
         foreach (var (category, words) in _config.FilteredWords)
         {

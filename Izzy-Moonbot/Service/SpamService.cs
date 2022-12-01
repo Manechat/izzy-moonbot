@@ -361,10 +361,6 @@ public class SpamService
         if (!DiscordHelper.IsProcessableMessage(messageParam)) return; // Not processable
         if (messageParam is not SocketUserMessage message) return; // Not processable
         
-        if (_config.ThreadOnlyMode &&
-            (message.Channel.GetChannelType() != ChannelType.PublicThread &&
-             message.Channel.GetChannelType() != ChannelType.PrivateThread)) return; // Not a thread, in thread only mode
-
         var context = new SocketCommandContext(client, message);
 
         if (!DiscordHelper.IsDefaultGuild(context)) return;
