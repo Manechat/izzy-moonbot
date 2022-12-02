@@ -73,12 +73,6 @@ public class BotLogBuilder
         _log.Embed = embed;
         return this;
     }
-
-    public BotLogBuilder SetFileLogContent(string content)
-    {
-        _log.FileLogContent = content;
-        return this;
-    }
     
     public BotLogBuilder SetFileAttachment(FileAttachment attachment)
     {
