@@ -34,7 +34,7 @@ public class ModLoggingService
     }
 }
 
-public class Log
+public class IzzyLog
 {
     public SocketTextChannel Channel;
     public string? Content;
@@ -42,7 +42,7 @@ public class Log
     public string? FileLogContent;
     public FileAttachment? Attachment;
 
-    public Log(SocketTextChannel channel) { Channel = channel; }
+    public IzzyLog(SocketTextChannel channel) { Channel = channel; }
 }
 
 public class BotLogBuilder
@@ -51,7 +51,7 @@ public class BotLogBuilder
     private readonly Config _config;
     private readonly BatchLogger _batchLogger;
 
-    private readonly Log _log;
+    private readonly IzzyLog _log;
 
     public BotLogBuilder(Config config, SocketGuild guild, BatchLogger batchLogger)
     {
@@ -59,7 +59,7 @@ public class BotLogBuilder
         _guild = guild;
         _batchLogger = batchLogger;
 
-        _log = new Log(_guild.GetTextChannel(_config.LogChannel));
+        _log = new IzzyLog(_guild.GetTextChannel(_config.LogChannel));
     }
 
     public BotLogBuilder SetContent(string content)
@@ -112,7 +112,7 @@ public class ModLogBuilder
     private readonly Config _config;
     private readonly BatchLogger _batchLogger;
 
-    private readonly Log _log;
+    private readonly IzzyLog _log;
 
     public ModLogBuilder(Config config, SocketGuild guild, BatchLogger batchLogger)
     {
@@ -120,7 +120,7 @@ public class ModLogBuilder
         _guild = guild;
         _batchLogger = batchLogger;
 
-        _log = new Log(_guild.GetTextChannel(_config.ModChannel));
+        _log = new IzzyLog(_guild.GetTextChannel(_config.ModChannel));
     }
 
     public ModLogBuilder SetContent(string content)
@@ -181,8 +181,8 @@ public class ModLogBuilder
 
 public class BatchLogger
 {
-    private readonly List<Log> _botLogs = new();
-    private readonly List<Log> _modLogs = new();
+    private readonly List<IzzyLog> _botLogs = new();
+    private readonly List<IzzyLog> _modLogs = new();
     private readonly Config _config;
 
     public BatchLogger(Config config)
@@ -192,12 +192,12 @@ public class BatchLogger
         RefreshBatchInterval();
     }
 
-    public void AddBotLog(Log log)
+    public void AddBotLog(IzzyLog log)
     {
         _botLogs.Add(log);
     }
     
-    public void AddModLog(Log log)
+    public void AddModLog(IzzyLog log)
     {
         _modLogs.Add(log);
     }
