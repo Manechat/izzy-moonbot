@@ -9,6 +9,8 @@ namespace Izzy_Moonbot.Adapters;
 public interface IIzzyUser
 {
     ulong Id { get; }
+    string Username { get; }
+    string Discriminator { get => "1234"; }
 }
 
 public interface IIzzyRole
@@ -62,6 +64,7 @@ public interface IIzzySocketGuildChannel
 public interface IIzzyGuild
 {
     ulong Id { get; }
+    string Name { get; }
     Task<IReadOnlyCollection<IIzzyUser>> SearchUsersAsync(string userSearchQuery);
     IReadOnlyCollection<IIzzySocketTextChannel> TextChannels { get; }
     IReadOnlyCollection<IIzzyRole> Roles { get; }
@@ -95,5 +98,6 @@ public interface IIzzyContext
     IIzzyClient Client { get; }
     IIzzySocketMessageChannel Channel { get; }
     IIzzyMessage Message { get; }
+    IIzzyUser User { get; }
 }
 

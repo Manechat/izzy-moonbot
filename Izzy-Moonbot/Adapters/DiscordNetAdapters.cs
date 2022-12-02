@@ -21,6 +21,8 @@ public class DiscordNetUserAdapter : IIzzyUser
     }
 
     public ulong Id { get => _user.Id; }
+    public string Username { get => _user.Username; }
+    public string Discriminator { get => _user.Discriminator; }
 
     public override string? ToString()
     {
@@ -197,6 +199,7 @@ public class SocketGuildAdapter : IIzzyGuild
     }
 
     public ulong Id { get => _guild.Id; }
+    public string Name { get => _guild.Name; }
 
     public async Task<IReadOnlyCollection<IIzzyUser>> SearchUsersAsync(string userSearchQuery)
     {
@@ -290,4 +293,6 @@ public class SocketCommandContextAdapter : IIzzyContext
     public IIzzySocketMessageChannel Channel { get => new SocketMessageChannelAdapter(_context.Channel); }
 
     public IIzzyMessage Message { get => new SocketUserMessageAdapter(_context.Message); }
+
+    public IIzzyUser User { get => new DiscordNetUserAdapter(_context.User); }
 }

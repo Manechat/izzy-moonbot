@@ -22,7 +22,7 @@ public static class TestUtils
         var generalChannel = new StubChannel(1, "general");
         var channels = new List<StubChannel> { generalChannel, new StubChannel(2, "modchat") };
 
-        var guild = new StubGuild(1, roles, users, channels);
+        var guild = new StubGuild(1, "Maretime Bay", roles, users, channels);
         var client = new StubClient(izzyHerself, new List<StubGuild> { guild });
 
         var cfg = new Config();

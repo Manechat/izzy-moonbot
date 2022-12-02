@@ -93,8 +93,7 @@ public class RaidService
             if (member.JoinedAt.Value.AddSeconds(_config.RecentJoinDecay) < DateTimeOffset.Now) return false;
             
             _log.Log(
-                $"{member.DisplayName} ({member.Id}) no longer a recent join (immediate after raid)",
-                null);
+                $"{member.DisplayName} ({member.Id}) no longer a recent join (immediate after raid)");
             return true;
         });
         
@@ -109,8 +108,7 @@ public class RaidService
                 {
                     await Task.Delay(Convert.ToInt32((member.JoinedAt.Value.AddSeconds(_config.RecentJoinDecay) - DateTimeOffset.Now) * 1000));
                     await _log.Log(
-                        $"{member.DisplayName} ({member.Id}) no longer a recent join (after raid)",
-                        null);
+                        $"{member.DisplayName} ({member.Id}) no longer a recent join (after raid)");
                     _state.RecentJoins.Remove(member.Id);
                 });
             }
@@ -136,8 +134,7 @@ public class RaidService
             if (member.JoinedAt.Value.AddSeconds(_config.RecentJoinDecay) < DateTimeOffset.Now) return false;
             
             _log.Log(
-                $"{member.DisplayName} ({member.Id}) no longer a recent join (immediate after raid)",
-                null);
+                $"{member.DisplayName} ({member.Id}) no longer a recent join (immediate after raid)");
             return true;
         });
         
@@ -152,8 +149,7 @@ public class RaidService
                 {
                     await Task.Delay(Convert.ToInt32((member.JoinedAt.Value.AddSeconds(_config.RecentJoinDecay) - DateTimeOffset.Now) * 1000));
                     await _log.Log(
-                        $"{member.DisplayName} ({member.Id}) no longer a recent join (after raid)",
-                        null);
+                        $"{member.DisplayName} ({member.Id}) no longer a recent join (after raid)");
                     _state.RecentJoins.Remove(member.Id);
                 });
             }
@@ -191,8 +187,7 @@ public class RaidService
             var potentialRaiders = new List<string>();
 
             _log.Log(
-                "Small raid detected!",
-                null);
+                "Small raid detected!");
 
             _state.RecentJoins.ForEach(userId =>
             {
@@ -235,8 +230,7 @@ public class RaidService
             var potentialRaiders = new List<string>();
 
             _log.Log(
-                "Large raid detected!",
-                null);
+                "Large raid detected!");
 
             var recentJoins = _state.RecentJoins.Select(recentJoin =>
             {
@@ -320,17 +314,16 @@ public class RaidService
             _state.CurrentSmallJoinCount++;
             await _log.Log(
                 $"Small raid join count raised for {member.DisplayName} ({member.Id}). Now at {_state.CurrentSmallJoinCount}/{_config.SmallRaidSize} for {_config.SmallRaidTime} seconds.",
-                null, level: LogLevel.Debug);
+                level: LogLevel.Debug);
             _state.CurrentLargeJoinCount++;
             await _log.Log(
                 $"Large raid join count raised for {member.DisplayName} ({member.Id}). Now at {_state.CurrentLargeJoinCount}/{_config.LargeRaidSize} for {_config.LargeRaidTime} seconds.",
-                null, level: LogLevel.Debug);
+                level: LogLevel.Debug);
 
             _state.RecentJoins.Add(member.Id);
 
             await _log.Log(
-                $"Recent join: {member.DisplayName} ({member.Id}), No longer considered recent join in {_config.RecentJoinDecay} seconds.",
-                null);
+                $"Recent join: {member.DisplayName} ({member.Id}), No longer considered recent join in {_config.RecentJoinDecay} seconds.");
 
             await CheckForTrip(member.Guild);
 
@@ -340,7 +333,7 @@ public class RaidService
                 _state.CurrentSmallJoinCount--;
                 await _log.Log(
                     $"Small raid join count dropped for {member.DisplayName} ({member.Id}). Now at {_state.CurrentSmallJoinCount}./{_config.SmallRaidSize} after {_config.SmallRaidTime} seconds.",
-                    null, level: LogLevel.Debug);
+                    level: LogLevel.Debug);
             });
 
             Task.Run(async () =>
@@ -349,7 +342,7 @@ public class RaidService
                 _state.CurrentLargeJoinCount--;
                 await _log.Log(
                     $"Large raid join count dropped for {member.DisplayName} ({member.Id}). Now at {_state.CurrentLargeJoinCount}/{_config.LargeRaidSize} after {_config.LargeRaidTime} seconds.",
-                    null, level: LogLevel.Debug);
+                    level: LogLevel.Debug);
             });
 
             Task.Run(async () =>
@@ -358,8 +351,7 @@ public class RaidService
                 if (_state.CurrentRaidMode == RaidMode.None)
                 {
                     await _log.Log(
-                        $"{member.DisplayName} ({member.Id}) no longer a recent join",
-                        null);
+                        $"{member.DisplayName} ({member.Id}) no longer a recent join");
                     _state.RecentJoins.Remove(member.Id);
                 }
             });
@@ -373,7 +365,7 @@ public class RaidService
                         return; // Small raid join count is still ongoing.
                     if (_state.ManualRaidSilence) return; // This raid was manually silenced. Don't decay.
 
-                    await _log.Log("Decaying raid: Small -> None", null, level: LogLevel.Debug);
+                    await _log.Log("Decaying raid: Small -> None", level: LogLevel.Debug);
                     await DecaySmallRaid(member.Guild);
                 });
             if (_config.LargeRaidDecay != null)
@@ -385,15 +377,14 @@ public class RaidService
                     if (_state.CurrentLargeJoinCount > _config.SmallRaidSize)
                         return; // Large raid join count is still ongoing.
 
-                    await _log.Log("Decaying raid: Large -> Small", null, level: LogLevel.Debug);
+                    await _log.Log("Decaying raid: Large -> Small", level: LogLevel.Debug);
                     await DecayLargeRaid(member.Guild);
                 });
         }
         else
         {
             _log.Log(
-                $"{member.DisplayName}#{member.Discriminator} ({member.Id}) rejoined while still considered a recent join. Not calculating additional raid pressure.",
-                null);
+                $"{member.DisplayName}#{member.Discriminator} ({member.Id}) rejoined while still considered a recent join. Not calculating additional raid pressure.");
         }
     }
 }

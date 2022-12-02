@@ -13,13 +13,13 @@ namespace Izzy_Moonbot.Adapters;
 
 public class TestUser : IIzzyUser
 {
-    public string Name { get; }
     public ulong Id { get; }
+    public string Username { get; }
 
-    public TestUser(string name, ulong id)
+    public TestUser(string username, ulong id)
     {
-        Name = name;
         Id = id;
+        Username = username;
     }
 }
 
@@ -188,13 +188,15 @@ public class TestMessageChannel : IIzzySocketMessageChannel
 public class StubGuild
 {
     public ulong Id { get; }
+    public string Name { get; }
     public List<TestRole> Roles;
     public List<TestUser> Users;
     public List<StubChannel> Channels;
 
-    public StubGuild(ulong id, List<TestRole> roles, List<TestUser> users, List<StubChannel> channels)
+    public StubGuild(ulong id, string name, List<TestRole> roles, List<TestUser> users, List<StubChannel> channels)
     {
         Id = id;
+        Name = name;
         Roles = roles;
         Users = users;
         Channels = channels;
@@ -204,6 +206,7 @@ public class StubGuild
 public class TestGuild : IIzzyGuild
 {
     public ulong Id { get; }
+    public string Name { get; }
     public IReadOnlyCollection<IIzzySocketTextChannel> TextChannels { get; }
     public IReadOnlyCollection<IIzzyRole> Roles { get; }
 
@@ -212,7 +215,8 @@ public class TestGuild : IIzzyGuild
     public TestGuild(StubGuild stub)
     {
         Id = stub.Id;
-        _users= stub.Users;
+        Name = stub.Name;
+        _users = stub.Users;
         Roles = stub.Roles;
         TextChannels = stub.Channels.Select(c => new TestTextChannel(stub, c.Id, c.Name)).ToList();
     }
@@ -227,7 +231,7 @@ public class TestGuild : IIzzyGuild
 
     public Task<IReadOnlyCollection<IIzzyUser>> SearchUsersAsync(string userSearchQuery)
     {
-        return Task.FromResult((IReadOnlyCollection<IIzzyUser>)_users.Where(user => user.Name.StartsWith(userSearchQuery)).ToList());
+        return Task.FromResult((IReadOnlyCollection<IIzzyUser>)_users.Where(user => user.Username.StartsWith(userSearchQuery)).ToList());
     }
 
     public IIzzyUser GetUser(ulong userId) => _users.Where(user => user.Id == userId).Single();
@@ -246,14 +250,16 @@ public class TestIzzyContext : IIzzyContext
     public IIzzyClient Client { get; }
     public IIzzySocketMessageChannel Channel { get; }
     public IIzzyMessage Message { get; }
+    public IIzzyUser User { get; }
 
-    public TestIzzyContext(bool isPrivate, IIzzyGuild guild, IIzzyClient client, IIzzySocketMessageChannel messageChannel, IIzzyMessage message)
+    public TestIzzyContext(bool isPrivate, IIzzyGuild guild, IIzzyClient client, IIzzySocketMessageChannel messageChannel, IIzzyMessage message, IIzzyUser user)
     {
         IsPrivate = isPrivate;
         Guild = guild;
         Client = client;
         Channel = messageChannel;
         Message = message;
+        User = user;
     }
 }
 
@@ -303,7 +309,8 @@ public class StubClient : IIzzyClient
                     new TestGuild(guild),
                     this,
                     new TestMessageChannel(channel.Name, channelId, guild, this),
-                    new TestMessage(stubMessage.Id, stubMessage.Content, user, channel)
+                    new TestMessage(stubMessage.Id, stubMessage.Content, user, channel),
+                    user
                 );
             }
             else

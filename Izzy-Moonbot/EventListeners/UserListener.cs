@@ -292,7 +292,7 @@ public class UserListener
         if (!_users.ContainsKey(newUser.Id))
         {
             changed = true;
-            await _logger.Log($"{newUser.Username}#{newUser.Discriminator} ({newUser.Id}) has no metadata, creating now...", null, level: LogLevel.Debug);
+            await _logger.Log($"{newUser.Username}#{newUser.Discriminator} ({newUser.Id}) has no metadata, creating now...", level: LogLevel.Debug);
             var newUserData = new User();
             newUserData.Username = $"{newUser.Username}#{newUser.Discriminator}";
             newUserData.Aliases.Add(newUser.Username);
@@ -303,7 +303,7 @@ public class UserListener
         {
             if (_users[newUser.Id].Username != $"{newUser.Username}#{newUser.Discriminator}")
             {
-                await _logger.Log($"User name/discriminator changed from {_users[newUser.Id].Username} to {newUser.Username}#{newUser.Discriminator}, updating...", null, level: LogLevel.Debug);
+                await _logger.Log($"User name/discriminator changed from {_users[newUser.Id].Username} to {newUser.Username}#{newUser.Discriminator}, updating...", level: LogLevel.Debug);
                 _users[newUser.Id].Username =
                     $"{newUser.Username}#{newUser.Discriminator}";
                 changed = true;
@@ -311,7 +311,7 @@ public class UserListener
 
             if (!_users[newUser.Id].Aliases.Contains(newUser.DisplayName))
             {
-                await _logger.Log($"{newUser.Username}#{newUser.Discriminator} ({newUser.Id}) has new displayname, updating...", null, level: LogLevel.Debug);
+                await _logger.Log($"{newUser.Username}#{newUser.Discriminator} ({newUser.Id}) has new displayname, updating...", level: LogLevel.Debug);
                 _users[newUser.Id].Aliases.Add(newUser.DisplayName);
                 changed = true;
             }

@@ -425,7 +425,7 @@ public class ConfigModuleTests
         var logChannel = new StubChannel(3, "bot-logs");
         var channels = new List<StubChannel> { generalChannel, modChannel, logChannel };
 
-        var guild = new StubGuild(1, roles, users, channels);
+        var guild = new StubGuild(1, "Maretime Bay", roles, users, channels);
         var client = new StubClient(izzyHerself, new List<StubGuild> { guild });
 
         var cfg = new Config();
