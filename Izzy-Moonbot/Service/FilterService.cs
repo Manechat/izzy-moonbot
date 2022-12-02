@@ -109,8 +109,9 @@ public class FilterService
         bool onEdit = false)
     {
         var roleIds = context.Guild.GetUser(context.User.Id).Roles.Select(role => role.Id).ToList();
-            
-        if(!_config.FilterBypassRoles.Overlaps(roleIds)) 
+
+        if (!_config.FilterBypassRoles.Overlaps(roleIds) &&
+            !(DiscordHelper.IsDev(context.User.Id) && _config.FilterDevBypass))
             await context.Message.DeleteAsync();
         
         try
