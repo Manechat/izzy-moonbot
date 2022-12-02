@@ -25,9 +25,10 @@ public class AdminModule : ModuleBase<SocketCommandContext>
     private readonly ScheduleService _schedule;
     private readonly Dictionary<ulong, User> _users;
     private readonly ModService _mod;
+    private readonly ModLoggingService _modLogger;
 
     public AdminModule(LoggingService logger, Config config, Dictionary<ulong, User> users,
-        State state, ScheduleService schedule, ModService mod)
+        State state, ScheduleService schedule, ModService mod, ModLoggingService modLogger)
     {
         _logger = logger;
         _config = config;
@@ -35,6 +36,7 @@ public class AdminModule : ModuleBase<SocketCommandContext>
         _schedule = schedule;
         _users = users;
         _mod = mod;
+        _modLogger = modLogger;
     }
 
     [Command("panic")]
@@ -881,7 +883,10 @@ public class AdminModule : ModuleBase<SocketCommandContext>
         );
         var s = new MemoryStream(Encoding.UTF8.GetBytes(bulkDeletionLogString));
         var fa = new FileAttachment(s, $"{channel.Name}_bulk_deletion_log_{DateTimeOffset.UtcNow.ToString()}.txt");
-        await logChannel.SendFileAsync(fa, $"Finished wiping {channelName}, here's the bulk deletion log:");
+        await _modLogger.CreateBotLog(Context.Guild)
+            .SetContent($"Finished wiping {channelName}, here's the bulk deletion log:")
+            .SetFileAttachment(fa)
+            .Send();
 
         await ReplyAsync($"Finished wiping {channelName}. {messagesToDeleteCount} messages were deleted.");
     }
