@@ -69,12 +69,17 @@ public class FilterService
         if (actionsTaken.Contains("silence")) actions.Add(":mute: - **I've silenced the user.**");
 
         var roleIds = context.Guild.GetUser(context.User.Id).Roles.Select(role => role.Id).ToList();
-        if (_config.FilterBypassRoles.Overlaps(roleIds) || 
-            (DiscordHelper.IsDev(context.User.Id) && _config.FilterDevBypass))
+        if (_config.FilterBypassRoles.Overlaps(roleIds))
         {
             actions.Clear();
             actions.Add(
                 ":information_source: - **I've done nothing as this user has a role which is in `FilterBypassRoles`.**");
+        }
+        else if (DiscordHelper.IsDev(context.User.Id) && _config.FilterDevBypass)
+        {
+            actions.Clear();
+            actions.Add(
+                ":information_source: - **I've done nothing as this is one of my developers and `FilterDevBypass` is true.**");
         }
 
         if (_config.SafeMode)
