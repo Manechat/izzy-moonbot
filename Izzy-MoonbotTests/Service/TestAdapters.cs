@@ -4,6 +4,9 @@ using static Izzy_Moonbot.Adapters.IIzzyClient;
 
 namespace Izzy_Moonbot.Adapters;
 
+// This file is for test implementations of the Discord.NET
+// adapter interfaces in IzzyInterfaces.cs.
+
 // Unfortunately CS1998 doesn't understand the concept of a synchronous implementation of
 // an asynchronous API, so there's no way to satisfy it without spawning useless threads.
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously

@@ -15,30 +15,10 @@ namespace Izzy_Moonbot_Tests.Helpers;
 [TestClass()]
 public class PaginationHelperTests
 {
-    private static (Config, ConfigDescriber, (TestUser, TestUser), List<TestRole>, StubChannel, StubGuild, StubClient) DefaultStubs()
-    {
-        var izzyHerself = new TestUser("Izzy Moonbot", 1);
-        var sunny = new TestUser("Sunny", 2);
-        var users = new List<TestUser> { izzyHerself, sunny };
-
-        var roles = new List<TestRole> { new TestRole("Alicorn", 1) };
-
-        var generalChannel = new StubChannel(1, "general");
-        var channels = new List<StubChannel> { generalChannel };
-
-        var guild = new StubGuild(1, roles, users, channels);
-        var client = new StubClient(izzyHerself, new List<StubGuild> { guild });
-
-        var cfg = new Config();
-        var cd = new ConfigDescriber();
-
-        return (cfg, cd, (izzyHerself, sunny), roles, generalChannel, guild, client);
-    }
-
     [TestMethod()]
     public void BasicPagingTests()
     {
-        var (cfg, cd, (izzyHerself, sunny), _, generalChannel, guild, client) = DefaultStubs();
+        var (cfg, cd, (izzyHerself, sunny), _, generalChannel, guild, client) = TestUtils.DefaultStubs();
 
         var context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, "make some pages");
 

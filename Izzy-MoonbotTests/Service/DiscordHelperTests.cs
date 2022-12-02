@@ -1,5 +1,6 @@
 ﻿using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Helpers;
+using Izzy_Moonbot_Tests;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using static Izzy_Moonbot.Helpers.DiscordHelper;
 
@@ -59,19 +60,10 @@ public class DiscordHelperTests
         Assert.ThrowsException<FormatException>(() => DiscordHelper.ConvertRolePingToId("foo <@&1234> bar"));
     }
 
-    // The built-in Assert.AreEqual and CollectionsAssert.AreEqual have error messages so bad it was worth writing my own asserts
-    void AssertListsAreEqual<T>(IList<T> expected, IList<T> actual, string message = "")
-    {
-        if (expected.Count() != actual.Count())
-            Assert.AreEqual(expected, actual, $"\nCount() mismatch: {expected.Count()} != {actual.Count()}");
-        foreach (var i in Enumerable.Range(0, expected.Count()))
-            Assert.AreEqual(expected[i], actual[i], $"\nItem {i}" + message);
-    }
-
     void AssertArgumentResultsAreEqual(ArgumentResult expected, ArgumentResult actual)
     {
-        AssertListsAreEqual(expected.Arguments, actual.Arguments, "\nArguments");
-        AssertListsAreEqual(expected.Indices, actual.Indices, "\nIndices");
+        TestUtils.AssertListsAreEqual(expected.Arguments, actual.Arguments, "\nArguments");
+        TestUtils.AssertListsAreEqual(expected.Indices, actual.Indices, "\nIndices");
     }
 
     string SkippedArgsString(string argsString, int argsToSkip)
@@ -155,35 +147,11 @@ public class DiscordHelperTests
         Assert.AreEqual("x", SkippedArgsString(argsString, 2)); // TODO: Incorrect
     }
 
-    public StubClient DefaultTestClient()
-    {
-        // Unrealistic assumptions made here include but are not limited to:
-        // - There is only one guild/server the bot ever sees
-        // - All users are present in all channels
-
-        var izzyHerself = new TestUser("Izzy Moonbot", 1);
-
-        var users = new List<TestUser>{
-            izzyHerself,
-            new TestUser("Sunny", 2)
-        };
-
-        var roles = new List<TestRole> {
-            new TestRole("Alicorn", 1)
-        };
-
-        var generalChannel = new StubChannel(1, "general");
-        var channels = new List<StubChannel> { generalChannel };
-
-        var guild = new StubGuild(1, roles, users, channels);
-        return new StubClient(izzyHerself, new List<StubGuild> { guild });
-    }
-
     [TestMethod()]
     public async Task UserRoleChannel_GettersTests()
     {
-        var client = DefaultTestClient();
-        var context = client.AddMessage(1, 1, 1, "hello");
+        var (_, _, (izzyHerself, _), _, generalChannel, guild, client) = TestUtils.DefaultStubs();
+        var context = client.AddMessage(guild.Id, generalChannel.Id, izzyHerself.Id, "hello");
 
         Assert.AreEqual(1ul, await GetChannelIdIfAccessAsync("1", context));
         Assert.AreEqual(0ul, await GetChannelIdIfAccessAsync("999", context));
