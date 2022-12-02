@@ -199,7 +199,11 @@ public class InfoModule : ModuleBase<SocketCommandContext>
 
     private string PonyReadableRelevantAliases(char prefix, string command)
     {
-        var relevantAliases = _config.Aliases.Where(alias => alias.Value.ToLower().StartsWith(command));
+        var relevantAliases = _config.Aliases.Where(alias =>
+            // be careful not to e.g. make `.help ass` display .assignrole aliases
+            alias.Value.ToLower() == command ||
+                alias.Value.ToLower().StartsWith($"{command} "));
+
         if (relevantAliases.Any())
             return $"{Environment.NewLine}Relevant aliases: {string.Join(", ", relevantAliases.Select(alias => $"{prefix}{alias.Key}"))}";
         else
