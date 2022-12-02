@@ -873,16 +873,23 @@ public class AdminModule : ModuleBase<SocketCommandContext>
             return;
         }
 
-        await _logger.Log($"Assembling a bulk deletion log from the content of {messagesToDeleteCount} deleted messages");
-        bulkDeletionLog.Sort((x, y) => x.Item1.CompareTo(y.Item1));
-        var bulkDeletionLogString = string.Join(
-            Environment.NewLine + Environment.NewLine,
-            bulkDeletionLog.Select(logElement => logElement.Item2)
-        );
-        var s = new MemoryStream(Encoding.UTF8.GetBytes(bulkDeletionLogString));
-        var fa = new FileAttachment(s, $"{channel.Name}_bulk_deletion_log_{DateTimeOffset.UtcNow.ToString()}.txt");
-        await logChannel.SendFileAsync(fa, $"Finished wiping {channelName}, here's the bulk deletion log:");
+        if (messagesToDeleteCount > 0)
+        {
+            await _logger.Log($"Assembling a bulk deletion log from the content of {messagesToDeleteCount} deleted messages");
+            bulkDeletionLog.Sort((x, y) => x.Item1.CompareTo(y.Item1));
+            var bulkDeletionLogString = string.Join(
+                Environment.NewLine + Environment.NewLine,
+                bulkDeletionLog.Select(logElement => logElement.Item2)
+            );
+            var s = new MemoryStream(Encoding.UTF8.GetBytes(bulkDeletionLogString));
+            var fa = new FileAttachment(s, $"{channel.Name}_bulk_deletion_log_{DateTimeOffset.UtcNow.ToString()}.txt");
+            await logChannel.SendFileAsync(fa, $"Finished wiping {channelName}, here's the bulk deletion log:");
 
-        await ReplyAsync($"Finished wiping {channelName}. {messagesToDeleteCount} messages were deleted.");
+            await ReplyAsync($"Finished wiping {channelName}. {messagesToDeleteCount} messages were deleted, and a bulk deletion log was posted in <#{_config.LogChannel}>");
+        }
+        else
+        {
+            await ReplyAsync($"I didn't find any messages that recent in {channelName}. Deleted nothing.");
+        }
     }
 }
