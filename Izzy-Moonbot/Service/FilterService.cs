@@ -90,11 +90,7 @@ public class FilterService
                 ":information_source: - **I've done nothing as this is one of my developers and `FilterDevBypass` is true.**");
         }
 
-        if (_config.SafeMode)
-            embedBuilder.AddField("How do I want to respond? (`SafeMode` is enabled)",
-                string.Join(Environment.NewLine, actions));
-        else
-            embedBuilder.AddField("What have I done in response?", string.Join(Environment.NewLine, actions));
+        embedBuilder.AddField("What have I done in response?", string.Join(Environment.NewLine, actions));
 
         var fileLogResponse = "Delete";
         if (actionsTaken.Contains("message")) fileLogResponse += ", Send Message";
@@ -142,10 +138,7 @@ public class FilterService
 
             if (messageResponse != null)
             {
-                if (_config.SafeMode)
-                    message = await context.Guild.GetTextChannel(_config.LogChannel).SendMessageAsync(
-                        $"<@{context.User.Id}> {messageResponse}{Environment.NewLine}{Environment.NewLine}*I am posting this message here as safe mode is enabled.*");
-                else message = await context.Channel.SendMessageAsync($"<@{context.User.Id}> {messageResponse}");
+                message = await context.Channel.SendMessageAsync($"<@{context.User.Id}> {messageResponse}");
                 actions.Add("message");
             }
 
