@@ -43,8 +43,12 @@ public class FilterService
     
     public void RegisterEvents(DiscordSocketClient client)
     {
-        client.MessageReceived += (message) => Task.Run(async () => { await ProcessMessage(message, client); });
-        client.MessageUpdated += (oldMessage, newMessage, channel) => Task.Run(async () => { await ProcessMessageUpdate(oldMessage, newMessage, channel, client); });
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
+#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+        client.MessageReceived += async (message) => ProcessMessage(message, client);
+        client.MessageUpdated += async (oldMessage, newMessage, channel) => ProcessMessageUpdate(oldMessage, newMessage, channel, client);
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
+#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
     }
 
     private async Task LogFilterTrip(SocketCommandContext context, string word, string category,
