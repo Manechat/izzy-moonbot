@@ -24,20 +24,20 @@ public class ScheduleService
     private readonly LoggingService _logger;
     private readonly ModService _mod;
     private readonly ModLoggingService _modLogging;
-    private State _state;
+    private GeneralStorage _generalStorage;
 
     private readonly List<ScheduledJob> _scheduledJobs;
 
     private bool _alreadyInitiated;
 
-    public ScheduleService(Config config, ModService mod, ModLoggingService modLogging, LoggingService logger, State state,
+    public ScheduleService(Config config, ModService mod, ModLoggingService modLogging, LoggingService logger, GeneralStorage generalStorage,
         List<ScheduledJob> scheduledJobs)
     {
         _config = config;
         _logger = logger;
         _mod = mod;
         _modLogging = modLogging;
-        _state = state;
+        _generalStorage = generalStorage;
         _scheduledJobs = scheduledJobs;
     }
 
@@ -458,19 +458,21 @@ public class ScheduleService
             {
                 var image = await BooruHelper.GetFeaturedImage();
 
-                if (_state.CurrentBooruFeaturedImage != null)
+                if (_generalStorage.CurrentBooruFeaturedImage != null)
                 {
-                    if (image.Id == _state.CurrentBooruFeaturedImage.Id)
+                    if (image.Id == _generalStorage.CurrentBooruFeaturedImage.Id)
                     {
                         // Update the cache in case of change, but return
-                        _state.CurrentBooruFeaturedImage =
+                        _generalStorage.CurrentBooruFeaturedImage =
                             image; // Cache to not anger CULTPONY or Twilight (API docs say to cache)
+                        await FileHelper.SaveGeneralStorageAsync(_generalStorage);
                         return;
                     }
                 }
 
-                _state.CurrentBooruFeaturedImage =
+                _generalStorage.CurrentBooruFeaturedImage =
                     image; // Cache to not anger CULTPONY or Twilight (API docs say to cache)
+                await FileHelper.SaveGeneralStorageAsync(_generalStorage);
 
                 // Don't check the images if they're not ready yet!
                 if (!image.ThumbnailsGenerated || image.Representations == null)

@@ -22,15 +22,17 @@ public class RaidService
     private readonly ModService _modService;
     private readonly Config _config;
     private readonly State _state;
+    private readonly GeneralStorage _generalStorage;
 
     public RaidService(Config config, ModService modService, LoggingService log, ModLoggingService modLog,
-        State state)
+        State state, GeneralStorage generalStorage)
     {
         _config = config;
         _modService = modService;
         _log = log;
         _modLog = modLog;
         _state = state;
+        _generalStorage = generalStorage;
     }
 
     public void RegisterEvents(DiscordSocketClient client)
@@ -71,14 +73,15 @@ public class RaidService
 
         await _modService.SilenceUsers(recentJoins, "Suspected raider");
 
-        _state.ManualRaidSilence = true;
+        _generalStorage.ManualRaidSilence = true;
 
         await FileHelper.SaveConfigAsync(_config);
+        await FileHelper.SaveGeneralStorageAsync(_generalStorage);
     }
 
     public async Task EndRaid(SocketCommandContext context)
     {
-        _state.CurrentRaidMode = RaidMode.None;
+        _generalStorage.CurrentRaidMode = RaidMode.None;
 
         _config.AutoSilenceNewJoins = false;
         _config.BatchSendLogs = false;
@@ -116,12 +119,13 @@ public class RaidService
             }
         });
 
-        _state.ManualRaidSilence = false;
+        _generalStorage.ManualRaidSilence = false;
+        await FileHelper.SaveGeneralStorageAsync(_generalStorage);
     }
 
     private async Task DecaySmallRaid(SocketGuild guild)
     {
-        _state.CurrentRaidMode = RaidMode.None;
+        _generalStorage.CurrentRaidMode = RaidMode.None;
 
         _config.AutoSilenceNewJoins = false;
         _config.BatchSendLogs = false;
@@ -164,29 +168,32 @@ public class RaidService
                 $"The raid has ended. I've disabled raid defences and cleared my internal cache of all recent joins.")
             .SetFileLogContent("The raid has ended. I've disabled raid defences and cleared my internal cache of all recent joins.")
             .Send();
+
+        await FileHelper.SaveGeneralStorageAsync(_generalStorage);
     }
 
     private async Task DecayLargeRaid(SocketGuild guild)
     {
-        _state.CurrentRaidMode = RaidMode.Small;
+        _generalStorage.CurrentRaidMode = RaidMode.Small;
 
-        if (!_state.ManualRaidSilence) _config.AutoSilenceNewJoins = false;
+        if (!_generalStorage.ManualRaidSilence) _config.AutoSilenceNewJoins = false;
         _config.BatchSendLogs = false;
 
         var manualRaidActive =
             "`.ass` was ran manually, not disabling `AutoSilenceNewJoins`. Run `.assoff` to end the raid.";
-        if (!_state.ManualRaidSilence) manualRaidActive = "";
+        if (!_generalStorage.ManualRaidSilence) manualRaidActive = "";
         await _modLog.CreateModLog(guild)
             .SetContent($"The raid has deescalated. I'm lowering the raid level down to Small. {manualRaidActive}")
             .SetFileLogContent($"The raid has deescalated. I'm lowering the raid level down to Small. {manualRaidActive}")
             .Send();
 
         await FileHelper.SaveConfigAsync(_config);
+        await FileHelper.SaveGeneralStorageAsync(_generalStorage);
     }
 
     public async Task CheckForTrip(SocketGuild guild)
     {
-        if (_state.CurrentSmallJoinCount >= _config.SmallRaidSize && _state.CurrentRaidMode == RaidMode.None)
+        if (_state.CurrentSmallJoinCount >= _config.SmallRaidSize && _generalStorage.CurrentRaidMode == RaidMode.None)
         {
             var potentialRaiders = new List<string>();
 
@@ -227,10 +234,11 @@ public class RaidService
                                    $"{string.Join($"{Environment.NewLine}", potentialRaiders)}{Environment.NewLine}")
                 .Send();
 
-            _state.CurrentRaidMode = RaidMode.Small;
+            _generalStorage.CurrentRaidMode = RaidMode.Small;
+            await FileHelper.SaveGeneralStorageAsync(_generalStorage);
         }
 
-        if (_state.CurrentLargeJoinCount >= _config.LargeRaidSize && _state.CurrentRaidMode != RaidMode.Large)
+        if (_state.CurrentLargeJoinCount >= _config.LargeRaidSize && _generalStorage.CurrentRaidMode != RaidMode.Large)
         {
             var potentialRaiders = new List<string>();
 
@@ -272,7 +280,7 @@ public class RaidService
                 }
             });
 
-            if (_state.CurrentRaidMode == RaidMode.None)
+            if (_generalStorage.CurrentRaidMode == RaidMode.None)
             {
                 await _modLog.CreateModLog(guild)
                     .SetContent(
@@ -304,10 +312,11 @@ public class RaidService
                         .Send();
             }
 
-            _state.CurrentRaidMode = RaidMode.Large;
+            _generalStorage.CurrentRaidMode = RaidMode.Large;
             _config.AutoSilenceNewJoins = true;
 
             await FileHelper.SaveConfigAsync(_config);
+            await FileHelper.SaveGeneralStorageAsync(_generalStorage);
         }
     }
 
@@ -355,7 +364,7 @@ public class RaidService
             Task.Run(async () =>
             {
                 await Task.Delay(Convert.ToInt32(_config.RecentJoinDecay * 1000));
-                if (_state.CurrentRaidMode == RaidMode.None)
+                if (_generalStorage.CurrentRaidMode == RaidMode.None)
                 {
                     await _log.Log(
                         $"{member.DisplayName} ({member.Id}) no longer a recent join",
@@ -368,10 +377,10 @@ public class RaidService
                 {
                     await Task.Delay(Convert.ToInt32(_config.SmallRaidDecay * 60 * 1000));
                     if (_config.SmallRaidDecay == null) return; // Was disabled
-                    if (_state.CurrentRaidMode != RaidMode.Small) return; // Not a small raid
+                    if (_generalStorage.CurrentRaidMode != RaidMode.Small) return; // Not a small raid
                     if (_state.CurrentSmallJoinCount > 0)
                         return; // Small raid join count is still ongoing.
-                    if (_state.ManualRaidSilence) return; // This raid was manually silenced. Don't decay.
+                    if (_generalStorage.ManualRaidSilence) return; // This raid was manually silenced. Don't decay.
 
                     await _log.Log("Decaying raid: Small -> None", null, level: LogLevel.Debug);
                     await DecaySmallRaid(member.Guild);
@@ -381,7 +390,7 @@ public class RaidService
                 {
                     await Task.Delay(Convert.ToInt32(_config.LargeRaidDecay * 60 * 1000));
                     if (_config.SmallRaidDecay == null) return; // Was disabled
-                    if (_state.CurrentRaidMode != RaidMode.Large) return; // Not a large raid
+                    if (_generalStorage.CurrentRaidMode != RaidMode.Large) return; // Not a large raid
                     if (_state.CurrentLargeJoinCount > _config.SmallRaidSize)
                         return; // Large raid join count is still ongoing.
 

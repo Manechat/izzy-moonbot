@@ -10,17 +10,11 @@ namespace Izzy_Moonbot.Settings;
 public class State
 {
     public int CurrentLargeJoinCount = 0;
-    public RaidMode CurrentRaidMode = RaidMode.None;
     public int CurrentSmallJoinCount = 0;
 
     // AdminModule
     public DateTimeOffset LastMentionResponse = DateTimeOffset.MinValue;
 
-    public bool ManualRaidSilence = false;
-
     // RaidService
     public List<ulong> RecentJoins = new();
-    
-    // Banner management
-    public BooruImage? CurrentBooruFeaturedImage = null;
 }

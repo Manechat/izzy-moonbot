@@ -20,15 +20,17 @@ public class RaidModule : ModuleBase<SocketCommandContext>
     private readonly ScheduleService _scheduleService;
     private readonly Config _config;
     private readonly State _state;
+    private readonly GeneralStorage _generalStorage;
 
     public RaidModule(Config config, RaidService raidService, State state,
-        ScheduleService scheduleService, ModService modService)
+        ScheduleService scheduleService, ModService modService, GeneralStorage generalStorage)
     {
         _config = config;
         _raidService = raidService;
         _state = state;
         _scheduleService = scheduleService;
         _modService = modService;
+        _generalStorage = generalStorage;
     }
 
     [Command("ass")]
@@ -38,7 +40,7 @@ public class RaidModule : ModuleBase<SocketCommandContext>
     [DevCommand(Group = "Permissions")]
     public async Task AssAsync()
     {
-        if (_state.CurrentRaidMode == RaidMode.None)
+        if (_generalStorage.CurrentRaidMode == RaidMode.None)
         {
             await ReplyAsync("There doesn't seem to be any raids going on...");
             return;
@@ -56,7 +58,7 @@ public class RaidModule : ModuleBase<SocketCommandContext>
     [DevCommand(Group = "Permissions")]
     public async Task AssOffAsync()
     {
-        if (_state.CurrentRaidMode == RaidMode.None)
+        if (_generalStorage.CurrentRaidMode == RaidMode.None)
         {
             await ReplyAsync("There doesn't seem to be any raids going on...");
             return;
@@ -74,7 +76,7 @@ public class RaidModule : ModuleBase<SocketCommandContext>
     [DevCommand(Group = "Permissions")]
     public async Task GetRaidAsync()
     {
-        if (_state.CurrentRaidMode == RaidMode.None)
+        if (_generalStorage.CurrentRaidMode == RaidMode.None)
         {
             await ReplyAsync("There doesn't seem to be any raids going on...");
             return;
@@ -98,7 +100,7 @@ public class RaidModule : ModuleBase<SocketCommandContext>
     [DevCommand(Group = "Permissions")]
     public async Task BanRaidAsync()
     {
-        if (_state.CurrentRaidMode == RaidMode.NONE)
+        if (_generalStorage.CurrentRaidMode == RaidMode.NONE)
         {
             await ReplyAsync("There doesn't seem to be any raids going on...", messageReference: new Discord.MessageReference(Context.Message.Id, Context.Channel.Id, Context.Guild.Id));
             return;
