@@ -254,12 +254,24 @@ public class TestIzzyContext : IIzzyContext
     }
 }
 
+public class IdHaver : IIzzyHasId
+{
+    public ulong Id { get; }
+    public IdHaver(ulong id) => Id = id;
+}
+
+public class CustomIdHaver : IIzzyHasCustomId
+{
+    public string CustomId { get; }
+    public CustomIdHaver(string id) => CustomId = id;
+}
+
 public class StubClient : IIzzyClient
 {
     public IIzzyUser CurrentUser { get => _currentUser; }
     public IReadOnlyCollection<IIzzyGuild> Guilds { get => (IReadOnlyCollection<IIzzyGuild>)_guilds; }
 
-    public event Func<SocketMessageComponent, Task>? ButtonExecuted;
+    public event Func<IIzzySocketMessageComponent, Task>? ButtonExecuted;
     public event Func<IIzzyHasId, IIzzyHasId, Task>? MessageDeleted;
 
     public StubClient(TestUser user, List<StubGuild> guilds)
@@ -298,5 +310,36 @@ public class StubClient : IIzzyClient
                     throw new KeyNotFoundException($"No channel with id {channelId}");
         }
         else throw new KeyNotFoundException($"No guild with id {guildId}");
+    }
+
+    public class TestSocketMessageComponent : IIzzySocketMessageComponent
+    {
+        public IIzzyHasId User { get; }
+        public IIzzyHasId Message { get; }
+        public IIzzyHasCustomId Data { get; }
+
+        public bool Acknowledged { get; set; } = false;
+
+        public TestSocketMessageComponent(ulong userId, ulong messageId, string customId)
+        {
+            User = new IdHaver(userId);
+            Message = new IdHaver(messageId);
+            Data = new CustomIdHaver(customId);
+        }
+
+        public Task DeferAsync()
+        {
+            Acknowledged = true;
+            return Task.CompletedTask;
+        }
+    }
+    public void FireButtonExecuted(ulong userId, ulong messageId, string customId)
+    {
+        ButtonExecuted?.Invoke(new TestSocketMessageComponent(userId, messageId, customId));
+    }
+
+    public void FireMessageDeleted(ulong messageId, ulong channelId)
+    {
+        MessageDeleted?.Invoke(new IdHaver(messageId), new IdHaver(channelId));
     }
 }

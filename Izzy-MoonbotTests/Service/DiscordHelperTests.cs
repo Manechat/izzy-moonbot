@@ -3,7 +3,7 @@ using Izzy_Moonbot.Helpers;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using static Izzy_Moonbot.Helpers.DiscordHelper;
 
-namespace Izzy_MoonbotTests.Service;
+namespace Izzy_Moonbot_Tests.Helpers;
 
 [TestClass()]
 public class DiscordHelperTests

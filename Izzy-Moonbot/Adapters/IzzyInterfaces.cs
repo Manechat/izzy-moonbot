@@ -75,8 +75,16 @@ public interface IIzzyClient
     IIzzyUser CurrentUser { get; }
     IReadOnlyCollection<IIzzyGuild> Guilds { get; }
 
+    public interface IIzzyHasCustomId { string CustomId { get; } }
+    public interface IIzzySocketMessageComponent {
+        IIzzyHasId User { get; }
+        IIzzyHasId Message { get; }
+        IIzzyHasCustomId Data { get; }
+        Task DeferAsync();
+    }
+    event Func<IIzzySocketMessageComponent, Task> ButtonExecuted;
+
     public interface IIzzyHasId { ulong Id { get; } }
-    event Func<SocketMessageComponent, Task> ButtonExecuted;
     event Func<IIzzyHasId, IIzzyHasId, Task> MessageDeleted;
 }
 

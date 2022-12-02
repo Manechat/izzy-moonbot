@@ -477,7 +477,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                 };
 
                                 var paginationMessage = new PaginationHelper(context, pages.ToArray(),
-                                    staticParts, 0, false, AllowedMentions.None);
+                                    staticParts, false, AllowedMentions.None);
                             }
                             else
                             {
@@ -518,7 +518,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                 };
 
                                 var paginationMessage =
-                                    new PaginationHelper(context, pages.ToArray(), staticParts, 0, false);
+                                    new PaginationHelper(context, pages.ToArray(), staticParts, false);
                             }
                             else
                             {

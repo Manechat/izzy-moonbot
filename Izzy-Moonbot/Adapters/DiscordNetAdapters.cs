@@ -223,6 +223,27 @@ public class IdHaver : IIzzyHasId
     public IdHaver(ulong id) => Id = id;
 }
 
+public class CustomIdHaver : IIzzyHasCustomId
+{
+    public string CustomId { get; }
+    public CustomIdHaver(string id) => CustomId = id;
+}
+
+public class SocketMessageComponentAdapter : IIzzySocketMessageComponent
+{
+    private SocketMessageComponent _component;
+
+    public SocketMessageComponentAdapter(SocketMessageComponent component)
+    {
+        _component = component;
+    }
+
+    public IIzzyHasId User { get => new IdHaver(_component.User.Id); }
+    public IIzzyHasId Message { get => new IdHaver(_component.Message.Id); }
+    public IIzzyHasCustomId Data { get => new CustomIdHaver(_component.Data.CustomId); }
+    public Task DeferAsync() => _component.DeferAsync();
+}
+
 public class DiscordSocketClientAdapter : IIzzyClient
 {
     private readonly DiscordSocketClient _client;
@@ -231,9 +252,9 @@ public class DiscordSocketClientAdapter : IIzzyClient
     {
         _client = client;
 
-        _client.ButtonExecuted += async (SocketMessageComponent arg) =>
+        _client.ButtonExecuted += async (arg) =>
         {
-            ButtonExecuted?.Invoke(arg);
+            ButtonExecuted?.Invoke(new SocketMessageComponentAdapter(arg));
         };
         _client.MessageDeleted += async (message, channel) =>
         {
@@ -247,7 +268,7 @@ public class DiscordSocketClientAdapter : IIzzyClient
         get => _client.Guilds.Select(guild => new SocketGuildAdapter(guild)).ToList();
     }
 
-    public event Func<SocketMessageComponent, Task>? ButtonExecuted;
+    public event Func<IIzzySocketMessageComponent, Task>? ButtonExecuted;
     public event Func<IIzzyHasId, IIzzyHasId, Task>? MessageDeleted;
 }
 

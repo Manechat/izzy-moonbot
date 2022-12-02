@@ -5,7 +5,7 @@ using Izzy_Moonbot.Settings;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using static Izzy_Moonbot.EventListeners.ConfigListener;
 
-namespace Izzy_MoonbotTests.Service;
+namespace Izzy_Moonbot_Tests.Modules;
 
 [TestClass()]
 public class ConfigModuleTests
