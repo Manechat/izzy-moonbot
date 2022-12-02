@@ -1,1527 +1,655 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 using Discord.Commands;
 using Discord.WebSocket;
+using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Settings;
+using Microsoft.AspNetCore.DataProtection.KeyManagement;
+using Newtonsoft.Json.Linq;
 
 namespace Izzy_Moonbot.Helpers;
 
 public static class ConfigHelper
 {
-    public static bool DoesValueExist<T>(Config settings, string key) where T : Config
+    public static bool ResolveBool(string boolResolvable)
     {
-        var t = typeof(T);
-
-        if (t.GetProperty(key) == null) return false;
-        return true;
+        switch (boolResolvable.ToLower())
+        {
+            case "true":
+            case "yes":
+            case "enable":
+            case "activate":
+            case "on":
+            case "y":
+                return true;
+            case "false":
+            case "no":
+            case "disable":
+            case "deactivate":
+            case "off":
+            case "n":
+                return false;
+            default:
+                throw new FormatException($"Couldn't process {boolResolvable} into a boolean.");
+        }
     }
 
 #nullable enable
-    public static object? GetValue<T>(Config settings, string key) where T : Config
+    public static object? GetValue(Config settings, string key)
     {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config.");
+        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+            return pinfo.GetValue(settings);
 
-        var t = typeof(T);
-
-        return t.GetProperty(key).GetValue(settings);
+        throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config.");
     }
 
-    public static async Task<string?> SetStringValue<T>(Config settings, string key, string? stringResolvable)
-        where T : Config
+    public static async Task<T?> SetSimpleValue<T>(Config settings, string key, T? valueResolvable)
     {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config.");
+        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        {
+            pinfo.SetValue(settings, valueResolvable);
+            await FileHelper.SaveConfigAsync(settings);
+            return valueResolvable;
+        }
 
-        var t = typeof(T);
-
-        t.GetProperty(key).SetValue(settings, stringResolvable);
-
-        await FileHelper.SaveConfigAsync(settings);
-        return stringResolvable;
+        throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config.");
     }
 
-    public static async Task<char?> SetCharValue<T>(Config settings, string key, char? charResolvable)
-        where T : Config
+    public static async Task<bool?> SetBooleanValue(Config settings, string key, string? boolResolvable)
     {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config.");
-
-        if (charResolvable == null)
+        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
-            // spain without the `s`
-            var t = typeof(T);
+            bool? resolvedBool = boolResolvable is null ? null : ResolveBool(boolResolvable);
 
-            t.GetProperty(key).SetValue(settings, null);
-
+            pinfo.SetValue(settings, resolvedBool);
             await FileHelper.SaveConfigAsync(settings);
-            return null;
+            return resolvedBool;
         }
-        else
-        {
-            var t = typeof(T);
 
-            t.GetProperty(key).SetValue(settings, charResolvable);
-
-            await FileHelper.SaveConfigAsync(settings);
-            return charResolvable;
-        }
+        throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config.");
     }
 
-    public static async Task<bool?> SetBooleanValue<T>(Config settings, string key, string? boolResolvable)
-        where T : Config
+    public static async Task<IIzzyRole?> SetRoleValue(Config settings, string key, string? roleResolvable,
+    IIzzyContext context)
     {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config.");
-
-        if (boolResolvable == null)
+        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
-            // spain without the `s`
-            var t = typeof(T);
-
-            t.GetProperty(key).SetValue(settings, null);
-
-            await FileHelper.SaveConfigAsync(settings);
-            return null;
-        }
-        else
-        {
-            var t = typeof(T);
-
-            switch (boolResolvable.ToLower())
+            IIzzyRole? role = null;
+            if (roleResolvable is not null)
             {
-                case "true":
-                case "yes":
-                case "enable":
-                case "activate":
-                case "on":
-                case "y":
-                    t.GetProperty(key).SetValue(settings, true);
+                var roleId = DiscordHelper.GetRoleIdIfAccessAsync(roleResolvable, context);
 
-                    await FileHelper.SaveConfigAsync(settings);
-                    return true;
-                case "false":
-                case "no":
-                case "disable":
-                case "deactivate":
-                case "off":
-                case "n":
-                    t.GetProperty(key).SetValue(settings, false);
+                if (roleId == 0) throw new MemberAccessException($"Couldn't find role using resolvable `{roleResolvable}`");
 
-                    await FileHelper.SaveConfigAsync(settings);
-                    return false;
-                default:
-                    throw new FormatException($"Couldn't process {boolResolvable} into a boolean.");
+                role = context.Guild.GetRole(roleId);
+
+                pinfo.SetValue(settings, roleId, null);
             }
-        }
-    }
-
-    public static async Task<int?> SetIntValue<T>(Config settings, string key, int? intResolvable)
-        where T : Config
-    {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
-
-        if (intResolvable == null)
-        {
-            // spain without the `s`
-            var t = typeof(T);
-
-            t.GetProperty(key).SetValue(settings, null);
-
-            await FileHelper.SaveConfigAsync(settings);
-            return null;
-        }
-        else
-        {
-            var t = typeof(T);
-
-            t.GetProperty(key).SetValue(settings, intResolvable);
-
-            await FileHelper.SaveConfigAsync(settings);
-            return intResolvable;
-        }
-    }
-
-    public static async Task<double?> SetDoubleValue<T>(Config settings, string key, double? doubleResolvable)
-        where T : Config
-    {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
-
-        if (doubleResolvable == null)
-        {
-            // spain without the `s`
-            var t = typeof(T);
-
-            t.GetProperty(key).SetValue(settings, null);
-
-            await FileHelper.SaveConfigAsync(settings);
-            return null;
-        }
-        else
-        {
-            var t = typeof(T);
-
-            t.GetProperty(key).SetValue(settings, doubleResolvable);
-
-            await FileHelper.SaveConfigAsync(settings);
-            return doubleResolvable;
-        }
-    }
-
-    public static async Task<SocketGuildUser?> SetUserValue<T>(Config settings, string key,
-        string? userResolvable, SocketCommandContext context) where T : Config
-    {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
-
-        if (userResolvable == null)
-        {
-            // spain without the `s`
-            var t = typeof(T);
-
-            t.GetProperty(key).SetValue(settings, null);
-
-            await FileHelper.SaveConfigAsync(settings);
-            return null;
-        }
-        else
-        {
-            var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(userResolvable, context);
-
-            if (userId == 0) throw new MemberAccessException($"Couldn't find user using resolvable `{userResolvable}`");
-
-            var user = context.Guild.GetUser(userId);
-
-            var t = typeof(T);
-
-            t.GetProperty(key).SetValue(settings, userId, null);
-
-            await FileHelper.SaveConfigAsync(settings);
-            return user;
-        }
-    }
-
-    public static async Task<SocketRole?> SetRoleValue<T>(Config settings, string key, string? roleResolvable,
-        SocketCommandContext context) where T : Config
-    {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
-
-        if (roleResolvable == null)
-        {
-            // spain without the `s`
-            var t = typeof(T);
-
-            t.GetProperty(key).SetValue(settings, null);
-
-            await FileHelper.SaveConfigAsync(settings);
-            return null;
-        }
-        else
-        {
-            var roleId = DiscordHelper.GetRoleIdIfAccessAsync(roleResolvable, context);
-
-            if (roleId == 0) throw new MemberAccessException($"Couldn't find role using resolvable `{roleResolvable}`");
-
-            var role = context.Guild.GetRole(roleId);
-
-            var t = typeof(T);
-
-            t.GetProperty(key).SetValue(settings, roleId, null);
+            else
+            {
+                pinfo.SetValue(settings, null);
+            }
 
             await FileHelper.SaveConfigAsync(settings);
             return role;
         }
+
+        throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<SocketGuildChannel?> SetChannelValue<T>(Config settings, string key,
-        string? channelResolvable, SocketCommandContext context) where T : Config
+    public static async Task<IIzzySocketGuildChannel?> SetChannelValue(Config settings, string key,
+        string? channelResolvable, IIzzyContext context)
     {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
-
-        if (channelResolvable == null)
+        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
-            // spain without the `s`
-            var t = typeof(T);
+            IIzzySocketGuildChannel? channel = null;
+            if (channelResolvable is not null)
+            {
+                var channelId = await DiscordHelper.GetChannelIdIfAccessAsync(channelResolvable, context);
 
-            t.GetProperty(key).SetValue(settings, null);
+                if (channelId == 0) throw new MemberAccessException($"Couldn't find channel using resolvable `{channelResolvable}`");
 
-            await FileHelper.SaveConfigAsync(settings);
-            return null;
-        }
-        else
-        {
-            var channelId = await DiscordHelper.GetChannelIdIfAccessAsync(channelResolvable, context);
+                channel = context.Guild.GetChannel(channelId);
 
-            if (channelId == 0)
-                throw new MemberAccessException($"Couldn't find channel using resolvable `{channelResolvable}`");
-
-            var channel = context.Guild.GetChannel(channelId);
-
-            var t = typeof(T);
-
-            t.GetProperty(key).SetValue(settings, channelId, null);
+                pinfo.SetValue(settings, channelId, null);
+            }
+            else
+            {
+                pinfo.SetValue(settings, null);
+            }
 
             await FileHelper.SaveConfigAsync(settings);
             return channel;
         }
+
+        throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
     }
 
-    public static bool HasValueInList<T>(Config settings, string key, object? value) where T : Config
+    public static bool HasValueInSet<T>(Config settings, string key, T value)
     {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
-
-        var t = typeof(T);
-
-        if (!(t.GetProperty(key).GetValue(settings) is IList &&
-              t.GetProperty(key).GetValue(settings).GetType().IsGenericType &&
-              t.GetProperty(key).GetValue(settings).GetType().GetGenericTypeDefinition()
-                  .IsAssignableFrom(typeof(List<>)))) throw new ArgumentException($"'{key}' is not a List.");
-
-        var list = t.GetProperty(key).GetValue(settings) as List<object?>;
-
-        if (list.Contains(value)) return true;
-        return false;
-    }
-
-    public static List<string>? GetStringList<T>(Config settings, string key) where T : Config
-    {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
-
-        var t = typeof(T);
-
-        if (!(t.GetProperty(key).GetValue(settings) is IList &&
-              t.GetProperty(key).GetValue(settings).GetType().IsGenericType &&
-              t.GetProperty(key).GetValue(settings).GetType().GetGenericTypeDefinition()
-                  .IsAssignableFrom(typeof(List<>)))) throw new ArgumentException($"'{key}' is not a List.");
-
-        var list = (List<string>?)t.GetProperty(key).GetValue(settings);
-
-        if (list == null)
-            throw new NullReferenceException(
-                $"'{key}' in Config is null when it should be a List. Is the config corrupted?");
-
-        return list;
-    }
-
-    public static async Task<string> AddToStringList<T>(Config settings, string key, string value)
-        where T : Config
-    {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
-
-        var t = typeof(T);
-
-        if (!(t.GetProperty(key).GetValue(settings) is IList &&
-              t.GetProperty(key).GetValue(settings).GetType().IsGenericType &&
-              t.GetProperty(key).GetValue(settings).GetType().GetGenericTypeDefinition()
-                  .IsAssignableFrom(typeof(List<>)))) throw new ArgumentException($"'{key}' is not a List.");
-
-        var list = (List<string>?)t.GetProperty(key).GetValue(settings);
-
-        list.Add(value);
-
-        t.GetProperty(key).SetValue(settings, list);
-
-        await FileHelper.SaveConfigAsync(settings);
-        return value;
-    }
-
-    public static async Task<string> RemoveFromStringList<T>(Config settings, string key, string value)
-        where T : Config
-    {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
-
-        var t = typeof(T);
-
-        if (!(t.GetProperty(key).GetValue(settings) is IList &&
-              t.GetProperty(key).GetValue(settings).GetType().IsGenericType &&
-              t.GetProperty(key).GetValue(settings).GetType().GetGenericTypeDefinition()
-                  .IsAssignableFrom(typeof(List<>)))) throw new ArgumentException($"'{key}' is not a List.");
-
-        var list = (List<string>?)t.GetProperty(key).GetValue(settings);
-
-        list.Remove(value);
-
-        t.GetProperty(key).SetValue(settings, list);
-
-        await FileHelper.SaveConfigAsync(settings);
-        return value;
-    }
-
-    public static List<char>? GetCharList<T>(Config settings, string key) where T : Config
-    {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
-
-        var t = typeof(T);
-
-        if (!(t.GetProperty(key).GetValue(settings) is IList &&
-              t.GetProperty(key).GetValue(settings).GetType().IsGenericType &&
-              t.GetProperty(key).GetValue(settings).GetType().GetGenericTypeDefinition()
-                  .IsAssignableFrom(typeof(List<>)))) throw new ArgumentException($"'{key}' is not a List.");
-
-        var list = (List<char>?)t.GetProperty(key).GetValue(settings);
-
-        return list;
-    }
-
-    public static async Task<char> AddToCharList<T>(Config settings, string key, char charResolvable)
-        where T : Config
-    {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
-
-        var t = typeof(T);
-
-        if (!(t.GetProperty(key).GetValue(settings) is IList &&
-              t.GetProperty(key).GetValue(settings).GetType().IsGenericType &&
-              t.GetProperty(key).GetValue(settings).GetType().GetGenericTypeDefinition()
-                  .IsAssignableFrom(typeof(List<>)))) throw new ArgumentException($"'{key}' is not a List.");
-
-        var list = (List<char>?)t.GetProperty(key).GetValue(settings);
-
-        list.Add(charResolvable);
-
-        t.GetProperty(key).SetValue(settings, list);
-
-        await FileHelper.SaveConfigAsync(settings);
-        return charResolvable;
-    }
-
-    public static async Task<char> RemoveFromCharList<T>(Config settings, string key, char charResolvable)
-        where T : Config
-    {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
-
-        var t = typeof(T);
-
-        if (!(t.GetProperty(key).GetValue(settings) is IList &&
-              t.GetProperty(key).GetValue(settings).GetType().IsGenericType &&
-              t.GetProperty(key).GetValue(settings).GetType().GetGenericTypeDefinition()
-                  .IsAssignableFrom(typeof(List<>)))) throw new ArgumentException($"'{key}' is not a List.");
-
-        var list = (List<char>?)t.GetProperty(key).GetValue(settings);
-
-        list.Remove(charResolvable);
-
-        t.GetProperty(key).SetValue(settings, list);
-
-        await FileHelper.SaveConfigAsync(settings);
-        return charResolvable;
-    }
-
-    public static List<bool>? GetBooleanList<T>(Config settings, string key) where T : Config
-    {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
-
-        var t = typeof(T);
-
-        if (!(t.GetProperty(key).GetValue(settings) is IList &&
-              t.GetProperty(key).GetValue(settings).GetType().IsGenericType &&
-              t.GetProperty(key).GetValue(settings).GetType().GetGenericTypeDefinition()
-                  .IsAssignableFrom(typeof(List<>)))) throw new ArgumentException($"'{key}' is not a List.");
-
-        var list = (List<bool>?)t.GetProperty(key).GetValue(settings);
-
-        return list;
-    }
-
-    public static async Task<bool> AddToBooleanList<T>(Config settings, string key, string booleanResolvable)
-        where T : Config
-    {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
-
-        var t = typeof(T);
-
-        if (!(t.GetProperty(key).GetValue(settings) is IList &&
-              t.GetProperty(key).GetValue(settings).GetType().IsGenericType &&
-              t.GetProperty(key).GetValue(settings).GetType().GetGenericTypeDefinition()
-                  .IsAssignableFrom(typeof(List<>)))) throw new ArgumentException($"'{key}' is not a List.");
-
-        var list = (List<bool>?)t.GetProperty(key).GetValue(settings);
-
-        switch (booleanResolvable.ToLower())
+        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
-            case "true":
-            case "yes":
-            case "enable":
-            case "activate":
-            case "on":
-            case "y":
-                list.Add(true);
-
-                t.GetProperty(key).SetValue(settings, list);
-
-                await FileHelper.SaveConfigAsync(settings);
-                return true;
-            case "false":
-            case "no":
-            case "disable":
-            case "deactivate":
-            case "off":
-            case "n":
-                list.Add(false);
-
-                t.GetProperty(key).SetValue(settings, list);
-
-                await FileHelper.SaveConfigAsync(settings);
-                return false;
-            default:
-                throw new FormatException($"Couldn't process {booleanResolvable} into a boolean.");
-        }
-    }
-
-    public static async Task<bool> RemoveFromBooleanList<T>(Config settings, string key,
-        string booleanResolvable) where T : Config
-    {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
-
-        var t = typeof(T);
-
-        if (!(t.GetProperty(key).GetValue(settings) is IList &&
-              t.GetProperty(key).GetValue(settings).GetType().IsGenericType &&
-              t.GetProperty(key).GetValue(settings).GetType().GetGenericTypeDefinition()
-                  .IsAssignableFrom(typeof(List<>)))) throw new ArgumentException($"'{key}' is not a List.");
-
-        var list = (List<bool>?)t.GetProperty(key).GetValue(settings);
-
-        switch (booleanResolvable.ToLower())
-        {
-            case "true":
-            case "yes":
-            case "enable":
-            case "activate":
-            case "on":
-            case "y":
-                list.Remove(true);
-
-                t.GetProperty(key).SetValue(settings, list);
-
-                await FileHelper.SaveConfigAsync(settings);
-                return true;
-            case "false":
-            case "no":
-            case "disable":
-            case "deactivate":
-            case "off":
-            case "n":
-                list.Remove(false);
-
-                t.GetProperty(key).SetValue(settings, list);
-
-                await FileHelper.SaveConfigAsync(settings);
-                return false;
-            default:
-                throw new FormatException($"Couldn't process {booleanResolvable} into a boolean.");
-        }
-    }
-
-    public static List<int>? GetIntList<T>(Config settings, string key) where T : Config
-    {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
-
-        var t = typeof(T);
-
-        if (!(t.GetProperty(key).GetValue(settings) is IList &&
-              t.GetProperty(key).GetValue(settings).GetType().IsGenericType &&
-              t.GetProperty(key).GetValue(settings).GetType().GetGenericTypeDefinition()
-                  .IsAssignableFrom(typeof(List<>)))) throw new ArgumentException($"'{key}' is not a List.");
-
-        var list = (List<int>?)t.GetProperty(key).GetValue(settings);
-
-        return list;
-    }
-
-    public static async Task<int> AddToIntList<T>(Config settings, string key, int intResolvable)
-        where T : Config
-    {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
-
-        var t = typeof(T);
-
-        if (!(t.GetProperty(key).GetValue(settings) is IList &&
-              t.GetProperty(key).GetValue(settings).GetType().IsGenericType &&
-              t.GetProperty(key).GetValue(settings).GetType().GetGenericTypeDefinition()
-                  .IsAssignableFrom(typeof(List<>)))) throw new ArgumentException($"'{key}' is not a List.");
-
-        var list = (List<int>?)t.GetProperty(key).GetValue(settings);
-
-        list.Add(intResolvable);
-
-        t.GetProperty(key).SetValue(settings, list);
-
-        await FileHelper.SaveConfigAsync(settings);
-        return intResolvable;
-    }
-
-    public static async Task<int> RemoveFromIntList<T>(Config settings, string key, int intResolvable)
-        where T : Config
-    {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
-
-        var t = typeof(T);
-
-        if (!(t.GetProperty(key).GetValue(settings) is IList &&
-              t.GetProperty(key).GetValue(settings).GetType().IsGenericType &&
-              t.GetProperty(key).GetValue(settings).GetType().GetGenericTypeDefinition()
-                  .IsAssignableFrom(typeof(List<>)))) throw new ArgumentException($"'{key}' is not a List.");
-
-        var list = (List<int>?)t.GetProperty(key).GetValue(settings);
-
-        var result = list.Remove(intResolvable);
-        if (!result) throw new ArgumentOutOfRangeException($"'{intResolvable}' was not in the list to begin with.");
-
-        t.GetProperty(key).SetValue(settings, list);
-
-        await FileHelper.SaveConfigAsync(settings);
-        return intResolvable;
-    }
-
-    public static List<double>? GetDoubleList<T>(Config settings, string key) where T : Config
-    {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
-
-        var t = typeof(T);
-
-        if (!(t.GetProperty(key).GetValue(settings) is IList &&
-              t.GetProperty(key).GetValue(settings).GetType().IsGenericType &&
-              t.GetProperty(key).GetValue(settings).GetType().GetGenericTypeDefinition()
-                  .IsAssignableFrom(typeof(List<>)))) throw new ArgumentException($"'{key}' is not a List.");
-
-        var list = (List<double>?)t.GetProperty(key).GetValue(settings);
-
-        return list;
-    }
-
-    public static async Task<double> AddToDoubleList<T>(Config settings, string key, double doubleResolvable)
-        where T : Config
-    {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
-
-        var t = typeof(T);
-
-        if (!(t.GetProperty(key).GetValue(settings) is IList &&
-              t.GetProperty(key).GetValue(settings).GetType().IsGenericType &&
-              t.GetProperty(key).GetValue(settings).GetType().GetGenericTypeDefinition()
-                  .IsAssignableFrom(typeof(List<>)))) throw new ArgumentException($"'{key}' is not a List.");
-
-        var list = (List<double>?)t.GetProperty(key).GetValue(settings);
-
-        list.Add(doubleResolvable);
-
-        t.GetProperty(key).SetValue(settings, list);
-
-        await FileHelper.SaveConfigAsync(settings);
-        return doubleResolvable;
-    }
-
-    public static async Task<double> RemoveFromDoubleList<T>(Config settings, string key,
-        double doubleResolvable) where T : Config
-    {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
-
-        var t = typeof(T);
-
-        if (!(t.GetProperty(key).GetValue(settings) is IList &&
-              t.GetProperty(key).GetValue(settings).GetType().IsGenericType &&
-              t.GetProperty(key).GetValue(settings).GetType().GetGenericTypeDefinition()
-                  .IsAssignableFrom(typeof(List<>)))) throw new ArgumentException($"'{key}' is not a List.");
-
-        var list = (List<double>?)t.GetProperty(key).GetValue(settings);
-
-        var result = list.Remove(doubleResolvable);
-        if (!result) throw new ArgumentOutOfRangeException($"'{doubleResolvable}' was not in the list to begin with.");
-
-        t.GetProperty(key).SetValue(settings, list);
-
-        await FileHelper.SaveConfigAsync(settings);
-        return doubleResolvable;
-    }
-
-    private static HashSet<SocketGuildUser> UserIdToUser(HashSet<ulong> list, SocketCommandContext context)
-    {
-        HashSet<SocketGuildUser> finalList = new();
-
-        foreach (var user in list) finalList.Add(context.Guild.GetUser(user));
-
-        return finalList;
-    }
-
-    public static HashSet<SocketGuildUser> GetUserList<T>(Config settings, string key,
-        SocketCommandContext context) where T : Config
-    {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
-
-        var t = typeof(T);
-
-        if (!(t.GetProperty(key).GetValue(settings) is ISet<ulong> &&
-              t.GetProperty(key).GetValue(settings).GetType().IsGenericType &&
-              t.GetProperty(key).GetValue(settings).GetType().GetGenericTypeDefinition()
-                  .IsAssignableFrom(typeof(HashSet<>)))) throw new ArgumentException($"'{key}' is not a HashSet.");
-
-        var list = (HashSet<ulong>?)t.GetProperty(key).GetValue(settings);
-
-        if (list == null) throw new NullReferenceException("HashSet is null *despite* already being nullchecked?");
-
-        return UserIdToUser(list, context);
-    }
-
-    public static async Task<SocketGuildUser> AddToUserList<T>(Config settings, string key,
-        string userResolvable, SocketCommandContext context) where T : Config
-    {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
-
-        var t = typeof(T);
-
-        if (!(t.GetProperty(key).GetValue(settings) is ISet<ulong> &&
-              t.GetProperty(key).GetValue(settings).GetType().IsGenericType &&
-              t.GetProperty(key).GetValue(settings).GetType().GetGenericTypeDefinition()
-                  .IsAssignableFrom(typeof(HashSet<>)))) throw new ArgumentException($"'{key}' is not a HashSet.");
-
-        var list = (HashSet<ulong>?)t.GetProperty(key).GetValue(settings);
-
-        if (list == null) throw new NullReferenceException("HashSet is null *despite* already being nullchecked?");
-
-        var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(userResolvable, context);
-
-        if (userId == 0) throw new MemberAccessException($"Cannot access user '{userResolvable}'.");
-
-        var user = context.Guild.GetUser(userId);
-
-        var result = list.Add(userId);
-        if (!result) throw new ArgumentOutOfRangeException($"'{userId}' is already present within the HashSet.");
-
-        t.GetProperty(key).SetValue(settings, list);
-
-        await FileHelper.SaveConfigAsync(settings);
-        return user;
-    }
-
-    public static async Task<SocketGuildUser> RemoveFromUserList<T>(Config settings, string key,
-        string userResolvable, SocketCommandContext context) where T : Config
-    {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
-
-        var t = typeof(T);
-
-        if (!(t.GetProperty(key).GetValue(settings) is ISet<ulong> &&
-              t.GetProperty(key).GetValue(settings).GetType().IsGenericType &&
-              t.GetProperty(key).GetValue(settings).GetType().GetGenericTypeDefinition()
-                  .IsAssignableFrom(typeof(HashSet<>)))) throw new ArgumentException($"'{key}' is not a HashSet.");
-
-        var list = (HashSet<ulong>?)t.GetProperty(key).GetValue(settings);
-
-        if (list == null) throw new NullReferenceException("HashSet is null *despite* already being nullchecked?");
-
-        var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(userResolvable, context);
-
-        if (userId == 0) throw new MemberAccessException($"Cannot access user '{userResolvable}'.");
-
-        var user = context.Guild.GetUser(userId);
-
-        var result = list.Remove(userId);
-        if (!result) throw new ArgumentOutOfRangeException($"'{userResolvable}' was not in the HashSet to begin with.");
-
-        t.GetProperty(key).SetValue(settings, list);
-
-        await FileHelper.SaveConfigAsync(settings);
-        return user;
-    }
-
-    private static HashSet<SocketRole> RoleIdToRole(HashSet<ulong> list, SocketCommandContext context)
-    {
-        HashSet<SocketRole> finalList = new();
-
-        foreach (var role in list) finalList.Add(context.Guild.GetRole(role));
-
-        return finalList;
-    }
-
-    public static HashSet<SocketRole> GetRoleList<T>(Config settings, string key, SocketCommandContext context)
-        where T : Config
-    {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
-
-        var t = typeof(T);
-
-        if (!(t.GetProperty(key).GetValue(settings) is ISet<ulong> &&
-              t.GetProperty(key).GetValue(settings).GetType().IsGenericType &&
-              t.GetProperty(key).GetValue(settings).GetType().GetGenericTypeDefinition()
-                  .IsAssignableFrom(typeof(HashSet<>)))) throw new ArgumentException($"'{key}' is not a HashSet.");
-
-        var list = (HashSet<ulong>?)t.GetProperty(key).GetValue(settings);
-
-        if (list == null) throw new NullReferenceException("HashSet is null *despite* already being nullchecked?");
-
-        return RoleIdToRole(list, context);
-    }
-
-    public static async Task<SocketRole> AddToRoleList<T>(Config settings, string key, string roleResolvable,
-        SocketCommandContext context) where T : Config
-    {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
-
-        var t = typeof(T);
-
-        if (!(t.GetProperty(key).GetValue(settings) is ISet<ulong> &&
-              t.GetProperty(key).GetValue(settings).GetType().IsGenericType &&
-              t.GetProperty(key).GetValue(settings).GetType().GetGenericTypeDefinition()
-                  .IsAssignableFrom(typeof(HashSet<>)))) throw new ArgumentException($"'{key}' is not a HashSet.");
-
-        var list = (HashSet<ulong>?)t.GetProperty(key).GetValue(settings);
-
-        if (list == null) throw new NullReferenceException("HashSet is null *despite* already being nullchecked?");
-
-        var roleId = DiscordHelper.GetRoleIdIfAccessAsync(roleResolvable, context);
-
-        if (roleId == 0) throw new MemberAccessException($"Cannot access role '{roleResolvable}'.");
-
-        var role = context.Guild.GetRole(roleId);
-
-        var result = list.Add(roleId);
-        if (!result) throw new ArgumentOutOfRangeException($"'{roleId}' is already present within the HashSet.");
-
-        t.GetProperty(key).SetValue(settings, list);
-
-        await FileHelper.SaveConfigAsync(settings);
-        return role;
-    }
-
-    public static async Task<SocketRole> RemoveFromRoleList<T>(Config settings, string key,
-        string roleResolvable, SocketCommandContext context) where T : Config
-    {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
-
-        var t = typeof(T);
-
-        if (!(t.GetProperty(key).GetValue(settings) is ISet<ulong> &&
-              t.GetProperty(key).GetValue(settings).GetType().IsGenericType &&
-              t.GetProperty(key).GetValue(settings).GetType().GetGenericTypeDefinition()
-                  .IsAssignableFrom(typeof(HashSet<>)))) throw new ArgumentException($"'{key}' is not a HashSet.");
-
-        var list = (HashSet<ulong>?)t.GetProperty(key).GetValue(settings);
-
-        if (list == null) throw new NullReferenceException("HashSet is null *despite* already being nullchecked?");
-
-        var roleId = DiscordHelper.GetRoleIdIfAccessAsync(roleResolvable, context);
-
-        if (roleId == 0) throw new MemberAccessException($"Cannot access role '{roleResolvable}'.");
-
-        var role = context.Guild.GetRole(roleId);
-
-        var result = list.Remove(roleId);
-        if (!result) throw new ArgumentOutOfRangeException($"'{roleId}' was not in the HashSet to begin with.");
-
-        t.GetProperty(key).SetValue(settings, list);
-
-        await FileHelper.SaveConfigAsync(settings);
-        return role;
-    }
-
-    private static HashSet<SocketGuildChannel> ChannelIdToChannel(HashSet<ulong> list, SocketCommandContext context)
-    {
-        HashSet<SocketGuildChannel> finalList = new();
-
-        foreach (var channel in list) finalList.Add(context.Guild.GetChannel(channel));
-
-        return finalList;
-    }
-
-    public static HashSet<SocketGuildChannel> GetChannelList<T>(Config settings, string key,
-        SocketCommandContext context) where T : Config
-    {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
-
-        var t = typeof(T);
-
-        if (!(t.GetProperty(key).GetValue(settings) is ISet<ulong> &&
-              t.GetProperty(key).GetValue(settings).GetType().IsGenericType &&
-              t.GetProperty(key).GetValue(settings).GetType().GetGenericTypeDefinition()
-                  .IsAssignableFrom(typeof(HashSet<>)))) throw new ArgumentException($"'{key}' is not a HashSet.");
-
-        var list = (HashSet<ulong>?)t.GetProperty(key).GetValue(settings);
-
-        if (list == null) throw new NullReferenceException("HashSet is null *despite* already being nullchecked?");
-
-        return ChannelIdToChannel(list, context);
-    }
-
-    public static async Task<SocketGuildChannel> AddToChannelList<T>(Config settings, string key,
-        string channelResolvable, SocketCommandContext context) where T : Config
-    {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
-
-        var t = typeof(T);
-
-        if (!(t.GetProperty(key).GetValue(settings) is ISet<ulong> &&
-              t.GetProperty(key).GetValue(settings).GetType().IsGenericType &&
-              t.GetProperty(key).GetValue(settings).GetType().GetGenericTypeDefinition()
-                  .IsAssignableFrom(typeof(HashSet<>)))) throw new ArgumentException($"'{key}' is not a HashSet.");
-
-        var list = (HashSet<ulong>?)t.GetProperty(key).GetValue(settings);
-
-        if (list == null) throw new NullReferenceException("HashSet is null *despite* already being nullchecked?");
-
-        var channelId = await DiscordHelper.GetChannelIdIfAccessAsync(channelResolvable, context);
-
-        if (channelId == 0) throw new MemberAccessException($"Cannot access channel '{channelResolvable}'.");
-
-        var channel = context.Guild.GetChannel(channelId);
-
-        var result = list.Add(channelId);
-        if (!result) throw new ArgumentOutOfRangeException($"'{channelId}' is already present within the HashSet.");
-
-        t.GetProperty(key).SetValue(settings, list);
-
-        await FileHelper.SaveConfigAsync(settings);
-        return channel;
-    }
-
-    public static async Task<SocketGuildChannel> RemoveFromChannelList<T>(Config settings, string key,
-        string channelResolvable, SocketCommandContext context) where T : Config
-    {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
-
-        var t = typeof(T);
-
-        if (!(t.GetProperty(key).GetValue(settings) is ISet<ulong> &&
-              t.GetProperty(key).GetValue(settings).GetType().IsGenericType &&
-              t.GetProperty(key).GetValue(settings).GetType().GetGenericTypeDefinition()
-                  .IsAssignableFrom(typeof(HashSet<>)))) throw new ArgumentException($"'{key}' is not a HashSet.");
-
-        var list = (HashSet<ulong>?)t.GetProperty(key).GetValue(settings);
-
-        if (list == null) throw new NullReferenceException("HashSet is null *despite* already being nullchecked?");
-
-        var channelId = await DiscordHelper.GetChannelIdIfAccessAsync(channelResolvable, context);
-
-        if (channelId == 0) throw new MemberAccessException($"Cannot access channel '{channelResolvable}'.");
-
-        var channel = context.Guild.GetChannel(channelId);
-
-        var result = list.Remove(channelId);
-        if (!result) throw new ArgumentOutOfRangeException($"'{channelId}' was not in the HashSet to begin with.");
-
-        t.GetProperty(key).SetValue(settings, list);
-
-        await FileHelper.SaveConfigAsync(settings);
-        return channel;
-    }
-
-    public static Dictionary<string, string> GetStringDictionary<T>(Config settings, string key) where T : Config
-    {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
-
-        var t = typeof(T);
-
-        if (!(t.GetProperty(key).GetValue(settings) is IDictionary<string, string>))
-            throw new ArgumentException($"'{key}' is not a Dictionary<string, string>.");
-
-        var list = (Dictionary<string, string>?)t.GetProperty(key).GetValue(settings);
-
-        if (list == null) throw new NullReferenceException("HashSet is null *despite* already being nullchecked?");
-
-        return list;
-    }
-    
-    public static bool DoesStringDictionaryKeyExist<T>(Config settings, string key, string dictionaryKey) where T : Config
-    {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
-
-        var t = typeof(T);
-
-        var property = t.GetProperty(key);
-        if (property == null) return false;
-
-        var items = property.GetValue(settings);
-        return items is Dictionary<string, string> dictionary && dictionary.ContainsKey(dictionaryKey);
-    }
-
-    public static async Task<(string, string?, string)> CreateStringDictionaryKey<T>(Config settings, string key,
-        string dictionaryKey, string value) where T : Config
-    {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
-
-        var t = typeof(T);
-
-        if (!(t.GetProperty(key).GetValue(settings) is Dictionary<string, string>))
-            throw new ArgumentException($"'{key}' is not a Dictionary<string, string>.");
-
-        var list = (IDictionary<string, string>?)t.GetProperty(key).GetValue(settings);
-
-        if (list == null) throw new NullReferenceException("Dictionary is null *despite* already being nullchecked?");
-
-        try
-        {
-            list.Add(dictionaryKey, value);
-
-            t.GetProperty(key).SetValue(settings, list);
-
-            await FileHelper.SaveConfigAsync(settings);
-            return (dictionaryKey, null, value);
-        }
-        catch (ArgumentException ex)
-        {
-            throw new ArgumentOutOfRangeException($"'{dictionaryKey}' is already present within the Dictionary.");
-        }
-    }
-
-    public static async Task<string> RemoveStringDictionaryKey<T>(Config settings, string key,
-        string dictionaryKey) where T : Config
-    {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
-
-        var t = typeof(T);
-
-        if (!(t.GetProperty(key).GetValue(settings) is IDictionary<string, string>))
-            throw new ArgumentException($"'{key}' is not a Dictionary<string, string>.");
-
-        var list = (IDictionary<string, string>?)t.GetProperty(key).GetValue(settings);
-
-        if (list == null) throw new NullReferenceException("Dictionary is null *despite* already being nullchecked?");
-
-        var result = list.Remove(dictionaryKey);
-        if (!result)
-            throw new ArgumentOutOfRangeException($"'{dictionaryKey}' was not in the Dictionary to begin with.");
-
-        t.GetProperty(key).SetValue(settings, list);
-
-        await FileHelper.SaveConfigAsync(settings);
-        return dictionaryKey;
-    }
-
-    public static string GetStringDictionaryValue<T>(Config settings, string key, string dictionaryKey) where T : Config
-    {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
-
-        var t = typeof(T);
-
-        if (!(t.GetProperty(key).GetValue(settings) is IDictionary<string, string>))
-            throw new ArgumentException($"'{key}' is not a Dictionary<string, string>.");
-
-        var list = (IDictionary<string, string>?)t.GetProperty(key).GetValue(settings);
-
-        if (list == null) throw new NullReferenceException("Dictionary is null *despite* already being nullchecked?");
-        
-        if (!list.ContainsKey(dictionaryKey)) throw new KeyNotFoundException($"'{dictionaryKey}' is not in '{key}'");
-
-        return list[dictionaryKey];
-    }
-
-    public static async Task<(string, string?, string)> SetStringDictionaryValue<T>(Config settings, string key,
-        string dictionaryKey, string value) where T : Config
-    {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
-
-        var t = typeof(T);
-
-        if (!(t.GetProperty(key).GetValue(settings) is IDictionary<string, string>))
-            throw new ArgumentException($"'{key}' is not a Dictionary<string, string>.");
-
-        var list = (IDictionary<string, string>?)t.GetProperty(key).GetValue(settings);
-
-        if (list == null) throw new NullReferenceException("Dictionary is null *despite* already being nullchecked?");
-
-        if (!list.TryGetValue(dictionaryKey, out var oldValue)) oldValue = null;
-        
-        list[dictionaryKey] = value;
-
-        t.GetProperty(key).SetValue(settings, list);
-
-        await FileHelper.SaveConfigAsync(settings);
-        return (dictionaryKey, oldValue, value);
-    }
-
-    public static Dictionary<string, string?> GetNullableStringDictionary<T>(Config settings, string key) where T : Config
-    {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
-
-        var t = typeof(T);
-
-        if (!(t.GetProperty(key).GetValue(settings) is IDictionary<string, string?>))
-            throw new ArgumentException($"'{key}' is not a Dictionary<string, string?>.");
-
-        var list = (Dictionary<string, string?>?)t.GetProperty(key).GetValue(settings);
-
-        if (list == null) throw new NullReferenceException("HashSet is null *despite* already being nullchecked?");
-
-        return list;
-    }
-
-    public static bool DoesNullableStringDictionaryKeyExist<T>(Config settings, string key, string dictionaryKey) where T : Config
-    {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
-
-        var t = typeof(T);
-
-        var property = t.GetProperty(key);
-        if (property == null) return false;
-
-        var items = property.GetValue(settings);
-        return items is Dictionary<string, string?> dictionary && dictionary.ContainsKey(dictionaryKey);
-    }
-
-    public static async Task<(string, string?, string?)> CreateNullableStringDictionaryKey<T>(Config settings, string key,
-        string dictionaryKey, string? value) where T : Config
-    {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
-
-        var t = typeof(T);
-
-        if (!(t.GetProperty(key).GetValue(settings) is Dictionary<string, string?>))
-            throw new ArgumentException($"'{key}' is not a Dictionary<string, string?>.");
-
-        var list = (IDictionary<string, string?>?)t.GetProperty(key).GetValue(settings);
-
-        if (list == null) throw new NullReferenceException("Dictionary is null *despite* already being nullchecked?");
-
-        try
-        {
-            list.Add(dictionaryKey, value);
-
-            t.GetProperty(key).SetValue(settings, list);
-
-            await FileHelper.SaveConfigAsync(settings);
-            return (dictionaryKey, null, value);
-        }
-        catch (ArgumentException ex)
-        {
-            throw new ArgumentOutOfRangeException($"'{dictionaryKey}' is already present within the Dictionary.");
-        }
-    }
-
-    public static async Task<string> RemoveNullableStringDictionaryKey<T>(Config settings, string key,
-        string dictionaryKey) where T : Config
-    {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
-
-        var t = typeof(T);
-
-        if (!(t.GetProperty(key).GetValue(settings) is IDictionary<string, string?>))
-            throw new ArgumentException($"'{key}' is not a Dictionary<string, string?>.");
-
-        var list = (IDictionary<string, string?>?)t.GetProperty(key).GetValue(settings);
-
-        if (list == null) throw new NullReferenceException("Dictionary is null *despite* already being nullchecked?");
-
-        var result = list.Remove(dictionaryKey);
-        if (!result)
-            throw new ArgumentOutOfRangeException($"'{dictionaryKey}' was not in the Dictionary to begin with.");
-
-        t.GetProperty(key).SetValue(settings, list);
-
-        await FileHelper.SaveConfigAsync(settings);
-        return dictionaryKey;
-    }
-
-    public static string? GetNullableStringDictionaryValue<T>(Config settings, string key, string dictionaryKey) where T : Config
-    {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
-
-        var t = typeof(T);
-
-        if (!(t.GetProperty(key).GetValue(settings) is IDictionary<string, string?>))
-            throw new ArgumentException($"'{key}' is not a Dictionary<string, string?>.");
-
-        var list = (IDictionary<string, string?>?)t.GetProperty(key).GetValue(settings);
-
-        if (list == null) throw new NullReferenceException("Dictionary is null *despite* already being nullchecked?");
-
-        if (!list.ContainsKey(dictionaryKey)) throw new KeyNotFoundException($"'{dictionaryKey}' is not in '{key}'");
-
-        return list[dictionaryKey];
-    }
-
-    public static async Task<(string, string?, string?)> SetNullableStringDictionaryValue<T>(Config settings, string key,
-        string dictionaryKey, string? value) where T : Config
-    {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
-
-        var t = typeof(T);
-
-        if (!(t.GetProperty(key).GetValue(settings) is IDictionary<string, string?>))
-            throw new ArgumentException($"'{key}' is not a Dictionary<string, string?>.");
-
-        var list = (IDictionary<string, string?>?)t.GetProperty(key).GetValue(settings);
-
-        if (list == null) throw new NullReferenceException("Dictionary is null *despite* already being nullchecked?");
-
-        if (!list.TryGetValue(dictionaryKey, out var oldValue)) oldValue = null;
-        
-        list[dictionaryKey] = value;
-
-        t.GetProperty(key).SetValue(settings, list);
-
-        await FileHelper.SaveConfigAsync(settings);
-        return (dictionaryKey, oldValue, value);
-    }
-
-    public static Dictionary<string, bool> GetBooleanDictionary<T>(Config settings, string key) where T : Config
-    {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
-
-        var t = typeof(T);
-
-        if (!(t.GetProperty(key).GetValue(settings) is IDictionary<string, bool>))
-            throw new ArgumentException($"'{key}' is not a Dictionary<string, bool>.");
-
-        var list = (Dictionary<string, bool>?)t.GetProperty(key).GetValue(settings);
-
-        if (list == null) throw new NullReferenceException("HashSet is null *despite* already being nullchecked?");
-
-        return list;
-    }
-    
-    public static bool DoesBooleanDictionaryKeyExist<T>(Config settings, string key, string dictionaryKey) where T : Config
-    {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
-
-        var t = typeof(T);
-
-        var property = t.GetProperty(key);
-        if (property == null) return false;
-
-        var items = property.GetValue(settings);
-        return items is Dictionary<string, bool> dictionary && dictionary.ContainsKey(dictionaryKey);
-    }
-
-    public static async Task<(string, bool?, bool)> CreateBooleanDictionaryKey<T>(Config settings, string key,
-        string dictionaryKey, string value) where T : Config
-    {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
-
-        var t = typeof(T);
-
-        if (!(t.GetProperty(key).GetValue(settings) is Dictionary<string, bool>))
-            throw new ArgumentException($"'{key}' is not a Dictionary<string, bool>.");
-
-        var list = (IDictionary<string, bool>?)t.GetProperty(key).GetValue(settings);
-
-        if (list == null) throw new NullReferenceException("Dictionary is null *despite* already being nullchecked?");
-
-        try
-        {
-            var boolean = false;
-            
-            switch (value.ToLower())
+            var configValue = pinfo.GetValue(settings);
+            if (configValue is ISet<T> set
+                && set.GetType().IsGenericType
+                && set.GetType().GetGenericTypeDefinition().IsAssignableFrom(typeof(HashSet<>)))
             {
-                case "true":
-                case "yes":
-                case "enable":
-                case "activate":
-                case "on":
-                case "y":
-                    boolean = true;
-                    break;
-                case "false":
-                case "no":
-                case "disable":
-                case "deactivate":
-                case "off":
-                case "n":
-                    boolean = false;
-                    break;
-                default:
-                    throw new FormatException($"Couldn't process {value} into a boolean.");
+                return set.Contains(value);
             }
-
-            list.Add(dictionaryKey, boolean);
-
-            t.GetProperty(key).SetValue(settings, list);
-
-            await FileHelper.SaveConfigAsync(settings);
-            return (dictionaryKey, null, boolean);
+            throw new ArgumentException($"'{key}' is not an ISet.");
         }
-        catch (ArgumentException ex)
+
+        throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
+    }
+
+    public static ISet<string>? GetStringSet(Config settings, string key)
+    {
+        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
-            throw new ArgumentOutOfRangeException($"'{dictionaryKey}' is already present within the Dictionary.");
+            var configValue = pinfo.GetValue(settings);
+            if (configValue is ISet<string> set
+                && set.GetType().IsGenericType
+                && set.GetType().GetGenericTypeDefinition().IsAssignableFrom(typeof(HashSet<>)))
+            {
+                if (set is not null)
+                    return set;
+
+                throw new NullReferenceException($"'{key}' in Config is null when it should be a Set. Is the config corrupted?");
+            }
+            throw new ArgumentException($"'{key}' is not a Set.");
         }
+
+        throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<string> RemoveBooleanDictionaryKey<T>(Config settings, string key,
-        string dictionaryKey) where T : Config
+    public static async Task<string> AddToStringSet(Config settings, string key, string value)
     {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
-
-        var t = typeof(T);
-
-        if (!(t.GetProperty(key).GetValue(settings) is IDictionary<string, bool>))
-            throw new ArgumentException($"'{key}' is not a Dictionary<string, bool>.");
-
-        var list = (IDictionary<string, bool>?)t.GetProperty(key).GetValue(settings);
-
-        if (list == null) throw new NullReferenceException("Dictionary is null *despite* already being nullchecked?");
-
-        var result = list.Remove(dictionaryKey);
-        if (!result)
-            throw new ArgumentOutOfRangeException($"'{dictionaryKey}' was not in the Dictionary to begin with.");
-
-        t.GetProperty(key).SetValue(settings, list);
-
-        await FileHelper.SaveConfigAsync(settings);
-        return dictionaryKey;
-    }
-
-    public static bool GetBooleanDictionaryValue<T>(Config settings, string key, string dictionaryKey) where T : Config
-    {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
-
-        var t = typeof(T);
-
-        if (!(t.GetProperty(key).GetValue(settings) is IDictionary<string, bool>))
-            throw new ArgumentException($"'{key}' is not a Dictionary<string, bool>.");
-
-        var list = (IDictionary<string, bool>?)t.GetProperty(key).GetValue(settings);
-
-        if (list == null) throw new NullReferenceException("Dictionary is null *despite* already being nullchecked?");
-
-        if (!list.ContainsKey(dictionaryKey)) throw new KeyNotFoundException($"'{dictionaryKey}' is not in '{key}'");
-
-        return list[dictionaryKey];
-    }
-
-    public static async Task<(string, bool?, bool)> SetBooleanDictionaryValue<T>(Config settings, string key,
-        string dictionaryKey, string value) where T : Config
-    {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
-
-        var t = typeof(T);
-
-        if (!(t.GetProperty(key).GetValue(settings) is IDictionary<string, bool>))
-            throw new ArgumentException($"'{key}' is not a Dictionary<string, bool>.");
-
-        var list = (IDictionary<string, bool>?)t.GetProperty(key).GetValue(settings);
-
-        if (list == null) throw new NullReferenceException("Dictionary is null *despite* already being nullchecked?");
-
-        bool? oldValue = list[dictionaryKey];
-        
-        switch (value.ToLower())
+        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
-            case "true":
-            case "yes":
-            case "enable":
-            case "activate":
-            case "on":
-            case "y":
-                list[dictionaryKey] = true;
-                break;
-            case "false":
-            case "no":
-            case "disable":
-            case "deactivate":
-            case "off":
-            case "n":
-                list[dictionaryKey] = false;
-                break;
-            default:
-                throw new FormatException($"Couldn't process {value} into a boolean.");
+            var configValue = pinfo.GetValue(settings);
+            if (configValue is ISet<string> set
+                && set.GetType().IsGenericType
+                && set.GetType().GetGenericTypeDefinition().IsAssignableFrom(typeof(HashSet<>)))
+            {
+                set.Add(value);
+
+                pinfo.SetValue(settings, set);
+                await FileHelper.SaveConfigAsync(settings);
+                return value;
+            }
+            throw new ArgumentException($"'{key}' is not a Set.");
         }
 
-        t.GetProperty(key).SetValue(settings, list);
-
-        await FileHelper.SaveConfigAsync(settings);
-        return (dictionaryKey, oldValue, list[dictionaryKey]);
+        throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
     }
 
-    public static Dictionary<string, List<string>> GetStringListDictionary<T>(Config settings, string key) where T : Config
+    public static async Task<string> RemoveFromStringSet(Config settings, string key, string value)
     {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
-
-        var t = typeof(T);
-
-        if (!(t.GetProperty(key).GetValue(settings) is IDictionary<string, List<string>>))
-            throw new ArgumentException($"'{key}' is not a Dictionary<string, List<string>>.");
-
-        var list = (Dictionary<string, List<string>>?)t.GetProperty(key).GetValue(settings);
-
-        if (list == null) throw new NullReferenceException("HashSet is null *despite* already being nullchecked?");
-
-        return list;
-    }
-    
-    public static bool DoesStringListDictionaryKeyExist<T>(Config settings, string key, string dictionaryKey) where T : Config
-    {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
-
-        var t = typeof(T);
-
-        var property = t.GetProperty(key);
-        if (property == null) return false;
-
-        var items = property.GetValue(settings);
-        return items is Dictionary<string, List<string>> dictionary && dictionary.ContainsKey(dictionaryKey);
-    }
-
-    public static async Task<(string, string)> CreateStringListDictionaryKey<T>(Config settings, string key,
-        string dictionaryKey, string value) where T : Config
-    {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
-
-        var t = typeof(T);
-
-        if (!(t.GetProperty(key).GetValue(settings) is Dictionary<string, List<string>>))
-            throw new ArgumentException($"'{key}' is not a Dictionary<string, List<string>>.");
-
-        var list = (IDictionary<string, List<string>>?)t.GetProperty(key).GetValue(settings);
-
-        if (list == null) throw new NullReferenceException("Dictionary is null *despite* already being nullchecked?");
-
-        try
+        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
-            list.Add(dictionaryKey, new List<string>{ value });
+            var configValue = pinfo.GetValue(settings);
+            if (configValue is ISet<string> set
+                && set.GetType().IsGenericType
+                && set.GetType().GetGenericTypeDefinition().IsAssignableFrom(typeof(HashSet<>)))
+            {
+                set.Remove(value);
 
-            t.GetProperty(key).SetValue(settings, list);
-
-            await FileHelper.SaveConfigAsync(settings);
-            return (dictionaryKey, value);
+                pinfo.SetValue(settings, set);
+                await FileHelper.SaveConfigAsync(settings);
+                return value;
+            }
+            throw new ArgumentException($"'{key}' is not a Set.");
         }
-        catch (ArgumentException ex)
+
+        throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
+    }
+
+    private static HashSet<IIzzyUser> UserIdToUser(HashSet<ulong> set, IIzzyContext context)
+    {
+        HashSet<IIzzyUser> finalSet = new();
+
+        foreach (var user in set) finalSet.Add(context.Guild.GetUser(user));
+
+        return finalSet;
+    }
+
+    public static HashSet<IIzzyUser> GetUserSet(Config settings, string key,
+        IIzzyContext context)
+    {
+        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
-            throw new ArgumentOutOfRangeException($"'{dictionaryKey}' is already present within the Dictionary.");
+            var configValue = pinfo.GetValue(settings);
+            if (configValue is HashSet<ulong> set
+                && set.GetType().IsGenericType
+                && set.GetType().GetGenericTypeDefinition().IsAssignableFrom(typeof(HashSet<>)))
+            {
+                return UserIdToUser(set, context);
+            }
+            throw new ArgumentException($"'{key}' is not a HashSet.");
         }
+
+        throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<string> RemoveStringListDictionaryKey<T>(Config settings, string key,
-        string dictionaryKey) where T : Config
+    public static async Task<IIzzyUser> AddToUserSet(Config settings, string key,
+        string userResolvable, IIzzyContext context)
     {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
+        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        {
+            var configValue = pinfo.GetValue(settings);
+            if (configValue is HashSet<ulong> set
+                && set.GetType().IsGenericType
+                && set.GetType().GetGenericTypeDefinition().IsAssignableFrom(typeof(HashSet<>)))
+            {
+                var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(userResolvable, context);
+                if (userId == 0) throw new MemberAccessException($"Cannot access user '{userResolvable}'.");
 
-        var t = typeof(T);
+                var user = context.Guild.GetUser(userId);
 
-        if (!(t.GetProperty(key).GetValue(settings) is IDictionary<string, List<string>>))
-            throw new ArgumentException($"'{key}' is not a Dictionary<string, List<string>>.");
+                var result = set.Add(userId);
+                if (!result) throw new ArgumentOutOfRangeException($"'{userId}' is already present within the HashSet.");
 
-        var list = (IDictionary<string, List<string>>?)t.GetProperty(key).GetValue(settings);
+                pinfo.SetValue(settings, set);
+                await FileHelper.SaveConfigAsync(settings);
+                return user;
+            }
+            throw new ArgumentException($"'{key}' is not a HashSet.");
+        }
 
-        if (list == null) throw new NullReferenceException("Dictionary is null *despite* already being nullchecked?");
-
-        var result = list.Remove(dictionaryKey);
-        if (!result)
-            throw new ArgumentOutOfRangeException($"'{dictionaryKey}' was not in the Dictionary to begin with.");
-
-        t.GetProperty(key).SetValue(settings, list);
-
-        await FileHelper.SaveConfigAsync(settings);
-        return dictionaryKey;
+        throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static List<string> GetStringListDictionaryValue<T>(Config settings, string key,
-        string dictionaryKey) where T : Config
+    public static async Task<IIzzyUser> RemoveFromUserSet(Config settings, string key,
+        string userResolvable, IIzzyContext context)
     {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
+        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        {
+            var configValue = pinfo.GetValue(settings);
+            if (configValue is HashSet<ulong> set
+                && set.GetType().IsGenericType
+                && set.GetType().GetGenericTypeDefinition().IsAssignableFrom(typeof(HashSet<>)))
+            {
+                var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(userResolvable, context);
+                if (userId == 0) throw new MemberAccessException($"Cannot access user '{userResolvable}'.");
 
-        var t = typeof(T);
+                var user = context.Guild.GetUser(userId);
 
-        if (!(t.GetProperty(key).GetValue(settings) is IDictionary<string, List<string>>))
-            throw new ArgumentException($"'{key}' is not a Dictionary<string, List<string>>.");
+                var result = set.Remove(userId);
+                if (!result) throw new ArgumentOutOfRangeException($"'{userResolvable}' was not in the HashSet to begin with.");
 
-        var list = (IDictionary<string, List<string>>?)t.GetProperty(key).GetValue(settings);
+                pinfo.SetValue(settings, set);
+                await FileHelper.SaveConfigAsync(settings);
+                return user;
+            }
+            throw new ArgumentException($"'{key}' is not a HashSet.");
+        }
 
-        if (list == null) throw new NullReferenceException("Dictionary is null *despite* already being nullchecked?");
-
-        if (!list.ContainsKey(dictionaryKey))
-            throw new KeyNotFoundException($"'{dictionaryKey}' does not exist within '{key}'");
-        
-        return list[dictionaryKey];
+        throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<(string, string)> AddToStringListDictionaryValue<T>(Config settings, string key,
-        string dictionaryKey, string value) where T : Config
+    private static HashSet<IIzzyRole> RoleIdToRole(HashSet<ulong> set, IIzzyContext context)
     {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
+        HashSet<IIzzyRole> finalSet = new();
 
-        var t = typeof(T);
+        foreach (var role in set) finalSet.Add(context.Guild.GetRole(role));
 
-        if (!(t.GetProperty(key).GetValue(settings) is IDictionary<string, List<string>>))
-            throw new ArgumentException($"'{key}' is not a Dictionary<string, List<string>>.");
-
-        var list = (IDictionary<string, List<string>>?)t.GetProperty(key).GetValue(settings);
-
-        if (list == null) throw new NullReferenceException("Dictionary is null *despite* already being nullchecked?");
-
-        list[dictionaryKey].Add(value);
-
-        t.GetProperty(key).SetValue(settings, list);
-
-        await FileHelper.SaveConfigAsync(settings);
-        return (dictionaryKey, value);
+        return finalSet;
     }
 
-    public static async Task<(string, string)> RemoveFromStringListDictionaryValue<T>(Config settings, string key,
-        string dictionaryKey, string value) where T : Config
+    public static HashSet<IIzzyRole> GetRoleSet(Config settings, string key, IIzzyContext context)
     {
-        if (!DoesValueExist<Config>(settings, key))
-            throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
+        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        {
+            var configValue = pinfo.GetValue(settings);
+            if (configValue is HashSet<ulong> set
+                && set.GetType().IsGenericType
+                && set.GetType().GetGenericTypeDefinition().IsAssignableFrom(typeof(HashSet<>)))
+            {
+                return RoleIdToRole(set, context);
+            }
+            throw new ArgumentException($"'{key}' is not a HashSet.");
+        }
 
-        var t = typeof(T);
+        throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
+    }
 
-        if (!(t.GetProperty(key).GetValue(settings) is IDictionary<string, List<string>>))
-            throw new ArgumentException($"'{key}' is not a Dictionary<string, List<string>>.");
+    public static async Task<IIzzyRole> AddToRoleSet(Config settings, string key, string roleResolvable,
+        IIzzyContext context)
+    {
+        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        {
+            var configValue = pinfo.GetValue(settings);
+            if (configValue is HashSet<ulong> set
+                && set.GetType().IsGenericType
+                && set.GetType().GetGenericTypeDefinition().IsAssignableFrom(typeof(HashSet<>)))
+            {
+                var roleId = DiscordHelper.GetRoleIdIfAccessAsync(roleResolvable, context);
+                if (roleId == 0) throw new MemberAccessException($"Cannot access role '{roleResolvable}'.");
 
-        var list = (IDictionary<string, List<string>>?)t.GetProperty(key).GetValue(settings);
+                var role = context.Guild.GetRole(roleId);
 
-        if (list == null) throw new NullReferenceException("Dictionary is null *despite* already being nullchecked?");
+                var result = set.Add(roleId);
+                if (!result) throw new ArgumentOutOfRangeException($"'{roleId}' is already present within the HashSet.");
 
-        var result = list[dictionaryKey].Remove(value);
-        if (!result)
-            throw new ArgumentOutOfRangeException($"'{value}' was not in the Dictionary StringList to begin with.");
+                pinfo.SetValue(settings, set);
+                await FileHelper.SaveConfigAsync(settings);
+                return role;
+            }
+            throw new ArgumentException($"'{key}' is not a HashSet.");
+        }
 
-        t.GetProperty(key).SetValue(settings, list);
+        throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
+    }
 
-        await FileHelper.SaveConfigAsync(settings);
-        return (dictionaryKey, value);
+    public static async Task<IIzzyRole> RemoveFromRoleSet(Config settings, string key,
+        string roleResolvable, IIzzyContext context)
+    {
+        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        {
+            var configValue = pinfo.GetValue(settings);
+            if (configValue is HashSet<ulong> set
+                && set.GetType().IsGenericType
+                && set.GetType().GetGenericTypeDefinition().IsAssignableFrom(typeof(HashSet<>)))
+            {
+                var roleId = DiscordHelper.GetRoleIdIfAccessAsync(roleResolvable, context);
+                if (roleId == 0) throw new MemberAccessException($"Cannot access role '{roleResolvable}'.");
+
+                var role = context.Guild.GetRole(roleId);
+
+                var result = set.Remove(roleId);
+                if (!result) throw new ArgumentOutOfRangeException($"'{roleId}' was not in the HashSet to begin with.");
+
+                pinfo.SetValue(settings, set);
+                await FileHelper.SaveConfigAsync(settings);
+                return role;
+            }
+            throw new ArgumentException($"'{key}' is not a HashSet.");
+        }
+
+        throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
+    }
+
+    private static HashSet<IIzzySocketGuildChannel> ChannelIdToChannel(HashSet<ulong> set, IIzzyContext context)
+    {
+        HashSet<IIzzySocketGuildChannel> finalSet = new();
+
+        foreach (var channel in set) finalSet.Add(context.Guild.GetChannel(channel));
+
+        return finalSet;
+    }
+
+    public static HashSet<IIzzySocketGuildChannel> GetChannelSet(Config settings, string key,
+        IIzzyContext context)
+    {
+        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        {
+            var configValue = pinfo.GetValue(settings);
+            if (configValue is HashSet<ulong> set
+                && set.GetType().IsGenericType
+                && set.GetType().GetGenericTypeDefinition().IsAssignableFrom(typeof(HashSet<>)))
+            {
+                return ChannelIdToChannel(set, context);
+            }
+            throw new ArgumentException($"'{key}' is not a HashSet.");
+        }
+
+        throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
+    }
+
+    public static async Task<IIzzySocketGuildChannel> AddToChannelSet(Config settings, string key,
+        string channelResolvable, IIzzyContext context)
+    {
+        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        {
+            var configValue = pinfo.GetValue(settings);
+            if (configValue is HashSet<ulong> set
+                && set.GetType().IsGenericType
+                && set.GetType().GetGenericTypeDefinition().IsAssignableFrom(typeof(HashSet<>)))
+            {
+                var channelId = await DiscordHelper.GetChannelIdIfAccessAsync(channelResolvable, context);
+                if (channelId == 0) throw new MemberAccessException($"Cannot access channel '{channelResolvable}'.");
+
+                var channel = context.Guild.GetChannel(channelId);
+
+                var result = set.Add(channelId);
+                if (!result) throw new ArgumentOutOfRangeException($"'{channelId}' is already present within the HashSet.");
+
+                pinfo.SetValue(settings, set);
+                await FileHelper.SaveConfigAsync(settings);
+                return channel;
+            }
+            throw new ArgumentException($"'{key}' is not a HashSet.");
+        }
+
+        throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
+    }
+
+    public static async Task<IIzzySocketGuildChannel> RemoveFromChannelSet(Config settings, string key,
+        string channelResolvable, IIzzyContext context)
+    {
+        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        {
+            var configValue = pinfo.GetValue(settings);
+            if (configValue is HashSet<ulong> set
+                && set.GetType().IsGenericType
+                && set.GetType().GetGenericTypeDefinition().IsAssignableFrom(typeof(HashSet<>)))
+            {
+                var channelId = await DiscordHelper.GetChannelIdIfAccessAsync(channelResolvable, context);
+                if (channelId == 0) throw new MemberAccessException($"Cannot access channel '{channelResolvable}'.");
+
+                var channel = context.Guild.GetChannel(channelId);
+
+                var result = set.Remove(channelId);
+                if (!result) throw new ArgumentOutOfRangeException($"'{channelId}' was not in the HashSet to begin with.");
+
+                pinfo.SetValue(settings, set);
+                await FileHelper.SaveConfigAsync(settings);
+                return channel;
+            }
+            throw new ArgumentException($"'{key}' is not a HashSet.");
+        }
+
+        throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
+    }
+
+    public static IDictionary<string, VALUE> GetDictionary<VALUE>(Config settings, string key)
+    {
+        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        {
+            if (pinfo.GetValue(settings) is IDictionary<string, VALUE> dict)
+            {
+                return dict;
+            }
+            throw new ArgumentException($"'{key}' is not a Dictionary<string, string>.");
+        }
+
+        throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
+    }
+
+    public static bool DoesDictionaryKeyExist<VALUE>(Config settings, string key, string dictionaryKey)
+    {
+        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        {
+            if (pinfo.GetValue(settings) is IDictionary<string, VALUE> dict)
+            {
+                return dict.ContainsKey(dictionaryKey);
+            }
+            return false;
+        }
+
+        throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
+    }
+
+    public static async Task<(string, string?, VALUE)> CreateDictionaryKey<VALUE>(Config settings, string key,
+        string dictionaryKey, VALUE value)
+    {
+        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        {
+            if (pinfo.GetValue(settings) is IDictionary<string, VALUE> dict)
+            {
+                try
+                {
+                    dict.Add(dictionaryKey, value);
+
+                    pinfo.SetValue(settings, dict);
+                    await FileHelper.SaveConfigAsync(settings);
+                    return (dictionaryKey, null, value);
+                }
+                catch (ArgumentException)
+                {
+                    throw new ArgumentOutOfRangeException($"'{dictionaryKey}' is already present within the Dictionary.");
+                }
+            }
+            throw new ArgumentException($"'{key}' is not a Dictionary.");
+        }
+
+        throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
+    }
+
+    public static async Task<string> RemoveDictionaryKey<VALUE>(Config settings, string key,
+        string dictionaryKey)
+    {
+        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        {
+            if (pinfo.GetValue(settings) is IDictionary<string, VALUE> dict)
+            {
+                var result = dict.Remove(dictionaryKey);
+                if (!result) throw new ArgumentOutOfRangeException($"'{dictionaryKey}' was not in the Dictionary to begin with.");
+
+                pinfo.SetValue(settings, dict);
+                await FileHelper.SaveConfigAsync(settings);
+                return dictionaryKey;
+            }
+            throw new ArgumentException($"'{key}' is not a Dictionary.");
+        }
+
+        throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
+    }
+
+    public static VALUE GetDictionaryValue<VALUE>(Config settings, string key, string dictionaryKey)
+    {
+        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        {
+            if (pinfo.GetValue(settings) is IDictionary<string, VALUE> dict)
+            {
+                if (!dict.ContainsKey(dictionaryKey)) throw new KeyNotFoundException($"'{dictionaryKey}' is not in '{key}'");
+
+                return dict[dictionaryKey];
+            }
+            throw new ArgumentException($"'{key}' is not a Dictionary.");
+        }
+
+        throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
+    }
+
+    public static async Task<(string, string?, string)> SetStringDictionaryValue(Config settings, string key,
+        string dictionaryKey, string value)
+    {
+        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        {
+            if (pinfo.GetValue(settings) is IDictionary<string, string> dict)
+            {
+                if (!dict.TryGetValue(dictionaryKey, out var oldValue)) oldValue = null;
+
+                dict[dictionaryKey] = value;
+
+                pinfo.SetValue(settings, dict);
+                await FileHelper.SaveConfigAsync(settings);
+                return (dictionaryKey, oldValue, value);
+            }
+            throw new ArgumentException($"'{key}' is not a Dictionary<string, string>.");
+        }
+
+        throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
+    }
+
+    public static async Task<(string, string?, string?)> SetNullableStringDictionaryValue(Config settings, string key,
+        string dictionaryKey, string? value)
+    {
+        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        {
+            if (pinfo.GetValue(settings) is IDictionary<string, string?> dict)
+            {
+                if (!dict.TryGetValue(dictionaryKey, out var oldValue)) oldValue = null;
+
+                dict[dictionaryKey] = value;
+
+                pinfo.SetValue(settings, dict);
+                await FileHelper.SaveConfigAsync(settings);
+                return (dictionaryKey, oldValue, value);
+            }
+            throw new ArgumentException($"'{key}' is not a Dictionary<string, string?>.");
+        }
+
+        throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
+    }
+
+    public static async Task<(string, string)> CreateStringSetDictionaryKey(Config settings, string key,
+        string dictionaryKey, string value)
+    {
+        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        {
+            if (pinfo.GetValue(settings) is IDictionary<string, HashSet<string>> dict)
+            {
+                try
+                {
+                    dict.Add(dictionaryKey, new HashSet<string> { value });
+
+                    pinfo.SetValue(settings, dict);
+                    await FileHelper.SaveConfigAsync(settings);
+                    return (dictionaryKey, value);
+                }
+                catch (ArgumentException)
+                {
+                    throw new ArgumentOutOfRangeException($"'{dictionaryKey}' is already present within the Dictionary.");
+                }
+            }
+            throw new ArgumentException($"'{key}' is not a Dictionary<string, HashSet<string>>.");
+        }
+
+        throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
+    }
+
+    public static async Task<(string, string)> AddToStringSetDictionaryValue(Config settings, string key,
+        string dictionaryKey, string value)
+    {
+        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        {
+            if (pinfo.GetValue(settings) is IDictionary<string, HashSet<string>> dict)
+            {
+                dict[dictionaryKey].Add(value);
+
+                pinfo.SetValue(settings, dict);
+                await FileHelper.SaveConfigAsync(settings);
+                return (dictionaryKey, value);
+            }
+            throw new ArgumentException($"'{key}' is not a Dictionary<string, HashSet<string>>.");
+        }
+
+        throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
+    }
+
+    public static async Task<(string, string)> RemoveFromStringSetDictionaryValue(Config settings, string key,
+        string dictionaryKey, string value)
+    {
+        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        {
+            if (pinfo.GetValue(settings) is IDictionary<string, HashSet<string>> dict)
+            {
+                var result = dict[dictionaryKey].Remove(value);
+                if (!result) throw new ArgumentOutOfRangeException($"'{value}' was not in the Dictionary StringSet to begin with.");
+
+                pinfo.SetValue(settings, dict);
+                await FileHelper.SaveConfigAsync(settings);
+                return (dictionaryKey, value);
+            }
+            throw new ArgumentException($"'{key}' is not a Dictionary<string, HashSet<string>>.");
+        }
+
+        throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 }

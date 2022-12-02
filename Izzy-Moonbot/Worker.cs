@@ -16,6 +16,7 @@ using Izzy_Moonbot.EventListeners;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Service;
 using Izzy_Moonbot.Settings;
+using Izzy_Moonbot.Types;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -37,6 +38,7 @@ namespace Izzy_Moonbot
         private readonly IServiceCollection _services;
         private readonly Config _config;
         private readonly Dictionary<ulong, User> _users;
+        private readonly ConfigListener _configListener;
         private readonly UserListener _userListener;
         private DiscordSocketClient _client;
         public bool hasProgrammingSocks = true;
@@ -44,7 +46,7 @@ namespace Izzy_Moonbot
 
         public Worker(ILogger<Worker> logger, ModLoggingService modLog, IServiceCollection services, ModService modService, RaidService raidService,
             FilterService filterService, ScheduleService scheduleService, IOptions<DiscordSettings> discordSettings,
-            Config config, Dictionary<ulong, User> users, UserListener userListener, SpamService spamService)
+            Config config, Dictionary<ulong, User> users, UserListener userListener, SpamService spamService, ConfigListener configListener)
         {
             _logger = logger;
             _modLog = modLog;
@@ -59,6 +61,7 @@ namespace Izzy_Moonbot
             _users = users;
             _userListener = userListener;
             _spamService = spamService;
+            _configListener = configListener;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -89,6 +92,7 @@ namespace Izzy_Moonbot
 
                 await InstallCommandsAsync();
                 
+                _configListener.RegisterEvents(_client);
                 _userListener.RegisterEvents(_client);
                 
                 _spamService.RegisterEvents(_client);
@@ -152,7 +156,12 @@ namespace Izzy_Moonbot
 
         private async Task InstallCommandsAsync()
         {
-            _client.MessageReceived += HandleMessageReceivedAsync;
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
+#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+            _client.MessageReceived += async (message) => HandleMessageReceivedAsync(message);
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
+#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+
             await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), _services.BuildServiceProvider());
         }
 
@@ -295,7 +304,7 @@ namespace Izzy_Moonbot
                     $"Resynced users. {guild.Users.Count} users found, {newUserCount} unknown, {reloadUserCount} required update, {knownUserCount} up to date.");
                 
                 // Get stowaways
-                var stowawayList = new HashSet<SocketGuildUser>();
+                var stowawaySet = new HashSet<SocketGuildUser>();
         
                 await foreach (var socketGuildUser in guild.Users.ToAsyncEnumerable())
                 {
@@ -305,14 +314,14 @@ namespace Izzy_Moonbot
                     if (!socketGuildUser.Roles.Select(role => role.Id).Contains((ulong)_config.MemberRole))
                     {
                         // Doesn't have member role, add to stowaway list.
-                        stowawayList.Add(socketGuildUser);
+                        stowawaySet.Add(socketGuildUser);
                     }
                 }
 
-                if (stowawayList.Count != 0)
+                if (stowawaySet.Count != 0)
                 {
-                    var stowawayStringList = stowawayList.Select(user => $"<@{user.Id}>");
-                    var stowawayStringFileList = stowawayList.Select(user => $"{user.Username}#{user.Discriminator}");
+                    var stowawayStringList = stowawaySet.Select(user => $"<@{user.Id}>");
+                    var stowawayStringFileList = stowawaySet.Select(user => $"{user.Username}#{user.Discriminator}");
                     
                     await _modLog.CreateModLog(guild)
                         .SetContent($"I found these stowaways after I rebooted, cannot tell if they're new users:{Environment.NewLine}" +

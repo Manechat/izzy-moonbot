@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Discord;
@@ -65,7 +67,11 @@ public class SpamService
     public void RegisterEvents(DiscordSocketClient client)
     {
         // Register MessageReceived event
-        client.MessageReceived += (message) => Task.Run(async () => { await MessageReceiveEvent(message, client); });
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
+#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+        client.MessageReceived += async (message) => MessageReceiveEvent(message, client);
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
+#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
     }
 
     /// <summary>
@@ -288,6 +294,8 @@ public class SpamService
         // Silence user, this also logs the action.
         await _mod.SilenceUser(user, $"Exceeded pressure max ({pressure}/{_config.SpamMaxPressure}) in <#{message.Channel.Id}>");
 
+        var bulkDeletionLog = new List<(DateTimeOffset, string)>();
+
         var alreadyDeletedMessages = 0;
         
         // Remove all messages considered part of spam.
@@ -295,10 +303,17 @@ public class SpamService
         {
             try
             {
-                var previousMessage = await context.Guild.GetTextChannel(previousMessageItem.ChannelId)
-                    .GetMessageAsync(previousMessageItem.Id);
-                if (previousMessage == null) alreadyDeletedMessages++;
-                else await previousMessage.DeleteAsync();
+                var channel = context.Guild.GetTextChannel(previousMessageItem.ChannelId);
+                var previousMessage = await channel.GetMessageAsync(previousMessageItem.Id);
+                if (previousMessage is not null)
+                {
+                    if (previousMessage.Content != "")
+                        bulkDeletionLog.Add((previousMessageItem.Timestamp,
+                            $"[{previousMessageItem.Timestamp}] in #{channel.Name}: {previousMessage.Content}"));
+                    await previousMessage.DeleteAsync();
+                }
+                else
+                    alreadyDeletedMessages++;
             }
             catch (HttpException exception)
             {
@@ -322,6 +337,35 @@ public class SpamService
             }
         }
 
+        string? bulkLogJumpUrl = null;
+        if (bulkDeletionLog.Count > 0)
+        {
+            var logChannelId = _config.LogChannel;
+            if (logChannelId == 0)
+                await _logger.Log("I couldn't post a bulk deletion log, because .config LogChannel hasn't been set.");
+            else
+            {
+                var logChannel = context.Guild.GetTextChannel(logChannelId);
+                if (logChannel is not null)
+                {
+                    await _logger.Log($"Assembling a bulk deletion log from the content of {bulkDeletionLog.Count} deleted messages");
+                    bulkDeletionLog.Sort((x, y) => x.Item1.CompareTo(y.Item1));
+                    var bulkDeletionLogString = string.Join(
+                        Environment.NewLine + Environment.NewLine,
+                        bulkDeletionLog.Select(logElement => logElement.Item2)
+                    );
+                    var s = new MemoryStream(Encoding.UTF8.GetBytes(bulkDeletionLogString));
+                    var fa = new FileAttachment(s, $"{context.User.Username}_{context.User.Id}_spam_bulk_deletion_log_{DateTimeOffset.UtcNow.ToString()}.txt");
+
+                    var spamBulkDeletionMessage = await logChannel.SendFileAsync(fa,
+                        $"Deleted recent messages from {context.User.Username} ({context.User.Id}) after they tripped spam detection, here's the bulk deletion log:");
+                    bulkLogJumpUrl = spamBulkDeletionMessage.GetJumpUrl();
+                }
+                else
+                    await _logger.Log("Something went wrong trying to access LogChannel.");
+            }
+        }
+
         if (alreadyAlerted) return;
         
         var embedBuilder = new EmbedBuilder()
@@ -331,6 +375,9 @@ public class SpamService
             .AddField("Channel", $"<#{context.Channel.Id}>", true)
             .AddField("Pressure", $"This user's last message raised their pressure from {oldPressureAfterDecay} to {pressure}, exceeding {_config.SpamMaxPressure}")
             .AddField("Breakdown of last message", $"{PonyReadableBreakdown(pressureBreakdown)}");
+
+        if (bulkLogJumpUrl is not null)
+            embedBuilder.AddField("Bulk Deletion Log", bulkLogJumpUrl);
 
         if (alreadyDeletedMessages != 0)
             embedBuilder.WithDescription(
@@ -361,10 +408,6 @@ public class SpamService
         if (!DiscordHelper.IsProcessableMessage(messageParam)) return; // Not processable
         if (messageParam is not SocketUserMessage message) return; // Not processable
         
-        if (_config.ThreadOnlyMode &&
-            (message.Channel.GetChannelType() != ChannelType.PublicThread &&
-             message.Channel.GetChannelType() != ChannelType.PrivateThread)) return; // Not a thread, in thread only mode
-
         var context = new SocketCommandContext(client, message);
 
         if (!DiscordHelper.IsDefaultGuild(context)) return;

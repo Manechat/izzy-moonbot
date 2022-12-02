@@ -20,6 +20,7 @@ public class ConfigItem
 public enum ConfigItemCategory
 {
     Core,
+    Server,
     Moderation,
     Debug,
     User,
@@ -30,38 +31,24 @@ public enum ConfigItemCategory
 
 public enum ConfigItemType
 {
+    // Values
     String,
     Char,
     Boolean,
     Integer,
     Double,
-    User,
+    Enum,
     Role,
     Channel,
-    StringList,
-    CharList,
-    BooleanList,
-    IntegerList,
-    DoubleList,
-    UserList,
-    RoleList,
-    ChannelList,
+    
+    // Sets
+    StringSet,
+    RoleSet,
+    ChannelSet,
+    
+    // Dictionaries
     StringDictionary,
-
-    //CharDictionary, // Note: Implement when needed
-    BooleanDictionary,
-
-    //IntegerDictionary, // Note: Implement when needed
-    //DoubleDictionary, // Note: Implement when needed
-    //UserDictionary, // Note: Implement when needed
-    //RoleDictionary, // Note: Implement when needed
-    //ChannelDictionary, // Note: Implement when needed
-    StringListDictionary
-    //CharListDictionary, // Note: Implement when needed
-    //BooleanListDictionary, // Note: Implement when needed
-    //IntegerListDictionary, // Note: Implement when needed
-    //DoubleListDictionary, // Note: Implement when needed
-    //UserListDictionary, // Note: Implement when needed
-    //RoleListDictionary, // Note: Implement when needed
-    //ChannelListDictionary // Note: Implement when needed
+    
+    // Dictionaries of Sets
+    StringSetDictionary
 }

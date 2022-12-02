@@ -1,13 +1,9 @@
-﻿using Izzy_Moonbot.Helpers;
+﻿using Izzy_Moonbot.Adapters;
+using Izzy_Moonbot.Helpers;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using static Izzy_Moonbot.Helpers.DiscordHelper;
 
-namespace Izzy_MoonbotTests.Service;
+namespace Izzy_Moonbot_Tests.Helpers;
 
 [TestClass()]
 public class DiscordHelperTests
@@ -157,5 +153,65 @@ public class DiscordHelperTests
         Assert.AreEqual("\"bar baz\" quux", SkippedArgsString(argsString, 0));
         Assert.AreEqual("\" quux", SkippedArgsString(argsString, 1)); // TODO: Incorrect
         Assert.AreEqual("x", SkippedArgsString(argsString, 2)); // TODO: Incorrect
+    }
+
+    public StubClient DefaultTestClient()
+    {
+        // Unrealistic assumptions made here include but are not limited to:
+        // - There is only one guild/server the bot ever sees
+        // - All users are present in all channels
+
+        var izzyHerself = new TestUser("Izzy Moonbot", 1);
+
+        var users = new List<TestUser>{
+            izzyHerself,
+            new TestUser("Sunny", 2)
+        };
+
+        var roles = new List<TestRole> {
+            new TestRole("Alicorn", 1)
+        };
+
+        var generalChannel = new StubChannel(1, "general");
+        var channels = new List<StubChannel> { generalChannel };
+
+        var guild = new StubGuild(1, roles, users, channels);
+        return new StubClient(izzyHerself, new List<StubGuild> { guild });
+    }
+
+    [TestMethod()]
+    public async Task UserRoleChannel_GettersTests()
+    {
+        var client = DefaultTestClient();
+        var context = client.AddMessage(1, 1, 1, "hello");
+
+        Assert.AreEqual(1ul, await GetChannelIdIfAccessAsync("1", context));
+        Assert.AreEqual(0ul, await GetChannelIdIfAccessAsync("999", context));
+
+        Assert.AreEqual(1ul, await GetChannelIdIfAccessAsync("<#1>", context));
+        Assert.AreEqual(0ul, await GetChannelIdIfAccessAsync("<#999>", context));
+
+        Assert.AreEqual(1ul, await GetChannelIdIfAccessAsync("general", context));
+        Assert.AreEqual(0ul, await GetChannelIdIfAccessAsync("other", context));
+
+        Assert.AreEqual(1ul, GetRoleIdIfAccessAsync("1", context));
+        Assert.AreEqual(0ul, GetRoleIdIfAccessAsync("999", context));
+
+        Assert.AreEqual(1ul, GetRoleIdIfAccessAsync("<@&1>", context));
+        Assert.AreEqual(0ul, GetRoleIdIfAccessAsync("<@&999>", context));
+
+        Assert.AreEqual(1ul, GetRoleIdIfAccessAsync("Alicorn", context));
+        Assert.AreEqual(0ul, GetRoleIdIfAccessAsync("other", context));
+
+        // unlike the channel and role getters, this user method intentionally supports "unknown" users not in the guild
+        Assert.AreEqual(1ul, await GetUserIdFromPingOrIfOnlySearchResultAsync("1", context));
+        Assert.AreEqual(999ul, await GetUserIdFromPingOrIfOnlySearchResultAsync("999", context));
+
+        Assert.AreEqual(1ul, await GetUserIdFromPingOrIfOnlySearchResultAsync("<@1>", context));
+        Assert.AreEqual(999ul, await GetUserIdFromPingOrIfOnlySearchResultAsync("<@999>", context));
+
+        Assert.AreEqual(1ul, await GetUserIdFromPingOrIfOnlySearchResultAsync("Izzy", context));
+        Assert.AreEqual(2ul, await GetUserIdFromPingOrIfOnlySearchResultAsync("Sunny", context));
+        Assert.AreEqual(0ul, await GetUserIdFromPingOrIfOnlySearchResultAsync("other", context));
     }
 }

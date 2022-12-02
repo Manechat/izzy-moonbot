@@ -364,7 +364,7 @@ public class AdminModule : ModuleBase<SocketCommandContext>
 
         var random = new Random();
         var index = random.Next(_config.MentionResponses.Count);
-        var response = _config.MentionResponses[index]; // Random response
+        var response = _config.MentionResponses.ElementAt(index); // Random response
 
         _state.LastMentionResponse = DateTimeOffset.UtcNow;
 
@@ -389,7 +389,7 @@ public class AdminModule : ModuleBase<SocketCommandContext>
         {
             if (!Context.Guild.HasAllMembers) await Context.Guild.DownloadUsersAsync();
 
-            var stowawayList = new HashSet<SocketGuildUser>();
+            var stowawaySet = new HashSet<SocketGuildUser>();
             
             await foreach (var socketGuildUser in Context.Guild.Users.ToAsyncEnumerable())
             {
@@ -398,19 +398,19 @@ public class AdminModule : ModuleBase<SocketCommandContext>
 
                 if (!socketGuildUser.Roles.Select(role => role.Id).Contains((ulong)_config.MemberRole))
                 {
-                    // Doesn't have member role, add to stowaway list.
-                    stowawayList.Add(socketGuildUser);
+                    // Doesn't have member role, add to stowaway set.
+                    stowawaySet.Add(socketGuildUser);
                 }
             }
 
-            if (stowawayList.Count == 0)
+            if (stowawaySet.Count == 0)
             {
                 // There's no stowaways
                 await ReplyAsync("I didn't find any stowaways.");
             }
             else
             {
-                var stowawayStringList = stowawayList.Select(user => $"<@{user.Id}>");
+                var stowawayStringList = stowawaySet.Select(user => $"<@{user.Id}>");
 
                 await ReplyAsync(
                     $"I found these following stowaways:{Environment.NewLine}{string.Join(", ", stowawayStringList)}");
@@ -427,6 +427,7 @@ public class AdminModule : ModuleBase<SocketCommandContext>
     [DevCommand(Group = "Permissions")]
     [Parameter("user", ParameterType.User, "The user to ban.")]
     [Parameter("duration", ParameterType.DateTime, "How long the ban should last, e.g. \"2 weeks\" or \"6 months\". Omit for an indefinite ban.", true)]
+    [Example(".ban 123456789012345678 1 month")]
     public async Task BanCommandAsync(
         [Remainder] string argsString = "")
     {
@@ -618,6 +619,7 @@ public class AdminModule : ModuleBase<SocketCommandContext>
     [Parameter("role", ParameterType.Role, "The role to assign.")]
     [Parameter("user", ParameterType.User, "The user to assign the role.")]
     [Parameter("duration", ParameterType.DateTime, "How long the role should last, e.g. \"2 weeks\" or \"6 months\". Omit for an indefinite role assignment.", true)]
+    [Example(".assignrole @Best Pony @Izzy Moonbot 24 hours")]
     public async Task AssignRoleCommandAsync(
         [Remainder] string argsString = "")
     {
@@ -757,6 +759,7 @@ public class AdminModule : ModuleBase<SocketCommandContext>
     [Parameter("channel", ParameterType.Channel, "The channel to wipe.")]
     [Parameter("duration", ParameterType.DateTime, "How far back to wipe messages, e.g. \"5 minutes\" or \"10 days\". " +
         "Defaults to 24 hours. Note that Discord doesn't support bulk deleting messages older than 14 days.", true)]
+    [Example(".wipe #the-moon 20 minutes")]
     public async Task WipeCommandAsync(
         [Remainder] string argsString = "")
     {

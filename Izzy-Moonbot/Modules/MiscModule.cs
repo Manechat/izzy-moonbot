@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Izzy_Moonbot.Attributes;
+using Izzy_Moonbot.EventListeners;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Service;
 using Izzy_Moonbot.Settings;
@@ -24,6 +25,33 @@ public class MiscModule : ModuleBase<SocketCommandContext>
         _config = config;
         _schedule = schedule;
         _logger = logger;
+    }
+
+    [Command("banner")]
+    [Summary("Get the current banner of Manechat.")]
+    [Alias("getbanner", "currentbanner")]
+    public async Task BannerCommandAsync()
+    {
+        if (_config.BannerMode == ConfigListener.BannerMode.ManebooruFeatured)
+        {
+            await ReplyAsync("I'm currently syncing the banner with the Manebooru featured image");
+            await ReplyAsync(";featured");
+            return;
+        }
+
+        if (Context.Guild.BannerUrl == null)
+        {
+            await ReplyAsync("No banner is currently set.");
+            return;
+        }
+
+        var message = "";
+        if (_config.BannerMode == ConfigListener.BannerMode.None)
+            message += $"I'm not currently managing the banner, but here's the current server's banner.{Environment.NewLine}";
+
+        message += $"{Context.Guild.BannerUrl}?size=4096";
+
+        await ReplyAsync(message);
     }
 
     [Command("snowflaketime")]
@@ -59,6 +87,8 @@ public class MiscModule : ModuleBase<SocketCommandContext>
         "How long to wait until sending the message, e.g. \"5 days\" or \"2 hours\".")]
     [Parameter("message", ParameterType.String, "The reminder message to DM.")]
     [ExternalUsageAllowed]
+    [Example(".remindme 2 hours join stream")]
+    [Example(".remindme 6 months rethink life")]
     public async Task RemindMeCommandAsync([Remainder] string argsString = "")
     {
         if (argsString == "")
@@ -677,6 +707,8 @@ public class MiscModule : ModuleBase<SocketCommandContext>
         [DevCommand(Group="Permission")]
         [Parameter("user", ParameterType.User, "The user to add the quote to.")]
         [Parameter("content", ParameterType.String, "The quote content to add.")]
+        [Example(".addquote @UserName hello there")]
+        [Example(".addquote \"Izzy Moonbot\" belizzle it")]
         public async Task AddQuoteCommandAsync(
             [Remainder] string argsString = "")
         {

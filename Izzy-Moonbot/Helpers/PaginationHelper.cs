@@ -4,6 +4,8 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using Izzy_Moonbot.Adapters;
+using static Izzy_Moonbot.Adapters.IIzzyClient;
 
 namespace Izzy_Moonbot.Helpers;
 
@@ -11,39 +13,41 @@ public class PaginationHelper
 {
     private readonly AllowedMentions _allowedMentions;
 
-    private readonly DiscordSocketClient _client;
-    private readonly RequestOptions _options;
+    private readonly IIzzyClient _client;
     private readonly string[] _staticParts;
 
     private readonly bool _useCodeBlock;
     private ulong _authorId;
     private bool _easterEgg;
-    private IUserMessage _message;
+    private IIzzyMessage _message;
     public DateTime ExpiresAt;
-    public int PageNumber;
+    private int _pageNumber = 0;
     public string[] Pages;
 
-    public PaginationHelper(SocketCommandContext context, string[] pages, string[] staticParts, int pageNumber = 0,
+    public PaginationHelper(SocketCommandContext context, string[] pages, string[] staticParts,
         bool codeblock = true,
-        AllowedMentions allowedMentions = null,
-        RequestOptions options = null)
+        AllowedMentions allowedMentions = null)
+        : this(new SocketCommandContextAdapter(context), pages, staticParts, codeblock, allowedMentions)
+    { }
+
+    public PaginationHelper(IIzzyContext context, string[] pages, string[] staticParts,
+        bool codeblock = true,
+        AllowedMentions allowedMentions = null)
     {
         _client = context.Client;
         _authorId = context.Message.Author.Id;
         Pages = pages;
-        PageNumber = pageNumber;
         _staticParts = staticParts;
         _easterEgg = false;
         _useCodeBlock = codeblock;
         _allowedMentions = allowedMentions;
-        _options = options;
 
         ExpiresAt = DateTime.UtcNow + TimeSpan.FromMinutes(5);
 
         CreatePaginationMessage(context);
     }
 
-    private async void CreatePaginationMessage(SocketCommandContext context)
+    private async void CreatePaginationMessage(IIzzyContext context)
     {
         var builder = new ComponentBuilder()
             .WithButton(customId: "goto-start", emote: Emoji.Parse(":track_previous:"), disabled: false)
@@ -56,7 +60,7 @@ public class PaginationHelper
 
         _message = await context.Channel.SendMessageAsync(
             $"{_staticParts[0]}{Environment.NewLine}{Environment.NewLine}<a:rdloop:910875692785336351> Pagination is loading. Please wait...{Environment.NewLine}{Environment.NewLine}{_staticParts[1]}",
-            components: builder.Build(), allowedMentions: _allowedMentions, options: _options);
+            components: builder.Build(), allowedMentions: _allowedMentions);
 
         _client.ButtonExecuted += ButtonEvent;
         _client.MessageDeleted += MessageDeletedEvent;
@@ -88,7 +92,7 @@ public class PaginationHelper
             if (_useCodeBlock) codeBlock = "```";
 
             msg.Content =
-                $"{_staticParts[0]}{Environment.NewLine}{codeBlock}{Environment.NewLine}{Pages[PageNumber]}{Environment.NewLine}{codeBlock}`Page {PageNumber + 1} out of {Pages.Length}`{Environment.NewLine}{_staticParts[1]}{Environment.NewLine}{Environment.NewLine}{expireMessage}";
+                $"{_staticParts[0]}{Environment.NewLine}{codeBlock}{Environment.NewLine}{Pages[_pageNumber]}{Environment.NewLine}{codeBlock}`Page {_pageNumber + 1} out of {Pages.Length}`{Environment.NewLine}{_staticParts[1]}{Environment.NewLine}{Environment.NewLine}{expireMessage}";
 
             if (_easterEgg)
             {
@@ -131,7 +135,7 @@ public class PaginationHelper
         });
     }
 
-    private async Task ButtonEvent(SocketMessageComponent component)
+    private async Task ButtonEvent(IIzzySocketMessageComponent component)
     {
         if (component.User.Id != _authorId) return;
         if (component.Message.Id != _message.Id) return;
@@ -139,19 +143,19 @@ public class PaginationHelper
         switch (component.Data.CustomId)
         {
             case "goto-start":
-                PageNumber = 0;
+                _pageNumber = 0;
                 RedrawPagination();
                 break;
             case "goto-previous":
-                if (PageNumber >= 1) PageNumber -= 1;
+                if (_pageNumber >= 1) _pageNumber -= 1;
                 RedrawPagination();
                 break;
             case "goto-next":
-                if (PageNumber < Pages.Length - 1) PageNumber += 1;
+                if (_pageNumber < Pages.Length - 1) _pageNumber += 1;
                 RedrawPagination();
                 break;
             case "goto-end":
-                PageNumber = Pages.Length - 1;
+                _pageNumber = Pages.Length - 1;
                 RedrawPagination();
                 break;
             case "trigger-easteregg":
@@ -163,8 +167,7 @@ public class PaginationHelper
         await component.DeferAsync();
     }
 
-    private async Task MessageDeletedEvent(Cacheable<IMessage, ulong> message,
-        Cacheable<IMessageChannel, ulong> channel)
+    private async Task MessageDeletedEvent(IIzzyHasId message, IIzzyHasId channel)
     {
         if (_message.Id == message.Id)
         {

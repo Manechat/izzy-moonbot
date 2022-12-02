@@ -34,7 +34,6 @@ public class InfoModule : ModuleBase<SocketCommandContext>
 
         if (item == "")
         {
-            Context.Client.GetUser(4);
             // List modules.
             var moduleList = new List<string>();
 
@@ -57,178 +56,154 @@ public class InfoModule : ModuleBase<SocketCommandContext>
                 $"```{Environment.NewLine}{string.Join(Environment.NewLine, moduleList)}{Environment.NewLine}```{Environment.NewLine}" +
                 $"ℹ  **See also: `{prefix}config`. Run `{prefix}help config` for more information.**");
         }
-        else
+        else if (_commands.Commands.Any(command => command.Name.ToLower() == item.ToLower()))
         {
-            if (_commands.Commands.Any(command => command.Name.ToLower() == item.ToLower()))
+            // It's a command!
+            var commandInfo = _commands.Commands.Single<CommandInfo>(command => command.Name.ToLower() == item.ToLower());
+            var ponyReadable = PonyReadableCommandHelp(prefix, item, commandInfo);
+            ponyReadable += PonyReadableRelevantAliases(prefix, item);
+            await ReplyAsync(ponyReadable);
+        }
+        // Module.
+        else if (_commands.Modules.Any(module => module.Name.ToLower() == item.ToLower() ||
+                                                 module.Name.ToLower() == item.ToLower() + "module" ||
+                                                 module.Name.ToLower() == item.ToLower() + "submodule"))
+        {
+            // It's a module!
+            var moduleInfo = _commands.Modules.Single<ModuleInfo>(module =>
+                module.Name.ToLower() == item.ToLower() ||
+                module.Name.ToLower() == item.ToLower() + "module" ||
+                module.Name.ToLower() == item.ToLower() + "submodule");
+
+            var commands = moduleInfo.Commands.Select<CommandInfo, string>(command =>
+                $"{prefix}{command.Name} - {command.Summary}"
+            ).ToList();
+
+            if (commands.Count > 10)
             {
-                // It's a command!
-                var commandInfo = _commands.Commands.Single<CommandInfo>(command => command.Name.ToLower() == item.ToLower());
-                var ponyReadable = $"**{prefix}{commandInfo.Name}** - {commandInfo.Module.Name.Replace("Module", "").Replace("Submodule", "")} category{Environment.NewLine}";
-                if (commandInfo.Preconditions.Any(attribute => attribute is ModCommandAttribute) &&
-                    commandInfo.Preconditions.Any(attribute => attribute is DevCommandAttribute))
-                    ponyReadable += $"ℹ  *This is a moderator and developer only command.*{Environment.NewLine}";
-                else if (commandInfo.Preconditions.Any(attribute => attribute is ModCommandAttribute))
-                    ponyReadable += $"ℹ  *This is a moderator only command.*{Environment.NewLine}";
-                else if (commandInfo.Preconditions.Any(attribute => attribute is DevCommandAttribute))
-                    ponyReadable += $"ℹ  *This is a developer only command.*{Environment.NewLine}";
-
-                ponyReadable += $"*{commandInfo.Summary}*{Environment.NewLine}";
-                if (commandInfo.Remarks != null) ponyReadable += $"*{commandInfo.Remarks}*{Environment.NewLine}";
-
-                ponyReadable += $"```{Environment.NewLine}";
-
-                var parameters = commandInfo.Attributes.OfType<ParameterAttribute>();
-
-                ponyReadable = parameters.Aggregate(ponyReadable, (current, parameter) => current + $"{parameter}{Environment.NewLine}");
-
-                ponyReadable += $"```";
-                
-                if (commandInfo.Aliases.Any(alternative => alternative.ToLower() != commandInfo.Name.ToLower() && alternative.ToLower() != item.ToLower()))
-                    ponyReadable += $"{Environment.NewLine}" +
-                                    $"Alternative names: {string.Join(", ", commandInfo.Aliases.Where(alternative => alternative.ToLower() != commandInfo.Name.ToLower() && alternative.ToLower() != item.ToLower()))}";
-
-                await ReplyAsync(ponyReadable);
-                return;
-            }
-            else
-            {
-                // Module.
-                if (_commands.Modules.Any(module => module.Name.ToLower() == item.ToLower() ||
-                                                    module.Name.ToLower() == item.ToLower() + "module" ||
-                                                    module.Name.ToLower() == item.ToLower() + "submodule"))
+                // Use pagination
+                var pages = new List<string>();
+                var pageNumber = -1;
+                for (var i = 0; i < commands.Count; i++)
                 {
-                    // It's a module!
-                    var moduleInfo = _commands.Modules.Single<ModuleInfo>(module => 
-                        module.Name.ToLower() == item.ToLower() ||
-                        module.Name.ToLower() == item.ToLower() + "module" ||
-                        module.Name.ToLower() == item.ToLower() + "submodule");
-
-                    var commands = moduleInfo.Commands.Select<CommandInfo, string>(command => 
-                        $"{prefix}{command.Name} - {command.Summary}"
-                    ).ToList();
-
-                    if (commands.Count > 10)
+                    if (i % 10 == 0)
                     {
-                        // Use pagination
-                        var pages = new List<string>();
-                        var pageNumber = -1;
-                        for (var i = 0; i < commands.Count; i++)
-                        {
-                            if (i % 10 == 0)
-                            {
-                                pageNumber += 1;
-                                pages.Add("");
-                            }
+                        pageNumber += 1;
+                        pages.Add("");
+                    }
 
-                            pages[pageNumber] += commands[i] + Environment.NewLine;
-                        }
+                    pages[pageNumber] += commands[i] + Environment.NewLine;
+                }
 
-                        var potentialAliases = _commands.Commands.Where(command =>
-                            command.Aliases.Select(alias => alias.ToLower()).Contains(item.ToLower())).ToArray();
-                        
-                        string[] staticParts =
-                        {
+                var potentialAliases = _commands.Commands.Where(command =>
+                    command.Aliases.Select(alias => alias.ToLower()).Contains(item.ToLower())).ToArray();
+
+                string[] staticParts =
+                {
                             $"Hii! Here's a list of all the commands I could find in the {moduleInfo.Name.Replace("Module", "").Replace("Submodule", "")} category!",
                             $"Run `{prefix}help <command>` for help regarding a specific command!" +
                             $"{(potentialAliases.Length != 0 ? $"{Environment.NewLine}ℹ  This category shares a name with an alias. For information regarding this alias, run `{prefix}help {potentialAliases.First().Name.ToLower()}`.": "")}"
                         };
 
-                        var paginationMessage = new PaginationHelper(Context, pages.ToArray(), staticParts);
-                        return;
-                    }
-                    else
-                    {
-                        var potentialAliases = _commands.Commands.Where(command =>
-                            command.Aliases.Select(alias => alias.ToLower()).Contains(item.ToLower())).ToArray();
+                var paginationMessage = new PaginationHelper(Context, pages.ToArray(), staticParts);
+            }
+            else
+            {
+                var potentialAliases = _commands.Commands.Where(command =>
+                    command.Aliases.Select(alias => alias.ToLower()).Contains(item.ToLower())).ToArray();
 
-                        await ReplyAsync(
-                            $"Hii! Here's a list of all the commands I could find in the {moduleInfo.Name.Replace("Module", "").Replace("Submodule", "")} category!{Environment.NewLine}" +
-                            $"```{Environment.NewLine}{string.Join(Environment.NewLine, commands)}{Environment.NewLine}```{Environment.NewLine}" +
-                            $"Run `{prefix}help <command>` for help regarding a specific command!" +
-                            $"{(potentialAliases.Length != 0 ? $"{Environment.NewLine}ℹ  This category shares a name with an alias. For information regarding this alias, run `{prefix}help {potentialAliases.First().Name.ToLower()}`.": "")}");
-                        return;
-                    }
-                }
-                // Try alternate command names
-                if (_commands.Commands.Any(command =>
-                        command.Aliases.Select(alias => alias.ToLower()).Contains(item.ToLower())))
-                {
-                    // Alternate detected!
-                    var commandInfo = _commands.Commands.Single<CommandInfo>(command => command.Aliases.Select(alias => alias.ToLower()).Contains(item.ToLower()));
-                    var ponyReadable = $"**{prefix}{commandInfo.Aliases.Single(alias => alias.ToLower() == item.ToLower())}** (alternate name of **{commandInfo.Name}**) - {commandInfo.Module.Name.Replace("Module", "").Replace("Submodule", "")} category{Environment.NewLine}";
-                    if (commandInfo.Preconditions.Any(attribute => attribute is ModCommandAttribute) &&
-                        commandInfo.Preconditions.Any(attribute => attribute is DevCommandAttribute))
-                        ponyReadable += $"ℹ  *This is a moderator and developer only command.*{Environment.NewLine}";
-                    else if (commandInfo.Preconditions.Any(attribute => attribute is ModCommandAttribute))
-                        ponyReadable += $"ℹ  *This is a moderator only command.*{Environment.NewLine}";
-                    else if (commandInfo.Preconditions.Any(attribute => attribute is DevCommandAttribute))
-                        ponyReadable += $"ℹ  *This is a developer only command.*{Environment.NewLine}";
+                await ReplyAsync(
+                    $"Hii! Here's a list of all the commands I could find in the {moduleInfo.Name.Replace("Module", "").Replace("Submodule", "")} category!{Environment.NewLine}" +
+                    $"```{Environment.NewLine}{string.Join(Environment.NewLine, commands)}{Environment.NewLine}```{Environment.NewLine}" +
+                    $"Run `{prefix}help <command>` for help regarding a specific command!" +
+                    $"{(potentialAliases.Length != 0 ? $"{Environment.NewLine}ℹ  This category shares a name with an alias. For information regarding this alias, run `{prefix}help {potentialAliases.First().Name.ToLower()}`." : "")}");
+            }
+        }
+        // Try alternate command names
+        else if (_commands.Commands.Any(command =>
+            command.Aliases.Select(alias => alias.ToLower()).Contains(item.ToLower())))
+        {
+            // Alternate detected!
+            var commandInfo = _commands.Commands.Single<CommandInfo>(command => command.Aliases.Select(alias => alias.ToLower()).Contains(item.ToLower()));
+            var alternateName = commandInfo.Aliases.Single(alias => alias.ToLower() == item.ToLower());
+            var ponyReadable = PonyReadableCommandHelp(prefix, item, commandInfo, alternateName);
+            ponyReadable += PonyReadableRelevantAliases(prefix, item);
+            await ReplyAsync(ponyReadable);
+        }
+        // Try aliases
+        else if (_config.Aliases.Any(alias => alias.Key.ToLower() == item.ToLower()))
+        {
+            var alias = _config.Aliases.First(alias => alias.Key.ToLower() == item.ToLower());
+            var ponyReadable = $"**{prefix}{alias.Key}** is an alias for **{prefix}{alias.Value}** (see {prefix}config Aliases){Environment.NewLine}{Environment.NewLine}";
 
-                    ponyReadable += $"*{commandInfo.Summary}*{Environment.NewLine}";
-                    if (commandInfo.Remarks != null) ponyReadable += $"*{commandInfo.Remarks}*{Environment.NewLine}";
+            var commandInfo = _commands.Commands.FirstOrDefault(command => command.Name.ToLower() == alias.Value.Split(" ")[0].ToLower());
 
-                    ponyReadable += $"```{Environment.NewLine}";
-
-                    var parameters = commandInfo.Attributes.OfType<ParameterAttribute>();
-
-                    ponyReadable = parameters.Aggregate(ponyReadable, (current, parameter) => current + $"{parameter}{Environment.NewLine}");
-                    
-                    ponyReadable += $"```";
-                
-                    if (commandInfo.Aliases.Any(alternative => alternative.ToLower() != commandInfo.Name.ToLower() && alternative.ToLower() != item.ToLower()))
-                        ponyReadable += $"{Environment.NewLine}" +
-                                        $"Alternate names: {string.Join(", ", commandInfo.Aliases.Where(alternative => alternative.ToLower() != commandInfo.Name.ToLower() && alternative.ToLower() != item.ToLower()))}";
-
-                    await ReplyAsync(ponyReadable);
-                    return;
-                }
-                // Try aliases
-                if (_config.Aliases.Any(alias => alias.Key.ToLower() == item.ToLower()))
-                {
-                    var alias = _config.Aliases.First(alias => alias.Key.ToLower() == item.ToLower());
-                    var ponyReadable = $"**{prefix}{alias.Key}** is an alias for **{prefix}{alias.Value}** (see {prefix}config Aliases){Environment.NewLine}{Environment.NewLine}";
-
-                    var commandInfo = _commands.Commands.FirstOrDefault(command => command.Name.ToLower() == alias.Value.Split(" ")[0].ToLower());
-
-                    if (commandInfo != null)
-                    { 
-                        ponyReadable += $"**{prefix}{commandInfo.Name}** - {commandInfo.Module.Name.Replace("Module", "").Replace("Submodule", "")} category{Environment.NewLine}";
-                        if (commandInfo.Preconditions.Any(attribute => attribute is ModCommandAttribute) &&
-                            commandInfo.Preconditions.Any(attribute => attribute is DevCommandAttribute))
-                            ponyReadable += $"ℹ  *This is a moderator and developer only command.*{Environment.NewLine}";
-                        else if (commandInfo.Preconditions.Any(attribute => attribute is ModCommandAttribute))
-                            ponyReadable += $"ℹ  *This is a moderator only command.*{Environment.NewLine}";
-                        else if (commandInfo.Preconditions.Any(attribute => attribute is DevCommandAttribute))
-                            ponyReadable += $"ℹ  *This is a developer only command.*{Environment.NewLine}";
-
-                        ponyReadable += $"*{commandInfo.Summary}*{Environment.NewLine}";
-                        if (commandInfo.Remarks != null) ponyReadable += $"*{commandInfo.Remarks}*{Environment.NewLine}";
-
-                        ponyReadable += $"```{Environment.NewLine}";
-
-                        var parameters = commandInfo.Attributes.OfType<ParameterAttribute>();
-
-                        ponyReadable = parameters.Aggregate(ponyReadable, (current, parameter) => current + $"{parameter}{Environment.NewLine}");
-                    
-                        ponyReadable += $"```";
-                
-                        if (commandInfo.Aliases.Any(alternative => alternative.ToLower() != commandInfo.Name.ToLower() && alternative.ToLower() != item.ToLower()))
-                            ponyReadable += $"{Environment.NewLine}" +
-                                        $"Alternate names: {string.Join(", ", commandInfo.Aliases.Where(alternative => alternative.ToLower() != commandInfo.Name.ToLower() && alternative.ToLower() != item.ToLower()))}";
-
-                        await ReplyAsync(ponyReadable);
-                        return;
-                    }
-
-                    // Complain
-                    await ReplyAsync(
-                        $"**Warning!** This alias directs to a non-existent command!{Environment.NewLine}Please remove this alias or redirect it to an existing command.");
-                    return;
-                }
+            if (commandInfo != null)
+            {
+                ponyReadable += PonyReadableCommandHelp(prefix, item, commandInfo);
+                await ReplyAsync(ponyReadable);
+                return;
             }
 
+            // Complain
+            await ReplyAsync(
+                $"**Warning!** This alias directs to a non-existent command!{Environment.NewLine}Please remove this alias or redirect it to an existing command.");
+        }
+        else
+        {
             await ReplyAsync($"Sorry, I was unable to find \"{item}\" as either a command, category, or alias.");
         }
+    }
+
+    private string PonyReadableCommandHelp(char prefix, string command, CommandInfo commandInfo, string? alternateName = null)
+    {
+        var ponyReadable = (alternateName == null ? $"**{prefix}{commandInfo.Name}**" : $"**{prefix}{alternateName}** (alternate name of **{prefix}{commandInfo.Name}**)") +
+            $" - {commandInfo.Module.Name.Replace("Module", "").Replace("Submodule", "")} category{Environment.NewLine}";
+
+        if (commandInfo.Preconditions.Any(attribute => attribute is ModCommandAttribute) &&
+            commandInfo.Preconditions.Any(attribute => attribute is DevCommandAttribute))
+            ponyReadable += $"ℹ  *This is a moderator and developer only command.*{Environment.NewLine}";
+        else if (commandInfo.Preconditions.Any(attribute => attribute is ModCommandAttribute))
+            ponyReadable += $"ℹ  *This is a moderator only command.*{Environment.NewLine}";
+        else if (commandInfo.Preconditions.Any(attribute => attribute is DevCommandAttribute))
+            ponyReadable += $"ℹ  *This is a developer only command.*{Environment.NewLine}";
+
+        ponyReadable += $"*{commandInfo.Summary}*{Environment.NewLine}";
+        if (commandInfo.Remarks != null) ponyReadable += $"*{commandInfo.Remarks}*{Environment.NewLine}";
+
+        var parameters = commandInfo.Attributes.OfType<ParameterAttribute>();
+        if (parameters.Any())
+        {
+            ponyReadable += $"{Environment.NewLine}Syntax: `{prefix}{commandInfo.Name}";
+            ponyReadable = parameters.Aggregate(ponyReadable, (current, parameter) => current + $" {(parameter.Optional ? $"[{parameter.Name}]" : parameter.Name)}");
+            ponyReadable += $"`{Environment.NewLine}";
+
+            ponyReadable += $"```{Environment.NewLine}";
+            ponyReadable = parameters.Aggregate(ponyReadable, (current, parameter) => current + $"{parameter}{Environment.NewLine}");
+            ponyReadable += $"```";
+        }
+
+        var examples = commandInfo.Attributes.OfType<ExampleAttribute>();
+        if (examples.Count() == 1)
+            ponyReadable += $"Example: `{examples.Single()}`";
+        else if (examples.Count() > 1)
+            ponyReadable += $"Examples: {string.Join(",  ", examples.Select(e => $"`{e}`"))}";
+
+        var remainingAlternates = commandInfo.Aliases.Where(alternate => alternate.ToLower() != commandInfo.Name.ToLower() && alternate.ToLower() != command.ToLower());
+        if (remainingAlternates.Any())
+            ponyReadable += $"{Environment.NewLine}" +
+                $"Alternate names: {string.Join(", ", remainingAlternates.Select(alt => $"{prefix}{alt}"))}";
+
+        return ponyReadable;
+    }
+
+    private string PonyReadableRelevantAliases(char prefix, string command)
+    {
+        var relevantAliases = _config.Aliases.Where(alias => alias.Value.ToLower().StartsWith(command));
+        if (relevantAliases.Any())
+            return $"{Environment.NewLine}Relevant aliases: {string.Join(", ", relevantAliases.Select(alias => $"{prefix}{alias.Key}"))}";
+        else
+            return "";
     }
 
     [Command("about")]
@@ -237,7 +212,14 @@ public class InfoModule : ModuleBase<SocketCommandContext>
     public async Task AboutCommandAsync()
     {
         await ReplyAsync(
-            $"Izzy Moonbot{Environment.NewLine}Programmed in C# with Virtual Studio and JetBrains Rider{Environment.NewLine}Programmed by Dr. Romulus#4444 and Cloudburst#0001 (Twi/Leah){Environment.NewLine}Supervisor programmed by Raindrops#2245{Environment.NewLine}{Environment.NewLine}Profile picture by confetticakez#7352 (Confetti){Environment.NewLine}https://manebooru.art/images/4023149",
+            $"Izzy Moonbot{Environment.NewLine}" +
+            $"Programmed in C# with Virtual Studio and JetBrains Rider{Environment.NewLine}" +
+            $"Programmed by Dr. Romulus#4444, Cloudburst#0001 (Twi/Leah) and Ixrec#7992{Environment.NewLine}" +
+
+            $"Supervisor programmed by Raindrops#2245{Environment.NewLine}" +
+            $"{Environment.NewLine}" +
+            $"Profile picture by confetticakez#7352 (Confetti){Environment.NewLine}" +
+            $"https://manebooru.art/images/4023149",
             allowedMentions: AllowedMentions.None);
     }
 }

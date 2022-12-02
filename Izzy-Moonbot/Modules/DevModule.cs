@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using Flurl;
+using Flurl.Http;
 using Izzy_Moonbot.Attributes;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Service;
@@ -176,7 +178,7 @@ public class DevModule : ModuleBase<SocketCommandContext>
                         await msg.RemoveAllReactionsAsync();
                         await msg.ModifyAsync(message => message.Content = "⚠  **Importing. Please wait...**");
 
-                        _config.FilteredWords[args[1]].AddRange(toFilter);
+                        _config.FilteredWords[args[1]].UnionWith(toFilter);
 
                         await FileHelper.SaveConfigAsync(_config);
                         await msg.ModifyAsync(message => message.Content = "⚠  **Done!**");
@@ -376,6 +378,25 @@ public class DevModule : ModuleBase<SocketCommandContext>
                 await ReplyAsync($"Processed. Here's what I got:{Environment.NewLine}```{Environment.NewLine}" +
                                  $"{string.Join(", ", customArgument_Result)}" +
                                  $"{Environment.NewLine}```");
+                break;
+            case "listEnum":
+                var enumNames = Enum.GetNames<TestEnum>();
+
+                await ReplyAsync($"```{Environment.NewLine}{string.Join(", ", enumNames)}{Environment.NewLine}```");
+                break;
+            case "parseEnum":
+                if (!Enum.TryParse<TestEnum>(args[0], out var testEnum))
+                {
+                    await ReplyAsync("Parse fail.");
+                    return;
+                }
+
+                await ReplyAsync($"Parse success. `{testEnum}`");
+                break;
+            case "parseImage":
+                var attachment = new FileAttachment(args[0].GetStreamAsync().Result, "test.png");
+
+                await Context.Channel.SendFileAsync(attachment, "Test Success");
                 break;
             default:
                 Context.Message.ReplyAsync("Unknown test.");

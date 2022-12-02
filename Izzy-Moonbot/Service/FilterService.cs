@@ -43,8 +43,12 @@ public class FilterService
     
     public void RegisterEvents(DiscordSocketClient client)
     {
-        client.MessageReceived += (message) => Task.Run(async () => { await ProcessMessage(message, client); });
-        client.MessageUpdated += (oldMessage, newMessage, channel) => Task.Run(async () => { await ProcessMessageUpdate(oldMessage, newMessage, channel, client); });
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
+#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+        client.MessageReceived += async (message) => ProcessMessage(message, client);
+        client.MessageUpdated += async (oldMessage, newMessage, channel) => ProcessMessageUpdate(oldMessage, newMessage, channel, client);
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
+#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
     }
 
     private async Task LogFilterTrip(SocketCommandContext context, string word, string category,
@@ -66,15 +70,24 @@ public class FilterService
         if (actionsTaken.Contains("message"))
             actions.Add(
                 $":speech_balloon: - **I've sent a message in response.**");
-        if (actionsTaken.Contains("silence")) actions.Add(":mute: - **I've silenced the user.**");
+        if (actionsTaken.Contains("silence"))
+        {
+            actions.Add(":mute: - **I've silenced the user.**");
+            actions.Add(":exclamation: - **I've pinged all moderators.**");
+        }
 
         var roleIds = context.Guild.GetUser(context.User.Id).Roles.Select(role => role.Id).ToList();
-        if (_config.FilterBypassRoles.Overlaps(roleIds) || 
-            (DiscordHelper.IsDev(context.User.Id) && _config.FilterDevBypass))
+        if (_config.FilterBypassRoles.Overlaps(roleIds))
         {
             actions.Clear();
             actions.Add(
                 ":information_source: - **I've done nothing as this user has a role which is in `FilterBypassRoles`.**");
+        }
+        else if (DiscordHelper.IsDev(context.User.Id) && _config.FilterDevBypass)
+        {
+            actions.Clear();
+            actions.Add(
+                ":information_source: - **I've done nothing as this is one of my developers and `FilterDevBypass` is true.**");
         }
 
         if (_config.SafeMode)
@@ -90,8 +103,8 @@ public class FilterService
         if (_config.FilterBypassRoles.Overlaps(roleIds) ||
             (DiscordHelper.IsDev(context.User.Id) && _config.FilterDevBypass)) fileLogResponse = "Nothing";
 
-            await _modLog.CreateModLog(context.Guild)
-            .SetContent($"{(_config.FilterBypassRoles.Overlaps(roleIds) || (DiscordHelper.IsDev(context.User.Id) && _config.FilterDevBypass) ? "" : $"<@&{_config.ModRole}>")} Filter Violation for <@{context.User.Id}>")
+        await _modLog.CreateModLog(context.Guild)
+            .SetContent($"{(actionsTaken.Contains("silence") ? $"<@&{_config.ModRole}>" : "")} Filter Violation for <@{context.User.Id}>")
             .SetEmbed(embedBuilder.Build())
             .SetFileLogContent($"Filter violation by {context.User.Username}#{context.User.Discriminator} ({context.Guild.GetUser(context.User.Id).DisplayName}) (`{context.User.Id}`) in #{context.Channel.Name} (`{context.Channel.Id}`){Environment.NewLine}" +
                                $"Category: {category}{Environment.NewLine}" +
@@ -104,19 +117,18 @@ public class FilterService
         bool onEdit = false)
     {
         var roleIds = context.Guild.GetUser(context.User.Id).Roles.Select(role => role.Id).ToList();
-            
-        if(!_config.FilterBypassRoles.Overlaps(roleIds)) 
+
+        if (!_config.FilterBypassRoles.Overlaps(roleIds) &&
+            !(DiscordHelper.IsDev(context.User.Id) && _config.FilterDevBypass))
             await context.Message.DeleteAsync();
         
         try
         {
             if (!_config.FilterResponseMessages.ContainsKey(category))
                 _config.FilterResponseMessages[category] = null;
-            if (!_config.FilterResponseSilence.ContainsKey(category))
-                _config.FilterResponseSilence[category] = false;
 
             var messageResponse = _config.FilterResponseMessages[category];
-            var shouldSilence = _config.FilterResponseSilence[category];
+            var shouldSilence = _config.FilterResponseSilence.Contains(category);
             
             if (_config.FilterBypassRoles.Overlaps(roleIds) || 
                 (DiscordHelper.IsDev(context.User.Id) && _config.FilterDevBypass))
@@ -159,7 +171,7 @@ public class FilterService
     {
         if (newMessage.Author.Id == client.CurrentUser.Id) return; // Don't process self.
         
-        if (!_config.FilterEnabled || !_config.FilterMonitorEdits) return;
+        if (!_config.FilterEnabled) return;
         if (newMessage.Author.IsBot) return; // Don't listen to bots
         if (!DiscordHelper.IsInGuild(newMessage)) return;
         if (!DiscordHelper.IsProcessableMessage(newMessage)) return; // Not processable
@@ -168,10 +180,6 @@ public class FilterService
         
         if (!DiscordHelper.IsDefaultGuild(context)) return;
         
-        if (_config.ThreadOnlyMode &&
-            (message.Channel.GetChannelType() != ChannelType.PublicThread &&
-             message.Channel.GetChannelType() != ChannelType.PrivateThread)) return; // Not a thread, in thread only mode
-
         if (_config.FilterIgnoredChannels.Contains(context.Channel.Id)) return;
         foreach (var (category, words) in _config.FilteredWords)
         {
@@ -208,10 +216,6 @@ public class FilterService
         
         if (!DiscordHelper.IsDefaultGuild(context)) return;
         
-        if (_config.ThreadOnlyMode &&
-            (message.Channel.GetChannelType() != ChannelType.PublicThread &&
-             message.Channel.GetChannelType() != ChannelType.PrivateThread)) return; // Not a thread, in thread only mode
-
         if (_config.FilterIgnoredChannels.Contains(context.Channel.Id)) return;
         foreach (var (category, words) in _config.FilteredWords)
         {
