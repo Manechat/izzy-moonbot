@@ -128,6 +128,17 @@ public class SocketTextChannelAdapter : IIzzySocketTextChannel
     public IReadOnlyCollection<IIzzyUser> Users {
         get => _channel.Users.Select(user => new DiscordNetUserAdapter(user)).ToList();
     }
+    public async Task<IIzzyMessage> SendMessageAsync(
+        string message,
+        AllowedMentions? allowedMentions = null,
+        MessageComponent? components = null,
+        RequestOptions? options = null,
+        Embed[]? embeds = null
+    )
+    {
+        var sentMesssage = await _channel.SendMessageAsync(message, allowedMentions: allowedMentions, components: components, options: options, embeds: embeds);
+        return new RestUserMessageAdapter(sentMesssage);
+    }
 
     public override string? ToString()
     {
@@ -218,6 +229,7 @@ public class SocketGuildAdapter : IIzzyGuild
     public IIzzyUser GetUser(ulong userId) => new DiscordNetUserAdapter(_guild.GetUser(userId));
     public IIzzyRole GetRole(ulong roleId) => new DiscordNetRoleAdapter(_guild.GetRole(roleId));
     public IIzzySocketGuildChannel GetChannel(ulong channelId) => new SocketGuildChannelAdapter(_guild.GetChannel(channelId));
+    public IIzzySocketTextChannel GetTextChannel(ulong channelId) => new SocketTextChannelAdapter(_guild.GetTextChannel(channelId));
 }
 
 public class IdHaver : IIzzyHasId

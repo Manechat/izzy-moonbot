@@ -53,6 +53,13 @@ public interface IIzzySocketTextChannel
     ulong Id { get; }
     string Name { get; }
     IReadOnlyCollection<IIzzyUser> Users { get; }
+    Task<IIzzyMessage> SendMessageAsync(
+        string message,
+        AllowedMentions? allowedMentions = null,
+        MessageComponent? components = null,
+        RequestOptions? options = null,
+        Embed[]? embeds = null
+    );
 }
 
 public interface IIzzySocketGuildChannel
@@ -71,6 +78,7 @@ public interface IIzzyGuild
     IIzzyUser GetUser(ulong userId);
     IIzzyRole GetRole(ulong roleId);
     IIzzySocketGuildChannel GetChannel(ulong channelId);
+    IIzzySocketTextChannel GetTextChannel(ulong channelId);
 }
 
 public interface IIzzyClient
