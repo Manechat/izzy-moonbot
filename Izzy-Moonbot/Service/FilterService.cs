@@ -66,7 +66,11 @@ public class FilterService
         if (actionsTaken.Contains("message"))
             actions.Add(
                 $":speech_balloon: - **I've sent a message in response.**");
-        if (actionsTaken.Contains("silence")) actions.Add(":mute: - **I've silenced the user.**");
+        if (actionsTaken.Contains("silence"))
+        {
+            actions.Add(":mute: - **I've silenced the user.**");
+            actions.Add(":exclamation: - **I've pinged all moderators.**");
+        }
 
         var roleIds = context.Guild.GetUser(context.User.Id).Roles.Select(role => role.Id).ToList();
         if (_config.FilterBypassRoles.Overlaps(roleIds))
