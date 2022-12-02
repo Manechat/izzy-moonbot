@@ -16,7 +16,6 @@ public class Config
         // Core settings
         Prefix = '.';
         UnicycleInterval = 100;
-        SafeMode = true;
         BatchSendLogs = false;
         BatchLogsSendRate = 10;
         MentionResponseEnabled = false;
@@ -82,7 +81,6 @@ public class Config
     // Core settings
     public char Prefix { get; set; }
     public int UnicycleInterval { get; set; }
-    public bool SafeMode { get; set; }
     public bool BatchSendLogs { get; set; }
     public double BatchLogsSendRate { get; set; }
     public bool MentionResponseEnabled { get; set; }

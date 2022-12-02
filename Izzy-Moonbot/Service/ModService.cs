@@ -23,7 +23,7 @@ public class ModService
 
     public async Task KickUser(SocketGuildUser user, DateTimeOffset time, string? reason = null)
     {
-        if (!_config.SafeMode) await user.KickAsync(reason);
+        await user.KickAsync(reason);
     }
 
     public async Task KickUsers(IEnumerable<SocketGuildUser> users, string? reason = null)
@@ -32,7 +32,7 @@ public class ModService
 
         foreach (var user in users)
         {
-            if (!_config.SafeMode) await user.KickAsync(reason);
+            await user.KickAsync(reason);
         }
     }
 
@@ -40,13 +40,10 @@ public class ModService
     {
         if (_config.MemberRole == null) throw new TargetException("MemberRole config value is null (not set)");
         
-        if (!_config.SafeMode)
-        {
-            await user.RemoveRoleAsync((ulong) _config.MemberRole);
+        await user.RemoveRoleAsync((ulong) _config.MemberRole);
             
-            _users[user.Id].Silenced = true;
-            await FileHelper.SaveUsersAsync(_users);
-        }
+        _users[user.Id].Silenced = true;
+        await FileHelper.SaveUsersAsync(_users);
     }
 
     public async Task SilenceUsers(IEnumerable<SocketGuildUser> users, string? reason = null)
@@ -57,7 +54,6 @@ public class ModService
 
         foreach (var user in users)
         {
-            if (_config.SafeMode) continue;
             await user.RemoveRoleAsync((ulong)_config.MemberRole);
 
             _users[user.Id].Silenced = true;
@@ -67,7 +63,7 @@ public class ModService
 
     public async Task AddRole(SocketGuildUser user, ulong roleId, string? reason = null)
     {
-        if (!_config.SafeMode) await user.AddRoleAsync(roleId);
+        await user.AddRoleAsync(roleId);
     }
 
     public async Task AddRoleToUsers(IEnumerable<SocketGuildUser> users, ulong roleId, string? reason = null)
@@ -76,13 +72,13 @@ public class ModService
 
         foreach (var socketGuildUser in users)
         {
-            if (!_config.SafeMode) await socketGuildUser.AddRoleAsync(roleId);
+            await socketGuildUser.AddRoleAsync(roleId);
         }
     }
 
     public async Task RemoveRole(SocketGuildUser user, ulong roleId, string? reason = null)
     {
-        if (!_config.SafeMode) await user.RemoveRoleAsync(roleId);
+        await user.RemoveRoleAsync(roleId);
     }
 
     public async Task RemoveRoleFromUsers(IEnumerable<SocketGuildUser> users, ulong roleId, string? reason = null)
@@ -91,13 +87,13 @@ public class ModService
 
         foreach (var socketGuildUser in users)
         {
-            if (!_config.SafeMode) await socketGuildUser.RemoveRoleAsync(roleId);
+            await socketGuildUser.RemoveRoleAsync(roleId);
         }
     }
 
     public async Task AddRoles(SocketGuildUser user, IEnumerable<ulong> roles, string? reason = null)
     {
-        if (!_config.SafeMode) await user.AddRolesAsync(roles);
+        await user.AddRolesAsync(roles);
     }
 
     public async Task AddRolesToUsers(IEnumerable<SocketGuildUser> users, IEnumerable<ulong> roles, string? reason = null)
@@ -107,14 +103,14 @@ public class ModService
 
         foreach (var socketGuildUser in users)
         {
-            if (!_config.SafeMode) await socketGuildUser.AddRolesAsync(roles);
+            await socketGuildUser.AddRolesAsync(roles);
         }
     }
 
     public async Task RemoveRoles(SocketGuildUser user, IEnumerable<ulong> roles, string? reason = null)
     {
         if (!roles.Any()) throw new NullReferenceException("roles must have role ids in them");
-        if (!_config.SafeMode) await user.RemoveRolesAsync(roles);
+        await user.RemoveRolesAsync(roles);
     }
 
     public async Task RemoveRolesFromUsers(IEnumerable<SocketGuildUser> users, IEnumerable<ulong> roles, string? reason = null)
@@ -124,7 +120,7 @@ public class ModService
 
         foreach (var socketGuildUser in users)
         {
-            if (!_config.SafeMode) await socketGuildUser.RemoveRolesAsync(roles);
+            await socketGuildUser.RemoveRolesAsync(roles);
         }
     }
 }

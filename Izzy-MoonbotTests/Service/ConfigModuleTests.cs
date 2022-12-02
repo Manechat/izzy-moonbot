@@ -523,13 +523,6 @@ public class ConfigModuleTests
         Assert.AreEqual(cfg.UnicycleInterval, 42);
         Assert.AreEqual("I've set `UnicycleInterval` to the following content: 42", generalChannel.Messages.Last().Content);
 
-        // post ".config SafeMode false"
-        Assert.AreEqual(cfg.SafeMode, true);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config SafeMode false");
-        await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "SafeMode", "false");
-        Assert.AreEqual(cfg.SafeMode, false);
-        Assert.AreEqual("I've set `SafeMode` to the following content: False", generalChannel.Messages.Last().Content);
-
         // post ".config BatchSendLogs true"
         Assert.AreEqual(cfg.BatchSendLogs, false);
         context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config BatchSendLogs true");
@@ -892,7 +885,7 @@ public class ConfigModuleTests
         // Ensure we can't forget to keep this test up to date
         var configPropsCount = typeof(Config).GetProperties().Length;
 
-        Assert.AreEqual(51, configPropsCount,
+        Assert.AreEqual(50, configPropsCount,
             $"{Environment.NewLine}If you just added or removed a config item, then this test is probably out of date");
 
         Assert.AreEqual(configPropsCount * 2, generalChannel.Messages.Count(),
