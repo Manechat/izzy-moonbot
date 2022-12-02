@@ -95,8 +95,8 @@ public class FilterService
         if (_config.FilterBypassRoles.Overlaps(roleIds) ||
             (DiscordHelper.IsDev(context.User.Id) && _config.FilterDevBypass)) fileLogResponse = "Nothing";
 
-            await _modLog.CreateModLog(context.Guild)
-            .SetContent($"{(_config.FilterBypassRoles.Overlaps(roleIds) || (DiscordHelper.IsDev(context.User.Id) && _config.FilterDevBypass) ? "" : $"<@&{_config.ModRole}>")} Filter Violation for <@{context.User.Id}>")
+        await _modLog.CreateModLog(context.Guild)
+            .SetContent($"{(actionsTaken.Contains("silence") ? $"<@&{_config.ModRole}>" : "")} Filter Violation for <@{context.User.Id}>")
             .SetEmbed(embedBuilder.Build())
             .SetFileLogContent($"Filter violation by {context.User.Username}#{context.User.Discriminator} ({context.Guild.GetUser(context.User.Id).DisplayName}) (`{context.User.Id}`) in #{context.Channel.Name} (`{context.Channel.Id}`){Environment.NewLine}" +
                                $"Category: {category}{Environment.NewLine}" +
