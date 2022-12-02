@@ -151,7 +151,7 @@ public class SpamService
         if (linePressure > 0)
         {
             pressure += linePressure;
-            pressureBreakdown.Add((linePressure, $"Lines: {linePressure} ≈ {newlineCount} line breaks × {_config.SpamLengthPressure}"));
+            pressureBreakdown.Add((linePressure, $"Lines: {linePressure} ≈ {newlineCount} line breaks × {_config.SpamLinePressure}"));
         }
 
         // Attachments, embeds, and stickers count as Image pressure
