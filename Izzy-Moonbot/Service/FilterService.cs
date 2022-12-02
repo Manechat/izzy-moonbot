@@ -70,15 +70,24 @@ public class FilterService
         if (actionsTaken.Contains("message"))
             actions.Add(
                 $":speech_balloon: - **I've sent a message in response.**");
-        if (actionsTaken.Contains("silence")) actions.Add(":mute: - **I've silenced the user.**");
+        if (actionsTaken.Contains("silence"))
+        {
+            actions.Add(":mute: - **I've silenced the user.**");
+            actions.Add(":exclamation: - **I've pinged all moderators.**");
+        }
 
         var roleIds = context.Guild.GetUser(context.User.Id).Roles.Select(role => role.Id).ToList();
-        if (_config.FilterBypassRoles.Overlaps(roleIds) || 
-            (DiscordHelper.IsDev(context.User.Id) && _config.FilterDevBypass))
+        if (_config.FilterBypassRoles.Overlaps(roleIds))
         {
             actions.Clear();
             actions.Add(
                 ":information_source: - **I've done nothing as this user has a role which is in `FilterBypassRoles`.**");
+        }
+        else if (DiscordHelper.IsDev(context.User.Id) && _config.FilterDevBypass)
+        {
+            actions.Clear();
+            actions.Add(
+                ":information_source: - **I've done nothing as this is one of my developers and `FilterDevBypass` is true.**");
         }
 
         if (_config.SafeMode)
@@ -94,8 +103,8 @@ public class FilterService
         if (_config.FilterBypassRoles.Overlaps(roleIds) ||
             (DiscordHelper.IsDev(context.User.Id) && _config.FilterDevBypass)) fileLogResponse = "Nothing";
 
-            await _modLog.CreateModLog(context.Guild)
-            .SetContent($"{(_config.FilterBypassRoles.Overlaps(roleIds) || (DiscordHelper.IsDev(context.User.Id) && _config.FilterDevBypass) ? "" : $"<@&{_config.ModRole}>")} Filter Violation for <@{context.User.Id}>")
+        await _modLog.CreateModLog(context.Guild)
+            .SetContent($"{(actionsTaken.Contains("silence") ? $"<@&{_config.ModRole}>" : "")} Filter Violation for <@{context.User.Id}>")
             .SetEmbed(embedBuilder.Build())
             .SetFileLogContent($"Filter violation by {context.User.Username}#{context.User.Discriminator} ({context.Guild.GetUser(context.User.Id).DisplayName}) (`{context.User.Id}`) in #{context.Channel.Name} (`{context.Channel.Id}`){Environment.NewLine}" +
                                $"Category: {category}{Environment.NewLine}" +
@@ -108,8 +117,9 @@ public class FilterService
         bool onEdit = false)
     {
         var roleIds = context.Guild.GetUser(context.User.Id).Roles.Select(role => role.Id).ToList();
-            
-        if(!_config.FilterBypassRoles.Overlaps(roleIds)) 
+
+        if (!_config.FilterBypassRoles.Overlaps(roleIds) &&
+            !(DiscordHelper.IsDev(context.User.Id) && _config.FilterDevBypass))
             await context.Message.DeleteAsync();
         
         try
