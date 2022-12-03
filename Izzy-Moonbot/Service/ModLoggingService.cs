@@ -97,7 +97,7 @@ public class ModLogBuilder
         if (_config.BatchSendLogs)
             _batchLogger.AddModLog(_log);
         else
-            await _log.Channel.SendMessageAsync(_log.Content, embeds: new Embed[] { _log.Embed });
+            await _log.Channel.SendMessageAsync(_log.Content, embeds: _log.Embed != null ? new []{ _log.Embed } : null);
     }
 }
 
