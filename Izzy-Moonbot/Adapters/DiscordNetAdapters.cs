@@ -21,6 +21,8 @@ public class DiscordNetUserAdapter : IIzzyUser
     }
 
     public ulong Id { get => _user.Id; }
+    public string Username { get => _user.Username; }
+    public string Discriminator { get => _user.Discriminator; }
 
     public override string? ToString()
     {
@@ -126,6 +128,17 @@ public class SocketTextChannelAdapter : IIzzySocketTextChannel
     public IReadOnlyCollection<IIzzyUser> Users {
         get => _channel.Users.Select(user => new DiscordNetUserAdapter(user)).ToList();
     }
+    public async Task<IIzzyMessage> SendMessageAsync(
+        string message,
+        AllowedMentions? allowedMentions = null,
+        MessageComponent? components = null,
+        RequestOptions? options = null,
+        Embed[]? embeds = null
+    )
+    {
+        var sentMesssage = await _channel.SendMessageAsync(message, allowedMentions: allowedMentions, components: components, options: options, embeds: embeds);
+        return new RestUserMessageAdapter(sentMesssage);
+    }
 
     public override string? ToString()
     {
@@ -197,6 +210,7 @@ public class SocketGuildAdapter : IIzzyGuild
     }
 
     public ulong Id { get => _guild.Id; }
+    public string Name { get => _guild.Name; }
 
     public async Task<IReadOnlyCollection<IIzzyUser>> SearchUsersAsync(string userSearchQuery)
     {
@@ -215,6 +229,7 @@ public class SocketGuildAdapter : IIzzyGuild
     public IIzzyUser GetUser(ulong userId) => new DiscordNetUserAdapter(_guild.GetUser(userId));
     public IIzzyRole GetRole(ulong roleId) => new DiscordNetRoleAdapter(_guild.GetRole(roleId));
     public IIzzySocketGuildChannel GetChannel(ulong channelId) => new SocketGuildChannelAdapter(_guild.GetChannel(channelId));
+    public IIzzySocketTextChannel GetTextChannel(ulong channelId) => new SocketTextChannelAdapter(_guild.GetTextChannel(channelId));
 }
 
 public class IdHaver : IIzzyHasId
@@ -290,4 +305,6 @@ public class SocketCommandContextAdapter : IIzzyContext
     public IIzzySocketMessageChannel Channel { get => new SocketMessageChannelAdapter(_context.Channel); }
 
     public IIzzyMessage Message { get => new SocketUserMessageAdapter(_context.Message); }
+
+    public IIzzyUser User { get => new DiscordNetUserAdapter(_context.User); }
 }

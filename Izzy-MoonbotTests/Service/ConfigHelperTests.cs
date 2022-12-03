@@ -102,56 +102,29 @@ public class ConfigHelperTests
             Assert.AreEqual(expected[i], actual[i], $"\nItem {i}" + message);
     }
 
-    void AssertSetsAreEqual<T>(ISet<T>? expected, ISet<T>? actual, string message = "")
-    {
-        if (expected is null || actual is null)
-        {
-            Assert.AreEqual(expected, actual);
-            return;
-        }
-        if (expected.Count() != actual.Count())
-            Assert.AreEqual(expected, actual, $"\nCount() mismatch: {expected.Count()} != {actual.Count()}");
-        foreach (var value in expected)
-            Assert.IsTrue(actual.Contains(value), $"\nValue {value}" + message);
-    }
-
     [TestMethod()]
     public async Task Config_HashSets_TestsAsync()
     {
         var cfg = new Config();
 
-        AssertSetsAreEqual(new HashSet<string>(), cfg.FilterResponseSilence);
-        AssertSetsAreEqual(new HashSet<string>(), ConfigHelper.GetStringSet(cfg, "FilterResponseSilence"));
+        TestUtils.AssertSetsAreEqual(new HashSet<string>(), cfg.FilterResponseSilence);
+        TestUtils.AssertSetsAreEqual(new HashSet<string>(), ConfigHelper.GetStringSet(cfg, "FilterResponseSilence"));
         Assert.IsFalse(ConfigHelper.DoesDictionaryKeyExist<string>(cfg, "FilterResponseSilence", "spam"));
 
         await ConfigHelper.AddToStringSet(cfg, "FilterResponseSilence", "spam");
 
-        AssertSetsAreEqual(new HashSet<string> { "spam" }, cfg.FilterResponseSilence);
-        AssertSetsAreEqual(new HashSet<string> { "spam" }, ConfigHelper.GetStringSet(cfg, "FilterResponseSilence"));
+        TestUtils.AssertSetsAreEqual(new HashSet<string> { "spam" }, cfg.FilterResponseSilence);
+        TestUtils.AssertSetsAreEqual(new HashSet<string> { "spam" }, ConfigHelper.GetStringSet(cfg, "FilterResponseSilence"));
         Assert.IsTrue(ConfigHelper.HasValueInSet(cfg, "FilterResponseSilence", "spam"));
 
         await ConfigHelper.RemoveFromStringSet(cfg, "FilterResponseSilence", "spam");
 
-        AssertSetsAreEqual(new HashSet<string>(), cfg.FilterResponseSilence);
-        AssertSetsAreEqual(new HashSet<string>(), ConfigHelper.GetStringSet(cfg, "FilterResponseSilence"));
+        TestUtils.AssertSetsAreEqual(new HashSet<string>(), cfg.FilterResponseSilence);
+        TestUtils.AssertSetsAreEqual(new HashSet<string>(), ConfigHelper.GetStringSet(cfg, "FilterResponseSilence"));
         Assert.IsFalse(ConfigHelper.HasValueInSet(cfg, "FilterResponseSilence", "spam"));
 
         Assert.ThrowsException<KeyNotFoundException>(() => ConfigHelper.GetStringSet(cfg, "foo"));
         Assert.ThrowsException<ArgumentException>(() => ConfigHelper.GetStringSet(cfg, "Prefix"));
-    }
-
-    // The built-in Assert.AreEqual and CollectionsAssert.AreEqual don't even work on Dictionaries, so everyone has to write their own
-    void AssertDictionariesAreEqual<K, V>(IDictionary<K, V>? expected, IDictionary<K, V>? actual, string message = "")
-    {
-        if (expected is null || actual is null)
-        {
-            Assert.AreEqual(expected, actual);
-            return;
-        }
-        AssertListsAreEqual(
-            expected.OrderBy(kv => kv.Key).ToList(),
-            actual.OrderBy(kv => kv.Key).ToList()
-        );
     }
 
     [TestMethod()]
@@ -161,28 +134,28 @@ public class ConfigHelperTests
 
         // Aliases is the only Dict<string, string> in Config
 
-        AssertDictionariesAreEqual(new Dictionary<string, string>(), cfg.Aliases);
-        AssertDictionariesAreEqual(new Dictionary<string, string>(), ConfigHelper.GetDictionary<string>(cfg, "Aliases"));
+        TestUtils.AssertDictionariesAreEqual(new Dictionary<string, string>(), cfg.Aliases);
+        TestUtils.AssertDictionariesAreEqual(new Dictionary<string, string>(), ConfigHelper.GetDictionary<string>(cfg, "Aliases"));
         Assert.IsFalse(ConfigHelper.DoesDictionaryKeyExist<string>(cfg, "Aliases", "testalias"));
 
         await ConfigHelper.CreateDictionaryKey<string>(cfg, "Aliases", "testalias", "echo hi");
 
-        AssertDictionariesAreEqual(new Dictionary<string, string> { { "testalias", "echo hi" } }, cfg.Aliases);
-        AssertDictionariesAreEqual(new Dictionary<string, string> { { "testalias", "echo hi" } }, ConfigHelper.GetDictionary<string>(cfg, "Aliases"));
+        TestUtils.AssertDictionariesAreEqual(new Dictionary<string, string> { { "testalias", "echo hi" } }, cfg.Aliases);
+        TestUtils.AssertDictionariesAreEqual(new Dictionary<string, string> { { "testalias", "echo hi" } }, ConfigHelper.GetDictionary<string>(cfg, "Aliases"));
         Assert.IsTrue(ConfigHelper.DoesDictionaryKeyExist<string>(cfg, "Aliases", "testalias"));
         Assert.AreEqual("echo hi", ConfigHelper.GetDictionaryValue<string>(cfg, "Aliases", "testalias"));
 
         await ConfigHelper.SetStringDictionaryValue(cfg, "Aliases", "testalias", "echo belizzle it");
 
-        AssertDictionariesAreEqual(new Dictionary<string, string> { { "testalias", "echo belizzle it" } }, cfg.Aliases);
-        AssertDictionariesAreEqual(new Dictionary<string, string> { { "testalias", "echo belizzle it" } }, ConfigHelper.GetDictionary<string>(cfg, "Aliases"));
+        TestUtils.AssertDictionariesAreEqual(new Dictionary<string, string> { { "testalias", "echo belizzle it" } }, cfg.Aliases);
+        TestUtils.AssertDictionariesAreEqual(new Dictionary<string, string> { { "testalias", "echo belizzle it" } }, ConfigHelper.GetDictionary<string>(cfg, "Aliases"));
         Assert.IsTrue(ConfigHelper.DoesDictionaryKeyExist<string>(cfg, "Aliases", "testalias"));
         Assert.AreEqual("echo belizzle it", ConfigHelper.GetDictionaryValue<string>(cfg, "Aliases", "testalias"));
 
         await ConfigHelper.RemoveDictionaryKey<string>(cfg, "Aliases", "testalias");
 
-        AssertDictionariesAreEqual(new Dictionary<string, string>(), cfg.Aliases);
-        AssertDictionariesAreEqual(new Dictionary<string, string>(), ConfigHelper.GetDictionary<string>(cfg, "Aliases"));
+        TestUtils.AssertDictionariesAreEqual(new Dictionary<string, string>(), cfg.Aliases);
+        TestUtils.AssertDictionariesAreEqual(new Dictionary<string, string>(), ConfigHelper.GetDictionary<string>(cfg, "Aliases"));
         Assert.IsFalse(ConfigHelper.DoesDictionaryKeyExist<string>(cfg, "Aliases", "testalias"));
 
         Assert.ThrowsException<KeyNotFoundException>(() => ConfigHelper.GetDictionary<string>(cfg, "foo"));
@@ -190,48 +163,32 @@ public class ConfigHelperTests
 
         // FilterResponseMessages is the only Dict<string, string?> in Config
 
-        AssertDictionariesAreEqual(new Dictionary<string, string?>(), cfg.Aliases);
-        AssertDictionariesAreEqual(new Dictionary<string, string?>(), ConfigHelper.GetDictionary<string?>(cfg, "FilterResponseMessages"));
+        TestUtils.AssertDictionariesAreEqual(new Dictionary<string, string?>(), cfg.Aliases);
+        TestUtils.AssertDictionariesAreEqual(new Dictionary<string, string?>(), ConfigHelper.GetDictionary<string?>(cfg, "FilterResponseMessages"));
         Assert.IsFalse(ConfigHelper.DoesDictionaryKeyExist<string>(cfg, "FilterResponseMessages", "spam"));
 
         await ConfigHelper.CreateDictionaryKey<string>(cfg, "FilterResponseMessages", "spam", "this is a ham server");
 
-        AssertDictionariesAreEqual(new Dictionary<string, string?> { { "spam", "this is a ham server" } }, cfg.FilterResponseMessages);
-        AssertDictionariesAreEqual(new Dictionary<string, string?> { { "spam", "this is a ham server" } }, ConfigHelper.GetDictionary<string?>(cfg, "FilterResponseMessages"));
+        TestUtils.AssertDictionariesAreEqual(new Dictionary<string, string?> { { "spam", "this is a ham server" } }, cfg.FilterResponseMessages);
+        TestUtils.AssertDictionariesAreEqual(new Dictionary<string, string?> { { "spam", "this is a ham server" } }, ConfigHelper.GetDictionary<string?>(cfg, "FilterResponseMessages"));
         Assert.IsTrue(ConfigHelper.DoesDictionaryKeyExist<string?>(cfg, "FilterResponseMessages", "spam"));
         Assert.AreEqual("this is a ham server", ConfigHelper.GetDictionaryValue<string?>(cfg, "FilterResponseMessages", "spam"));
 
         await ConfigHelper.SetStringDictionaryValue(cfg, "FilterResponseMessages", "spam", "begone spambots");
 
-        AssertDictionariesAreEqual(new Dictionary<string, string?> { { "spam", "begone spambots" } }, cfg.FilterResponseMessages);
-        AssertDictionariesAreEqual(new Dictionary<string, string?> { { "spam", "begone spambots" } }, ConfigHelper.GetDictionary<string?>(cfg, "FilterResponseMessages"));
+        TestUtils.AssertDictionariesAreEqual(new Dictionary<string, string?> { { "spam", "begone spambots" } }, cfg.FilterResponseMessages);
+        TestUtils.AssertDictionariesAreEqual(new Dictionary<string, string?> { { "spam", "begone spambots" } }, ConfigHelper.GetDictionary<string?>(cfg, "FilterResponseMessages"));
         Assert.IsTrue(ConfigHelper.DoesDictionaryKeyExist<string?>(cfg, "FilterResponseMessages", "spam"));
         Assert.AreEqual("begone spambots", ConfigHelper.GetDictionaryValue<string?>(cfg, "FilterResponseMessages", "spam"));
 
         await ConfigHelper.RemoveDictionaryKey<string?>(cfg, "FilterResponseMessages", "spam");
 
-        AssertDictionariesAreEqual(new Dictionary<string, string?>(), cfg.FilterResponseMessages);
-        AssertDictionariesAreEqual(new Dictionary<string, string?>(), ConfigHelper.GetDictionary<string?>(cfg, "FilterResponseMessages"));
+        TestUtils.AssertDictionariesAreEqual(new Dictionary<string, string?>(), cfg.FilterResponseMessages);
+        TestUtils.AssertDictionariesAreEqual(new Dictionary<string, string?>(), ConfigHelper.GetDictionary<string?>(cfg, "FilterResponseMessages"));
         Assert.IsFalse(ConfigHelper.DoesDictionaryKeyExist<string?>(cfg, "FilterResponseMessages", "spam"));
 
         Assert.ThrowsException<KeyNotFoundException>(() => ConfigHelper.GetDictionary<string?>(cfg, "foo"));
         Assert.ThrowsException<ArgumentException>(() => ConfigHelper.GetDictionary<string?>(cfg, "Prefix"));
-    }
-
-    // even my AssertDictionariesAreEqual helper falls apart on Set values
-    void AssertDictsOfSetsAreEqual<K, V>(IDictionary<K, HashSet<V>>? expected, IDictionary<K, HashSet<V>>? actual, string message = "")
-    {
-        if (expected is null || actual is null)
-        {
-            Assert.AreEqual(expected, actual);
-            return;
-        }
-        if (expected.Count() != actual.Count())
-            Assert.AreEqual(expected, actual, $"\nCount() mismatch: {expected.Count()} != {actual.Count()}");
-        foreach (var kv in expected)
-        {
-            AssertSetsAreEqual(expected[kv.Key], actual[kv.Key], $"\nKey {kv.Key}" + message);
-        }
     }
 
     [TestMethod()]
@@ -241,38 +198,38 @@ public class ConfigHelperTests
 
         // FilteredWords is the only Dict<string, Set<>> in Config
 
-        AssertDictsOfSetsAreEqual(new Dictionary<string, HashSet<string>>(), cfg.FilteredWords);
-        AssertDictsOfSetsAreEqual(new Dictionary<string, HashSet<string>>(), ConfigHelper.GetDictionary<HashSet<string>>(cfg, "FilteredWords"));
+        TestUtils.AssertDictsOfSetsAreEqual(new Dictionary<string, HashSet<string>>(), cfg.FilteredWords);
+        TestUtils.AssertDictsOfSetsAreEqual(new Dictionary<string, HashSet<string>>(), ConfigHelper.GetDictionary<HashSet<string>>(cfg, "FilteredWords"));
         Assert.IsFalse(ConfigHelper.DoesDictionaryKeyExist<HashSet<string>>(cfg, "FilteredWords", "jinxies"));
 
         await ConfigHelper.CreateStringSetDictionaryKey(cfg, "FilteredWords", "jinxies", "mayonnaise");
 
-        AssertDictsOfSetsAreEqual(new Dictionary<string, HashSet<string>> { { "jinxies", new HashSet<string> { "mayonnaise" } } }, cfg.FilteredWords);
-        AssertDictsOfSetsAreEqual(new Dictionary<string, HashSet<string>> { { "jinxies", new HashSet<string> { "mayonnaise" } } }, ConfigHelper.GetDictionary<HashSet<string>>(cfg, "FilteredWords"));
+        TestUtils.AssertDictsOfSetsAreEqual(new Dictionary<string, HashSet<string>> { { "jinxies", new HashSet<string> { "mayonnaise" } } }, cfg.FilteredWords);
+        TestUtils.AssertDictsOfSetsAreEqual(new Dictionary<string, HashSet<string>> { { "jinxies", new HashSet<string> { "mayonnaise" } } }, ConfigHelper.GetDictionary<HashSet<string>>(cfg, "FilteredWords"));
         Assert.IsTrue(ConfigHelper.DoesDictionaryKeyExist<HashSet<string>>(cfg, "FilteredWords", "jinxies"));
-        AssertSetsAreEqual(new HashSet<string> { "mayonnaise" }, ConfigHelper.GetDictionaryValue<HashSet<string>>(cfg, "FilteredWords", "jinxies"));
+        TestUtils.AssertSetsAreEqual(new HashSet<string> { "mayonnaise" }, ConfigHelper.GetDictionaryValue<HashSet<string>>(cfg, "FilteredWords", "jinxies"));
 
         await ConfigHelper.AddToStringSetDictionaryValue(cfg, "FilteredWords", "jinxies", "magic");
         await ConfigHelper.AddToStringSetDictionaryValue(cfg, "FilteredWords", "jinxies", "wing");
         await ConfigHelper.AddToStringSetDictionaryValue(cfg, "FilteredWords", "jinxies", "feather");
 
-        AssertDictsOfSetsAreEqual(new Dictionary<string, HashSet<string>> { { "jinxies", new HashSet<string> { "mayonnaise", "magic", "wing", "feather" } } }, cfg.FilteredWords);
-        AssertDictsOfSetsAreEqual(new Dictionary<string, HashSet<string>> { { "jinxies", new HashSet<string> { "mayonnaise", "magic", "wing", "feather" } } }, ConfigHelper.GetDictionary<HashSet<string>>(cfg, "FilteredWords"));
+        TestUtils.AssertDictsOfSetsAreEqual(new Dictionary<string, HashSet<string>> { { "jinxies", new HashSet<string> { "mayonnaise", "magic", "wing", "feather" } } }, cfg.FilteredWords);
+        TestUtils.AssertDictsOfSetsAreEqual(new Dictionary<string, HashSet<string>> { { "jinxies", new HashSet<string> { "mayonnaise", "magic", "wing", "feather" } } }, ConfigHelper.GetDictionary<HashSet<string>>(cfg, "FilteredWords"));
         Assert.IsTrue(ConfigHelper.DoesDictionaryKeyExist<HashSet<string>>(cfg, "FilteredWords", "jinxies"));
-        AssertSetsAreEqual(new HashSet<string> { "mayonnaise", "magic", "wing", "feather" }, ConfigHelper.GetDictionaryValue<HashSet<string>>(cfg, "FilteredWords", "jinxies"));
+        TestUtils.AssertSetsAreEqual(new HashSet<string> { "mayonnaise", "magic", "wing", "feather" }, ConfigHelper.GetDictionaryValue<HashSet<string>>(cfg, "FilteredWords", "jinxies"));
 
         await ConfigHelper.RemoveFromStringSetDictionaryValue(cfg, "FilteredWords", "jinxies", "mayonnaise");
         await ConfigHelper.RemoveFromStringSetDictionaryValue(cfg, "FilteredWords", "jinxies", "magic");
 
-        AssertDictsOfSetsAreEqual(new Dictionary<string, HashSet<string>> { { "jinxies", new HashSet<string> { "wing", "feather" } } }, cfg.FilteredWords);
-        AssertDictsOfSetsAreEqual(new Dictionary<string, HashSet<string>> { { "jinxies", new HashSet<string> { "wing", "feather" } } }, ConfigHelper.GetDictionary<HashSet<string>>(cfg, "FilteredWords"));
+        TestUtils.AssertDictsOfSetsAreEqual(new Dictionary<string, HashSet<string>> { { "jinxies", new HashSet<string> { "wing", "feather" } } }, cfg.FilteredWords);
+        TestUtils.AssertDictsOfSetsAreEqual(new Dictionary<string, HashSet<string>> { { "jinxies", new HashSet<string> { "wing", "feather" } } }, ConfigHelper.GetDictionary<HashSet<string>>(cfg, "FilteredWords"));
         Assert.IsTrue(ConfigHelper.DoesDictionaryKeyExist<HashSet<string>>(cfg, "FilteredWords", "jinxies"));
-        AssertSetsAreEqual(new HashSet<string> { "wing", "feather" }, ConfigHelper.GetDictionaryValue<HashSet<string>>(cfg, "FilteredWords", "jinxies"));
+        TestUtils.AssertSetsAreEqual(new HashSet<string> { "wing", "feather" }, ConfigHelper.GetDictionaryValue<HashSet<string>>(cfg, "FilteredWords", "jinxies"));
 
         await ConfigHelper.RemoveDictionaryKey<HashSet<string>>(cfg, "FilteredWords", "jinxies");
 
-        AssertDictsOfSetsAreEqual(new Dictionary<string, HashSet<string>>(), cfg.FilteredWords);
-        AssertDictsOfSetsAreEqual(new Dictionary<string, HashSet<string>>(), ConfigHelper.GetDictionary<HashSet<string>>(cfg, "FilteredWords"));
+        TestUtils.AssertDictsOfSetsAreEqual(new Dictionary<string, HashSet<string>>(), cfg.FilteredWords);
+        TestUtils.AssertDictsOfSetsAreEqual(new Dictionary<string, HashSet<string>>(), ConfigHelper.GetDictionary<HashSet<string>>(cfg, "FilteredWords"));
         Assert.IsFalse(ConfigHelper.DoesDictionaryKeyExist<HashSet<string>>(cfg, "FilteredWords", "jinxies"));
 
         Assert.ThrowsException<KeyNotFoundException>(() => ConfigHelper.GetDictionary<HashSet<string>>(cfg, "foo"));

@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
+using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Settings;
 
@@ -25,29 +25,33 @@ public class ModLoggingService
 
     public ModLogBuilder CreateModLog(SocketGuild guild)
     {
+        return CreateModLog(new SocketGuildAdapter(guild));
+    }
+    public ModLogBuilder CreateModLog(IIzzyGuild guild)
+    {
         return new ModLogBuilder(_config, guild, _batchLogger);
     }
 }
 
 public class ModLog
 {
-    public SocketTextChannel Channel;
+    public IIzzySocketTextChannel Channel;
     public string? Content;
     public Embed? Embed;
     public string? FileLogContent;
 
-    public ModLog(SocketTextChannel channel) { Channel = channel; }
+    public ModLog(IIzzySocketTextChannel channel) { Channel = channel; }
 }
 
 public class ModLogBuilder
 {
-    private readonly SocketGuild _guild;
+    private readonly IIzzyGuild _guild;
     private readonly Config _config;
     private readonly BatchLogger _batchLogger;
 
     private readonly ModLog _log;
 
-    public ModLogBuilder(Config config, SocketGuild guild, BatchLogger batchLogger)
+    public ModLogBuilder(Config config, IIzzyGuild guild, BatchLogger batchLogger)
     {
         _config = config;
         _guild = guild;
@@ -93,7 +97,7 @@ public class ModLogBuilder
         if (_config.BatchSendLogs)
             _batchLogger.AddModLog(_log);
         else
-            await _log.Channel.SendMessageAsync(_log.Content, embed: _log.Embed);
+            await _log.Channel.SendMessageAsync(_log.Content, embeds: new Embed[] { _log.Embed });
     }
 }
 
@@ -120,7 +124,7 @@ public class BatchLogger
         {
             await Task.Delay(Convert.ToInt32(_config.BatchLogsSendRate * 1000));
 
-            SocketTextChannel? modLogChannel = null;
+            IIzzySocketTextChannel? modLogChannel = null;
             var modLogContent = new List<string>();
             var modLogEmbeds = new List<Embed>();
 
