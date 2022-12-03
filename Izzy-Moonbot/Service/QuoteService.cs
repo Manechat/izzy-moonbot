@@ -488,7 +488,7 @@ public class QuoteService
     }
 }
 
-public class Quote
+public struct Quote
 {
     public int Id;
     public string Name;
