@@ -153,16 +153,6 @@ public class QuoteService
     }
     
     /// <summary>
-    /// Check if a user has quotes.
-    /// </summary>
-    /// <param name="user">The user to check.</param>
-    /// <returns>Whether the user has quotes or not.</returns>
-    public bool HasQuotes(IUser user)
-    {
-        return _quoteStorage.Quotes.ContainsKey(user.Id.ToString());
-    }
-
-    /// <summary>
     /// Check if a category exists.
     /// </summary>
     /// <param name="name">The category name to check.</param>
@@ -494,38 +484,6 @@ public class QuoteService
         await FileHelper.SaveQuoteStorageAsync(_quoteStorage);
         
         return new Quote(id, keyValuePair.Key, quoteContent);
-    }
-    
-    /// <summary>
-    /// Remove all quote from a user.
-    /// </summary>
-    /// <param name="user">The user to remove the quotes from.</param>
-    /// <exception cref="NullReferenceException">If the user doesn't have any quotes.</exception>
-    public async Task RemoveQuotes(IUser user)
-    {
-        if (!_quoteStorage.Quotes.ContainsKey(user.Id.ToString()))
-            throw new NullReferenceException("That user does not have any quotes.");
-        
-        _quoteStorage.Quotes.Remove(user.Id.ToString());
-        
-        await FileHelper.SaveQuoteStorageAsync(_quoteStorage);
-    }
-    
-    /// <summary>
-    /// Remove all quote from a category.
-    /// </summary>
-    /// <param name="name">The category name to remove the quotes from.</param>
-    /// <exception cref="NullReferenceException">If the category doesn't have any quotes.</exception>
-    public async Task RemoveQuotes(string name)
-    {
-        if (!_quoteStorage.Quotes.Keys.All(key => key.ToLower() == name.ToLower()))
-            throw new NullReferenceException("That category does not have any quotes.");
-        
-        var keyValuePair = _quoteStorage.Quotes.Single(pair => pair.Key.ToLower() != name.ToLower());
-        
-        _quoteStorage.Quotes.Remove(keyValuePair.Key);
-        
-        await FileHelper.SaveQuoteStorageAsync(_quoteStorage);
     }
 }
 
