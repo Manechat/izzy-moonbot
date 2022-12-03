@@ -8,20 +8,22 @@ using Discord.WebSocket;
 using Izzy_Moonbot.Settings;
 using Izzy_Moonbot.Adapters;
 using Microsoft.Extensions.Configuration;
+using System.IO;
 
 namespace Izzy_Moonbot.Helpers;
 
 public static class DiscordHelper
 {
+    // This setter should only be used by tests
+    public static ulong? DefaultGuildId { get; set; } = null;
+
     public static bool ShouldExecuteInPrivate(bool externalUsageAllowedFlag, SocketCommandContext context)
     {
         return ShouldExecuteInPrivate(externalUsageAllowedFlag, new SocketCommandContextAdapter(context));
     }
     public static bool ShouldExecuteInPrivate(bool externalUsageAllowedFlag, IIzzyContext context)
     {
-        var settings = GetDiscordSettings();
-
-        if (context.IsPrivate || context.Guild.Id != settings.DefaultGuild)
+        if (context.IsPrivate || context.Guild.Id != DefaultGuild())
         {
             return externalUsageAllowedFlag;
         }
@@ -39,14 +41,27 @@ public static class DiscordHelper
 
         if (context.IsPrivate) return false;
         
-        return context.Guild.Id == settings.DefaultGuild;
+        return context.Guild.Id == DefaultGuild();
     }
     
     public static ulong DefaultGuild()
     {
-        var settings = GetDiscordSettings();
+        var maybeDefaultGuildId = DefaultGuildId;
+        if (maybeDefaultGuildId is ulong defaultGuildId)
+            return defaultGuildId;
 
-        return settings.DefaultGuild;
+        try
+        {
+            var settings = GetDiscordSettings();
+            return settings.DefaultGuild;
+        }
+        catch (FileNotFoundException e)
+        {
+            Console.WriteLine("Caught FileNotFoundException in DefaultGuild(). " +
+                "If you're seeing this in tests, you probably forgot to set a fake DefaultGuildId.");
+            Console.WriteLine(e.Message);
+            throw;
+        }
     }
     
     public static bool IsDev(ulong user)
