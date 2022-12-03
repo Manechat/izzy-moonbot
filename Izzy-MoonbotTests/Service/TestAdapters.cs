@@ -302,7 +302,7 @@ public class CustomIdHaver : IIzzyHasCustomId
 public class StubClient : IIzzyClient
 {
     public IIzzyUser CurrentUser { get => _currentUser; }
-    public IReadOnlyCollection<IIzzyGuild> Guilds { get => (IReadOnlyCollection<IIzzyGuild>)_guilds; }
+    public IReadOnlyCollection<IIzzyGuild> Guilds { get => _guilds.Select(g => new TestGuild(g, this)).ToList(); }
 
     public event Func<IIzzySocketMessageComponent, Task>? ButtonExecuted;
     public event Func<IIzzyHasId, IIzzyHasId, Task>? MessageDeleted;
