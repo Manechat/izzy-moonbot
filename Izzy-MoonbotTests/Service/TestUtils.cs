@@ -11,7 +11,7 @@ namespace Izzy_Moonbot_Tests;
 
 public static class TestUtils
 {
-    public static (Config, ConfigDescriber, (TestUser, TestUser), List<TestRole>, StubChannel, StubGuild, StubClient) DefaultStubs()
+    public static (Config, ConfigDescriber, (TestUser, TestUser), List<TestRole>, (StubChannel, StubChannel, StubChannel), StubGuild, StubClient) DefaultStubs()
     {
         var izzyHerself = new TestUser("Izzy Moonbot", 1);
         var sunny = new TestUser("Sunny", 2);
@@ -20,7 +20,9 @@ public static class TestUtils
         var roles = new List<TestRole> { new TestRole("Alicorn", 1), new TestRole("Pegasus", 2) };
 
         var generalChannel = new StubChannel(1, "general");
-        var channels = new List<StubChannel> { generalChannel, new StubChannel(2, "modchat") };
+        var modChat = new StubChannel(2, "modchat");
+        var logChat = new StubChannel(3, "botlogs");
+        var channels = new List<StubChannel> { generalChannel, modChat, logChat };
 
         var guild = new StubGuild(1, "Maretime Bay", roles, users, channels);
         var client = new StubClient(izzyHerself, new List<StubGuild> { guild });
@@ -28,7 +30,7 @@ public static class TestUtils
         var cfg = new Config();
         var cd = new ConfigDescriber();
 
-        return (cfg, cd, (izzyHerself, sunny), roles, generalChannel, guild, client);
+        return (cfg, cd, (izzyHerself, sunny), roles, (generalChannel, modChat, logChat), guild, client);
     }
 
     // The built-in Assert.AreEqual and CollectionsAssert.AreEqual have error messages so bad it was worth writing my own asserts

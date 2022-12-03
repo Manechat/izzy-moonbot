@@ -18,7 +18,7 @@ public class PaginationHelperTests
     [TestMethod()]
     public void BasicPagingTests()
     {
-        var (cfg, cd, (izzyHerself, sunny), _, generalChannel, guild, client) = TestUtils.DefaultStubs();
+        var (cfg, cd, (izzyHerself, sunny), _, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
 
         var context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, "make some pages");
 

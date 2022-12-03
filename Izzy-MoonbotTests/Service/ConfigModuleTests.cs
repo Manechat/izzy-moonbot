@@ -13,7 +13,7 @@ public class ConfigModuleTests
     [TestMethod()]
     public async Task ConfigCommand_BreathingTestsAsync()
     {
-        var (cfg, cd, (izzyHerself, sunny), _, generalChannel, guild, client) = TestUtils.DefaultStubs();
+        var (cfg, cd, (izzyHerself, sunny), _, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
 
         // post ".config prefix *", mis-capitalized on purpose
 
@@ -57,7 +57,7 @@ public class ConfigModuleTests
     [TestMethod()]
     public async Task ConfigCommand_CategoryTestsAsync()
     {
-        var (cfg, cd, (_, sunny), _, generalChannel, guild, client) = TestUtils.DefaultStubs();
+        var (cfg, cd, (_, sunny), _, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
 
         var context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config core");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "core", "");
@@ -70,7 +70,7 @@ public class ConfigModuleTests
     [TestMethod()]
     public async Task ConfigCommand_ItemDescriptionsAndGetters_ScalarsTestsAsync()
     {
-        var (cfg, cd, (_, sunny), _, generalChannel, guild, client) = TestUtils.DefaultStubs();
+        var (cfg, cd, (_, sunny), _, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
 
         // String/Char/Boolean/Integer/Double share the same logic
 
@@ -135,7 +135,7 @@ public class ConfigModuleTests
     [TestMethod()]
     public async Task ConfigCommand_ItemDescriptionsAndGetters_CollectionsTestsAsync()
     {
-        var (cfg, cd, (_, sunny), _, generalChannel, guild, client) = TestUtils.DefaultStubs();
+        var (cfg, cd, (_, sunny), _, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
 
         // StringSet
 
@@ -256,7 +256,7 @@ public class ConfigModuleTests
     [TestMethod()]
     public async Task ConfigCommand_EditStringSetTestsAsync()
     {
-        var (cfg, cd, (_, sunny), _, generalChannel, guild, client) = TestUtils.DefaultStubs();
+        var (cfg, cd, (_, sunny), _, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
 
         cfg.MentionResponses.Add("hello new friend!");
         var context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config MentionResponses add got something I can unicycle?");
@@ -281,7 +281,7 @@ public class ConfigModuleTests
     [TestMethod()]
     public async Task ConfigCommand_EditRoleSetTestsAsync()
     {
-        var (cfg, cd, (_, sunny), _, generalChannel, guild, client) = TestUtils.DefaultStubs();
+        var (cfg, cd, (_, sunny), _, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
 
         cfg.SpamBypassRoles.Add(2ul);
         var context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config SpamBypassRoles add <@&1>");
@@ -308,7 +308,7 @@ public class ConfigModuleTests
     [TestMethod()]
     public async Task ConfigCommand_EditChannelSetTestsAsync()
     {
-        var (cfg, cd, (_, sunny), _, generalChannel, guild, client) = TestUtils.DefaultStubs();
+        var (cfg, cd, (_, sunny), _, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
 
         cfg.SpamIgnoredChannels.Add(2ul);
         var context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config SpamIgnoredChannels add <#1>");
@@ -333,7 +333,7 @@ public class ConfigModuleTests
     [TestMethod()]
     public async Task ConfigCommand_EditStringDictionaryTestsAsync()
     {
-        var (cfg, cd, (_, sunny), _, generalChannel, guild, client) = TestUtils.DefaultStubs();
+        var (cfg, cd, (_, sunny), _, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
 
         cfg.Aliases.Add("moonlaser", "addquote moon");
         var context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config Aliases set echogeneral echo <#1>");
@@ -369,7 +369,7 @@ public class ConfigModuleTests
     [TestMethod()]
     public async Task ConfigCommand_EditStringSetDictionaryTestsAsync()
     {
-        var (cfg, cd, (_, sunny), _, generalChannel, guild, client) = TestUtils.DefaultStubs();
+        var (cfg, cd, (_, sunny), _, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
 
         cfg.FilteredWords.Add("slurs", new HashSet<string> { "mudpony" });
         cfg.FilteredWords.Add("links", new HashSet<string> { "cliptrot.pony/" });
