@@ -19,7 +19,7 @@ public class QuoteModuleTests
     public async Task BasicTests()
     {
         var (cfg, cd, (izzy, sunny), _, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
-        //DiscordHelper.DefaultGuildId = guild.Id;
+        DiscordHelper.DefaultGuildId = guild.Id;
 
         // only one quote so that the "random" selection is deterministic for now
         var quotes = new QuoteStorage();
