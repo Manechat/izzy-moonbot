@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
+using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Settings;
 
@@ -39,7 +40,7 @@ public class QuoteService
     /// <param name="guild">The guild to check for the user in.</param>
     /// <returns>"user" if the alias refers to a user, "category" if not.</returns>
     /// <exception cref="NullReferenceException">If the alias doesn't exist.</exception>
-    public string AliasRefersTo(string alias, SocketGuild guild)
+    public string AliasRefersTo(string alias, IIzzyGuild guild)
     {
         if (_quoteStorage.Aliases.Keys.Any(key => key.ToLower() == alias.ToLower()))
         {
@@ -60,15 +61,15 @@ public class QuoteService
     }
 
     /// <summary>
-    /// Process an alias into a IUser.
+    /// Process an alias into a IIzzyUser.
     /// </summary>
     /// <param name="alias">The alias to process.</param>
     /// <param name="guild">The guild to get the user from.</param>
-    /// <returns>An instance of IUser that this alias refers to.</returns>
+    /// <returns>An instance of IIzzyUser that this alias refers to.</returns>
     /// <exception cref="TargetException">If the user couldn't be found (left the server).</exception>
     /// <exception cref="ArgumentException">If the alias doesn't refer to a user.</exception>
     /// <exception cref="NullReferenceException">If the alias doesn't exist.</exception>
-    public IUser ProcessAlias(string alias, SocketGuild guild)
+    public IIzzyUser ProcessAlias(string alias, IIzzyGuild guild)
     {
         if (_quoteStorage.Aliases.ContainsKey(alias))
         {
@@ -82,7 +83,7 @@ public class QuoteService
 
                 return potentialUser;
             }
-            throw new ArgumentException("This alias cannot be converted to an IUser.");
+            throw new ArgumentException("This alias cannot be converted to an IIzzyUser.");
         }
 
         throw new NullReferenceException("That alias does not exist.");
@@ -112,7 +113,7 @@ public class QuoteService
     /// <param name="alias">The alias to add.</param>
     /// <param name="user">The user to map it to.</param>
     /// <exception cref="DuplicateNameException">If the alias already exists.</exception>
-    public async Task AddAlias(string alias, IUser user)
+    public async Task AddAlias(string alias, IIzzyUser user)
     {
         if (_quoteStorage.Aliases.ContainsKey(alias)) throw new DuplicateNameException("This alias already exists.");
         
@@ -162,7 +163,7 @@ public class QuoteService
         return _quoteStorage.Quotes.Keys.Any(key => key.ToLower() == name.ToLower());
     }
 
-    public string[] GetKeyList(SocketGuild guild)
+    public string[] GetKeyList(IIzzyGuild guild)
     {
         return _quoteStorage.Quotes.Keys.ToArray().Select(key =>
         {
@@ -201,7 +202,7 @@ public class QuoteService
     /// <returns>A Quote containing the quote information.</returns>
     /// <exception cref="NullReferenceException">If the user doesn't have any quotes.</exception>
     /// <exception cref="IndexOutOfRangeException">If the id provided is larger than the amount of quotes the user has.</exception>
-    public Quote GetQuote(IUser user, int id)
+    public Quote GetQuote(IIzzyUser user, int id)
     {
         if (!_quoteStorage.Quotes.ContainsKey(user.Id.ToString()))
             throw new NullReferenceException("That user does not have any quotes.");
@@ -253,7 +254,7 @@ public class QuoteService
     /// <param name="user">The user to get the quotes of.</param>
     /// <returns>An array of Quotes that this user has.</returns>
     /// <exception cref="NullReferenceException">If the user doesn't have any quotes.</exception>
-    public Quote[] GetQuotes(IUser user)
+    public Quote[] GetQuotes(IIzzyUser user)
     {
         if (!_quoteStorage.Quotes.ContainsKey(user.Id.ToString()))
             throw new NullReferenceException("That user does not have any quotes.");
@@ -301,7 +302,7 @@ public class QuoteService
     /// </summary>
     /// <param name="guild">The guild to get the user from, for name fetching purposes.</param>
     /// <returns>A Quote containing the quote information.</returns>
-    public Quote GetRandomQuote(SocketGuild guild)
+    public Quote GetRandomQuote(IIzzyGuild guild)
     {
         Random rnd = new Random();
         var key = _quoteStorage.Quotes.Keys.ToArray()[rnd.Next(_quoteStorage.Quotes.Keys.Count)];
@@ -333,7 +334,7 @@ public class QuoteService
     /// <param name="user">The user to get the quote of.</param>
     /// <returns>A Quote containing the quote information.</returns>
     /// <exception cref="NullReferenceException">If the user doesn't have any quotes.</exception>
-    public Quote GetRandomQuote(IUser user)
+    public Quote GetRandomQuote(IIzzyUser user)
     {
         if (!_quoteStorage.Quotes.ContainsKey(user.Id.ToString()))
             throw new NullReferenceException("That user does not have any quotes.");
@@ -386,7 +387,7 @@ public class QuoteService
     /// <param name="user">The user to add the quote to.</param>
     /// <param name="content">The content of the quote.</param>
     /// <returns>The newly created Quote.</returns>
-    public async Task<Quote> AddQuote(IUser user, string content)
+    public async Task<Quote> AddQuote(IIzzyUser user, string content)
     {
         if (!_quoteStorage.Quotes.ContainsKey(user.Id.ToString()))
             _quoteStorage.Quotes.Add(user.Id.ToString(), new List<string>());
@@ -432,7 +433,7 @@ public class QuoteService
     /// <returns>The Quote that was removed.</returns>
     /// <exception cref="NullReferenceException">If the user doesn't have any quotes.</exception>
     /// <exception cref="IndexOutOfRangeException">If the quote id provided doesn't exist.</exception>
-    public async Task<Quote> RemoveQuote(IUser user, int id)
+    public async Task<Quote> RemoveQuote(IIzzyUser user, int id)
     {
         if (!_quoteStorage.Quotes.ContainsKey(user.Id.ToString()))
             throw new NullReferenceException("That user does not have any quotes.");

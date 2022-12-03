@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
+using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Attributes;
 using Izzy_Moonbot.EventListeners;
 using Izzy_Moonbot.Helpers;
@@ -193,6 +194,16 @@ public class MiscModule : ModuleBase<SocketCommandContext>
         [ExternalUsageAllowed]
         public async Task QuoteCommandAsync(
             [Remainder]string argsString = "")
+        {
+            await TestableQuoteCommandAsync(
+                new SocketCommandContextAdapter(Context),
+                argsString
+            );
+        }
+
+        public async Task TestableQuoteCommandAsync(
+            IIzzyContext Context,
+            string argsString = "")
         {
             var defaultGuild = Context.Client.Guilds.Single(guild => guild.Id == DiscordHelper.DefaultGuild());
             
@@ -435,6 +446,16 @@ public class MiscModule : ModuleBase<SocketCommandContext>
         public async Task ListQuotesCommandAsync(
             [Remainder] string search = ""
         )
+        {
+            await TestableListQuotesCommandAsync(
+                new SocketCommandContextAdapter(Context),
+                search
+            );
+        }
+
+        public async Task TestableListQuotesCommandAsync(
+            IIzzyContext Context,
+            string search = "")
         {
             var defaultGuild = Context.Client.Guilds.Single(guild => guild.Id == DiscordHelper.DefaultGuild());
             
@@ -712,6 +733,16 @@ public class MiscModule : ModuleBase<SocketCommandContext>
         public async Task AddQuoteCommandAsync(
             [Remainder] string argsString = "")
         {
+            await TestableAddQuoteCommandAsync(
+                new SocketCommandContextAdapter(Context),
+                argsString
+            );
+        }
+
+        public async Task TestableAddQuoteCommandAsync(
+            IIzzyContext Context,
+            string argsString = "")
+        {
             if (argsString == "")
             {
                 await Context.Channel.SendMessageAsync(
@@ -811,6 +842,16 @@ public class MiscModule : ModuleBase<SocketCommandContext>
         public async Task RemoveQuoteCommandAsync(
             [Remainder] string argsString = "")
         {
+            await TestableRemoveQuoteCommandAsync(
+                new SocketCommandContextAdapter(Context),
+                argsString
+            );
+        }
+
+        public async Task TestableRemoveQuoteCommandAsync(
+            IIzzyContext Context,
+            string argsString = "")
+        {
             if (argsString == "")
             {
                 await Context.Channel.SendMessageAsync(
@@ -893,6 +934,16 @@ public class MiscModule : ModuleBase<SocketCommandContext>
         [Parameter("target", ParameterType.User, "The user to set the alias to, if applicable.", true)]
         public async Task QuoteAliasCommandAsync(
             [Remainder] string argsString = "")
+        {
+            await TestableQuoteAliasCommandAsync(
+                new SocketCommandContextAdapter(Context),
+                argsString
+            );
+        }
+
+        public async Task TestableQuoteAliasCommandAsync(
+            IIzzyContext Context,
+            string argsString = "")
         {
             if (argsString == "")
             {

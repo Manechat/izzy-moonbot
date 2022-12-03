@@ -13,6 +13,11 @@ public interface IIzzyUser
     string Discriminator { get => "1234"; }
 }
 
+public interface IIzzyGuildUser : IIzzyUser
+{
+    string DisplayName { get; }
+}
+
 public interface IIzzyRole
 {
     string Name { get; }
@@ -75,7 +80,7 @@ public interface IIzzyGuild
     Task<IReadOnlyCollection<IIzzyUser>> SearchUsersAsync(string userSearchQuery);
     IReadOnlyCollection<IIzzySocketTextChannel> TextChannels { get; }
     IReadOnlyCollection<IIzzyRole> Roles { get; }
-    IIzzyUser GetUser(ulong userId);
+    IIzzyGuildUser GetUser(ulong userId);
     IIzzyRole GetRole(ulong roleId);
     IIzzySocketGuildChannel GetChannel(ulong channelId);
     IIzzySocketTextChannel GetTextChannel(ulong channelId);

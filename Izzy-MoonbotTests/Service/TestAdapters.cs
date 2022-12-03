@@ -11,10 +11,13 @@ namespace Izzy_Moonbot.Adapters;
 // an asynchronous API, so there's no way to satisfy it without spawning useless threads.
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
 
-public class TestUser : IIzzyUser
+public class TestUser : IIzzyGuildUser
 {
     public ulong Id { get; }
     public string Username { get; }
+
+    // TODO: implement nicknames
+    public string DisplayName { get => Username; }
 
     public TestUser(string username, ulong id)
     {
@@ -250,7 +253,7 @@ public class TestGuild : IIzzyGuild
         return Task.FromResult((IReadOnlyCollection<IIzzyUser>)_stubGuild.Users.Where(user => user.Username.StartsWith(userSearchQuery)).ToList());
     }
 
-    public IIzzyUser GetUser(ulong userId) => _stubGuild.Users.Where(user => user.Id == userId).Single();
+    public IIzzyGuildUser GetUser(ulong userId) => _stubGuild.Users.Where(user => user.Id == userId).Single();
     public IIzzyRole GetRole(ulong roleId) => Roles.Where(role => role.Id == roleId).Single();
     public IIzzySocketGuildChannel GetChannel(ulong channelId)
     {
