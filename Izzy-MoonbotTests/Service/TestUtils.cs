@@ -15,7 +15,10 @@ public static class TestUtils
     {
         var izzyHerself = new TestUser("Izzy Moonbot", 1);
         var sunny = new TestUser("Sunny", 2);
-        var users = new List<TestUser> { izzyHerself, sunny };
+        var zipp = new TestUser("Zipp", 3);
+        var pipp = new TestUser("Pipp", 4);
+        var hitch = new TestUser("Hitch", 5);
+        var users = new List<TestUser> { izzyHerself, sunny, zipp, pipp, hitch };
 
         var roles = new List<TestRole> { new TestRole("Alicorn", 1), new TestRole("Pegasus", 2) };
 
