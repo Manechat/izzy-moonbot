@@ -7,7 +7,10 @@ public class QuoteStorage
 {
     public QuoteStorage()
     {
-        Quotes = new Dictionary<string, List<string>>();
+        Quotes = new Dictionary<
+            string, // either a stringified user id, or a category name
+            List<string>
+        >();
         Aliases = new Dictionary<string, string>();
     }
 
