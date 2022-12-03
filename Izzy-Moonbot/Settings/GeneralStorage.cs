@@ -1,3 +1,6 @@
+using Izzy_Moonbot.Helpers;
+using Izzy_Moonbot.Service;
+
 namespace Izzy_Moonbot.Settings;
 
 // General misc storage
@@ -7,5 +10,18 @@ public class GeneralStorage
 {
     public GeneralStorage()
     {
+        // Antiraid
+        CurrentRaidMode = RaidMode.None;
+        ManualRaidSilence = false;
+        
+        // Banner management
+        CurrentBooruFeaturedImage = null;
     }
+    
+    // Antiraid
+    public RaidMode CurrentRaidMode { get; set; }
+    public bool ManualRaidSilence { get; set; }
+    
+    // Banner management
+    public BooruImage? CurrentBooruFeaturedImage { get; set; }
 }
