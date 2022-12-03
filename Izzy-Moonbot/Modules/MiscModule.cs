@@ -202,17 +202,17 @@ public class MiscModule : ModuleBase<SocketCommandContext>
         }
 
         public async Task TestableQuoteCommandAsync(
-            IIzzyContext Context,
+            IIzzyContext context,
             string argsString = "")
         {
-            var defaultGuild = Context.Client.Guilds.Single(guild => guild.Id == DiscordHelper.DefaultGuild());
+            var defaultGuild = context.Client.Guilds.Single(guild => guild.Id == DiscordHelper.DefaultGuild());
             
             if (argsString == "")
             {
                 // Get random quote and post
                 var quote = _quoteService.GetRandomQuote(defaultGuild);
 
-                await Context.Channel.SendMessageAsync($"**{quote.Name} `#{quote.Id+1}`:** {quote.Content}", allowedMentions: AllowedMentions.None);
+                await context.Channel.SendMessageAsync($"**{quote.Name} `#{quote.Id+1}`:** {quote.Content}", allowedMentions: AllowedMentions.None);
                 return;
             }
 
@@ -220,7 +220,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
 
             if (search == "" && number != null)
             {
-                await Context.Channel.SendMessageAsync("You need to provide a user to get the quotes from!");
+                await context.Channel.SendMessageAsync("You need to provide a user to get the quotes from!");
                 return;
             }
 
@@ -243,12 +243,12 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                             var quote = _quoteService.GetRandomQuote(user);
 
                             // Send quote and return
-                            await Context.Channel.SendMessageAsync($"**{quote.Name} `#{quote.Id + 1}`:** {quote.Content}", allowedMentions: AllowedMentions.None);
+                            await context.Channel.SendMessageAsync($"**{quote.Name} `#{quote.Id + 1}`:** {quote.Content}", allowedMentions: AllowedMentions.None);
                             return;
                         }
                         catch (NullReferenceException)
                         {
-                            await Context.Channel.SendMessageAsync($"I couldn't find any quotes for that user.");
+                            await context.Channel.SendMessageAsync($"I couldn't find any quotes for that user.");
                             return;
                         }
                     }
@@ -262,12 +262,12 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                         var quote = _quoteService.GetRandomQuote(category);
 
                         // Send quote and return.
-                        await Context.Channel.SendMessageAsync($"**{quote.Name} `#{quote.Id + 1}`:** {quote.Content}", allowedMentions: AllowedMentions.None);
+                        await context.Channel.SendMessageAsync($"**{quote.Name} `#{quote.Id + 1}`:** {quote.Content}", allowedMentions: AllowedMentions.None);
                         return;
                     }
                     catch (NullReferenceException)
                     {
-                        await Context.Channel.SendMessageAsync($"I couldn't find any quotes in that category.");
+                        await context.Channel.SendMessageAsync($"I couldn't find any quotes in that category.");
                         return;
                     }
                 }
@@ -281,24 +281,24 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                         var quote = _quoteService.GetRandomQuote(search);
 
                         // Send quote and return
-                        await Context.Channel.SendMessageAsync($"**{quote.Name} `#{quote.Id+1}`:** {quote.Content}", allowedMentions: AllowedMentions.None);
+                        await context.Channel.SendMessageAsync($"**{quote.Name} `#{quote.Id+1}`:** {quote.Content}", allowedMentions: AllowedMentions.None);
                         return;
                     } 
                     catch (NullReferenceException)
                     {
-                        await Context.Channel.SendMessageAsync($"I couldn't find any quotes in that category.");
+                        await context.Channel.SendMessageAsync($"I couldn't find any quotes in that category.");
                         return;
                     }
                 }
                 // It isn't, this is a user.
-                var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(search, Context, true);
+                var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(search, context, true);
                 var member = defaultGuild.GetUser(userId);
                         
                 // Check if the user exists or not
                 if (member == null)
                 {
                     // They don't, send a fail message and return.
-                    await Context.Channel.SendMessageAsync("I was unable to find the user you asked for. Sorry!");
+                    await context.Channel.SendMessageAsync("I was unable to find the user you asked for. Sorry!");
                     return;
                 }
                     
@@ -308,12 +308,12 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                     var quote = _quoteService.GetRandomQuote(member);
 
                     // Send quote and return
-                    await Context.Channel.SendMessageAsync($"**{quote.Name} `#{quote.Id+1}`:** {quote.Content}", allowedMentions: AllowedMentions.None);
+                    await context.Channel.SendMessageAsync($"**{quote.Name} `#{quote.Id+1}`:** {quote.Content}", allowedMentions: AllowedMentions.None);
                     return;
                 } 
                 catch (NullReferenceException)
                 {
-                    await Context.Channel.SendMessageAsync($"I couldn't find any for that user.");
+                    await context.Channel.SendMessageAsync($"I couldn't find any for that user.");
                     return;
                 }
             }
@@ -322,7 +322,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
             {
                 if (number.Value <= 0)
                 {
-                    await Context.Channel.SendMessageAsync($"Quotes begin at #1, not #{number.Value}!");
+                    await context.Channel.SendMessageAsync($"Quotes begin at #1, not #{number.Value}!");
                     return;
                 }
                 
@@ -340,17 +340,17 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                             var quote = _quoteService.GetQuote(user, number.Value - 1);
 
                             // Send quote and return
-                            await Context.Channel.SendMessageAsync($"**{quote.Name} `#{quote.Id + 1}`:** {quote.Content}", allowedMentions: AllowedMentions.None);
+                            await context.Channel.SendMessageAsync($"**{quote.Name} `#{quote.Id + 1}`:** {quote.Content}", allowedMentions: AllowedMentions.None);
                             return;
                         }
                         catch (NullReferenceException)
                         {
-                            await Context.Channel.SendMessageAsync($"I couldn't find any quotes for that user.");
+                            await context.Channel.SendMessageAsync($"I couldn't find any quotes for that user.");
                             return;
                         }
                         catch (IndexOutOfRangeException)
                         {
-                            await Context.Channel.SendMessageAsync($"I couldn't find that quote, sorry!");
+                            await context.Channel.SendMessageAsync($"I couldn't find that quote, sorry!");
                             return;
                         }
                     }
@@ -363,17 +363,17 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                         var quote = _quoteService.GetQuote(category, number.Value-1);
 
                         // Send quote and return.
-                        await Context.Channel.SendMessageAsync($"**{quote.Name} `#{quote.Id+1}`:** {quote.Content}", allowedMentions: AllowedMentions.None);
+                        await context.Channel.SendMessageAsync($"**{quote.Name} `#{quote.Id+1}`:** {quote.Content}", allowedMentions: AllowedMentions.None);
                         return;
                     }
                     catch (NullReferenceException)
                     {
-                        await Context.Channel.SendMessageAsync($"I couldn't find any quotes in that category.");
+                        await context.Channel.SendMessageAsync($"I couldn't find any quotes in that category.");
                         return;
                     }
                     catch (IndexOutOfRangeException)
                     {
-                        await Context.Channel.SendMessageAsync($"I couldn't find that quote, sorry!");
+                        await context.Channel.SendMessageAsync($"I couldn't find that quote, sorry!");
                         return;
                     }
                 }
@@ -387,29 +387,29 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                         var quote = _quoteService.GetQuote(search, number.Value-1);
 
                         // Send quote and return
-                        await Context.Channel.SendMessageAsync($"**{quote.Name} `#{quote.Id+1}`:** {quote.Content}", allowedMentions: AllowedMentions.None);
+                        await context.Channel.SendMessageAsync($"**{quote.Name} `#{quote.Id+1}`:** {quote.Content}", allowedMentions: AllowedMentions.None);
                         return;
                     } 
                     catch (NullReferenceException)
                     {
-                        await Context.Channel.SendMessageAsync($"I couldn't find any quotes in that category.");
+                        await context.Channel.SendMessageAsync($"I couldn't find any quotes in that category.");
                         return;
                     }
                     catch (IndexOutOfRangeException)
                     {
-                        await Context.Channel.SendMessageAsync($"I couldn't find that quote, sorry!");
+                        await context.Channel.SendMessageAsync($"I couldn't find that quote, sorry!");
                         return;
                     }
                 }
                 // It isn't, this is a user.
-                var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(search, Context, true);
+                var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(search, context, true);
                 var member = defaultGuild.GetUser(userId);
                 
                 // Check if the user exists or not
                 if (member == null)
                 {
                     // They don't, send a fail message and return.
-                    await Context.Channel.SendMessageAsync("I was unable to find the user you asked for. Sorry!");
+                    await context.Channel.SendMessageAsync("I was unable to find the user you asked for. Sorry!");
                     return;
                 }
                 
@@ -419,22 +419,22 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                     var quote = _quoteService.GetQuote(member, number.Value-1);
 
                     // Send quote and return
-                    await Context.Channel.SendMessageAsync($"**{quote.Name} `#{quote.Id+1}`:** {quote.Content}", allowedMentions: AllowedMentions.None);
+                    await context.Channel.SendMessageAsync($"**{quote.Name} `#{quote.Id+1}`:** {quote.Content}", allowedMentions: AllowedMentions.None);
                     return;
                 } 
                 catch (NullReferenceException)
                 {
-                    await Context.Channel.SendMessageAsync($"I couldn't find any quotes in that category.");
+                    await context.Channel.SendMessageAsync($"I couldn't find any quotes in that category.");
                     return;
                 }
                 catch (IndexOutOfRangeException)
                 {
-                    await Context.Channel.SendMessageAsync($"I couldn't find that quote, sorry!");
+                    await context.Channel.SendMessageAsync($"I couldn't find that quote, sorry!");
                     return;
                 }
             }
 
-            await Context.Channel.SendMessageAsync($"I... don't know what you want me to do?");
+            await context.Channel.SendMessageAsync($"I... don't know what you want me to do?");
         }
 
         [Command("listquotes")]
@@ -454,10 +454,10 @@ public class MiscModule : ModuleBase<SocketCommandContext>
         }
 
         public async Task TestableListQuotesCommandAsync(
-            IIzzyContext Context,
+            IIzzyContext context,
             string search = "")
         {
-            var defaultGuild = Context.Client.Guilds.Single(guild => guild.Id == DiscordHelper.DefaultGuild());
+            var defaultGuild = context.Client.Guilds.Single(guild => guild.Id == DiscordHelper.DefaultGuild());
             
             if (search == "")
             {
@@ -489,11 +489,11 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                         $"Run `{_config.Prefix}quote` for a random quote from a random user/category."
                     };
 
-                    var paginationMessage = new PaginationHelper(Context, pages.ToArray(), staticParts, allowedMentions: AllowedMentions.None);
+                    var paginationMessage = new PaginationHelper(context, pages.ToArray(), staticParts, allowedMentions: AllowedMentions.None);
                     return;
                 }
                 // No pagination, just output
-                await Context.Channel.SendMessageAsync($"Here's a list of users/categories of quotes I've found.{Environment.NewLine}```{Environment.NewLine}" +
+                await context.Channel.SendMessageAsync($"Here's a list of users/categories of quotes I've found.{Environment.NewLine}```{Environment.NewLine}" +
                                  $"{string.Join(Environment.NewLine, quoteKeys)}{Environment.NewLine}```{Environment.NewLine}" +
                                  $"Run `{_config.Prefix}quote <user/category>` to get a random quote from that user/category if specified.{Environment.NewLine}" +
                                  $"Run `{_config.Prefix}quote` for a random quote from a random user/category.", allowedMentions: AllowedMentions.None);
@@ -540,11 +540,11 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                                 $"Run `{_config.Prefix}quote` for a random quote from a random user/category."
                             };
 
-                            var paginationMessage = new PaginationHelper(Context, pages.ToArray(), staticParts, allowedMentions: AllowedMentions.None);
+                            var paginationMessage = new PaginationHelper(context, pages.ToArray(), staticParts, allowedMentions: AllowedMentions.None);
                             return;
                         }
                         // No pagination, just output
-                        await Context.Channel.SendMessageAsync($"Here's all the quotes I could find for **{user.Username}#{user.Discriminator}**.{Environment.NewLine}```{Environment.NewLine}" +
+                        await context.Channel.SendMessageAsync($"Here's all the quotes I could find for **{user.Username}#{user.Discriminator}**.{Environment.NewLine}```{Environment.NewLine}" +
                                          $"{string.Join(Environment.NewLine, quotes)}{Environment.NewLine}```{Environment.NewLine}" +
                                          $"Run `{_config.Prefix}quote <user/category> <number>` to get a specific quote.{Environment.NewLine}" +
                                          $"Run `{_config.Prefix}quote <user/category>` to get a random quote from that user/category.{Environment.NewLine}" +
@@ -553,7 +553,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                     }
                     catch (NullReferenceException)
                     {
-                        await Context.Channel.SendMessageAsync($"I couldn't find any quotes for that user.");
+                        await context.Channel.SendMessageAsync($"I couldn't find any quotes for that user.");
                         return;
                     }
                 }
@@ -591,11 +591,11 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                                 $"Run `{_config.Prefix}quote` for a random quote from a random user/category."
                             };
 
-                            var paginationMessage = new PaginationHelper(Context, pages.ToArray(), staticParts, allowedMentions: AllowedMentions.None);
+                            var paginationMessage = new PaginationHelper(context, pages.ToArray(), staticParts, allowedMentions: AllowedMentions.None);
                             return;
                         }
                         // No pagination, just output
-                        await Context.Channel.SendMessageAsync($"Here's all the quotes I could find in **{category}**.{Environment.NewLine}```{Environment.NewLine}" +
+                        await context.Channel.SendMessageAsync($"Here's all the quotes I could find in **{category}**.{Environment.NewLine}```{Environment.NewLine}" +
                                          $"{string.Join(Environment.NewLine, quotes)}{Environment.NewLine}```{Environment.NewLine}" +
                                          $"Run `{_config.Prefix}quote <user/category> <number>` to get a specific quote.{Environment.NewLine}" +
                                          $"Run `{_config.Prefix}quote <user/category>` to get a random quote from that user/category.{Environment.NewLine}" +
@@ -604,7 +604,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                 }
                 catch (NullReferenceException)
                 {
-                    await Context.Channel.SendMessageAsync($"I couldn't find any quotes in that category.");
+                    await context.Channel.SendMessageAsync($"I couldn't find any quotes in that category.");
                     return;
                 }
             }
@@ -643,11 +643,11 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                                 $"Run `{_config.Prefix}quote` for a random quote from a random user/category."
                             };
 
-                            var paginationMessage = new PaginationHelper(Context, pages.ToArray(), staticParts, allowedMentions: AllowedMentions.None);
+                            var paginationMessage = new PaginationHelper(context, pages.ToArray(), staticParts, allowedMentions: AllowedMentions.None);
                             return;
                         }
                         // No pagination, just output
-                        await Context.Channel.SendMessageAsync($"Here's all the quotes I could find in **{search}**.{Environment.NewLine}```{Environment.NewLine}" +
+                        await context.Channel.SendMessageAsync($"Here's all the quotes I could find in **{search}**.{Environment.NewLine}```{Environment.NewLine}" +
                                          $"{string.Join(Environment.NewLine, quotes)}{Environment.NewLine}```{Environment.NewLine}" +
                                          $"Run `{_config.Prefix}quote <user/category> <number>` to get a specific quote.{Environment.NewLine}" +
                                          $"Run `{_config.Prefix}quote <user/category>` to get a random quote from that user/category.{Environment.NewLine}" +
@@ -656,19 +656,19 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                 } 
                 catch (NullReferenceException)
                 {
-                    await Context.Channel.SendMessageAsync($"I couldn't find any quotes in that category.");
+                    await context.Channel.SendMessageAsync($"I couldn't find any quotes in that category.");
                     return;
                 }
             }
             // It isn't, this is a user.
-            var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(search, Context, true);
+            var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(search, context, true);
             var member = defaultGuild.GetUser(userId);
             
             // Check if the user exists or not
             if (member == null)
             {
                 // They don't, send a fail message and return.
-                await Context.Channel.SendMessageAsync("I was unable to find the user you asked for. Sorry!");
+                await context.Channel.SendMessageAsync("I was unable to find the user you asked for. Sorry!");
                 return;
             }
             
@@ -703,11 +703,11 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                                 $"Run `{_config.Prefix}quote` for a random quote from a random user/category."
                             };
 
-                            var paginationMessage = new PaginationHelper(Context, pages.ToArray(), staticParts, allowedMentions: AllowedMentions.None);
+                            var paginationMessage = new PaginationHelper(context, pages.ToArray(), staticParts, allowedMentions: AllowedMentions.None);
                             return;
                         }
                         // No pagination, just output
-                        await Context.Channel.SendMessageAsync($"Here's all the quotes I could find for **{member.DisplayName}**.{Environment.NewLine}```{Environment.NewLine}" +
+                        await context.Channel.SendMessageAsync($"Here's all the quotes I could find for **{member.DisplayName}**.{Environment.NewLine}```{Environment.NewLine}" +
                                          $"{string.Join(Environment.NewLine, quotes)}{Environment.NewLine}```{Environment.NewLine}" +
                                          $"Run `{_config.Prefix}quote <user/category> <number>` to get a specific quote.{Environment.NewLine}" +
                                          $"Run `{_config.Prefix}quote <user/category>` to get a random quote from that user/category.{Environment.NewLine}" +
@@ -716,7 +716,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
             } 
             catch (NullReferenceException)
             {
-                await Context.Channel.SendMessageAsync($"I couldn't find any quotes in that category.");
+                await context.Channel.SendMessageAsync($"I couldn't find any quotes in that category.");
                 return;
             }
         }
@@ -740,12 +740,12 @@ public class MiscModule : ModuleBase<SocketCommandContext>
         }
 
         public async Task TestableAddQuoteCommandAsync(
-            IIzzyContext Context,
+            IIzzyContext context,
             string argsString = "")
         {
             if (argsString == "")
             {
-                await Context.Channel.SendMessageAsync(
+                await context.Channel.SendMessageAsync(
                     "You need to tell me the user you want to add the quote to, and the content of the quote.");
                 return;
             }
@@ -757,13 +757,13 @@ public class MiscModule : ModuleBase<SocketCommandContext>
 
             if (user == "")
             {
-                await Context.Channel.SendMessageAsync("You need to tell me the user/category you want to add the quote to.");
+                await context.Channel.SendMessageAsync("You need to tell me the user/category you want to add the quote to.");
                 return;
             }
 
             if (content == "")
             {
-                await Context.Channel.SendMessageAsync("You need to provide content to add.");
+                await context.Channel.SendMessageAsync("You need to provide content to add.");
                 return;
             }
             
@@ -775,22 +775,22 @@ public class MiscModule : ModuleBase<SocketCommandContext>
             // Check for aliases
             if (_quoteService.AliasExists(user))
             {
-                if (_quoteService.AliasRefersTo(user, Context.Guild) == "user")
+                if (_quoteService.AliasRefersTo(user, context.Guild) == "user")
                 {
-                    var quoteUser = _quoteService.ProcessAlias(user, Context.Guild);
+                    var quoteUser = _quoteService.ProcessAlias(user, context.Guild);
 
                     var newAliasUserQuote = await _quoteService.AddQuote(quoteUser, content);
 
-                    await Context.Channel.SendMessageAsync(
+                    await context.Channel.SendMessageAsync(
                         $"Added the quote to **{quoteUser.Username}#{quoteUser.Discriminator}** as quote number {newAliasUserQuote.Id + 1}.{Environment.NewLine}" +
                         $"> {newAliasUserQuote.Content}", allowedMentions: AllowedMentions.None);
                     return;
                 }
-                var quoteCategory = _quoteService.ProcessAlias(user, Context.Guild);
+                var quoteCategory = _quoteService.ProcessAlias(user, context.Guild);
                     
                 var newAliasCategoryQuote = await _quoteService.AddQuote(quoteCategory, content);
 
-                await Context.Channel.SendMessageAsync(
+                await context.Channel.SendMessageAsync(
                     $"Added the quote to **{newAliasCategoryQuote.Name}** as quote number {newAliasCategoryQuote.Id + 1}.{Environment.NewLine}" +
                     $"> {newAliasCategoryQuote.Content}", allowedMentions: AllowedMentions.None);
                 return;
@@ -802,22 +802,22 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                 // Category exists, add new quote to it.
                 var newCategoryQuote = await _quoteService.AddQuote(user, content);
 
-                await Context.Channel.SendMessageAsync(
+                await context.Channel.SendMessageAsync(
                     $"Added the quote to **{user}** as quote number {newCategoryQuote.Id + 1}.{Environment.NewLine}" +
                     $"> {newCategoryQuote.Content}", allowedMentions: AllowedMentions.None);
                 return;
             }
                 
             // Now check user
-            var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(user, Context);
-            var member = Context.Guild.GetUser(userId);
+            var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(user, context);
+            var member = context.Guild.GetUser(userId);
 
             if (member == null)
             {
                 // New category
                 var newCategoryNewQuote = await _quoteService.AddQuote(user, content);
 
-                await Context.Channel.SendMessageAsync(
+                await context.Channel.SendMessageAsync(
                     $"Added the quote to **{user}** as quote number {newCategoryNewQuote.Id + 1}.{Environment.NewLine}" +
                     $"> {newCategoryNewQuote.Content}", allowedMentions: AllowedMentions.None);
                 return;
@@ -825,7 +825,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                 
             var newUserQuote = await _quoteService.AddQuote(member, content);
 
-            await Context.Channel.SendMessageAsync(
+            await context.Channel.SendMessageAsync(
                 $"Added the quote to **{newUserQuote.Name}** as quote number {newUserQuote.Id + 1}.{Environment.NewLine}" +
                 $"> {newUserQuote.Content}", allowedMentions: AllowedMentions.None);
             return;
@@ -849,12 +849,12 @@ public class MiscModule : ModuleBase<SocketCommandContext>
         }
 
         public async Task TestableRemoveQuoteCommandAsync(
-            IIzzyContext Context,
+            IIzzyContext context,
             string argsString = "")
         {
             if (argsString == "")
             {
-                await Context.Channel.SendMessageAsync(
+                await context.Channel.SendMessageAsync(
                     "You need to tell me the user you want to remove the quote from, and the quote number to remove.");
                 return;
             }
@@ -863,34 +863,34 @@ public class MiscModule : ModuleBase<SocketCommandContext>
 
             if (user == "")
             {
-                await Context.Channel.SendMessageAsync("You need to tell me the user/category you want to remove the quote from.");
+                await context.Channel.SendMessageAsync("You need to tell me the user/category you want to remove the quote from.");
                 return;
             }
 
             if (number == null)
             {
-                await Context.Channel.SendMessageAsync("You need to tell me the quote number to remove.");
+                await context.Channel.SendMessageAsync("You need to tell me the quote number to remove.");
                 return;
             }
 
             // Check for aliases
             if (_quoteService.AliasExists(user))
             {
-                if (_quoteService.AliasRefersTo(user, Context.Guild) == "user")
+                if (_quoteService.AliasRefersTo(user, context.Guild) == "user")
                 {
-                    var quoteUser = _quoteService.ProcessAlias(user, Context.Guild);
+                    var quoteUser = _quoteService.ProcessAlias(user, context.Guild);
 
                     var newAliasUserQuote = await _quoteService.RemoveQuote(quoteUser, number.Value-1);
 
-                    await Context.Channel.SendMessageAsync(
+                    await context.Channel.SendMessageAsync(
                         $"Removed quote number {number.Value} from **{quoteUser.Username}#{quoteUser.Discriminator}**.", allowedMentions: AllowedMentions.None);
                     return;
                 }
-                var quoteCategory = _quoteService.ProcessAlias(user, Context.Guild);
+                var quoteCategory = _quoteService.ProcessAlias(user, context.Guild);
                     
                 var newAliasCategoryQuote = await _quoteService.RemoveQuote(quoteCategory, number.Value-1);
 
-                await Context.Channel.SendMessageAsync(
+                await context.Channel.SendMessageAsync(
                     $"Removed quote number {number.Value} from **{newAliasCategoryQuote.Name}**.", allowedMentions: AllowedMentions.None);
                 return;
             }
@@ -901,25 +901,25 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                 // Category exists, add new quote to it.
                 var newCategoryQuote = await _quoteService.RemoveQuote(user, number.Value-1);
 
-                await Context.Channel.SendMessageAsync(
+                await context.Channel.SendMessageAsync(
                     $"Removed quote number {number.Value} from **{newCategoryQuote.Name}**.", allowedMentions: AllowedMentions.None);
                 return;
             }
                 
             // Now check user
-            var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(user, Context);
-            var member = Context.Guild.GetUser(userId);
+            var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(user, context);
+            var member = context.Guild.GetUser(userId);
 
             if (member == null)
             {
-                await Context.Channel.SendMessageAsync(
+                await context.Channel.SendMessageAsync(
                     $"Sorry, I couldn't find that user");
                 return;
             }
                 
             var newUserQuote = await _quoteService.RemoveQuote(member, number.Value-1);
 
-            await Context.Channel.SendMessageAsync(
+            await context.Channel.SendMessageAsync(
                 $"Removed quote number {number.Value} from **{newUserQuote.Name}**.", allowedMentions: AllowedMentions.None);
             return;
         }
@@ -942,12 +942,12 @@ public class MiscModule : ModuleBase<SocketCommandContext>
         }
 
         public async Task TestableQuoteAliasCommandAsync(
-            IIzzyContext Context,
+            IIzzyContext context,
             string argsString = "")
         {
             if (argsString == "")
             {
-                await Context.Channel.SendMessageAsync($"Hiya! This is how to use the quote alias command!{Environment.NewLine}" +
+                await context.Channel.SendMessageAsync($"Hiya! This is how to use the quote alias command!{Environment.NewLine}" +
                                  $"`{_config.Prefix}quotealias get <alias>` - Work out what an alias maps to.{Environment.NewLine}" +
                                  $"`{_config.Prefix}quotealias list` - List all aliases.{Environment.NewLine}" +
                                  $"`{_config.Prefix}quotealias set/add <alias> <user/category>` - Creates an alias.{Environment.NewLine}" +
@@ -965,7 +965,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
             {
                 var aliases = _quoteService.GetAliasKeyList();
 
-                await Context.Channel.SendMessageAsync(
+                await context.Channel.SendMessageAsync(
                     $"Here's all the aliases I could find.{Environment.NewLine}```{Environment.NewLine}" +
                     $"{string.Join(", ", aliases)}{Environment.NewLine}```{Environment.NewLine}" +
                     $"Run `{_config.Prefix}quotealias get <alias>` to find out what an alias maps to.{Environment.NewLine}" +
@@ -976,24 +976,24 @@ public class MiscModule : ModuleBase<SocketCommandContext>
             {
                 if (alias == "")
                 {
-                    await Context.Channel.SendMessageAsync("Uhhh... I can't get an alias if you haven't told me what alias you want...");
+                    await context.Channel.SendMessageAsync("Uhhh... I can't get an alias if you haven't told me what alias you want...");
                     return;
                 }
                 
                 if (_quoteService.AliasExists(alias))
                 {
-                    if (_quoteService.AliasRefersTo(alias, Context.Guild) == "user")
+                    if (_quoteService.AliasRefersTo(alias, context.Guild) == "user")
                     {
-                        var user = _quoteService.ProcessAlias(alias, Context.Guild);
+                        var user = _quoteService.ProcessAlias(alias, context.Guild);
 
-                        await Context.Channel.SendMessageAsync(
+                        await context.Channel.SendMessageAsync(
                             $"Quote alias **{alias}** maps to user **{user.Username}#{user.Discriminator}**.", allowedMentions: AllowedMentions.None);
                     }
                     else
                     {
                         var category = _quoteService.ProcessAlias(alias);
 
-                        await Context.Channel.SendMessageAsync(
+                        await context.Channel.SendMessageAsync(
                             $"Quote alias **{alias}** maps to category **{category}**.", allowedMentions: AllowedMentions.None);
                     }
                 }
@@ -1001,13 +1001,13 @@ public class MiscModule : ModuleBase<SocketCommandContext>
             {
                 if (alias == "")
                 {
-                    await Context.Channel.SendMessageAsync("You need to provide an alias to create.");
+                    await context.Channel.SendMessageAsync("You need to provide an alias to create.");
                     return;
                 }
 
                 if (target == "")
                 {
-                    await Context.Channel.SendMessageAsync("You need to provide a user or category name to set the alias to.");
+                    await context.Channel.SendMessageAsync("You need to provide a user or category name to set the alias to.");
                     return;
                 }
 
@@ -1015,38 +1015,38 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                 {
                     await _quoteService.AddAlias(alias, target);
                     
-                    await Context.Channel.SendMessageAsync($"Added alias **{alias}** to map to category **{target}**.", allowedMentions: AllowedMentions.None);
+                    await context.Channel.SendMessageAsync($"Added alias **{alias}** to map to category **{target}**.", allowedMentions: AllowedMentions.None);
                 }
                 else
                 {
-                    var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(target, Context);
-                    var member = Context.Guild.GetUser(userId);
+                    var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(target, context);
+                    var member = context.Guild.GetUser(userId);
 
                     if (member == null)
                     {
                         // Category
-                        await Context.Channel.SendMessageAsync($"I couldn't find a user or category with the target you provided.");
+                        await context.Channel.SendMessageAsync($"I couldn't find a user or category with the target you provided.");
                         return;
                     }
 
                     await _quoteService.AddAlias(alias, member);
 
-                    await Context.Channel.SendMessageAsync($"Added alias **{alias}** to map to user **{target}**.", allowedMentions: AllowedMentions.None);
+                    await context.Channel.SendMessageAsync($"Added alias **{alias}** to map to user **{target}**.", allowedMentions: AllowedMentions.None);
                 }
             } else if (operation.ToLower() == "delete" || operation.ToLower() == "remove")
             {
                 if (alias == "")
                 {
-                    await Context.Channel.SendMessageAsync("Uhhh... I can't delete an alias if you haven't told me what alias you want to delete...");
+                    await context.Channel.SendMessageAsync("Uhhh... I can't delete an alias if you haven't told me what alias you want to delete...");
                     return;
                 }
                 await _quoteService.RemoveAlias(alias);
 
-                await Context.Channel.SendMessageAsync($"Removed alias **{alias}**.", allowedMentions: AllowedMentions.None);
+                await context.Channel.SendMessageAsync($"Removed alias **{alias}**.", allowedMentions: AllowedMentions.None);
             }
             else
             {
-                await Context.Channel.SendMessageAsync(
+                await context.Channel.SendMessageAsync(
                     "Sorry, I don't understand what you want me to do.");
             }
         }
