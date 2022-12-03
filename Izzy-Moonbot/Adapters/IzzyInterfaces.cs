@@ -80,10 +80,10 @@ public interface IIzzyGuild
     Task<IReadOnlyCollection<IIzzyUser>> SearchUsersAsync(string userSearchQuery);
     IReadOnlyCollection<IIzzySocketTextChannel> TextChannels { get; }
     IReadOnlyCollection<IIzzyRole> Roles { get; }
-    IIzzyGuildUser GetUser(ulong userId);
-    IIzzyRole GetRole(ulong roleId);
-    IIzzySocketGuildChannel GetChannel(ulong channelId);
-    IIzzySocketTextChannel GetTextChannel(ulong channelId);
+    IIzzyGuildUser? GetUser(ulong userId);
+    IIzzyRole? GetRole(ulong roleId);
+    IIzzySocketGuildChannel? GetChannel(ulong channelId);
+    IIzzySocketTextChannel? GetTextChannel(ulong channelId);
 }
 
 public interface IIzzyClient

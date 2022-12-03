@@ -253,17 +253,17 @@ public class TestGuild : IIzzyGuild
         return Task.FromResult((IReadOnlyCollection<IIzzyUser>)_stubGuild.Users.Where(user => user.Username.StartsWith(userSearchQuery)).ToList());
     }
 
-    public IIzzyGuildUser GetUser(ulong userId) => _stubGuild.Users.Where(user => user.Id == userId).Single();
-    public IIzzyRole GetRole(ulong roleId) => Roles.Where(role => role.Id == roleId).Single();
-    public IIzzySocketGuildChannel GetChannel(ulong channelId)
+    public IIzzyGuildUser? GetUser(ulong userId) => _stubGuild.Users.Where(user => user.Id == userId).SingleOrDefault();
+    public IIzzyRole? GetRole(ulong roleId) => Roles.Where(role => role.Id == roleId).SingleOrDefault();
+    public IIzzySocketGuildChannel? GetChannel(ulong channelId)
     {
-        var tc = TextChannels.Where(tc => tc.Id == channelId).Single();
-        return new TestGuildChannel(tc.Name, tc.Id);
+        var tc = TextChannels.Where(tc => tc.Id == channelId).SingleOrDefault();
+        return tc is null ? null : new TestGuildChannel(tc.Name, tc.Id);
     }
-    public IIzzySocketTextChannel GetTextChannel(ulong channelId)
+    public IIzzySocketTextChannel? GetTextChannel(ulong channelId)
     {
-        var tc = TextChannels.Where(tc => tc.Id == channelId).Single();
-        return new TestTextChannel(_stubGuild, tc.Id, tc.Name, _clientBackref);
+        var tc = TextChannels.Where(tc => tc.Id == channelId).SingleOrDefault();
+        return tc is null ? null : new TestTextChannel(_stubGuild, tc.Id, tc.Name, _clientBackref);
     }
 }
 
