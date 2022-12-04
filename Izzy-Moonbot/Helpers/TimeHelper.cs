@@ -1,8 +1,7 @@
 using System;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.SignalR.Protocol;
+using Izzy_Moonbot.Helpers;
 
 namespace Izzy_Moonbot.Helpers;
 
@@ -98,7 +97,7 @@ public static class TimeHelper
                         return ConvertAbsolute(date.Value.Trim().ToLower(), month.Value.Trim().ToLower(),
                             year.Value.Trim().ToLower() != ""
                                 ? year.Value.Trim().ToLower()
-                                : DateTimeOffset.UtcNow.Year.ToString(), time.Value.Trim().ToLower());
+                                : DateTimeHelper.UtcNow.Year.ToString(), time.Value.Trim().ToLower());
                     }
                     
                     throw new FormatException("UNKNOWN_QUERY: The provided string doesn't match any possible date format.");
@@ -200,7 +199,7 @@ public static class TimeHelper
                     return ConvertAbsolute(date.Value.Trim().ToLower(), month.Value.Trim().ToLower(),
                         year.Value.Trim().ToLower() != ""
                             ? year.Value.Trim().ToLower()
-                            : DateTimeOffset.UtcNow.Year.ToString(),
+                            : DateTimeHelper.UtcNow.Year.ToString(),
                         time.Value.Trim().ToLower());
 
                 throw new FormatException("UNKNOWN_QUERY: The provided string doesn't match any possible date format.");
@@ -221,7 +220,7 @@ public static class TimeHelper
                 throw new FormatException("DATE_NOT_INT: Couldn't convert what should be a number to a number.");
         }
 
-        var dateTime = DateTimeOffset.UtcNow;
+        var dateTime = DateTimeHelper.UtcNow;
         
         switch (month)
         {
@@ -276,7 +275,7 @@ public static class TimeHelper
 
         var daysToAdd = 0;
 
-        var dateTime = DateTimeOffset.UtcNow;
+        var dateTime = DateTimeHelper.UtcNow;
         var currentWeekDay = (int) dateTime.DayOfWeek;
         
         // monday -> friday = 4
@@ -304,8 +303,8 @@ public static class TimeHelper
         var hourInt = convertedTime[0];
         var minuteInt = convertedTime[1];
 
-        var outputDateTime = new DateTimeOffset(DateTimeOffset.UtcNow.Year, DateTimeOffset.UtcNow.Month,
-            DateTimeOffset.UtcNow.Day, hourInt, minuteInt, 0, TimeSpan.Zero);
+        var outputDateTime = new DateTimeOffset(DateTimeHelper.UtcNow.Year, DateTimeHelper.UtcNow.Month,
+            DateTimeHelper.UtcNow.Day, hourInt, minuteInt, 0, TimeSpan.Zero);
         
         return new TimeHelperResponse(outputDateTime, false, null);
     }
@@ -432,7 +431,7 @@ public static class TimeHelper
                 throw new FormatException("DATE_NOT_INT: Couldn't convert what should be a number to a number.");
         }
 
-        var dateTime = DateTimeOffset.UtcNow;
+        var dateTime = DateTimeHelper.UtcNow;
         
         switch (month)
         {
@@ -487,7 +486,7 @@ public static class TimeHelper
 
         var daysToAdd = 0;
 
-        var dateTime = DateTimeOffset.UtcNow;
+        var dateTime = DateTimeHelper.UtcNow;
         var currentWeekDay = (int) dateTime.DayOfWeek;
         
         // monday -> friday = 4
@@ -515,8 +514,8 @@ public static class TimeHelper
         var hourInt = convertedTime[0];
         var minuteInt = convertedTime[1];
 
-        var outputDateTime = new DateTimeOffset(DateTimeOffset.UtcNow.Year, DateTimeOffset.UtcNow.Month,
-            DateTimeOffset.UtcNow.Day, hourInt, minuteInt, 0, TimeSpan.Zero);
+        var outputDateTime = new DateTimeOffset(DateTimeHelper.UtcNow.Year, DateTimeHelper.UtcNow.Month,
+            DateTimeHelper.UtcNow.Day, hourInt, minuteInt, 0, TimeSpan.Zero);
         
         return new TimeHelperResponse(outputDateTime, true, "daily");
     }
@@ -565,9 +564,9 @@ public static class TimeHelper
 
         if (dateInt == 0) throw new FormatException("DAY_INVALID: Day is invalid.");
 
-        var dateTime = new DateTimeOffset(DateTimeOffset.UtcNow.Year, monthInt, dateInt, hourInt, minuteInt, 0, TimeSpan.Zero);
+        var dateTime = new DateTimeOffset(DateTimeHelper.UtcNow.Year, monthInt, dateInt, hourInt, minuteInt, 0, TimeSpan.Zero);
 
-        if (DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() > dateTime.ToUnixTimeMilliseconds()) 
+        if (DateTimeHelper.UtcNow.ToUnixTimeMilliseconds() > dateTime.ToUnixTimeMilliseconds()) 
             dateTime = dateTime.AddYears(1);
 
         return new TimeHelperResponse(dateTime, true, "yearly");
