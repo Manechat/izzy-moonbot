@@ -89,9 +89,6 @@ public class Program
             // EventListeners
             services.AddSingleton<ConfigListener>();
             services.AddSingleton<UserListener>();
-            
-            // Misc
-            services.AddTransient<IDateTimeService, DateTimeService>();
 
             services.AddHostedService<Worker>();
         });
