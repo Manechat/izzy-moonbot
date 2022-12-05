@@ -51,7 +51,7 @@ public class SpamService
      * The test string is a way to test the spam filter without actually spamming
      * The test string is programmed to immediately set pressure to Config.SpamMaxPressure and is not defined if the bot is built with the Release flag.
      */
-    private readonly string _testString = "=+i7B3s+#(-{×jn6Ga3F~lA:IZZY_PRESSURE_TEST:H4fgd3!#!";
+    public readonly static string _testString = "=+i7B3s+#(-{×jn6Ga3F~lA:IZZY_PRESSURE_TEST:H4fgd3!#!";
     #endif
     
     // Pull services from the service system
