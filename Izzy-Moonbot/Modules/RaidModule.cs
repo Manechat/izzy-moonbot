@@ -92,29 +92,4 @@ public class RaidModule : ModuleBase<SocketCommandContext>
         await ReplyAsync(
             $"I consider the following users as part of the current raid.{Environment.NewLine}```{Environment.NewLine}{string.Join(", ", potentialRaiders)}{Environment.NewLine}```");
     }
-
-    /*[Command("banraid")]
-    [Summary("Ban all those considered part of the current raid. **ONLY USE AS LAST RESORT**")]
-    [RequireContext(ContextType.Guild)]
-    [ModCommand(Group = "Permissions")]
-    [DevCommand(Group = "Permissions")]
-    public async Task BanRaidAsync()
-    {
-        if (_generalStorage.CurrentRaidMode == RaidMode.NONE)
-        {
-            await ReplyAsync("There doesn't seem to be any raids going on...", messageReference: new Discord.MessageReference(Context.Message.Id, Context.Channel.Id, Context.Guild.Id));
-            return;
-        }
-
-        List<string> potentialRaiders = new List<string>();
-
-        _raidService.GetRecentJoins(Context).ForEach((user) =>
-        {
-            potentialRaiders.Add($"{user.Username}#{user.Discriminator}");
-
-            Context.Guild.AddBanAsync(user, pruneDays: 7, reason: "Ban Raid Command");
-        });
-
-        await ReplyAsync($"I consider the following users as part of the current raid and thus have been banned.{Environment.NewLine}```{Environment.NewLine}{string.Join(", ", potentialRaiders)}{Environment.NewLine}```", messageReference: new Discord.MessageReference(Context.Message.Id, Context.Channel.Id, Context.Guild.Id));
-    }*/
 }
