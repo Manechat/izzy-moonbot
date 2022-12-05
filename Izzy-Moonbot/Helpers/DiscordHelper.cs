@@ -89,7 +89,7 @@ public static class DiscordHelper
         return settings;
     }
     
-    public static bool IsProcessableMessage(SocketMessage msg)
+    public static bool IsProcessableMessage(IIzzyMessage msg)
     {
         if (msg.Type != MessageType.Default && msg.Type != MessageType.Reply &&
             msg.Type != MessageType.ThreadStarterMessage) return false;
@@ -191,7 +191,7 @@ public static class DiscordHelper
         public int[] Indices;
     }
 
-    public static bool IsInGuild(SocketMessage msg)
+    public static bool IsInGuild(IIzzyMessage msg)
     {
         if (msg.Channel.GetChannelType() == ChannelType.DM ||
             msg.Channel.GetChannelType() == ChannelType.Group) return false;

@@ -6,6 +6,7 @@ using Discord;
 using Discord.Commands;
 using Discord.Rest;
 using Discord.WebSocket;
+using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Settings;
 using Microsoft.Extensions.Logging;
@@ -41,18 +42,18 @@ public class FilterService
         _logger = logger;
     }
     
-    public void RegisterEvents(DiscordSocketClient client)
+    public void RegisterEvents(IIzzyClient client)
     {
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
 #pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
         client.MessageReceived += async (message) => ProcessMessage(message, client);
-        client.MessageUpdated += async (oldMessage, newMessage, channel) => ProcessMessageUpdate(oldMessage, newMessage, channel, client);
+        client.MessageUpdated += async (newMessage, channel) => ProcessMessageUpdate(newMessage, channel, client);
 #pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
 #pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
     }
 
-    private async Task LogFilterTrip(SocketCommandContext context, string word, string category,
-        List<string> actionsTaken, bool onEdit = false, RestUserMessage message = null)
+    private async Task LogFilterTrip(IIzzyContext context, string word, string category,
+        List<string> actionsTaken, bool onEdit = false, IIzzyMessage message = null)
     {
         var embedBuilder = new EmbedBuilder()
             .WithTitle(":warning: Filter violation detected" + (onEdit ? " on message edit" : ""))
@@ -109,7 +110,7 @@ public class FilterService
             .Send();
     }
 
-    private async Task ProcessFilterTrip(SocketCommandContext context, string word, string category,
+    private async Task ProcessFilterTrip(IIzzyContext context, string word, string category,
         bool onEdit = false)
     {
         var roleIds = context.Guild.GetUser(context.User.Id).Roles.Select(role => role.Id).ToList();
@@ -134,11 +135,10 @@ public class FilterService
             }
 
             var actions = new List<string>();
-            RestUserMessage message = null;
 
             if (messageResponse != null)
             {
-                message = await context.Channel.SendMessageAsync($"<@{context.User.Id}> {messageResponse}");
+                await context.Channel.SendMessageAsync($"<@{context.User.Id}> {messageResponse}");
                 actions.Add("message");
             }
 
@@ -159,8 +159,8 @@ public class FilterService
         }
     }
 
-    public async Task ProcessMessageUpdate(Cacheable<IMessage, ulong> oldMessage, SocketMessage newMessage,
-        ISocketMessageChannel channel, DiscordSocketClient client)
+    public async Task ProcessMessageUpdate(IIzzyMessage newMessage,
+        IIzzyMessageChannel channel, IIzzyClient client)
     {
         if (newMessage.Author.Id == client.CurrentUser.Id) return; // Don't process self.
         
@@ -168,8 +168,8 @@ public class FilterService
         if (newMessage.Author.IsBot) return; // Don't listen to bots
         if (!DiscordHelper.IsInGuild(newMessage)) return;
         if (!DiscordHelper.IsProcessableMessage(newMessage)) return; // Not processable
-        if (newMessage is not SocketUserMessage message) return; // Not processable
-        SocketCommandContext context = new SocketCommandContext(client, message);
+        if (newMessage is not IIzzyUserMessage message) return; // Not processable
+        IIzzyContext context = client.MakeContext(message);
         
         if (!DiscordHelper.IsDefaultGuild(context)) return;
         
@@ -196,7 +196,7 @@ public class FilterService
         }
     }
 
-    public async Task ProcessMessage(SocketMessage messageParam, DiscordSocketClient client)
+    public async Task ProcessMessage(IIzzyMessage messageParam, IIzzyClient client)
     {
         if (messageParam.Author.Id == client.CurrentUser.Id) return; // Don't process self.
         
@@ -204,8 +204,8 @@ public class FilterService
         if (messageParam.Author.IsBot) return; // Don't listen to bots
         if (!DiscordHelper.IsInGuild(messageParam)) return;
         if (!DiscordHelper.IsProcessableMessage(messageParam)) return; // Not processable
-        if (messageParam is not SocketUserMessage message) return; // Not processable
-        SocketCommandContext context = new SocketCommandContext(client, message);
+        if (messageParam is not IIzzyUserMessage message) return; // Not processable
+        IIzzyContext context = client.MakeContext(message);
         
         if (!DiscordHelper.IsDefaultGuild(context)) return;
         

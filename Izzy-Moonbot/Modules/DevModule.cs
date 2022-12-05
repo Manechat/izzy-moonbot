@@ -8,6 +8,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using Flurl;
 using Flurl.Http;
+using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Attributes;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Service;
@@ -264,10 +265,10 @@ public class DevModule : ModuleBase<SocketCommandContext>
                 Console.WriteLine("Task {0} returned {1:N0}", asyncTask.Id, asyncTask.Result);
                 break;
             case "overloadFilter":
-                var message = Context.Message as SocketMessage;
+                var izzyContext = new SocketCommandContextAdapter(Context);
                 for (var i = 0; i < 10; i++)
                 {
-                    Task.Run(async () => await _filterService.ProcessMessage(message, Context.Client));
+                    Task.Run(async () => await _filterService.ProcessMessage(izzyContext.Message, izzyContext.Client));
                 }
                 break;
             case "logTest":
