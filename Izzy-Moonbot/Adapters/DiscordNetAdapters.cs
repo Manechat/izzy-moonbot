@@ -30,6 +30,26 @@ public class DiscordNetUserAdapter : IIzzyUser
     }
 }
 
+public class DiscordNetGuildUserAdapter : IIzzyGuildUser
+{
+    private readonly IGuildUser _user;
+
+    public DiscordNetGuildUserAdapter(IGuildUser user)
+    {
+        _user = user;
+    }
+
+    public ulong Id { get => _user.Id; }
+    public string Username { get => _user.Username; }
+    public string Discriminator { get => _user.Discriminator; }
+    public string DisplayName { get => _user.DisplayName; }
+
+    public override string? ToString()
+    {
+        return _user.ToString();
+    }
+}
+
 public class DiscordNetRoleAdapter : IIzzyRole
 {
     private readonly IRole _role;
@@ -226,10 +246,10 @@ public class SocketGuildAdapter : IIzzyGuild
         get => _guild.Roles.Select(role => new DiscordNetRoleAdapter(role)).ToList();
     }
 
-    public IIzzyUser GetUser(ulong userId) => new DiscordNetUserAdapter(_guild.GetUser(userId));
-    public IIzzyRole GetRole(ulong roleId) => new DiscordNetRoleAdapter(_guild.GetRole(roleId));
-    public IIzzySocketGuildChannel GetChannel(ulong channelId) => new SocketGuildChannelAdapter(_guild.GetChannel(channelId));
-    public IIzzySocketTextChannel GetTextChannel(ulong channelId) => new SocketTextChannelAdapter(_guild.GetTextChannel(channelId));
+    public IIzzyGuildUser? GetUser(ulong userId) => new DiscordNetGuildUserAdapter(_guild.GetUser(userId));
+    public IIzzyRole? GetRole(ulong roleId) => new DiscordNetRoleAdapter(_guild.GetRole(roleId));
+    public IIzzySocketGuildChannel? GetChannel(ulong channelId) => new SocketGuildChannelAdapter(_guild.GetChannel(channelId));
+    public IIzzySocketTextChannel? GetTextChannel(ulong channelId) => new SocketTextChannelAdapter(_guild.GetTextChannel(channelId));
 }
 
 public class IdHaver : IIzzyHasId

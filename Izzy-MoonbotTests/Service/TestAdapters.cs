@@ -11,10 +11,13 @@ namespace Izzy_Moonbot.Adapters;
 // an asynchronous API, so there's no way to satisfy it without spawning useless threads.
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
 
-public class TestUser : IIzzyUser
+public class TestUser : IIzzyGuildUser
 {
     public ulong Id { get; }
     public string Username { get; }
+
+    // TODO: implement nicknames
+    public string DisplayName { get => Username; }
 
     public TestUser(string username, ulong id)
     {
@@ -250,17 +253,17 @@ public class TestGuild : IIzzyGuild
         return Task.FromResult((IReadOnlyCollection<IIzzyUser>)_stubGuild.Users.Where(user => user.Username.StartsWith(userSearchQuery)).ToList());
     }
 
-    public IIzzyUser GetUser(ulong userId) => _stubGuild.Users.Where(user => user.Id == userId).Single();
-    public IIzzyRole GetRole(ulong roleId) => Roles.Where(role => role.Id == roleId).Single();
-    public IIzzySocketGuildChannel GetChannel(ulong channelId)
+    public IIzzyGuildUser? GetUser(ulong userId) => _stubGuild.Users.Where(user => user.Id == userId).SingleOrDefault();
+    public IIzzyRole? GetRole(ulong roleId) => Roles.Where(role => role.Id == roleId).SingleOrDefault();
+    public IIzzySocketGuildChannel? GetChannel(ulong channelId)
     {
-        var tc = TextChannels.Where(tc => tc.Id == channelId).Single();
-        return new TestGuildChannel(tc.Name, tc.Id);
+        var tc = TextChannels.Where(tc => tc.Id == channelId).SingleOrDefault();
+        return tc is null ? null : new TestGuildChannel(tc.Name, tc.Id);
     }
-    public IIzzySocketTextChannel GetTextChannel(ulong channelId)
+    public IIzzySocketTextChannel? GetTextChannel(ulong channelId)
     {
-        var tc = TextChannels.Where(tc => tc.Id == channelId).Single();
-        return new TestTextChannel(_stubGuild, tc.Id, tc.Name, _clientBackref);
+        var tc = TextChannels.Where(tc => tc.Id == channelId).SingleOrDefault();
+        return tc is null ? null : new TestTextChannel(_stubGuild, tc.Id, tc.Name, _clientBackref);
     }
 }
 
@@ -299,7 +302,7 @@ public class CustomIdHaver : IIzzyHasCustomId
 public class StubClient : IIzzyClient
 {
     public IIzzyUser CurrentUser { get => _currentUser; }
-    public IReadOnlyCollection<IIzzyGuild> Guilds { get => (IReadOnlyCollection<IIzzyGuild>)_guilds; }
+    public IReadOnlyCollection<IIzzyGuild> Guilds { get => _guilds.Select(g => new TestGuild(g, this)).ToList(); }
 
     public event Func<IIzzySocketMessageComponent, Task>? ButtonExecuted;
     public event Func<IIzzyHasId, IIzzyHasId, Task>? MessageDeleted;
