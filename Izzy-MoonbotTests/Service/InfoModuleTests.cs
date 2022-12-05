@@ -1,7 +1,9 @@
 ﻿using Discord.Commands;
 using Izzy_Moonbot;
+using Izzy_Moonbot.Attributes;
 using Izzy_Moonbot.Describers;
 using Izzy_Moonbot.EventListeners;
+using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Modules;
 using Izzy_Moonbot.Service;
 using Izzy_Moonbot.Settings;
@@ -18,6 +20,9 @@ public class InfoModuleTests
 {
     public async Task<CommandService> SetupCommandService()
     {
+        // Hack to avoid trying to load appsettings in tests
+        DevCommandAttribute.TestMode = true;
+
         var services = new ServiceCollection();
 
         // Since we're using CommandService purely for its metadata, not the concrete service instances it
