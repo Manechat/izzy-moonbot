@@ -3,6 +3,7 @@ using Discord.Commands;
 using Discord.Rest;
 using Discord.WebSocket;
 using Izzy_Moonbot.Settings;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,6 +24,7 @@ public class DiscordNetUserAdapter : IIzzyUser
     public ulong Id { get => _user.Id; }
     public string Username { get => _user.Username; }
     public string Discriminator { get => _user.Discriminator; }
+    public bool IsBot => _user.IsBot;
 
     public override string? ToString()
     {
@@ -30,11 +32,11 @@ public class DiscordNetUserAdapter : IIzzyUser
     }
 }
 
-public class DiscordNetGuildUserAdapter : IIzzyGuildUser
+public class SocketGuildUserAdapter : IIzzyGuildUser
 {
-    private readonly IGuildUser _user;
+    private readonly SocketGuildUser _user;
 
-    public DiscordNetGuildUserAdapter(IGuildUser user)
+    public SocketGuildUserAdapter(SocketGuildUser user)
     {
         _user = user;
     }
@@ -43,10 +45,25 @@ public class DiscordNetGuildUserAdapter : IIzzyGuildUser
     public string Username { get => _user.Username; }
     public string Discriminator { get => _user.Discriminator; }
     public string DisplayName { get => _user.DisplayName; }
+    public bool IsBot => _user.IsBot;
+    public IReadOnlyCollection<IIzzyRole> Roles => _user.Roles.Select(r => new DiscordNetRoleAdapter(r)).ToList();
 
     public override string? ToString()
     {
         return _user.ToString();
+    }
+
+    public async Task AddRoleAsync(ulong roleId, RequestOptions? requestOptions)
+    {
+        await _user.AddRoleAsync(roleId, requestOptions);
+    }
+    public async Task AddRolesAsync(IEnumerable<ulong> roles, RequestOptions? requestOptions)
+    {
+        await _user.AddRolesAsync(roles, requestOptions);
+    }
+    public async Task RemoveRoleAsync(ulong memberRole, RequestOptions? requestOptions)
+    {
+        await _user.RemoveRoleAsync(memberRole, requestOptions);
     }
 }
 
@@ -82,43 +99,48 @@ class MessagePropertiesAdapter : IIzzyMessageProperties
     }
 };
 
-public class SocketUserMessageAdapter : IIzzyMessage
+public class DiscordNetMessageAdapter : IIzzyMessage
 {
-    private readonly SocketUserMessage _message;
+    private readonly IMessage _message;
 
-    public SocketUserMessageAdapter(SocketUserMessage message)
+    public DiscordNetMessageAdapter(IMessage message)
     {
         _message = message;
     }
 
     public ulong Id { get => _message.Id; }
     public string Content { get => _message.Content; }
+    public string CleanContent => _message.CleanContent;
     public IIzzyUser Author { get => new DiscordNetUserAdapter(_message.Author); }
-    public async Task ReplyAsync(string message)
-    {
-        await _message.ReplyAsync(message);
-    }
-    public async Task ModifyAsync(Action<IIzzyMessageProperties> action)
-    {
-        await _message.ModifyAsync(msg => {
-            action(new MessagePropertiesAdapter(msg));
-        });
-    }
+    public IIzzyMessageChannel Channel => new DiscordNetMessageChannelAdapter(_message.Channel);
+    public IReadOnlyCollection<IMessageComponent> Components => _message.Components;
+    public IReadOnlyCollection<IAttachment> Attachments => _message.Attachments;
+    public IReadOnlyCollection<IEmbed> Embeds => _message.Embeds;
+    public IReadOnlyCollection<IStickerItem> Stickers => _message.Stickers;
+    public async Task DeleteAsync() => await _message.DeleteAsync();
+    public string GetJumpUrl() => _message.GetJumpUrl();
 }
 
-public class RestUserMessageAdapter : IIzzyMessage
+public class DiscordNetUserMessageAdapter : IIzzyUserMessage
 {
 
-    private readonly RestUserMessage _message;
+    private readonly IUserMessage _message;
 
-    public RestUserMessageAdapter(RestUserMessage message)
+    public DiscordNetUserMessageAdapter(IUserMessage message)
     {
         _message = message;
     }
 
     public ulong Id { get => _message.Id; }
     public string Content { get => _message.Content; }
+    public string CleanContent => _message.CleanContent;
     public IIzzyUser Author { get => new DiscordNetUserAdapter(_message.Author); }
+    public IIzzyMessageChannel Channel => new DiscordNetMessageChannelAdapter(_message.Channel);
+
+    public IReadOnlyCollection<IMessageComponent> Components => _message.Components;
+    public IReadOnlyCollection<IAttachment> Attachments => _message.Attachments;
+    public IReadOnlyCollection<IEmbed> Embeds => _message.Embeds;
+    public IReadOnlyCollection<IStickerItem> Stickers => _message.Stickers;
 
     public async Task ReplyAsync(string message)
     {
@@ -130,6 +152,11 @@ public class RestUserMessageAdapter : IIzzyMessage
             action(new MessagePropertiesAdapter(msg));
         });
     }
+    public async Task DeleteAsync()
+    {
+        await _message.DeleteAsync();
+    }
+    public string GetJumpUrl() => _message.GetJumpUrl();
 }
 
 public class SocketTextChannelAdapter : IIzzySocketTextChannel
@@ -148,7 +175,7 @@ public class SocketTextChannelAdapter : IIzzySocketTextChannel
     public IReadOnlyCollection<IIzzyUser> Users {
         get => _channel.Users.Select(user => new DiscordNetUserAdapter(user)).ToList();
     }
-    public async Task<IIzzyMessage> SendMessageAsync(
+    public async Task<IIzzyUserMessage> SendMessageAsync(
         string message,
         AllowedMentions? allowedMentions = null,
         MessageComponent? components = null,
@@ -157,7 +184,17 @@ public class SocketTextChannelAdapter : IIzzySocketTextChannel
     )
     {
         var sentMesssage = await _channel.SendMessageAsync(message, allowedMentions: allowedMentions, components: components, options: options, embeds: embeds);
-        return new RestUserMessageAdapter(sentMesssage);
+        return new DiscordNetUserMessageAdapter(sentMesssage);
+    }
+    public async Task<IIzzyMessage> GetMessageAsync(ulong messageId)
+    {
+        var msg = await _channel.GetMessageAsync(messageId);
+        return new DiscordNetMessageAdapter(msg);
+    }
+    public async Task<IIzzyUserMessage> SendFileAsync(FileAttachment fa, string message)
+    {
+        var sentMesssage = await _channel.SendFileAsync(fa, message);
+        return new DiscordNetUserMessageAdapter(sentMesssage);
     }
 
     public override string? ToString()
@@ -166,11 +203,11 @@ public class SocketTextChannelAdapter : IIzzySocketTextChannel
     }
 }
 
-public class SocketMessageChannelAdapter : IIzzySocketMessageChannel
+public class DiscordNetMessageChannelAdapter : IIzzyMessageChannel
 {
-    private readonly ISocketMessageChannel _channel;
+    private readonly IMessageChannel _channel;
 
-    public SocketMessageChannelAdapter(ISocketMessageChannel channel)
+    public DiscordNetMessageChannelAdapter(IMessageChannel channel)
     {
         _channel = channel;
     }
@@ -184,7 +221,7 @@ public class SocketMessageChannelAdapter : IIzzySocketMessageChannel
         var user = await _channel.GetUserAsync(userId);
         return new DiscordNetUserAdapter(user);
     }
-    public async Task<IIzzyMessage> SendMessageAsync(
+    public async Task<IIzzyUserMessage> SendMessageAsync(
         string message,
         AllowedMentions? allowedMentions = null,
         MessageComponent? components = null,
@@ -192,7 +229,7 @@ public class SocketMessageChannelAdapter : IIzzySocketMessageChannel
     )
     {
         var sentMesssage = await _channel.SendMessageAsync(message, allowedMentions: allowedMentions, components: components, options: options);
-        return new RestUserMessageAdapter(sentMesssage);
+        return new DiscordNetUserMessageAdapter(sentMesssage);
     }
 
     public override string? ToString()
@@ -249,7 +286,7 @@ public class SocketGuildAdapter : IIzzyGuild
     public IIzzyGuildUser? GetUser(ulong userId)
     {
         var user = _guild.GetUser(userId);
-        return user is null ? null : new DiscordNetGuildUserAdapter(user);
+        return user is null ? null : new SocketGuildUserAdapter(user);
     }
     public IIzzyRole? GetRole(ulong roleId)
     {
@@ -303,14 +340,14 @@ public class DiscordSocketClientAdapter : IIzzyClient
     {
         _client = client;
 
+        _client.MessageReceived += async (msg) =>
+            MessageReceived?.Invoke(new DiscordNetMessageAdapter(msg));
+        _client.MessageUpdated += async (_oldMessage, newMessage, channel) =>
+            MessageUpdated?.Invoke(new DiscordNetMessageAdapter(newMessage), new DiscordNetMessageChannelAdapter(channel));
         _client.ButtonExecuted += async (arg) =>
-        {
             ButtonExecuted?.Invoke(new SocketMessageComponentAdapter(arg));
-        };
         _client.MessageDeleted += async (message, channel) =>
-        {
             MessageDeleted?.Invoke(new IdHaver(message.Id), new IdHaver(channel.Id));
-        };
     }
 
     public IIzzyUser CurrentUser { get => new DiscordNetUserAdapter(_client.CurrentUser); }
@@ -319,8 +356,44 @@ public class DiscordSocketClientAdapter : IIzzyClient
         get => _client.Guilds.Select(guild => new SocketGuildAdapter(guild)).ToList();
     }
 
+    public event Func<IIzzyMessage, Task>? MessageReceived;
+    public event Func<IIzzyMessage, IIzzyMessageChannel, Task>? MessageUpdated;
     public event Func<IIzzySocketMessageComponent, Task>? ButtonExecuted;
     public event Func<IIzzyHasId, IIzzyHasId, Task>? MessageDeleted;
+
+    public IIzzyContext MakeContext(IIzzyUserMessage message) =>
+        new ClientAndMessageContextAdapter(this, message);
+}
+
+public class ClientAndMessageContextAdapter : IIzzyContext
+{
+    private readonly IIzzyClient _client;
+    private readonly IIzzyUserMessage _message;
+
+    public ClientAndMessageContextAdapter(IIzzyClient client, IIzzyUserMessage message)
+    {
+        _client = client;
+        _message = message;
+    }
+
+    public bool IsPrivate => _message.Channel is IPrivateChannel; // copied from Discord.NET
+
+    public IIzzyGuild? Guild
+    {
+        get
+        {
+            var maybeGuild = (_message.Channel as SocketGuildChannel)?.Guild; // copied from Discord.NET
+            return maybeGuild is null ? null : new SocketGuildAdapter(maybeGuild);
+        }
+    }
+
+    public IIzzyClient Client => _client;
+
+    public IIzzyMessageChannel Channel => _message.Channel;
+
+    public IIzzyUserMessage Message => _message;
+
+    public IIzzyUser User => _message.Author;
 }
 
 public class SocketCommandContextAdapter : IIzzyContext
@@ -338,9 +411,9 @@ public class SocketCommandContextAdapter : IIzzyContext
 
     public IIzzyClient Client { get => new DiscordSocketClientAdapter(_context.Client); }
 
-    public IIzzySocketMessageChannel Channel { get => new SocketMessageChannelAdapter(_context.Channel); }
+    public IIzzyMessageChannel Channel { get => new DiscordNetMessageChannelAdapter(_context.Channel); }
 
-    public IIzzyMessage Message { get => new SocketUserMessageAdapter(_context.Message); }
+    public IIzzyUserMessage Message { get => new DiscordNetUserMessageAdapter(_context.Message); }
 
     public IIzzyUser User { get => new DiscordNetUserAdapter(_context.User); }
 }
