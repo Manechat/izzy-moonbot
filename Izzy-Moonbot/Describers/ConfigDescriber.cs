@@ -46,7 +46,15 @@ public class ConfigDescriber
             new ConfigItem(ConfigItemType.StringDictionary,
                 "Shorthand commands which can be used as an alternative to executing a different, often longer, command.",
                 ConfigItemCategory.Core));
-        
+        _config.Add("FirstRuleMessageId",
+            new ConfigItem(ConfigItemType.Integer,
+                "Id of the message in our rules channel that `.rule 1` should print.",
+                ConfigItemCategory.Core));
+        _config.Add("HiddenRules",
+            new ConfigItem(ConfigItemType.StringDictionary,
+                "Rules that we want `.rule` to display on but aren't or can't be messages in the rules channel.",
+                ConfigItemCategory.Core));
+
         // Server settings
         _config.Add("BannerMode",
             new ConfigItem(ConfigItemType.Enum,
