@@ -883,9 +883,9 @@ public class AdminModule : ModuleBase<SocketCommandContext>
             );
             var s = new MemoryStream(Encoding.UTF8.GetBytes(bulkDeletionLogString));
             var fa = new FileAttachment(s, $"{channel.Name}_bulk_deletion_log_{DateTimeOffset.UtcNow.ToString()}.txt");
-            await logChannel.SendFileAsync(fa, $"Finished wiping {channelName}, here's the bulk deletion log:");
+            var bulkDeletionMessage = await logChannel.SendFileAsync(fa, $"Finished wiping {channelName}, here's the bulk deletion log:");
 
-            await ReplyAsync($"Finished wiping {channelName}. {messagesToDeleteCount} messages were deleted, and a bulk deletion log was posted in <#{_config.LogChannel}>");
+            await ReplyAsync($"Finished wiping {channelName}. {messagesToDeleteCount} messages were deleted: {bulkDeletionMessage.GetJumpUrl()}");
         }
         else
         {
