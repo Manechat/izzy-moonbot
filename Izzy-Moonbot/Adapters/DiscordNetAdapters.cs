@@ -246,10 +246,26 @@ public class SocketGuildAdapter : IIzzyGuild
         get => _guild.Roles.Select(role => new DiscordNetRoleAdapter(role)).ToList();
     }
 
-    public IIzzyGuildUser? GetUser(ulong userId) => new DiscordNetGuildUserAdapter(_guild.GetUser(userId));
-    public IIzzyRole? GetRole(ulong roleId) => new DiscordNetRoleAdapter(_guild.GetRole(roleId));
-    public IIzzySocketGuildChannel? GetChannel(ulong channelId) => new SocketGuildChannelAdapter(_guild.GetChannel(channelId));
-    public IIzzySocketTextChannel? GetTextChannel(ulong channelId) => new SocketTextChannelAdapter(_guild.GetTextChannel(channelId));
+    public IIzzyGuildUser? GetUser(ulong userId)
+    {
+        var user = _guild.GetUser(userId);
+        return user is null ? null : new DiscordNetGuildUserAdapter(user);
+    }
+    public IIzzyRole? GetRole(ulong roleId)
+    {
+        var role = _guild.GetRole(roleId);
+        return role is null ? null : new DiscordNetRoleAdapter(role);
+    }
+    public IIzzySocketGuildChannel? GetChannel(ulong channelId)
+    {
+        var channel = _guild.GetChannel(channelId);
+        return channel is null ? null : new SocketGuildChannelAdapter(channel);
+    }
+    public IIzzySocketTextChannel? GetTextChannel(ulong channelId)
+    {
+        var textChannel = _guild.GetTextChannel(channelId);
+        return textChannel is null ? null : new SocketTextChannelAdapter(textChannel);
+    }
 }
 
 public class IdHaver : IIzzyHasId

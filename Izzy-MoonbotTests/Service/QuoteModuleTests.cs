@@ -124,6 +124,32 @@ public class QuoteModuleTests
     }
 
     [TestMethod()]
+    public async Task ListQuotes_ExternalUsers_Tests()
+    {
+        var (cfg, _, (izzy, sunny), _, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
+        DiscordHelper.DefaultGuildId = guild.Id;
+
+        // Test with a quote from a user id that is no longer in our guild
+        var quotes = new QuoteStorage();
+        quotes.Quotes.Add("1234", new List<string> { "minty was here" });
+
+        var userinfo = new Dictionary<ulong, User>();
+        var qs = new QuoteService(quotes, userinfo);
+        var qm = new QuotesSubmodule(cfg, qs);
+
+        var context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".listquotes");
+        await qm.TestableListQuotesCommandAsync(context, "");
+
+        var description = generalChannel.Messages.Last().Content;
+        StringAssert.Contains(description, "Here's a list of");
+        StringAssert.Contains(description, $"```{Environment.NewLine}" +
+            $"1234 {Environment.NewLine}" +
+            $"```{Environment.NewLine}");
+        StringAssert.Contains(description, "Run `.quote <user/category>`");
+        StringAssert.Contains(description, "Run `.quote`");
+    }
+
+    [TestMethod()]
     public async Task AddAndRemoveQuotes_Tests()
     {
         var (cfg, _, (_, sunny), _, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
