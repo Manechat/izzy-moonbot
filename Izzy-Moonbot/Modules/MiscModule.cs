@@ -232,7 +232,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                 ruleMessage = rulesAfterFirst.OrderBy(t => t.Item1).ElementAt(ruleNumber - 2).Item2;
             }
 
-            await ReplyAsync(ruleMessage.Trim(), allowedMentions: AllowedMentions.None);
+            await ReplyAsync(DiscordHelper.TrimDiscordWhitespace(ruleMessage), allowedMentions: AllowedMentions.None);
         }
         else
         {
