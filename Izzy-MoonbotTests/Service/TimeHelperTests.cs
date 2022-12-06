@@ -12,8 +12,6 @@ namespace Izzy_Moonbot_Tests.Helpers;
 [TestClass()]
 public class TimeHelperTests
 {
-    public static DateTimeOffset FiMEpoch = new DateTimeOffset(2010, 10, 10, 0, 0, 0, TimeSpan.Zero);
-
     [TestMethod()]
     public void GetTimeTypeTests()
     {
@@ -34,7 +32,7 @@ public class TimeHelperTests
     [TestMethod()]
     public void Convert_RelativeTests()
     {
-        DateTimeHelper.FakeUtcNow = FiMEpoch;
+        DateTimeHelper.FakeUtcNow = TestUtils.FiMEpoch;
 
         AssertTimeHelperResponsesAreEqual(
             new TimeHelperResponse(DateTimeHelper.UtcNow.AddMinutes(10), false, null),
@@ -65,7 +63,7 @@ public class TimeHelperTests
     [TestMethod()]
     public void Convert_MiscTests()
     {
-        DateTimeHelper.FakeUtcNow = FiMEpoch;
+        DateTimeHelper.FakeUtcNow = TestUtils.FiMEpoch;
 
         Assert.ThrowsException<FormatException>(() => TimeHelper.Convert(""));
 
@@ -94,7 +92,7 @@ public class TimeHelperTests
     [TestMethod()]
     public void Convert_MultipleDigitsTests()
     {
-        DateTimeHelper.FakeUtcNow = FiMEpoch;
+        DateTimeHelper.FakeUtcNow = TestUtils.FiMEpoch;
 
         AssertTimeHelperResponsesAreEqual(
             new TimeHelperResponse(DateTimeHelper.UtcNow.AddSeconds(123), false, null),

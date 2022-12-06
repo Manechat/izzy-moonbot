@@ -13,6 +13,8 @@ namespace Izzy_Moonbot_Tests;
 
 public static class TestUtils
 {
+    public static DateTimeOffset FiMEpoch = new DateTimeOffset(2010, 10, 10, 0, 0, 0, TimeSpan.Zero);
+
     public static (Config, ConfigDescriber, (TestUser, TestUser), List<TestRole>, (StubChannel, StubChannel, StubChannel), StubGuild, StubClient) DefaultStubs()
     {
         var izzyHerself = new TestUser("Izzy Moonbot", 1);
