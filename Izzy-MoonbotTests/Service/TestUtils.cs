@@ -27,9 +27,10 @@ public static class TestUtils
         var alicorn = new TestRole("Alicorn", 1);
         var roles = new List<TestRole> { alicorn, new TestRole("Pegasus", 2) };
 
-        var generalChannel = new StubChannel(1, "general");
-        var modChat = new StubChannel(2, "modchat");
-        var logChat = new StubChannel(3, "botlogs");
+        // because user ids are also Direct Message channel ids, regular channels must have different ids
+        var generalChannel = new StubChannel(1001, "general");
+        var modChat = new StubChannel(1002, "modchat");
+        var logChat = new StubChannel(1003, "botlogs");
         var channels = new List<StubChannel> { generalChannel, modChat, logChat };
 
         var guild = new StubGuild(1, "Maretime Bay", roles, users, channels);
