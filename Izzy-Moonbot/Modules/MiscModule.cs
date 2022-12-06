@@ -172,7 +172,74 @@ public class MiscModule : ModuleBase<SocketCommandContext>
             return;
         }
     }
-    
+
+    [Command("rule")]
+    [Summary("Show one of our server rules.")]
+    [Remarks("Takes the text from FirstRuleMessageId or one of the messages after it, depending on the number given. If the number is a key in HiddenRules, the corresponding value is displayed instead.")]
+    [Alias("rules")]
+    [Parameter("number", ParameterType.Integer, "The rule number to get.")]
+    [ExternalUsageAllowed]
+    public async Task RuleCommandAsync([Remainder] string argString = "")
+    {
+        argString = argString.Trim();
+        if (argString == "")
+        {
+            await ReplyAsync("You need to give me a rule number to look up!");
+            return;
+        }
+
+        if (_config.HiddenRules.ContainsKey(argString))
+        {
+            await ReplyAsync(_config.HiddenRules[argString]);
+            return;
+        }
+
+        var firstMessageId = _config.FirstRuleMessageId;
+        if (firstMessageId == 0)
+        {
+            await ReplyAsync("I can't look up rules without knowing where the first one is. Please ask a mod to use `.config FirstRuleMessageId`.");
+            return;
+        }
+
+        if (int.TryParse(argString, out var ruleNumber))
+        {
+            var rulesChannel = Context.Guild.RulesChannel;
+
+            string ruleMessage;
+            if (ruleNumber == 1)
+            {
+                ruleMessage = (await rulesChannel.GetMessageAsync(firstMessageId)).Content;
+            }
+            else
+            {
+                // There might be too few messages in the rules channel, or GetMessagesAsync() might return the messages
+                // in a strange order, so we have to gather all messages from rule 2 to rule N and then sort them.
+                var rulesAfterFirst = new List<(ulong, string)>();
+                await foreach (var messageBatch in rulesChannel.GetMessagesAsync(firstMessageId, Direction.After, ruleNumber - 1))
+                {
+                    foreach (var message in messageBatch)
+                        rulesAfterFirst.Add((message.Id, message.Content));
+                }
+
+                if (rulesAfterFirst.Count < (ruleNumber - 1))
+                {
+                    await ReplyAsync($"Sorry, there doesn't seem to be a rule {ruleNumber}");
+                    return;
+                }
+
+                // But we can assume all snowflake ids in Discord are monotonic, i.e. later rules will have higher ids
+                // -2 because of 0-indexing plus the fact that these are messages *after* rule 1
+                ruleMessage = rulesAfterFirst.OrderBy(t => t.Item1).ElementAt(ruleNumber - 2).Item2;
+            }
+
+            await ReplyAsync(ruleMessage.Trim(), allowedMentions: AllowedMentions.None);
+        }
+        else
+        {
+            await ReplyAsync($"Sorry, I couldn't convert {argString} to a number.");
+        }
+    }
+
     [Summary("Commands for viewing and modifying quotes.")]
     public class QuotesSubmodule : ModuleBase<SocketCommandContext>
     {

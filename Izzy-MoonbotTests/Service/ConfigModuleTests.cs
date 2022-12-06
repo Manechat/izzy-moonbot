@@ -506,6 +506,20 @@ public class ConfigModuleTests
         TestUtils.AssertDictionariesAreEqual(new Dictionary<string, string> { { "moonlaser", "addquote moon" } }, cfg.Aliases);
         Assert.AreEqual("I added the following string to the `moonlaser` map key in the `Aliases` map: `addquote moon`", generalChannel.Messages.Last().Content);
 
+        // post ".config FirstRuleMessageId 1234"
+        Assert.AreEqual(cfg.FirstRuleMessageId, 0ul);
+        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config FirstRuleMessageId 1234");
+        await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "FirstRuleMessageId", "1234");
+        Assert.AreEqual(cfg.FirstRuleMessageId, 1234ul);
+        Assert.AreEqual("I've set `FirstRuleMessageId` to the following content: 1234", generalChannel.Messages.Last().Content);
+
+        // post ".config HiddenRules set -1 :twiactually:"
+        TestUtils.AssertDictionariesAreEqual(new Dictionary<string, string>(), cfg.HiddenRules);
+        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config HiddenRules set -1 :twiactually:");
+        await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "HiddenRules", "set -1 :twiactually:");
+        TestUtils.AssertDictionariesAreEqual(new Dictionary<string, string> { { "-1", ":twiactually:" } }, cfg.HiddenRules);
+        Assert.AreEqual("I added the following string to the `-1` map key in the `HiddenRules` map: `:twiactually:`", generalChannel.Messages.Last().Content);
+
         // post ".config BannerMode ManebooruFeatured"
         Assert.AreEqual(cfg.BannerMode, BannerMode.None);
         context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config BannerMode ManebooruFeatured");
@@ -808,7 +822,7 @@ public class ConfigModuleTests
         // Ensure we can't forget to keep this test up to date
         var configPropsCount = typeof(Config).GetProperties().Length;
 
-        Assert.AreEqual(50, configPropsCount,
+        Assert.AreEqual(52, configPropsCount,
             $"{Environment.NewLine}If you just added or removed a config item, then this test is probably out of date");
 
         Assert.AreEqual(configPropsCount * 2, generalChannel.Messages.Count(),

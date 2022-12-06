@@ -24,7 +24,9 @@ public class Config
         DiscordActivityName = "you all soon";
         DiscordActivityWatching = true;
         Aliases = new Dictionary<string, string>();
-        
+        FirstRuleMessageId = 0;
+        HiddenRules = new Dictionary<string, string>();
+
         // Server settings
         _bannerMode = ConfigListener.BannerMode.None;
         _bannerInterval = 60;
@@ -89,7 +91,9 @@ public class Config
     public string? DiscordActivityName { get; set; }
     public bool DiscordActivityWatching { get; set; }
     public Dictionary<string, string> Aliases { get; set; }
-    
+    public ulong FirstRuleMessageId { get; set; }
+    public Dictionary<string, string> HiddenRules { get; set; }
+
     // Server settings
     private ConfigListener.BannerMode _bannerMode { get; set; }
     public ConfigListener.BannerMode BannerMode {

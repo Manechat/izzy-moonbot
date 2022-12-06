@@ -36,6 +36,7 @@ public enum ConfigItemType
     Char,
     Boolean,
     Integer,
+    UnsignedInteger,
     Double,
     Enum,
     Role,

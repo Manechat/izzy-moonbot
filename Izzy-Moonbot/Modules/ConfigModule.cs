@@ -137,6 +137,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                 case ConfigItemType.Char:
                 case ConfigItemType.Boolean:
                 case ConfigItemType.Integer:
+                case ConfigItemType.UnsignedInteger:
                 case ConfigItemType.Double:
                     await context.Channel.SendMessageAsync(
                         $"**{configItemKey}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
@@ -280,6 +281,32 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                             if (value != null)
                             {
                                 if (!int.TryParse(value, out var res))
+                                    throw new FormatException(); // Trip "invalid content" catch below.
+                                output = res;
+                            }
+
+                            var resultInteger =
+                                await ConfigHelper.SetSimpleValue(config, configItemKey, output);
+                            await context.Channel.SendMessageAsync($"I've set `{configItemKey}` to the following content: {resultInteger}",
+                                allowedMentions: AllowedMentions.None);
+                        }
+                        catch (FormatException)
+                        {
+                            await context.Channel.SendMessageAsync(
+                                $"I couldn't set `{configItemKey}` to the content provided because you provided content that I couldn't turn into a integer. Please try again.",
+                                allowedMentions: AllowedMentions.None);
+                        }
+
+                        break;
+                    case ConfigItemType.UnsignedInteger:
+                        if (configItem.Nullable && value == "<nothing>") value = null;
+
+                        try
+                        {
+                            ulong? output = null;
+                            if (value != null)
+                            {
+                                if (!ulong.TryParse(value, out var res))
                                     throw new FormatException(); // Trip "invalid content" catch below.
                                 output = res;
                             }
