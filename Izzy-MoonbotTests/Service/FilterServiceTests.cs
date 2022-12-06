@@ -16,6 +16,7 @@ public class FilterServiceTests
     {
         var (cfg, _, (_, sunny), _, (generalChannel, modChat, _), guild, client) = TestUtils.DefaultStubs();
         DiscordHelper.DefaultGuildId = guild.Id;
+        DiscordHelper.DevUserIds = new List<ulong>();
         DiscordHelper.PleaseAwaitEvents = true;
 
         cfg.ModChannel = modChat.Id;

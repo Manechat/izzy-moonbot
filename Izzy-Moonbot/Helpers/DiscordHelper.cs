@@ -17,6 +17,7 @@ public static class DiscordHelper
 {
     // These setters should only be used by tests
     public static ulong? DefaultGuildId { get; set; } = null;
+    public static List<ulong>? DevUserIds { get; set; } = null;
     public static bool PleaseAwaitEvents { get; set; } = false;
 
     // In production code, our event handlers need to return immediately no matter how
@@ -76,8 +77,11 @@ public static class DiscordHelper
     
     public static bool IsDev(ulong user)
     {
+        var maybeDevUserIds = DevUserIds;
+        if (maybeDevUserIds is List<ulong> devUserIds)
+            return devUserIds.Any(userId => userId == user);
+
         var settings = GetDiscordSettings();
-        
         return settings.DevUsers.Any(userId => userId == user);
     }
 
