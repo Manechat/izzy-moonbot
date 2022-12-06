@@ -111,7 +111,12 @@ public class DiscordNetMessageAdapter : IIzzyMessage
     public ulong Id { get => _message.Id; }
     public string Content { get => _message.Content; }
     public string CleanContent => _message.CleanContent;
-    public IIzzyUser Author { get => new DiscordNetUserAdapter(_message.Author); }
+    public IIzzyUser Author
+    {
+        get => _message.Author is SocketGuildUser ?
+            new SocketGuildUserAdapter(_message.Author as SocketGuildUser) :
+            new DiscordNetUserAdapter(_message.Author);
+    }
     public IIzzyMessageChannel Channel => new DiscordNetMessageChannelAdapter(_message.Channel);
     public IReadOnlyCollection<IMessageComponent> Components => _message.Components;
     public IReadOnlyCollection<IAttachment> Attachments => _message.Attachments;
@@ -134,7 +139,12 @@ public class DiscordNetUserMessageAdapter : IIzzyUserMessage
     public ulong Id { get => _message.Id; }
     public string Content { get => _message.Content; }
     public string CleanContent => _message.CleanContent;
-    public IIzzyUser Author { get => new DiscordNetUserAdapter(_message.Author); }
+    public IIzzyUser Author
+    {
+        get => _message.Author is SocketGuildUser ?
+            new SocketGuildUserAdapter(_message.Author as SocketGuildUser) :
+            new DiscordNetUserAdapter(_message.Author);
+    }
     public IIzzyMessageChannel Channel => new DiscordNetMessageChannelAdapter(_message.Channel);
 
     public IReadOnlyCollection<IMessageComponent> Components => _message.Components;
@@ -205,7 +215,9 @@ public class SocketTextChannelAdapter : IIzzySocketTextChannel
 
 public class DiscordNetMessageChannelAdapter : IIzzyMessageChannel
 {
-    private readonly IMessageChannel _channel;
+    // this needs to be readable elsewhere in this file because Discord.NET's API fundamentally
+    // requires runtime type casting in order to make a context out of a client and a message
+    public readonly IMessageChannel _channel;
 
     public DiscordNetMessageChannelAdapter(IMessageChannel channel)
     {
@@ -341,9 +353,14 @@ public class DiscordSocketClientAdapter : IIzzyClient
         _client = client;
 
         _client.MessageReceived += async (msg) =>
-            MessageReceived?.Invoke(new DiscordNetMessageAdapter(msg));
+            MessageReceived?.Invoke(
+                msg is SocketUserMessage ? new DiscordNetUserMessageAdapter(msg as SocketUserMessage) : new DiscordNetMessageAdapter(msg)
+            );
         _client.MessageUpdated += async (_oldMessage, newMessage, channel) =>
-            MessageUpdated?.Invoke(new DiscordNetMessageAdapter(newMessage), new DiscordNetMessageChannelAdapter(channel));
+            MessageUpdated?.Invoke(
+                newMessage is SocketUserMessage ? new DiscordNetUserMessageAdapter(newMessage as SocketUserMessage) : new DiscordNetMessageAdapter(newMessage),
+                new DiscordNetMessageChannelAdapter(channel)
+            );
         _client.ButtonExecuted += async (arg) =>
             ButtonExecuted?.Invoke(new SocketMessageComponentAdapter(arg));
         _client.MessageDeleted += async (message, channel) =>
@@ -376,13 +393,15 @@ public class ClientAndMessageContextAdapter : IIzzyContext
         _message = message;
     }
 
-    public bool IsPrivate => _message.Channel is IPrivateChannel; // copied from Discord.NET
+    // the casting strategy is taken from Discord.NET's source
+    public bool IsPrivate => (_message.Channel as DiscordNetMessageChannelAdapter)?._channel is IPrivateChannel;
 
     public IIzzyGuild? Guild
     {
         get
         {
-            var maybeGuild = (_message.Channel as SocketGuildChannel)?.Guild; // copied from Discord.NET
+            // the casting strategy is taken from Discord.NET's source
+            var maybeGuild = ((_message.Channel as DiscordNetMessageChannelAdapter)?._channel as SocketGuildChannel)?.Guild;
             return maybeGuild is null ? null : new SocketGuildAdapter(maybeGuild);
         }
     }
@@ -415,5 +434,9 @@ public class SocketCommandContextAdapter : IIzzyContext
 
     public IIzzyUserMessage Message { get => new DiscordNetUserMessageAdapter(_context.Message); }
 
-    public IIzzyUser User { get => new DiscordNetUserAdapter(_context.User); }
+    public IIzzyUser User {
+        get => _context.User is SocketGuildUser ?
+            new SocketGuildUserAdapter(_context.User as SocketGuildUser) :
+            new DiscordNetUserAdapter(_context.User);
+    }
 }
