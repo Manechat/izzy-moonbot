@@ -259,12 +259,12 @@ public class QuoteService
         if (!_quoteStorage.Quotes.ContainsKey(user.Id.ToString()))
             throw new NullReferenceException("That user does not have any quotes.");
         
-        var quotes = _quoteStorage.Quotes[user.Id.ToString()].Select(quoteContent =>
+        var quotes = _quoteStorage.Quotes[user.Id.ToString()].Select((content, index) =>
         {
             var quoteName = user.Username;
             if (user is IGuildUser guildUser) quoteName = guildUser.DisplayName;
 
-            return new Quote(_quoteStorage.Quotes[user.Id.ToString()].IndexOf(quoteContent), quoteName, quoteContent);
+            return new Quote(index, quoteName, content);
         }).ToArray();
 
         return quotes;

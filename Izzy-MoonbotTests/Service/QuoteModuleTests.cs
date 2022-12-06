@@ -149,6 +149,35 @@ public class QuoteModuleTests
         StringAssert.Contains(description, "Run `.quote`");
     }
 
+    // Regression test: This case used to print 1: ... 1: ... instead of 1: ... 2: ...
+    [TestMethod()]
+    public async Task ListQuotes_Duplicates_Tests()
+    {
+        var (cfg, _, (izzy, sunny), _, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
+        DiscordHelper.DefaultGuildId = guild.Id;
+
+        var quotes = new QuoteStorage();
+        quotes.Quotes.Add(sunny.Id.ToString(), new List<string> { "gonna be my day", "gonna be my day" });
+
+        var userinfo = new Dictionary<ulong, User>();
+        var qs = new QuoteService(quotes, userinfo);
+        var qm = new QuotesSubmodule(cfg, qs);
+
+        var context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".listquotes Sunny");
+        await qm.TestableListQuotesCommandAsync(context, "Sunny");
+
+        var description = generalChannel.Messages.Last().Content;
+        StringAssert.Contains(description, "all the quotes");
+        StringAssert.Contains(description, "for **Sunny**");
+        StringAssert.Contains(description, $"```{Environment.NewLine}" +
+            $"1: gonna be my day{Environment.NewLine}" +
+            $"2: gonna be my day{Environment.NewLine}" +
+            $"```{Environment.NewLine}");
+        StringAssert.Contains(description, "Run `.quote <user/category> <number>` to");
+        StringAssert.Contains(description, "Run `.quote <user/category>` to");
+        StringAssert.Contains(description, "Run `.quote` for");
+    }
+
     [TestMethod()]
     public async Task AddAndRemoveQuotes_Tests()
     {
