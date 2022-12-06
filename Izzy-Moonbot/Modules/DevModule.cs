@@ -449,7 +449,7 @@ public class DevModule : ModuleBase<SocketCommandContext>
             _schedule = schedule;
         }
 
-        [Command("schedule")]
+        [Command("oldschedule")]
         [Summary("Manage schedule")]
         [DevCommand]
         public async Task ScheduleCommandAsync([Summary("Action")] string action = "", [Summary("[...]")][Remainder] string argsString = "")
