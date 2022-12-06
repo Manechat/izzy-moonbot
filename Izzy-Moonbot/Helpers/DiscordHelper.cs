@@ -341,4 +341,33 @@ public static class DiscordHelper
         var trim = frontTrim.Split('>', 2)[0];
         return ulong.Parse(trim);
     }
+
+    // Where "Discord whitespace" refers to Char.IsWhiteSpace as well as the ":blank:" emoji
+    public static string TrimDiscordWhitespace(string s)
+    {
+        var blankEmoji = ":blank:";
+
+        var substringStartIndex = 0;
+        while ((s.Length >= (substringStartIndex + 1) && Char.IsWhiteSpace(s[substringStartIndex])) ||
+               (s.Length >= (substringStartIndex + blankEmoji.Length) && s.Substring(substringStartIndex, blankEmoji.Length) == blankEmoji))
+        {
+            if (Char.IsWhiteSpace(s[substringStartIndex])) substringStartIndex += 1;
+            else substringStartIndex += blankEmoji.Length;
+
+            if (substringStartIndex == s.Length) return "";
+        }
+
+        var substringEndIndex = s.Length - 1;
+        if (s.Length > 0)
+        {
+            while (Char.IsWhiteSpace(s[substringEndIndex]) ||
+                   (substringEndIndex >= (blankEmoji.Length - 1) && s.Substring(substringEndIndex - blankEmoji.Length + 1, blankEmoji.Length) == blankEmoji))
+            {
+                if (Char.IsWhiteSpace(s[substringEndIndex])) substringEndIndex -= 1;
+                else substringEndIndex -= blankEmoji.Length;
+            }
+        }
+
+        return s.Substring(substringStartIndex, substringEndIndex - substringStartIndex + 1);
+    }
 }
