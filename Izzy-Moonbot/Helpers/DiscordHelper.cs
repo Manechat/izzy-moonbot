@@ -49,8 +49,6 @@ public static class DiscordHelper
     }
     public static bool IsDefaultGuild(IIzzyContext context)
     {
-        var settings = GetDiscordSettings();
-
         if (context.IsPrivate) return false;
         
         return context.Guild.Id == DefaultGuild();
