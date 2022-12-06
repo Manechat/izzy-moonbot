@@ -39,8 +39,8 @@ public class LoggingServiceTests
 
         await logService.Log("sunny said something", context);
         TestUtils.AssertListsAreEqual(new List<string> {
-            "[LoggingServiceTests.cs:BasicTests:34] test",
-            "[LoggingServiceTests.cs:BasicTests:40] server: Maretime Bay (1) #general (1) @Sunny#1234 (2), sunny said something"
+            $"[LoggingServiceTests.cs:BasicTests:34] test",
+            $"[LoggingServiceTests.cs:BasicTests:40] server: Maretime Bay ({guild.Id}) #general ({generalChannel.Id}) @Sunny#1234 ({sunny.Id}), sunny said something"
         }, logger.Logs);
     }
 }
