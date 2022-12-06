@@ -7,6 +7,7 @@ using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 using static Izzy_Moonbot.Adapters.IIzzyClient;
 
@@ -25,6 +26,8 @@ public class DiscordNetUserAdapter : IIzzyUser
     public string Username { get => _user.Username; }
     public string Discriminator { get => _user.Discriminator; }
     public bool IsBot => _user.IsBot;
+    public async Task<IIzzyUserMessage> SendMessageAsync(string text) =>
+        new DiscordNetUserMessageAdapter(await _user.SendMessageAsync(text));
 
     public override string? ToString()
     {
@@ -46,25 +49,21 @@ public class SocketGuildUserAdapter : IIzzyGuildUser
     public string Discriminator { get => _user.Discriminator; }
     public string DisplayName { get => _user.DisplayName; }
     public bool IsBot => _user.IsBot;
-    public IReadOnlyCollection<IIzzyRole> Roles => _user.Roles.Select(r => new DiscordNetRoleAdapter(r)).ToList();
+    public async Task<IIzzyUserMessage> SendMessageAsync(string text) =>
+        new DiscordNetUserMessageAdapter(await _user.SendMessageAsync(text));
 
     public override string? ToString()
     {
         return _user.ToString();
     }
 
-    public async Task AddRoleAsync(ulong roleId, RequestOptions? requestOptions)
-    {
+    public IReadOnlyCollection<IIzzyRole> Roles => _user.Roles.Select(r => new DiscordNetRoleAdapter(r)).ToList();
+    public async Task AddRoleAsync(ulong roleId, RequestOptions? requestOptions) =>
         await _user.AddRoleAsync(roleId, requestOptions);
-    }
-    public async Task AddRolesAsync(IEnumerable<ulong> roles, RequestOptions? requestOptions)
-    {
+    public async Task AddRolesAsync(IEnumerable<ulong> roles, RequestOptions? requestOptions) =>
         await _user.AddRolesAsync(roles, requestOptions);
-    }
-    public async Task RemoveRoleAsync(ulong memberRole, RequestOptions? requestOptions)
-    {
+    public async Task RemoveRoleAsync(ulong memberRole, RequestOptions? requestOptions) =>
         await _user.RemoveRoleAsync(memberRole, requestOptions);
-    }
 }
 
 public class DiscordNetRoleAdapter : IIzzyRole
@@ -315,6 +314,14 @@ public class SocketGuildAdapter : IIzzyGuild
         var textChannel = _guild.GetTextChannel(channelId);
         return textChannel is null ? null : new SocketTextChannelAdapter(textChannel);
     }
+    public async Task AddBanAsync(ulong userId, int pruneDays, string reason) =>
+        await _guild.AddBanAsync(userId, pruneDays: pruneDays, reason: reason);
+    public async Task<bool> GetIsBannedAsync(ulong userId) =>
+        await _guild.GetBanAsync(userId) == null;
+    public async Task RemoveBanAsync(ulong userId) =>
+        await _guild.RemoveBanAsync(userId);
+    public async Task SetBanner(Image image) =>
+        await _guild.ModifyAsync(properties => properties.Banner = image);
 }
 
 public class IdHaver : IIzzyHasId
@@ -380,6 +387,24 @@ public class DiscordSocketClientAdapter : IIzzyClient
 
     public IIzzyContext MakeContext(IIzzyUserMessage message) =>
         new ClientAndMessageContextAdapter(this, message);
+
+    public IIzzyGuild? GetGuild(ulong userId)
+    {
+        var user = _client.GetGuild(userId);
+        return user is null ? null : new SocketGuildAdapter(user);
+    }
+    public async Task<IIzzyUser?> GetUserAsync(ulong userId)
+    {
+        var user = await _client.GetUserAsync(userId);
+        return user is null ? null : new DiscordNetUserAdapter(user);
+    }
+    public async Task SendDirectMessageAsync(ulong userId, string text)
+    {
+        var user = await _client.GetUserAsync(userId);
+        if (user == null) return;
+
+        await user.SendMessageAsync(text);
+    }
 }
 
 public class ClientAndMessageContextAdapter : IIzzyContext

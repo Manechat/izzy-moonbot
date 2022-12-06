@@ -1,9 +1,7 @@
 ﻿using Discord;
-using Discord.WebSocket;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace Izzy_Moonbot.Adapters;
 
@@ -116,6 +114,10 @@ public interface IIzzyGuild
     IIzzyRole? GetRole(ulong roleId);
     IIzzySocketGuildChannel? GetChannel(ulong channelId);
     IIzzySocketTextChannel? GetTextChannel(ulong channelId);
+    Task AddBanAsync(ulong userId, int pruneDays, string reason);
+    Task<bool> GetIsBannedAsync(ulong userId); // replaces the real GetBanAsync method
+    Task RemoveBanAsync(ulong userId);
+    Task SetBanner(Image image); // replaces the real ModifyAsync(props => ...) method
 }
 
 public interface IIzzyClient
@@ -140,6 +142,9 @@ public interface IIzzyClient
     event Func<IIzzyHasId, IIzzyHasId, Task> MessageDeleted;
 
     IIzzyContext MakeContext(IIzzyUserMessage message);
+    Task<IIzzyUser?> GetUserAsync(ulong userId);
+    IIzzyGuild? GetGuild(ulong v);
+    Task SendDirectMessageAsync(ulong userId, string text);
 }
 
 public interface IIzzyContext
