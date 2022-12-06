@@ -35,7 +35,7 @@ public class LoggingServiceTests
         TestUtils.AssertListsAreEqual(new List<string> { "test" }, logger.Logs);
 
         var (_, _, (_, sunny), _, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
-        var context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, "good morning everypony");
+        var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, "good morning everypony");
 
         await logService.Log("sunny said something", context);
         TestUtils.AssertListsAreEqual(new List<string> {

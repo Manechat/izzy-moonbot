@@ -44,12 +44,8 @@ public class FilterService
     
     public void RegisterEvents(IIzzyClient client)
     {
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
-#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-        client.MessageReceived += async (message) => ProcessMessage(message, client);
-        client.MessageUpdated += async (newMessage, channel) => ProcessMessageUpdate(newMessage, channel, client);
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
-#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+        client.MessageReceived += async (message) => await DiscordHelper.LeakOrAwaitTask(ProcessMessage(message, client));
+        client.MessageUpdated += async (newMessage, channel) => await DiscordHelper.LeakOrAwaitTask(ProcessMessageUpdate(newMessage, channel, client));
     }
 
     private async Task LogFilterTrip(IIzzyContext context, string word, string category,

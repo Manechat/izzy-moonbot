@@ -16,6 +16,7 @@ public class FilterServiceTests
     {
         var (cfg, _, (_, sunny), _, (generalChannel, modChat, _), guild, client) = TestUtils.DefaultStubs();
         DiscordHelper.DefaultGuildId = guild.Id;
+        DiscordHelper.PleaseAwaitEvents = true;
 
         cfg.ModChannel = modChat.Id;
         cfg.FilteredWords.Add("jinxies", new HashSet<string> { "magic", "wing", "feather", "mayonnaise" });
@@ -28,13 +29,13 @@ public class FilterServiceTests
 
         fs.RegisterEvents(client);
 
-        client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, "this is a completely ordinary chat message");
+        await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, "this is a completely ordinary chat message");
 
         Assert.AreEqual(1, generalChannel.Messages.Count);
         Assert.AreEqual("this is a completely ordinary chat message", generalChannel.Messages.Last().Content);
         Assert.AreEqual(0, modChat.Messages.Count);
 
-        client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, "magic wings of mayonnaise");
+        await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, "magic wings of mayonnaise");
 
         Assert.AreEqual(1, generalChannel.Messages.Count);
         Assert.AreEqual("this is a completely ordinary chat message", generalChannel.Messages.Last().Content);

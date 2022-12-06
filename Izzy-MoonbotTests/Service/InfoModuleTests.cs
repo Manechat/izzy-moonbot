@@ -64,7 +64,7 @@ public class InfoModuleTests
         var (cfg, _, (_, sunny), _, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
         var im = new InfoModule(cfg, await SetupCommandService());
 
-        var context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".help");
+        var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".help");
         await im.TestableHelpCommandAsync(context, "");
 
         var description = generalChannel.Messages.Last().Content;
@@ -75,7 +75,7 @@ public class InfoModuleTests
         StringAssert.Contains(description, "spam - ");
         StringAssert.Contains(description, "ℹ  **See also: `.config`");
 
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".help ban");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".help ban");
         await im.TestableHelpCommandAsync(context, "ban");
 
         description = generalChannel.Messages.Last().Content;
@@ -96,13 +96,13 @@ public class InfoModuleTests
         var im = new InfoModule(cfg, await SetupCommandService());
 
         // Check .help's regular behavior before adding aliases
-        var context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".help addquote");
+        var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".help addquote");
         await im.TestableHelpCommandAsync(context, "addquote");
 
         var baseAddQuoteDescription = generalChannel.Messages.Last().Content;
         Assert.IsFalse(baseAddQuoteDescription.Contains("Relevant aliases:"));
 
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".help moonlaser");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".help moonlaser");
         await im.TestableHelpCommandAsync(context, "moonlaser");
 
         var description = generalChannel.Messages.Last().Content;
@@ -113,7 +113,7 @@ public class InfoModuleTests
         cfg.Aliases.Add("crown", "assignrole <@1>");
 
         // .help should now append a Relevant Aliases line for commands with an alias
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".help addquote");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".help addquote");
         await im.TestableHelpCommandAsync(context, "addquote");
 
         description = generalChannel.Messages.Last().Content;
@@ -121,7 +121,7 @@ public class InfoModuleTests
         StringAssert.EndsWith(description, "Relevant aliases: .moonlaser", null, null);
 
         // .help <alias> should now prepend the alias definition to the help for the underlying command
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".help moonlaser");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".help moonlaser");
         await im.TestableHelpCommandAsync(context, "moonlaser");
 
         description = generalChannel.Messages.Last().Content;
@@ -129,7 +129,7 @@ public class InfoModuleTests
         StringAssert.Contains(description, baseAddQuoteDescription, null, null);
 
         // regression test: .help ass was mistakenly printing .assignrole's aliases because ass is a prefix of assignrole
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".help ass");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".help ass");
         await im.TestableHelpCommandAsync(context, "ass");
 
         Assert.IsFalse(generalChannel.Messages.Last().Content.Contains("Relevant aliases:"));

@@ -455,7 +455,7 @@ public class StubClient : IIzzyClient
     private TestUser _currentUser;
     private List<StubGuild> _guilds;
 
-    public TestIzzyContext AddMessage(ulong guildId, ulong channelId, ulong userId, string textContent)
+    public async Task<TestIzzyContext> AddMessageAsync(ulong guildId, ulong channelId, ulong userId, string textContent)
     {
         if (_guilds.Find(g => g.Id == guildId) is StubGuild guild)
         {
@@ -467,7 +467,8 @@ public class StubClient : IIzzyClient
                 channel.Messages.Add(stubMessage);
 
                 var testMessage = new TestMessage(stubMessage, user, channel, guild, this);
-                MessageReceived?.Invoke(testMessage);
+                var t = MessageReceived?.Invoke(testMessage);
+                if (t is not null) await t;
 
                 return new TestIzzyContext(
                     false,

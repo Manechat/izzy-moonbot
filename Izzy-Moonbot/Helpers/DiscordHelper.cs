@@ -9,13 +9,25 @@ using Izzy_Moonbot.Settings;
 using Izzy_Moonbot.Adapters;
 using Microsoft.Extensions.Configuration;
 using System.IO;
+using System.Runtime.CompilerServices;
 
 namespace Izzy_Moonbot.Helpers;
 
 public static class DiscordHelper
 {
-    // This setter should only be used by tests
+    // These setters should only be used by tests
     public static ulong? DefaultGuildId { get; set; } = null;
+    public static bool PleaseAwaitEvents { get; set; } = false;
+
+    // In production code, our event handlers need to return immediately no matter how
+    // much work there is to do, or else we "block the gateway task".
+    // But in tests we need to wait for that work to complete.
+    public static async Task<object?> LeakOrAwaitTask(Task t)
+    {
+        if (PleaseAwaitEvents)
+            await t;
+        return Task.CompletedTask;
+    }
 
     public static bool ShouldExecuteInPrivate(bool externalUsageAllowedFlag, SocketCommandContext context)
     {

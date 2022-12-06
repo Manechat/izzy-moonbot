@@ -16,6 +16,7 @@ public class SpamServiceTests
     {
         var (cfg, _, (_, sunny), _, (generalChannel, modChat, _), guild, client) = TestUtils.DefaultStubs();
         DiscordHelper.DefaultGuildId = guild.Id;
+        DiscordHelper.PleaseAwaitEvents = true;
 
         cfg.ModChannel = modChat.Id;
         cfg.FilteredWords.Add("jinxies", new HashSet<string> { "magic", "wing", "feather", "mayonnaise" });
@@ -35,7 +36,7 @@ public class SpamServiceTests
         Assert.AreEqual(0, generalChannel.Messages.Count);
         Assert.AreEqual(0, modChat.Messages.Count);
 
-        client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, SpamService._testString);
+        await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, SpamService._testString);
 
         // The spam message has already been deleted
         Assert.AreEqual(0, generalChannel.Messages.Count);
