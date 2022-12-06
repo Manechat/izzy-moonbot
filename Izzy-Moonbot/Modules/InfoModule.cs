@@ -4,9 +4,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
+using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Attributes;
 using Izzy_Moonbot.Helpers;
-using Izzy_Moonbot.Service;
 using Izzy_Moonbot.Settings;
 
 namespace Izzy_Moonbot.Modules;
@@ -30,6 +30,16 @@ public class InfoModule : ModuleBase<SocketCommandContext>
     public async Task HelpCommandAsync(
         [Remainder]string item = "")
     {
+        await TestableHelpCommandAsync(
+            new SocketCommandContextAdapter(Context),
+            item
+        );
+    }
+
+    public async Task TestableHelpCommandAsync(
+        IIzzyContext Context,
+        string item = "")
+    {
         var prefix = _config.Prefix;
 
         if (item == "")
@@ -48,7 +58,7 @@ public class InfoModule : ModuleBase<SocketCommandContext>
                 moduleList.Add(moduleInfo);
             }
 
-            await ReplyAsync(
+            await Context.Channel.SendMessageAsync(
                 $"Hii! Here's how to use the help command!{Environment.NewLine}" +
                 $"Run `{prefix}help <category>` to list the commands in a category.{Environment.NewLine}" +
                 $"Run `{prefix}help <command>` to view information about a command.{Environment.NewLine}{Environment.NewLine}" +
@@ -62,7 +72,7 @@ public class InfoModule : ModuleBase<SocketCommandContext>
             var commandInfo = _commands.Commands.Single<CommandInfo>(command => command.Name.ToLower() == item.ToLower());
             var ponyReadable = PonyReadableCommandHelp(prefix, item, commandInfo);
             ponyReadable += PonyReadableRelevantAliases(prefix, item);
-            await ReplyAsync(ponyReadable);
+            await Context.Channel.SendMessageAsync(ponyReadable);
         }
         // Module.
         else if (_commands.Modules.Any(module => module.Name.ToLower() == item.ToLower() ||
@@ -112,7 +122,7 @@ public class InfoModule : ModuleBase<SocketCommandContext>
                 var potentialAliases = _commands.Commands.Where(command =>
                     command.Aliases.Select(alias => alias.ToLower()).Contains(item.ToLower())).ToArray();
 
-                await ReplyAsync(
+                await Context.Channel.SendMessageAsync(
                     $"Hii! Here's a list of all the commands I could find in the {moduleInfo.Name.Replace("Module", "").Replace("Submodule", "")} category!{Environment.NewLine}" +
                     $"```{Environment.NewLine}{string.Join(Environment.NewLine, commands)}{Environment.NewLine}```{Environment.NewLine}" +
                     $"Run `{prefix}help <command>` for help regarding a specific command!" +
@@ -128,7 +138,7 @@ public class InfoModule : ModuleBase<SocketCommandContext>
             var alternateName = commandInfo.Aliases.Single(alias => alias.ToLower() == item.ToLower());
             var ponyReadable = PonyReadableCommandHelp(prefix, item, commandInfo, alternateName);
             ponyReadable += PonyReadableRelevantAliases(prefix, item);
-            await ReplyAsync(ponyReadable);
+            await Context.Channel.SendMessageAsync(ponyReadable);
         }
         // Try aliases
         else if (_config.Aliases.Any(alias => alias.Key.ToLower() == item.ToLower()))
@@ -141,17 +151,17 @@ public class InfoModule : ModuleBase<SocketCommandContext>
             if (commandInfo != null)
             {
                 ponyReadable += PonyReadableCommandHelp(prefix, item, commandInfo);
-                await ReplyAsync(ponyReadable);
+                await Context.Channel.SendMessageAsync(ponyReadable);
                 return;
             }
 
             // Complain
-            await ReplyAsync(
+            await Context.Channel.SendMessageAsync(
                 $"**Warning!** This alias directs to a non-existent command!{Environment.NewLine}Please remove this alias or redirect it to an existing command.");
         }
         else
         {
-            await ReplyAsync($"Sorry, I was unable to find \"{item}\" as either a command, category, or alias.");
+            await Context.Channel.SendMessageAsync($"Sorry, I was unable to find \"{item}\" as either a command, category, or alias.");
         }
     }
 
@@ -215,7 +225,7 @@ public class InfoModule : ModuleBase<SocketCommandContext>
     [ExternalUsageAllowed]
     public async Task AboutCommandAsync()
     {
-        await ReplyAsync(
+        await Context.Channel.SendMessageAsync(
             $"Izzy Moonbot{Environment.NewLine}" +
             $"Programmed in C# with Virtual Studio and JetBrains Rider{Environment.NewLine}" +
             $"Programmed by Dr. Romulus#4444, Cloudburst#0001 (Twi/Leah) and Ixrec#7992{Environment.NewLine}" +
