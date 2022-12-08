@@ -92,9 +92,19 @@ public class MiscModule : ModuleBase<SocketCommandContext>
     [Example(".remindme 6 months rethink life")]
     public async Task RemindMeCommandAsync([Remainder] string argsString = "")
     {
+        await TestableRemindMeCommandAsync(
+            new SocketCommandContextAdapter(Context),
+            argsString
+        );
+    }
+
+    public async Task TestableRemindMeCommandAsync(
+        IIzzyContext context,
+        string argsString = "")
+    {
         if (argsString == "")
         {
-            await Context.Channel.SendMessageAsync(
+            await context.Channel.SendMessageAsync(
                 $"Hey uhh... I think you forgot something... (Missing `time` and `message` parameters, see `{_config.Prefix}help remindme`)");
             return;
         }
@@ -109,13 +119,13 @@ public class MiscModule : ModuleBase<SocketCommandContext>
         {
             if (args.Arguments.Length < (timeType == "unknown" ? 2 : 3))
             {
-                await Context.Channel.SendMessageAsync("Please provide a time/date!");
+                await context.Channel.SendMessageAsync("Please provide a time/date!");
                 return;
             }
 
             if (args.Arguments.Length < (timeType == "unknown" ? 3 : 4))
             {
-                await Context.Channel.SendMessageAsync("You have to tell me what to remind you!");
+                await context.Channel.SendMessageAsync("You have to tell me what to remind you!");
                 return;
             }
 
@@ -130,13 +140,13 @@ public class MiscModule : ModuleBase<SocketCommandContext>
 
             if (!int.TryParse(timeNumber, out var time))
             {
-                await Context.Channel.SendMessageAsync($"I couldn't convert `{timeNumber}` to a number, please try again.");
+                await context.Channel.SendMessageAsync($"I couldn't convert `{timeNumber}` to a number, please try again.");
                 return;
             }
 
             if (!relativeTimeUnits.Contains(timeUnit))
             {
-                await Context.Channel.SendMessageAsync($"I couldn't convert `{timeUnit}` to a duration type, please try again.");
+                await context.Channel.SendMessageAsync($"I couldn't convert `{timeUnit}` to a duration type, please try again.");
                 return;
             }
 
@@ -147,23 +157,23 @@ public class MiscModule : ModuleBase<SocketCommandContext>
 
             if (content == "")
             {
-                await Context.Channel.SendMessageAsync("You have to tell me what to remind you!");
+                await context.Channel.SendMessageAsync("You have to tell me what to remind you!");
                 return;
             }
 
             await _logger.Log($"Adding scheduled job to remind user to \"{content}\" at {timeHelperResponse.Time:F}",
-                context: Context, level: LogLevel.Debug);
-            var action = new ScheduledEchoJob(Context.User.Id, content);
+                context: context, level: LogLevel.Debug);
+            var action = new ScheduledEchoJob(context.User, content);
             var task = new ScheduledJob(DateTimeOffset.UtcNow,
                 timeHelperResponse.Time, action);
             await _schedule.CreateScheduledJob(task);
-            await _logger.Log($"Added scheduled job for user", context: Context, level: LogLevel.Debug);
+            await _logger.Log($"Added scheduled job for user", context: context, level: LogLevel.Debug);
 
-            await Context.Channel.SendMessageAsync($"Okay! I'll DM you a reminder <t:{timeHelperResponse.Time.ToUnixTimeSeconds()}:R>.");
+            await context.Channel.SendMessageAsync($"Okay! I'll DM you a reminder <t:{timeHelperResponse.Time.ToUnixTimeSeconds()}:R>.");
         }
         else
         {
-            await Context.Channel.SendMessageAsync($"<@186730180872634368> https://www.youtube.com/watch?v=-5wpm-gesOY{Environment.NewLine}(I don't currently support timezones, which is required for the input you just gave me, so I'm telling my primary dev that she has to make me support them)");
+            await context.Channel.SendMessageAsync($"<@186730180872634368> https://www.youtube.com/watch?v=-5wpm-gesOY{Environment.NewLine}(I don't currently support timezones, which is required for the input you just gave me, so I'm telling my primary dev that she has to make me support them)");
             return;
         }
     }
