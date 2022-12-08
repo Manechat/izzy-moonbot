@@ -19,7 +19,7 @@ public class PaginationHelper
     private readonly bool _useCodeBlock;
     private ulong _authorId;
     private bool _easterEgg;
-    private IIzzyMessage _message;
+    private IIzzyUserMessage _message;
     public DateTime ExpiresAt;
     private int _pageNumber = 0;
     public string[] Pages;

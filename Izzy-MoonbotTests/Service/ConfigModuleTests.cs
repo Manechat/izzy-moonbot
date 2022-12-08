@@ -17,7 +17,7 @@ public class ConfigModuleTests
 
         // post ".config prefix *", mis-capitalized on purpose
 
-        var context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config prefix *");
+        var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config prefix *");
 
         Assert.AreEqual(cfg.Prefix, '.');
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "prefix", "*");
@@ -33,7 +33,7 @@ public class ConfigModuleTests
 
         // post ".config Prefix *"
 
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config Prefix *");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config Prefix *");
 
         Assert.AreEqual(cfg.Prefix, '.');
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "Prefix", "*");
@@ -59,7 +59,7 @@ public class ConfigModuleTests
     {
         var (cfg, cd, (_, sunny), _, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
 
-        var context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config core");
+        var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config core");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "core", "");
 
         Assert.IsTrue(generalChannel.Messages.Last().Content.Contains("Here's a list of all the config items I could find in the Core category!"));
@@ -75,7 +75,7 @@ public class ConfigModuleTests
         // String/Char/Boolean/Integer/Double share the same logic
 
         Assert.AreEqual(cfg.UnicycleInterval, 100);
-        var context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config UnicycleInterval");
+        var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config UnicycleInterval");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "UnicycleInterval", "");
         Assert.AreEqual(cfg.UnicycleInterval, 100);
 
@@ -90,7 +90,7 @@ public class ConfigModuleTests
         // Enum
 
         Assert.AreEqual(cfg.BannerMode, BannerMode.None);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config BannerMode");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config BannerMode");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "BannerMode", "");
         Assert.AreEqual(cfg.BannerMode, BannerMode.None);
 
@@ -106,7 +106,7 @@ public class ConfigModuleTests
         // Role/Channel are mostly the same
 
         cfg.ModRole = 1234ul;
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config ModRole");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config ModRole");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "ModRole", "");
         Assert.AreEqual(cfg.ModRole, 1234ul);
 
@@ -119,7 +119,7 @@ public class ConfigModuleTests
         StringAssert.Contains(description, "Run `.config ModRole <value>`");
 
         cfg.ModChannel = 42ul;
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config ModChannel");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config ModChannel");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "ModChannel", "");
         Assert.AreEqual(cfg.ModChannel, 42ul);
 
@@ -140,7 +140,7 @@ public class ConfigModuleTests
         // StringSet
 
         cfg.MentionResponses.Add("hello new friend!");
-        var context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config MentionResponses");
+        var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config MentionResponses");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "MentionResponses", "");
         TestUtils.AssertSetsAreEqual(cfg.MentionResponses, new HashSet<string> { "hello new friend!" });
 
@@ -153,7 +153,7 @@ public class ConfigModuleTests
         StringAssert.Contains(description, "Run `.config MentionResponses add <value>` to");
         StringAssert.Contains(description, "Run `.config MentionResponses remove <value>` to");
 
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config MentionResponses list");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config MentionResponses list");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "MentionResponses", "list");
         TestUtils.AssertSetsAreEqual(cfg.MentionResponses, new HashSet<string> { "hello new friend!" });
 
@@ -166,7 +166,7 @@ public class ConfigModuleTests
 
         cfg.Aliases.Add("moonlaser", "addquote moon");
         cfg.Aliases.Add("echogeneral", "echo <#1>");
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config Aliases");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config Aliases");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "Aliases", "");
         TestUtils.AssertDictionariesAreEqual(new Dictionary<string, string> { { "moonlaser", "addquote moon" }, { "echogeneral", "echo <#1>" } }, cfg.Aliases);
 
@@ -180,7 +180,7 @@ public class ConfigModuleTests
         StringAssert.Contains(description, "Run `.config Aliases set <key> <value>` to");
         StringAssert.Contains(description, "Run `.config Aliases delete <key>` to");
 
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config Aliases list");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config Aliases list");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "Aliases", "list");
         TestUtils.AssertDictionariesAreEqual(new Dictionary<string, string> { { "moonlaser", "addquote moon" }, { "echogeneral", "echo <#1>" } }, cfg.Aliases);
 
@@ -192,7 +192,7 @@ public class ConfigModuleTests
             $"echogeneral = echo <#1>{Environment.NewLine}" +
             $"```");
 
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config Aliases get moonlaser");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config Aliases get moonlaser");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "Aliases", "get moonlaser");
         TestUtils.AssertDictionariesAreEqual(new Dictionary<string, string> { { "moonlaser", "addquote moon" }, { "echogeneral", "echo <#1>" } }, cfg.Aliases);
 
@@ -204,7 +204,7 @@ public class ConfigModuleTests
 
         cfg.FilteredWords.Add("slurs", new HashSet<string> { "mudpony", "screwhead" });
         cfg.FilteredWords.Add("links", new HashSet<string> { "cliptrot.pony/" });
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config FilteredWords");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config FilteredWords");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "FilteredWords", "");
         TestUtils.AssertDictsOfSetsAreEqual(new Dictionary<string, HashSet<string>> {
             { "slurs", new HashSet<string> { "mudpony", "screwhead" } },
@@ -222,7 +222,7 @@ public class ConfigModuleTests
         StringAssert.Contains(description, "Run `.config FilteredWords deleteitem <key> <value>` to");
         StringAssert.Contains(description, "Run `.config FilteredWords deletelist <key>` to");
 
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config FilteredWords list");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config FilteredWords list");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "FilteredWords", "list");
         TestUtils.AssertDictsOfSetsAreEqual(new Dictionary<string, HashSet<string>> {
             { "slurs", new HashSet<string> { "mudpony", "screwhead" } },
@@ -239,7 +239,7 @@ public class ConfigModuleTests
             $"{Environment.NewLine}" +
             $"```");
 
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config FilteredWords get slurs");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config FilteredWords get slurs");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "FilteredWords", "get slurs");
         TestUtils.AssertDictsOfSetsAreEqual(new Dictionary<string, HashSet<string>> {
             { "slurs", new HashSet<string> { "mudpony", "screwhead" } },
@@ -259,7 +259,7 @@ public class ConfigModuleTests
         var (cfg, cd, (_, sunny), _, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
 
         cfg.MentionResponses.Add("hello new friend!");
-        var context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config MentionResponses add got something I can unicycle?");
+        var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config MentionResponses add got something I can unicycle?");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "MentionResponses", "add got something I can unicycle?");
         TestUtils.AssertSetsAreEqual(cfg.MentionResponses, new HashSet<string> { "hello new friend!", "got something I can unicycle?" });
 
@@ -268,7 +268,7 @@ public class ConfigModuleTests
         StringAssert.Contains(description, "I added the following");
         StringAssert.Contains(description, $"```{Environment.NewLine}got something I can unicycle?{Environment.NewLine}```");
 
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config MentionResponses remove hello new friend!");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config MentionResponses remove hello new friend!");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "MentionResponses", "remove hello new friend!");
         TestUtils.AssertSetsAreEqual(cfg.MentionResponses, new HashSet<string> { "got something I can unicycle?" });
 
@@ -284,7 +284,7 @@ public class ConfigModuleTests
         var (cfg, cd, (_, sunny), _, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
 
         cfg.SpamBypassRoles.Add(2ul);
-        var context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config SpamBypassRoles add <@&1>");
+        var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config SpamBypassRoles add <@&1>");
     
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "SpamBypassRoles", "add <@&1>");
     
@@ -295,7 +295,7 @@ public class ConfigModuleTests
         StringAssert.Contains(description, "I added the following");
         StringAssert.Contains(description, $"{Environment.NewLine}Alicorn");
 
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config SpamBypassRoles remove <@&2>");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config SpamBypassRoles remove <@&2>");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "SpamBypassRoles", "remove <@&2>");
         TestUtils.AssertSetsAreEqual(cfg.SpamBypassRoles, new HashSet<ulong> { 1ul });
 
@@ -311,7 +311,7 @@ public class ConfigModuleTests
         var (cfg, cd, (_, sunny), _, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
 
         cfg.SpamIgnoredChannels.Add(2ul);
-        var context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config SpamIgnoredChannels add <#1>");
+        var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config SpamIgnoredChannels add <#1>");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "SpamIgnoredChannels", "add <#1>");
         TestUtils.AssertSetsAreEqual(cfg.SpamIgnoredChannels, new HashSet<ulong> { 2ul, 1ul });
 
@@ -320,7 +320,7 @@ public class ConfigModuleTests
         StringAssert.Contains(description, "I added the following");
         StringAssert.Contains(description, $"{Environment.NewLine}general");
 
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config SpamIgnoredChannels remove <#2>");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config SpamIgnoredChannels remove <#2>");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "SpamIgnoredChannels", "remove <#2>");
         TestUtils.AssertSetsAreEqual(cfg.SpamIgnoredChannels, new HashSet<ulong> { 1ul });
 
@@ -336,7 +336,7 @@ public class ConfigModuleTests
         var (cfg, cd, (_, sunny), _, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
 
         cfg.Aliases.Add("moonlaser", "addquote moon");
-        var context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config Aliases set echogeneral echo <#1>");
+        var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config Aliases set echogeneral echo <#1>");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "Aliases", "set echogeneral echo <#1>");
         TestUtils.AssertDictionariesAreEqual(new Dictionary<string, string> { { "moonlaser", "addquote moon" }, { "echogeneral", "echo <#1>" } }, cfg.Aliases);
 
@@ -346,7 +346,7 @@ public class ConfigModuleTests
         StringAssert.Contains(description, "the `echogeneral` map key");
         StringAssert.Contains(description, ": `echo <#1>`");
 
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config Aliases set moonlaser addquote theothermoon");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config Aliases set moonlaser addquote theothermoon");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "Aliases", "set moonlaser addquote theothermoon");
         TestUtils.AssertDictionariesAreEqual(new Dictionary<string, string> { { "moonlaser", "addquote theothermoon" }, { "echogeneral", "echo <#1>" } }, cfg.Aliases);
 
@@ -356,7 +356,7 @@ public class ConfigModuleTests
         StringAssert.Contains(description, "the `moonlaser` map key");
         StringAssert.Contains(description, "from `addquote moon` to `addquote theothermoon`");
 
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config Aliases delete echogeneral");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config Aliases delete echogeneral");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "Aliases", "delete echogeneral");
         TestUtils.AssertDictionariesAreEqual(new Dictionary<string, string> { { "moonlaser", "addquote theothermoon" } }, cfg.Aliases);
 
@@ -373,7 +373,7 @@ public class ConfigModuleTests
 
         cfg.FilteredWords.Add("slurs", new HashSet<string> { "mudpony" });
         cfg.FilteredWords.Add("links", new HashSet<string> { "cliptrot.pony/" });
-        var context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config FilteredWords add slurs screwhead");
+        var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config FilteredWords add slurs screwhead");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "FilteredWords", "add slurs screwhead");
         TestUtils.AssertDictsOfSetsAreEqual(new Dictionary<string, HashSet<string>> {
             { "slurs", new HashSet<string> { "mudpony", "screwhead" } },
@@ -385,7 +385,7 @@ public class ConfigModuleTests
         StringAssert.Contains(description, "the `slurs` string list");
         StringAssert.Contains(description, ": `screwhead`");
 
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config FilteredWords deleteitem slurs mudpony");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config FilteredWords deleteitem slurs mudpony");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "FilteredWords", "deleteitem slurs mudpony");
         TestUtils.AssertDictsOfSetsAreEqual(new Dictionary<string, HashSet<string>> {
             { "slurs", new HashSet<string> { "screwhead" } },
@@ -397,7 +397,7 @@ public class ConfigModuleTests
         StringAssert.Contains(description, "the `slurs` string list");
         StringAssert.Contains(description, ": `mudpony`");
 
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config FilteredWords deletelist links");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config FilteredWords deletelist links");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "FilteredWords", "deletelist links");
         TestUtils.AssertDictsOfSetsAreEqual(new Dictionary<string, HashSet<string>> {
             { "slurs", new HashSet<string> { "screwhead" } }
@@ -434,42 +434,42 @@ public class ConfigModuleTests
 
         // post ".config Prefix *"
         Assert.AreEqual(cfg.Prefix, '.');
-        var context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config prefix *");
+        var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config prefix *");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "Prefix", "*");
         Assert.AreEqual(cfg.Prefix, '*');
         Assert.AreEqual("I've set `Prefix` to the following content: *", generalChannel.Messages.Last().Content);
 
         // post ".config UnicycleInterval 42"
         Assert.AreEqual(cfg.UnicycleInterval, 100);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config UnicycleInterval 42");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config UnicycleInterval 42");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "UnicycleInterval", "42");
         Assert.AreEqual(cfg.UnicycleInterval, 42);
         Assert.AreEqual("I've set `UnicycleInterval` to the following content: 42", generalChannel.Messages.Last().Content);
 
         // post ".config BatchSendLogs true"
         Assert.AreEqual(cfg.BatchSendLogs, false);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config BatchSendLogs true");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config BatchSendLogs true");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "BatchSendLogs", "true");
         Assert.AreEqual(cfg.BatchSendLogs, true);
         Assert.AreEqual("I've set `BatchSendLogs` to the following content: True", generalChannel.Messages.Last().Content);
 
         // post ".config BatchLogsSendRate 999"
         Assert.AreEqual(cfg.BatchLogsSendRate, 10);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config BatchLogsSendRate 999");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config BatchLogsSendRate 999");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "BatchLogsSendRate", "999");
         Assert.AreEqual(cfg.BatchLogsSendRate, 999);
         Assert.AreEqual("I've set `BatchLogsSendRate` to the following content: 999", generalChannel.Messages.Last().Content);
 
         // post ".config MentionResponseEnabled true"
         Assert.AreEqual(cfg.MentionResponseEnabled, false);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config MentionResponseEnabled true");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config MentionResponseEnabled true");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "MentionResponseEnabled", "true");
         Assert.AreEqual(cfg.MentionResponseEnabled, true);
         Assert.AreEqual("I've set `MentionResponseEnabled` to the following content: True", generalChannel.Messages.Last().Content);
 
         // post ".config MentionResponses add yes i am bot"
         TestUtils.AssertSetsAreEqual(new HashSet<string>(), cfg.MentionResponses);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config MentionResponses add yes i am bot");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config MentionResponses add yes i am bot");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "MentionResponses", "add yes i am bot");
         TestUtils.AssertSetsAreEqual(new HashSet<string> { "yes i am bot" }, cfg.MentionResponses);
         Assert.AreEqual($"I added the following content to the `MentionResponses` string list:{Environment.NewLine}" +
@@ -480,63 +480,63 @@ public class ConfigModuleTests
 
         // post ".config MentionResponseCooldown 50"
         Assert.AreEqual(cfg.MentionResponseCooldown, 600);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config MentionResponseCooldown 50");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config MentionResponseCooldown 50");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "MentionResponseCooldown", "50");
         Assert.AreEqual(cfg.MentionResponseCooldown, 50);
         Assert.AreEqual("I've set `MentionResponseCooldown` to the following content: 50", generalChannel.Messages.Last().Content);
 
         // post ".config DiscordActivityName buckball"
         Assert.AreEqual(cfg.DiscordActivityName, "you all soon");
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config DiscordActivityName buckball");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config DiscordActivityName buckball");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "DiscordActivityName", "buckball");
         Assert.AreEqual(cfg.DiscordActivityName, "buckball");
         Assert.AreEqual("I've set `DiscordActivityName` to the following content: buckball", generalChannel.Messages.Last().Content);
 
         // post ".config DiscordActivityWatching false"
         Assert.AreEqual(cfg.DiscordActivityWatching, true);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config DiscordActivityWatching false");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config DiscordActivityWatching false");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "DiscordActivityWatching", "false");
         Assert.AreEqual(cfg.DiscordActivityWatching, false);
         Assert.AreEqual("I've set `DiscordActivityWatching` to the following content: False", generalChannel.Messages.Last().Content);
 
         // post ".config Aliases set moonlaser addquote moon"
         TestUtils.AssertDictionariesAreEqual(new Dictionary<string, string>(), cfg.Aliases);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config Aliases set moonlaser addquote moon");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config Aliases set moonlaser addquote moon");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "Aliases", "set moonlaser addquote moon");
         TestUtils.AssertDictionariesAreEqual(new Dictionary<string, string> { { "moonlaser", "addquote moon" } }, cfg.Aliases);
         Assert.AreEqual("I added the following string to the `moonlaser` map key in the `Aliases` map: `addquote moon`", generalChannel.Messages.Last().Content);
 
         // post ".config FirstRuleMessageId 1234"
         Assert.AreEqual(cfg.FirstRuleMessageId, 0ul);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config FirstRuleMessageId 1234");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config FirstRuleMessageId 1234");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "FirstRuleMessageId", "1234");
         Assert.AreEqual(cfg.FirstRuleMessageId, 1234ul);
         Assert.AreEqual("I've set `FirstRuleMessageId` to the following content: 1234", generalChannel.Messages.Last().Content);
 
         // post ".config HiddenRules set -1 :twiactually:"
         TestUtils.AssertDictionariesAreEqual(new Dictionary<string, string>(), cfg.HiddenRules);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config HiddenRules set -1 :twiactually:");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config HiddenRules set -1 :twiactually:");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "HiddenRules", "set -1 :twiactually:");
         TestUtils.AssertDictionariesAreEqual(new Dictionary<string, string> { { "-1", ":twiactually:" } }, cfg.HiddenRules);
         Assert.AreEqual("I added the following string to the `-1` map key in the `HiddenRules` map: `:twiactually:`", generalChannel.Messages.Last().Content);
 
         // post ".config BannerMode ManebooruFeatured"
         Assert.AreEqual(cfg.BannerMode, BannerMode.None);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config BannerMode ManebooruFeatured");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config BannerMode ManebooruFeatured");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "BannerMode", "ManebooruFeatured");
         Assert.AreEqual(cfg.BannerMode, BannerMode.ManebooruFeatured);
         Assert.AreEqual("I've set `BannerMode` to the following content: ManebooruFeatured", generalChannel.Messages.Last().Content);
 
         // post ".config BannerInterval 1"
         Assert.AreEqual(cfg.BannerInterval, 60);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config BannerInterval 1");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config BannerInterval 1");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "BannerInterval", "1");
         Assert.AreEqual(cfg.BannerInterval, 1);
         Assert.AreEqual("I've set `BannerInterval` to the following content: 1", generalChannel.Messages.Last().Content);
 
         // post ".config BannerImages add https://static.manebooru.art/img/2022/11/23/4025857/large.png"
         TestUtils.AssertSetsAreEqual(new HashSet<string>(), cfg.BannerImages);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config BannerImages add https://static.manebooru.art/img/2022/11/23/4025857/large.png");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config BannerImages add https://static.manebooru.art/img/2022/11/23/4025857/large.png");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "BannerImages", "add https://static.manebooru.art/img/2022/11/23/4025857/large.png");
         TestUtils.AssertSetsAreEqual(new HashSet<string> { "https://static.manebooru.art/img/2022/11/23/4025857/large.png" }, cfg.BannerImages);
         Assert.AreEqual($"I added the following content to the `BannerImages` string list:{Environment.NewLine}" +
@@ -547,56 +547,56 @@ public class ConfigModuleTests
 
         // post ".config ModRole <@&1>"
         Assert.AreEqual(cfg.ModRole, 0ul);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config ModRole <@&1>");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config ModRole <@&1>");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "ModRole", "<@&1>");
         Assert.AreEqual(cfg.ModRole, 1ul);
         Assert.AreEqual("I've set `ModRole` to the following content: <@&1>", generalChannel.Messages.Last().Content);
 
         // post ".config ModChannel <#2>"
         Assert.AreEqual(cfg.ModChannel, 0ul);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config ModChannel <#2>");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config ModChannel <#2>");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "ModChannel", "<#2>");
         Assert.AreEqual(cfg.ModChannel, 2ul);
         Assert.AreEqual("I've set `ModChannel` to the following content: <#2>", generalChannel.Messages.Last().Content);
 
         // post ".config LogChannel <#3>"
         Assert.AreEqual(cfg.LogChannel, 0ul);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config LogChannel <#3>");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config LogChannel <#3>");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "LogChannel", "<#3>");
         Assert.AreEqual(cfg.LogChannel, 3ul);
         Assert.AreEqual("I've set `LogChannel` to the following content: <#3>", generalChannel.Messages.Last().Content);
 
         // post ".config ManageNewUserRoles false"
         Assert.AreEqual(cfg.ManageNewUserRoles, true);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config ManageNewUserRoles false");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config ManageNewUserRoles false");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "ManageNewUserRoles", "false");
         Assert.AreEqual(cfg.ManageNewUserRoles, false);
         Assert.AreEqual("I've set `ManageNewUserRoles` to the following content: False", generalChannel.Messages.Last().Content);
 
         // post ".config MemberRole <@&2>"
         Assert.AreEqual(cfg.MemberRole, 0ul);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config MemberRole <@&2>");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config MemberRole <@&2>");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "MemberRole", "<@&2>");
         Assert.AreEqual(cfg.MemberRole, 2ul);
         Assert.AreEqual("I've set `MemberRole` to the following content: <@&2>", generalChannel.Messages.Last().Content);
 
         // post ".config NewMemberRole <@&3>"
         Assert.AreEqual(cfg.NewMemberRole, 0ul);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config NewMemberRole <@&3>");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config NewMemberRole <@&3>");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "NewMemberRole", "<@&3>");
         Assert.AreEqual(cfg.NewMemberRole, 3ul);
         Assert.AreEqual("I've set `NewMemberRole` to the following content: <@&3>", generalChannel.Messages.Last().Content);
 
         // post ".config NewMemberRoleDecay 120"
         Assert.AreEqual(cfg.NewMemberRoleDecay, 0);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config NewMemberRoleDecay 120");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config NewMemberRoleDecay 120");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "NewMemberRoleDecay", "120");
         Assert.AreEqual(cfg.NewMemberRoleDecay, 120);
         Assert.AreEqual("I've set `NewMemberRoleDecay` to the following content: 120", generalChannel.Messages.Last().Content);
 
         // post ".config RolesToReapplyOnRejoin add <@&3>"
         TestUtils.AssertSetsAreEqual(new HashSet<ulong>(), cfg.RolesToReapplyOnRejoin);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config RolesToReapplyOnRejoin add <@&3>");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config RolesToReapplyOnRejoin add <@&3>");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "RolesToReapplyOnRejoin", "add <@&3>");
         TestUtils.AssertSetsAreEqual(new HashSet<ulong> { 3ul }, cfg.RolesToReapplyOnRejoin);
         Assert.AreEqual($"I added the following content to the `RolesToReapplyOnRejoin` role list:{Environment.NewLine}" +
@@ -605,14 +605,14 @@ public class ConfigModuleTests
 
         // post ".config FilterEnabled false"
         Assert.AreEqual(cfg.FilterEnabled, true);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config FilterEnabled false");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config FilterEnabled false");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "FilterEnabled", "false");
         Assert.AreEqual(cfg.FilterEnabled, false);
         Assert.AreEqual("I've set `FilterEnabled` to the following content: False", generalChannel.Messages.Last().Content);
 
         // post ".config FilterIgnoredChannels add <#2>"
         TestUtils.AssertSetsAreEqual(new HashSet<ulong>(), cfg.FilterIgnoredChannels);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config FilterIgnoredChannels add <#2>");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config FilterIgnoredChannels add <#2>");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "FilterIgnoredChannels", "add <#2>");
         TestUtils.AssertSetsAreEqual(new HashSet<ulong> { 2ul }, cfg.FilterIgnoredChannels);
         Assert.AreEqual($"I added the following content to the `FilterIgnoredChannels` channel list:{Environment.NewLine}" +
@@ -621,7 +621,7 @@ public class ConfigModuleTests
 
         // post ".config FilterBypassRoles add <@&1>"
         TestUtils.AssertSetsAreEqual(new HashSet<ulong>(), cfg.FilterBypassRoles);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config FilterBypassRoles add <@&1>");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config FilterBypassRoles add <@&1>");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "FilterBypassRoles", "add <@&1>");
         TestUtils.AssertSetsAreEqual(new HashSet<ulong> { 1ul }, cfg.FilterBypassRoles);
         Assert.AreEqual($"I added the following content to the `FilterBypassRoles` role list:{Environment.NewLine}" +
@@ -630,28 +630,28 @@ public class ConfigModuleTests
 
         // post ".config FilterDevBypass false"
         Assert.AreEqual(cfg.FilterDevBypass, true);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config FilterDevBypass false");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config FilterDevBypass false");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "FilterDevBypass", "false");
         Assert.AreEqual(cfg.FilterDevBypass, false);
         Assert.AreEqual("I've set `FilterDevBypass` to the following content: False", generalChannel.Messages.Last().Content);
 
         // post ".config FilteredWords add slurs mudpony"
         TestUtils.AssertDictsOfSetsAreEqual(new Dictionary<string, HashSet<string>>(), cfg.FilteredWords);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config FilteredWords add slurs mudpony");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config FilteredWords add slurs mudpony");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "FilteredWords", "add slurs mudpony");
         TestUtils.AssertDictsOfSetsAreEqual(new Dictionary<string, HashSet<string>> { { "slurs", new HashSet<string> { "mudpony" } } }, cfg.FilteredWords);
         Assert.AreEqual("I added the following string to the `slurs` string list in the `FilteredWords` map: `mudpony`", generalChannel.Messages.Last().Content);
 
         // post ".config FilterResponseMessages set slurs true"
         TestUtils.AssertDictionariesAreEqual(new Dictionary<string, string?>(), cfg.FilterResponseMessages);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config FilterResponseMessages set slurs that wasn't very nice");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config FilterResponseMessages set slurs that wasn't very nice");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "FilterResponseMessages", "set slurs that wasn't very nice");
         TestUtils.AssertDictionariesAreEqual(new Dictionary<string, string?> { { "slurs", "that wasn't very nice" } }, cfg.FilterResponseMessages);
         Assert.AreEqual("I added the following string to the `slurs` map key in the `FilterResponseMessages` map: `that wasn't very nice`", generalChannel.Messages.Last().Content);
 
         // post ".config FilterResponseSilence set slurs true"
         TestUtils.AssertSetsAreEqual(new HashSet<string>(), cfg.FilterResponseSilence);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config FilterResponseSilence add slurs");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config FilterResponseSilence add slurs");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "FilterResponseSilence", "add slurs");
         TestUtils.AssertSetsAreEqual(new HashSet<string> { "slurs" }, cfg.FilterResponseSilence);
         Assert.AreEqual($"I added the following content to the `FilterResponseSilence` string list:{Environment.NewLine}" +
@@ -662,14 +662,14 @@ public class ConfigModuleTests
 
         // post ".config SpamEnabled false"
         Assert.AreEqual(cfg.SpamEnabled, true);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config SpamEnabled false");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config SpamEnabled false");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "SpamEnabled", "false");
         Assert.AreEqual(cfg.SpamEnabled, false);
         Assert.AreEqual("I've set `SpamEnabled` to the following content: False", generalChannel.Messages.Last().Content);
 
         // post ".config SpamBypassRoles add <@&1>"
         TestUtils.AssertSetsAreEqual(new HashSet<ulong>(), cfg.SpamBypassRoles);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config SpamBypassRoles add <@&1>");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config SpamBypassRoles add <@&1>");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "SpamBypassRoles", "add <@&1>");
         TestUtils.AssertSetsAreEqual(new HashSet<ulong> { 1ul }, cfg.SpamBypassRoles);
         Assert.AreEqual($"I added the following content to the `SpamBypassRoles` role list:{Environment.NewLine}" +
@@ -678,7 +678,7 @@ public class ConfigModuleTests
 
         // post ".config SpamIgnoredChannels add <#2>"
         TestUtils.AssertSetsAreEqual(new HashSet<ulong>(), cfg.SpamIgnoredChannels);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config SpamIgnoredChannels add <#2>");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config SpamIgnoredChannels add <#2>");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "SpamIgnoredChannels", "add <#2>");
         TestUtils.AssertSetsAreEqual(new HashSet<ulong> { 2ul }, cfg.SpamIgnoredChannels);
         Assert.AreEqual($"I added the following content to the `SpamIgnoredChannels` channel list:{Environment.NewLine}" +
@@ -687,133 +687,133 @@ public class ConfigModuleTests
 
         // post ".config SpamDevBypass false"
         Assert.AreEqual(cfg.SpamDevBypass, true);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config SpamDevBypass false");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config SpamDevBypass false");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "SpamDevBypass", "false");
         Assert.AreEqual(cfg.SpamDevBypass, false);
         Assert.AreEqual("I've set `SpamDevBypass` to the following content: False", generalChannel.Messages.Last().Content);
 
         // post ".config SpamBasePressure 15"
         Assert.AreEqual(cfg.SpamBasePressure, 10.0);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config SpamBasePressure 15");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config SpamBasePressure 15");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "SpamBasePressure", "15");
         Assert.AreEqual(cfg.SpamBasePressure, 15.0);
         Assert.AreEqual("I've set `SpamBasePressure` to the following content: 15", generalChannel.Messages.Last().Content);
 
         // post ".config SpamImagePressure 15"
         Assert.AreEqual(cfg.SpamImagePressure, 8.3);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config SpamImagePressure 15");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config SpamImagePressure 15");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "SpamImagePressure", "15");
         Assert.AreEqual(cfg.SpamImagePressure, 15.0);
         Assert.AreEqual("I've set `SpamImagePressure` to the following content: 15", generalChannel.Messages.Last().Content);
 
         // post ".config SpamLengthPressure 15"
         Assert.AreEqual(cfg.SpamLengthPressure, 0.00625);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config SpamLengthPressure 15");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config SpamLengthPressure 15");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "SpamLengthPressure", "15");
         Assert.AreEqual(cfg.SpamLengthPressure, 15.0);
         Assert.AreEqual("I've set `SpamLengthPressure` to the following content: 15", generalChannel.Messages.Last().Content);
 
         // post ".config SpamLinePressure 15"
         Assert.AreEqual(cfg.SpamLinePressure, 0.714);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config SpamLinePressure 15");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config SpamLinePressure 15");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "SpamLinePressure", "15");
         Assert.AreEqual(cfg.SpamLinePressure, 15.0);
         Assert.AreEqual("I've set `SpamLinePressure` to the following content: 15", generalChannel.Messages.Last().Content);
 
         // post ".config SpamPingPressure 15"
         Assert.AreEqual(cfg.SpamPingPressure, 2.5);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config SpamPingPressure 15");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config SpamPingPressure 15");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "SpamPingPressure", "15");
         Assert.AreEqual(cfg.SpamPingPressure, 15.0);
         Assert.AreEqual("I've set `SpamPingPressure` to the following content: 15", generalChannel.Messages.Last().Content);
 
         // post ".config SpamRepeatPressure 15"
         Assert.AreEqual(cfg.SpamRepeatPressure, 10.0);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config SpamRepeatPressure 15");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config SpamRepeatPressure 15");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "SpamRepeatPressure", "15");
         Assert.AreEqual(cfg.SpamRepeatPressure, 15.0);
         Assert.AreEqual("I've set `SpamRepeatPressure` to the following content: 15", generalChannel.Messages.Last().Content);
 
         // post ".config SpamMaxPressure 15"
         Assert.AreEqual(cfg.SpamMaxPressure, 60.0);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config SpamMaxPressure 15");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config SpamMaxPressure 15");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "SpamMaxPressure", "15");
         Assert.AreEqual(cfg.SpamMaxPressure, 15.0);
         Assert.AreEqual("I've set `SpamMaxPressure` to the following content: 15", generalChannel.Messages.Last().Content);
 
         // post ".config SpamPressureDecay 15"
         Assert.AreEqual(cfg.SpamPressureDecay, 2.5);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config SpamPressureDecay 15");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config SpamPressureDecay 15");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "SpamPressureDecay", "15");
         Assert.AreEqual(cfg.SpamPressureDecay, 15.0);
         Assert.AreEqual("I've set `SpamPressureDecay` to the following content: 15", generalChannel.Messages.Last().Content);
 
         // post ".config SpamMessageDeleteLookback 15"
         Assert.AreEqual(cfg.SpamMessageDeleteLookback, 60);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config SpamMessageDeleteLookback 15");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config SpamMessageDeleteLookback 15");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "SpamMessageDeleteLookback", "15");
         Assert.AreEqual(cfg.SpamMessageDeleteLookback, 15.0);
         Assert.AreEqual("I've set `SpamMessageDeleteLookback` to the following content: 15", generalChannel.Messages.Last().Content);
 
         // post ".config RaidProtectionEnabled false"
         Assert.AreEqual(cfg.RaidProtectionEnabled, true);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config RaidProtectionEnabled false");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config RaidProtectionEnabled false");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "RaidProtectionEnabled", "false");
         Assert.AreEqual(cfg.RaidProtectionEnabled, false);
         Assert.AreEqual("I've set `RaidProtectionEnabled` to the following content: False", generalChannel.Messages.Last().Content);
 
         // post ".config AutoSilenceNewJoins true"
         Assert.AreEqual(cfg.AutoSilenceNewJoins, false);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config AutoSilenceNewJoins true");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config AutoSilenceNewJoins true");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "AutoSilenceNewJoins", "true");
         Assert.AreEqual(cfg.AutoSilenceNewJoins, true);
         Assert.AreEqual("I've set `AutoSilenceNewJoins` to the following content: True", generalChannel.Messages.Last().Content);
 
         // post ".config SmallRaidSize 5"
         Assert.AreEqual(cfg.SmallRaidSize, 3);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config SmallRaidSize 5");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config SmallRaidSize 5");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "SmallRaidSize", "5");
         Assert.AreEqual(cfg.SmallRaidSize, 5);
         Assert.AreEqual("I've set `SmallRaidSize` to the following content: 5", generalChannel.Messages.Last().Content);
 
         // post ".config SmallRaidTime 50"
         Assert.AreEqual(cfg.SmallRaidTime, 180);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config SmallRaidTime 50");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config SmallRaidTime 50");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "SmallRaidTime", "50");
         Assert.AreEqual(cfg.SmallRaidTime, 50);
         Assert.AreEqual("I've set `SmallRaidTime` to the following content: 50", generalChannel.Messages.Last().Content);
 
         // post ".config LargeRaidSize 20"
         Assert.AreEqual(cfg.LargeRaidSize, 10);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config LargeRaidSize 20");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config LargeRaidSize 20");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "LargeRaidSize", "20");
         Assert.AreEqual(cfg.LargeRaidSize, 20);
         Assert.AreEqual("I've set `LargeRaidSize` to the following content: 20", generalChannel.Messages.Last().Content);
 
         // post ".config LargeRaidTime 200"
         Assert.AreEqual(cfg.LargeRaidTime, 120);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config LargeRaidTime 200");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config LargeRaidTime 200");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "LargeRaidTime", "200");
         Assert.AreEqual(cfg.LargeRaidTime, 200);
         Assert.AreEqual("I've set `LargeRaidTime` to the following content: 200", generalChannel.Messages.Last().Content);
 
         // post ".config RecentJoinDecay 100"
         Assert.AreEqual(cfg.RecentJoinDecay, 300);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config RecentJoinDecay 100");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config RecentJoinDecay 100");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "RecentJoinDecay", "100");
         Assert.AreEqual(cfg.RecentJoinDecay, 100);
         Assert.AreEqual("I've set `RecentJoinDecay` to the following content: 100", generalChannel.Messages.Last().Content);
 
         // post ".config SmallRaidDecay 10"
         Assert.AreEqual(cfg.SmallRaidDecay, 5);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config SmallRaidDecay 10");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config SmallRaidDecay 10");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "SmallRaidDecay", "10");
         Assert.AreEqual(cfg.SmallRaidDecay, 10);
         Assert.AreEqual("I've set `SmallRaidDecay` to the following content: 10", generalChannel.Messages.Last().Content);
 
         // post ".config LargeRaidDecay 50"
         Assert.AreEqual(cfg.LargeRaidDecay, 30);
-        context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, ".config LargeRaidDecay 50");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config LargeRaidDecay 50");
         await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "LargeRaidDecay", "50");
         Assert.AreEqual(cfg.LargeRaidDecay, 50);
         Assert.AreEqual("I've set `LargeRaidDecay` to the following content: 50", generalChannel.Messages.Last().Content);

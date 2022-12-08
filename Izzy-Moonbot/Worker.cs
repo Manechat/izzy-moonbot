@@ -11,6 +11,7 @@ using Discord.Interactions;
 using Discord.Net;
 using Discord.Rest;
 using Discord.WebSocket;
+using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Attributes;
 using Izzy_Moonbot.EventListeners;
 using Izzy_Moonbot.Helpers;
@@ -91,13 +92,15 @@ namespace Izzy_Moonbot
                 }
 
                 await InstallCommandsAsync();
-                
+
+                var clientAdapter = new DiscordSocketClientAdapter(_client);
+
                 _configListener.RegisterEvents(_client);
                 _userListener.RegisterEvents(_client);
                 
-                _spamService.RegisterEvents(_client);
+                _spamService.RegisterEvents(clientAdapter);
                 _raidService.RegisterEvents(_client);
-                _filterService.RegisterEvents(_client);
+                _filterService.RegisterEvents(clientAdapter);
 
                 _client.LatencyUpdated += async (int old, int value) =>
                 {

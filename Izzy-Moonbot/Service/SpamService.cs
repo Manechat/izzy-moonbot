@@ -10,6 +10,7 @@ using Discord.Commands;
 using Discord.Net;
 using Discord.WebSocket;
 using HtmlAgilityPack;
+using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Settings;
 using Microsoft.Extensions.Logging;
@@ -50,7 +51,7 @@ public class SpamService
      * The test string is a way to test the spam filter without actually spamming
      * The test string is programmed to immediately set pressure to Config.SpamMaxPressure and is not defined if the bot is built with the Release flag.
      */
-    private readonly string _testString = "=+i7B3s+#(-{×jn6Ga3F~lA:IZZY_PRESSURE_TEST:H4fgd3!#!";
+    public readonly static string _testString = "=+i7B3s+#(-{×jn6Ga3F~lA:IZZY_PRESSURE_TEST:H4fgd3!#!";
     #endif
     
     // Pull services from the service system
@@ -64,14 +65,10 @@ public class SpamService
     }
     
     // Register required events
-    public void RegisterEvents(DiscordSocketClient client)
+    public void RegisterEvents(IIzzyClient client)
     {
         // Register MessageReceived event
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
-#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-        client.MessageReceived += async (message) => MessageReceiveEvent(message, client);
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
-#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+        client.MessageReceived += async (message) => await DiscordHelper.LeakOrAwaitTask(MessageReceiveEvent(message, client));
     }
 
     /// <summary>
@@ -133,8 +130,8 @@ public class SpamService
         return _users[id].Pressure;
     }
 
-    private async Task ProcessPressure(ulong id, SocketUserMessage message, SocketGuildUser user,
-        SocketCommandContext context)
+    private async Task ProcessPressure(ulong id, IIzzyUserMessage message, IIzzyGuildUser user,
+        IIzzyContext context)
     {
         var pressure = 0.0;
         var pressureBreakdown = new List<(double, string)>{};
@@ -289,7 +286,7 @@ public class SpamService
     }
 
     private async Task ProcessTrip(ulong id, double oldPressureAfterDecay, double pressure, List<(double, string)> pressureBreakdown,
-        SocketUserMessage message, SocketGuildUser user, SocketCommandContext context, bool alreadyAlerted = false)
+        IIzzyMessage message, IIzzyGuildUser user, IIzzyContext context, bool alreadyAlerted = false)
     {
         // Silence user, this also logs the action.
         await _mod.SilenceUser(user, $"Exceeded pressure max ({pressure}/{_config.SpamMaxPressure}) in <#{message.Channel.Id}>");
@@ -400,19 +397,19 @@ public class SpamService
         return string.Join(Environment.NewLine, orderedBreakdown);
     }
 
-    private async Task MessageReceiveEvent(SocketMessage messageParam, DiscordSocketClient client)
+    private async Task MessageReceiveEvent(IIzzyMessage messageParam, IIzzyClient client)
     {
         if (!_config.SpamEnabled) return; // anti-spam is off
         if (messageParam.Author.IsBot) return; // Don't listen to bots
         if (!DiscordHelper.IsInGuild(messageParam)) return; // Not in guild (in dm/group)
         if (!DiscordHelper.IsProcessableMessage(messageParam)) return; // Not processable
-        if (messageParam is not SocketUserMessage message) return; // Not processable
+        if (messageParam is not IIzzyUserMessage message) return; // Not processable
         
-        var context = new SocketCommandContext(client, message);
+        var context = client.MakeContext(message);
 
         if (!DiscordHelper.IsDefaultGuild(context)) return;
         
-        var guildUser = context.User as SocketGuildUser;
+        var guildUser = context.User as IIzzyGuildUser;
 
         if (guildUser.Id == client.CurrentUser.Id) return; // Don't process the bot
         if (_config.SpamIgnoredChannels.Contains(context.Channel.Id)) return; // Don't process ignored channels
