@@ -182,4 +182,32 @@ public class DiscordHelperTests
         Assert.AreEqual(2ul, await GetUserIdFromPingOrIfOnlySearchResultAsync("Sunny", context));
         Assert.AreEqual(0ul, await GetUserIdFromPingOrIfOnlySearchResultAsync("other", context));
     }
+
+    [TestMethod()]
+    public void TrimDiscordWhitespace_Tests()
+    {
+        Assert.AreEqual("", TrimDiscordWhitespace(""));
+        Assert.AreEqual("", TrimDiscordWhitespace("\n"));
+        Assert.AreEqual("", TrimDiscordWhitespace("\n\n\n"));
+        Assert.AreEqual("", TrimDiscordWhitespace(":blank:"));
+        Assert.AreEqual("", TrimDiscordWhitespace(":blank::blank::blank:"));
+
+        Assert.AreEqual("Izzy", TrimDiscordWhitespace("Izzy"));
+
+        Assert.AreEqual("Izzy", TrimDiscordWhitespace("Izzy\n"));
+        Assert.AreEqual("Izzy", TrimDiscordWhitespace("\nIzzy"));
+        Assert.AreEqual("Izzy", TrimDiscordWhitespace("\nIzzy\n"));
+
+        Assert.AreEqual("Izzy", TrimDiscordWhitespace("Izzy:blank:"));
+        Assert.AreEqual("Izzy", TrimDiscordWhitespace(":blank:Izzy"));
+        Assert.AreEqual("Izzy", TrimDiscordWhitespace(":blank:Izzy:blank:"));
+
+        Assert.AreEqual("Izzy", TrimDiscordWhitespace("\n:blank:Izzy"));
+        Assert.AreEqual("Izzy", TrimDiscordWhitespace(":blank:\nIzzy"));
+        Assert.AreEqual("Izzy", TrimDiscordWhitespace("Izzy\n:blank:"));
+        Assert.AreEqual("Izzy", TrimDiscordWhitespace("Izzy:blank:\n"));
+        Assert.AreEqual("Izzy", TrimDiscordWhitespace("\n:blank:Izzy\n:blank:"));
+
+        Assert.AreEqual("IzzyIzzyIzzy", TrimDiscordWhitespace("\n:blank: \n:blank: \nIzzyIzzyIzzy\n"));
+    }
 }
