@@ -890,7 +890,176 @@ public class AdminModule : ModuleBase<SocketCommandContext>
         if (argsString == "")
         {
             await ReplyAsync($"Heya! Here's a list of commands possible for schedule!{Environment.NewLine}" +
-                             $"`{_config.Prefix}schedule list [category]` - List the current scheduled tasks that exist, ");
+                             $"`{_config.Prefix}schedule list [category]` - List the current scheduled job that exist, optionally specifying the category to list.{Environment.NewLine}" +
+                             $"`{_config.Prefix}schedule list-full [category]` - Get the **full** list of scheduled jobs that exist, optionally specifying the category to list.{Environment.NewLine}" +
+                             $"`{_config.Prefix}schedule about <category>` - Get information about a schedule job category, including the arguments for `.schedule add`.{Environment.NewLine}" +
+                             $"`{_config.Prefix}schedule about <id>` - Get information about a specific scheduled job by its ID.{Environment.NewLine}" +
+                             $"`{_config.Prefix}schedule add <category> <time> [...]` - Add a scheduled job to the specified category to execute at the specified time, run `{_config.Prefix}schedule about <category>` to figure out the arguments.{Environment.NewLine}" +
+                             $"`{_config.Prefix}schedule remove <id>` - Remove a scheduled job by its ID.");
+            return;
+        }
+
+        var args = DiscordHelper.GetArguments(argsString);
+
+        if (args.Arguments[0].ToLower() == "list")
+        {
+            if (args.Arguments.Length == 1)
+            {
+                // All
+                var jobs = _schedule.GetScheduledJobs().Select(job => job.ToString()).ToList();
+                if (jobs.Count > 10)
+                {
+                    // Use pagination
+                    var pages = new List<string>();
+                    var pageNumber = -1;
+                    for (var i = 0; i < jobs.Count; i++)
+                    {
+                        if (i % 10 == 0)
+                        {
+                            pageNumber += 1;
+                            pages.Add("");
+                        }
+
+                        pages[pageNumber] += $"{jobs[i]}{Environment.NewLine}";
+                    }
+
+                    string[] staticParts =
+                    {
+                        "Heya! Here's a list of all the scheduled jobs!",
+                        "If you need a raw text list, run `.schedule list-full`."
+                    };
+
+                    var paginationMessage =
+                        new PaginationHelper(Context, pages.ToArray(), staticParts, codeblock: false);
+                }
+                else
+                {
+                    await ReplyAsync($"Heya! Here's a list of all the scheduled jobs!{Environment.NewLine}{Environment.NewLine}" +
+                                     string.Join(Environment.NewLine, jobs) +
+                                     $"{Environment.NewLine}{Environment.NewLine}If you need a raw text file, run `.schedule list-full`.");
+                }
+            }
+            else
+            {
+                // Specific category
+                var category = string.Join("", argsString.Skip(args.Indices[0]));
+                
+                var type = category.ToLower() switch
+                {
+                    "remove-role" or "remove role" or "role-removal" or "role removal" =>
+                        typeof(ScheduledRoleRemovalJob),
+                    "add-role" or "add role" or "role-addition" or "role addition" =>
+                        typeof(ScheduledRoleAdditionJob),
+                    "unban" or "unban user" or "unban-user" => typeof(ScheduledUnbanJob),
+                    "echo" or "echo message" or "reminders" => typeof(ScheduledEchoJob),
+                    "banner rotation" or "banner" or "banner-rotation" => typeof(ScheduledBannerRotationJob),
+                    _ => null
+                };
+
+                if (type == null)
+                {
+                    await ReplyAsync(
+                        $"The category \"{category}\" doesn't exist. Below is a list of acceptable inputs.{Environment.NewLine}" +
+                        $"`remove-role`, `remove role`, `role-removal`, `role removal` - Role removal jobs.{Environment.NewLine}" +
+                        $"`add-role`, `add role`, `role-addition`, `role addition` - Role addition jobs.{Environment.NewLine}" +
+                        $"`unban`, `unban user`, `unban-user` - User unban jobs.{Environment.NewLine}" +
+                        $"`echo`, `echo message`, `reminders` - Echo jobs.{Environment.NewLine}" +
+                        $"`banner rotation`, `banner`, `banner-rotation` - Banner rotation jobs.");
+                    return;
+                }
+                
+                var jobs = _schedule.GetScheduledJobs().Select(job => job.Action.GetType().FullName == type.FullName).ToList();
+                if (jobs.Count > 10)
+                {
+                    // Use pagination
+                    var pages = new List<string>();
+                    var pageNumber = -1;
+                    for (var i = 0; i < jobs.Count; i++)
+                    {
+                        if (i % 10 == 0)
+                        {
+                            pageNumber += 1;
+                            pages.Add("");
+                        }
+
+                        pages[pageNumber] += $"{jobs[i]}{Environment.NewLine}";
+                    }
+
+                    string[] staticParts =
+                    {
+                        $"Heya! Here's a list of all the scheduled jobs in the {category} category!",
+                        $"If you need a raw text list, run `.schedule list-full {category}`."
+                    };
+
+                    var paginationMessage =
+                        new PaginationHelper(Context, pages.ToArray(), staticParts, codeblock: false);
+                }
+                else
+                {
+                    await ReplyAsync($"Heya! Here's a list of all the scheduled jobs in the {category} category!{Environment.NewLine}{Environment.NewLine}" +
+                                     string.Join(Environment.NewLine, jobs) +
+                                     $"{Environment.NewLine}{Environment.NewLine}If you need a raw text list, run `.schedule list-full {category}`.");
+                }
+            }
+        }
+        else if (args.Arguments[0].ToLower() == "list-full")
+        {
+            if (args.Arguments.Length == 1)
+            {
+                // All
+                var jobs = _schedule.GetScheduledJobs().Select(job => job.ToString()).ToList();
+                
+                var s = new MemoryStream(Encoding.UTF8.GetBytes(string.Join(Environment.NewLine, jobs)));
+                var fa = new FileAttachment(s, $"all_scheduled_jobs_{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}.txt");
+
+                await Context.Channel.SendFileAsync(fa, $"Here's the file list of all scheduled jobs!");
+            }
+            else
+            {
+                // Specific category
+                var category = string.Join("", argsString.Skip(args.Indices[0]));
+                
+                var type = category.ToLower() switch
+                {
+                    "remove-role" or "remove role" or "role-removal" or "role removal" =>
+                        typeof(ScheduledRoleRemovalJob),
+                    "add-role" or "add role" or "role-addition" or "role addition" =>
+                        typeof(ScheduledRoleAdditionJob),
+                    "unban" or "unban user" or "unban-user" => typeof(ScheduledUnbanJob),
+                    "echo" or "echo message" or "reminders" => typeof(ScheduledEchoJob),
+                    "banner rotation" or "banner" or "banner-rotation" => typeof(ScheduledBannerRotationJob),
+                    _ => null
+                };
+
+                if (type == null)
+                {
+                    await ReplyAsync(
+                        $"The category \"{category}\" doesn't exist. Below is a list of acceptable inputs.{Environment.NewLine}" +
+                        $"`remove-role`, `remove role`, `role-removal`, `role removal` - Role removal jobs.{Environment.NewLine}" +
+                        $"`add-role`, `add role`, `role-addition`, `role addition` - Role addition jobs.{Environment.NewLine}" +
+                        $"`unban`, `unban user`, `unban-user` - User unban jobs.{Environment.NewLine}" +
+                        $"`echo`, `echo message`, `reminders` - Echo jobs.{Environment.NewLine}" +
+                        $"`banner rotation`, `banner`, `banner-rotation` - Banner rotation jobs.");
+                    return;
+                }
+                
+                var typeName = type.Name switch
+                {
+                    "ScheduledRoleRemovalJob" => "role_removal",
+                    "ScheduledRoleAdditionJob" => "role_addition",
+                    "ScheduledUnbanJob" => "unban",
+                    "ScheduledEchoJob" => "echo",
+                    "ScheduledBannerRotationJob" => "banner_rotation",
+                    _ => "????"
+                };
+                
+                var jobs = _schedule.GetScheduledJobs().Select(job => job.Action.GetType().FullName == type.FullName).ToList();
+                
+                var s = new MemoryStream(Encoding.UTF8.GetBytes(string.Join(Environment.NewLine, jobs)));
+                var fa = new FileAttachment(s, $"{typeName}_scheduled_jobs_{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}.txt");
+
+                await Context.Channel.SendFileAsync(fa, $"Here's the file list of all scheduled jobs in the {category} category!");
+            }
         }
     }
 }
