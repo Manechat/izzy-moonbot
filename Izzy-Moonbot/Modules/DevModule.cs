@@ -130,8 +130,8 @@ public class DevModule : ModuleBase<SocketCommandContext>
                 Context.Message.ReplyAsync($"UserStore size: {_users.Count}");
                 break;
             case "create-echo-task":
-                var action = _scheduleService.StringToAction(
-                    $"echo in {Context.Channel.Id} content Hello! Exactly 1 minute should have passed between the test command and this message!");
+                var action = new ScheduledEchoJob(Context.Channel,
+                    "Hello! Exactly 1 minute should have passed between the test command and this message!");
                 var task = new ScheduledJob(DateTimeOffset.UtcNow,
                     DateTimeOffset.UtcNow + TimeSpan.FromMinutes(1), action);
                 await _scheduleService.CreateScheduledJob(task);
@@ -307,9 +307,8 @@ public class DevModule : ModuleBase<SocketCommandContext>
                         "yearly" => ScheduledJobRepeatType.Yearly,
                         _ => ScheduledJobRepeatType.None
                     };
-
-                    var repeataction = _scheduleService.StringToAction(
-                        $"echo in {Context.Channel.Id} content Hello! I'm a repeating task occuring `{timeinput}`!");
+                    var repeataction = new ScheduledEchoJob(Context.Channel,
+                        $"Hello! I'm a repeating job occuring `{timeinput}`!");
                     var repeattask = new ScheduledJob(DateTimeOffset.UtcNow,
                         time.Time, repeataction, repeatType);
                     await _scheduleService.CreateScheduledJob(repeattask);
@@ -337,9 +336,7 @@ public class DevModule : ModuleBase<SocketCommandContext>
                     };
 
                     await _loggingService.Log($"{time.Time:F} {time.RepeatType}");
-                    
-                    var repeataction = _scheduleService.StringToAction(
-                        $"echo in {Context.Channel.Id} content misty");
+                    var repeataction = new ScheduledEchoJob(Context.Channel, "misty");
                     var repeattask = new ScheduledJob(DateTimeOffset.UtcNow,
                         time.Time, repeataction, repeatType);
                     await _scheduleService.CreateScheduledJob(repeattask);
@@ -449,7 +446,7 @@ public class DevModule : ModuleBase<SocketCommandContext>
             _schedule = schedule;
         }
 
-        [Command("oldschedule")]
+        /*[Command("oldschedule")]
         [Summary("Manage schedule")]
         [DevCommand]
         public async Task ScheduleCommandAsync([Summary("Action")] string action = "", [Summary("[...]")][Remainder] string argsString = "")
@@ -664,6 +661,6 @@ public class DevModule : ModuleBase<SocketCommandContext>
 
             if (t.GetProperty(key) == null) return false;
             return true;
-        }
+        }*/
     }
 }
