@@ -10,7 +10,6 @@ using Izzy_Moonbot.EventListeners;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Settings;
 using Microsoft.Extensions.Logging;
-using static Izzy_Moonbot.Settings.ScheduledJobActionType;
 using static Izzy_Moonbot.Settings.ScheduledJobRepeatType;
 
 namespace Izzy_Moonbot.Service;
@@ -62,7 +61,7 @@ public class ScheduleService
             }
             catch (Exception exception)
             {
-                _logger.Log($"{exception.Message}{Environment.NewLine}{exception.StackTrace}", level: LogLevel.Error);
+                await _logger.Log($"{exception.Message}{Environment.NewLine}{exception.StackTrace}", level: LogLevel.Error);
             }
 
             // Call self
@@ -86,28 +85,55 @@ public class ScheduleService
         {
             await _logger.Log($"Executing scheduled job queued for execution at {job.ExecuteAt:F}", level: LogLevel.Debug);
 
-            // Do processing here I guess!
-            switch (job.Action.Type)
+            try
             {
-                case RemoveRole:
-                    await Unicycle_RemoveRole(job, client.GetGuild(DiscordHelper.DefaultGuild()), client);
-                    break;
-                case AddRole:
-                    await Unicycle_AddRole(job, client.GetGuild(DiscordHelper.DefaultGuild()), client);
-                    break;
-                case Unban:
-                    await Unicycle_Unban(job, client.GetGuild(DiscordHelper.DefaultGuild()), client);
-                    break;
-                case Echo:
-                    await Unicycle_Echo(job, client.GetGuild(DiscordHelper.DefaultGuild()), client);
-                    break;
-                case BannerRotation:
-                    await Unicycle_BannerRotation(job, client.GetGuild(DiscordHelper.DefaultGuild()), client);
-                    break;
-                default:
-                    throw new NotSupportedException($"{job.Action.Type} is currently not supported.");
+                // Do processing here I guess!
+                bool completed;
+                
+                switch (job.Action.GetType().Name)
+                {
+                    case "ScheduledRoleRemovalJob":
+                        completed = await Unicycle_RemoveRole((ScheduledRoleRemovalJob)job.Action,
+                            client.GetGuild(DiscordHelper.DefaultGuild()));
+                        break;
+                    case "ScheduledRoleAdditionJob":
+                        completed = await Unicycle_AddRole((ScheduledRoleAdditionJob)job.Action,
+                            client.GetGuild(DiscordHelper.DefaultGuild()));
+                        break;
+                    case "ScheduledUnbanJob":
+                        completed = await Unicycle_Unban((ScheduledUnbanJob)job.Action,
+                            client.GetGuild(DiscordHelper.DefaultGuild()), client);
+                        break;
+                    case "ScheduledEchoJob":
+                        completed = await Unicycle_Echo((ScheduledEchoJob)job.Action,
+                            client.GetGuild(DiscordHelper.DefaultGuild()), client);
+                        break;
+                    case "ScheduledBannerRotationJob":
+                        completed = await Unicycle_BannerRotation((ScheduledBannerRotationJob)job.Action,
+                            client.GetGuild(DiscordHelper.DefaultGuild()), client);
+                        break;
+                    default:
+                        throw new NotSupportedException($"{job.Action.GetType().Name} is currently not supported.");
+                }
+
+                if (!completed)
+                {
+                    await _logger.Log(
+                        $"Scheduled job did not complete successfully but didn't throw an error. It likely received invalid data.{Environment.NewLine}" +
+                        $"Job: {job}",
+                        level: LogLevel.Warning);
+                }
             }
-            
+            catch (Exception ex)
+            {
+                await _logger.Log(
+                    $"Scheduled job threw an exception when trying to execute!{Environment.NewLine}" +
+                    $"Type: {ex.GetType().Name}{Environment.NewLine}" +
+                    $"Message: {ex.Message}{Environment.NewLine}" +
+                    $"Job: {job}{Environment.NewLine}" +
+                    $"Stack Trace: {ex.StackTrace}");
+            }
+
             await DeleteOrRepeatScheduledJob(job);
         }
     }
@@ -140,7 +166,7 @@ public class ScheduleService
 
     public async Task ModifyScheduledJob(string id, ScheduledJob job)
     {
-        _scheduledJobs[_scheduledJobs.IndexOf(_scheduledJobs.First(job => job.Id == id))] = job;
+        _scheduledJobs[_scheduledJobs.IndexOf(_scheduledJobs.First(altJob => altJob.Id == id))] = job;
         await FileHelper.SaveScheduleAsync(_scheduledJobs);
     }
 
@@ -204,101 +230,14 @@ public class ScheduleService
         await DeleteScheduledJob(job);
     }
     
-    public ScheduledJobAction StringToAction(string action)
-    {
-        ScheduledJobActionType actionType;
-        var fields = new Dictionary<string, string>();
-
-        switch (action.Split(" ")[0])
-        {
-            case "remove-role":
-                // remove-role <roleId> from <userId> reason <reason>
-                actionType = RemoveRole;
-                fields.Add("roleId", action.Split(" ")[1]);
-                if (action.Split(" ")[2] != "from") throw new FormatException("Invalid action format");
-                fields.Add("userId", action.Split(" ")[3]);
-                if (action.Split(" ")[4] != "reason") break;
-                fields.Add("reason", string.Join(" ", action.Split(" ").Skip(5)));
-                break;
-            case "add-role":
-                // add-role <roleId> from <userId> reason <reason>
-                actionType = AddRole;
-                fields.Add("roleId", action.Split(" ")[1]);
-                if (action.Split(" ")[2] != "from") throw new FormatException("Invalid action format");
-                fields.Add("userId", action.Split(" ")[3]);
-                if (action.Split(" ")[4] != "reason") break;
-                fields.Add("reason", string.Join(" ", action.Split(" ").Skip(5)));
-                break;
-            case "unban":
-                // unban <userId>
-                actionType = Unban;
-                fields.Add("userId", action.Split(" ")[1]);
-                break;
-            case "echo":
-                // echo in <channelId> content <content>
-                actionType = Echo;
-                if (action.Split(" ")[1] != "in") throw new FormatException("Invalid action format");
-                fields.Add("channelId", action.Split(" ")[2]);
-                if (action.Split(" ")[3] != "content") throw new FormatException("Invalid action format");
-                fields.Add("content", string.Join(" ", action.Split(" ").Skip(4)));
-                break;
-            case "banner-rotation":
-                // banner-rotation
-                actionType = BannerRotation;
-                break;
-            default:
-                throw new FormatException("Invalid action type");
-        }
-
-        return new ScheduledJobAction(actionType, fields);
-    }
-
-    public string ActionToString(ScheduledJobAction action)
-    {
-        var output = "";
-
-        switch (action.Type)
-        {
-            case RemoveRole:
-                output += "remove-role ";
-                output += $"{action.Fields["roleId"]} ";
-                output += $"from {action.Fields["userId"]}";
-                if (action.Fields["reason"] != null) output += $" reason {action.Fields["reason"]}";
-                break;
-            case AddRole:
-                output += "add-role ";
-                output += $"{action.Fields["roleId"]} ";
-                output += $"from {action.Fields["userId"]}";
-                if (action.Fields["reason"] != null) output += $" reason {action.Fields["reason"]}";
-                break;
-            case Unban:
-                output += "unban ";
-                output += $"{action.Fields["userId"]}";
-                break;
-            case Echo:
-                output += "echo in ";
-                output += $"{action.Fields["channelId"]} content ";
-                output += $"{action.Fields["content"]}";
-                break;
-            case BannerRotation:
-                output += "banner-rotation";
-                break;
-            default:
-                throw new FormatException("Invalid action type");
-        }
-
-        return output;
-    }
-    
     // Executors for different types.
-    private async Task Unicycle_AddRole(ScheduledJob job, SocketGuild guild, DiscordSocketClient client)
+    private async Task<bool> Unicycle_AddRole(ScheduledRoleAdditionJob job, SocketGuild guild)
     {
-        var role = guild.GetRole(ulong.Parse(job.Action.Fields["roleId"]));
-        var user = guild.GetUser(ulong.Parse(job.Action.Fields["userId"]));
-        if (role == null || user == null) return;
+        var role = guild.GetRole(job.Role);
+        var user = guild.GetUser(job.User);
+        if (role == null || user == null) return false;
 
-        string? reason = null;
-        if (job.Action.Fields.ContainsKey("reason")) reason = job.Action.Fields["reason"];
+        var reason = job.Reason;
         
         await _logger.Log(
             $"Adding {role.Name} ({role.Id}) to {user.Username}#{user.Discriminator} ({user.Id})", level: LogLevel.Debug);
@@ -310,18 +249,17 @@ public class ScheduleService
             .SetFileLogContent(
                 $"Gave {role.Name} ({role.Id}) to {user.Username}#{user.Discriminator} ({user.Id}). {(reason != null ? $"Reason: {reason}." : "")}")
             .Send();
+
+        return true;
     }
     
-    private async Task Unicycle_RemoveRole(ScheduledJob job, SocketGuild guild, DiscordSocketClient client)
+    private async Task<bool> Unicycle_RemoveRole(ScheduledRoleRemovalJob job, SocketGuild guild)
     {
-        if (!ulong.TryParse(job.Action.Fields["roleId"], out var roleId)) return;
-        if (!ulong.TryParse(job.Action.Fields["userId"], out var userId)) return;
-        var role = guild.GetRole(roleId);
-        var user = guild.GetUser(userId);
-        if (role == null || user == null) return;
+        var role = guild.GetRole(job.Role);
+        var user = guild.GetUser(job.User);
+        if (role == null || user == null) return false;
 
-        string? reason = null;
-        if (job.Action.Fields.ContainsKey("reason")) reason = job.Action.Fields["reason"];
+        string? reason = job.Reason;
         
         await _logger.Log(
             $"Removing {role.Name} ({role.Id}) from {user.Username}#{user.Discriminator} ({user.Id})", level: LogLevel.Debug);
@@ -333,56 +271,58 @@ public class ScheduleService
             .SetFileLogContent(
                 $"Removed {role.Name} ({role.Id}) from {user.Username}#{user.Discriminator} ({user.Id}). {(reason != null ? $"Reason: {reason}." : "")}")
             .Send();
+
+        return true;
     }
 
-    private async Task Unicycle_Unban(ScheduledJob job, SocketGuild guild, DiscordSocketClient client)
+    private async Task<bool> Unicycle_Unban(ScheduledUnbanJob job, SocketGuild guild, DiscordSocketClient client)
     {
-        if (!ulong.TryParse(job.Action.Fields["userId"], out var userId)) return;
-        if (await guild.GetBanAsync(userId) == null) return;
+        if (await guild.GetBanAsync(job.User) == null) return false;
 
-        var user = await client.GetUserAsync(userId);
+        var user = await client.GetUserAsync(job.User);
         
         await _logger.Log(
-            $"Unbanning {(user == null ? userId : $"")}.",
+            $"Unbanning {(user == null ? job.User : $"")}.",
             level: LogLevel.Debug);
 
-        await guild.RemoveBanAsync(userId);
+        await guild.RemoveBanAsync(job.User);
 
         var embed = new EmbedBuilder()
             .WithTitle(
-                $"Unbanned {(user != null ? $"{user.Username}#{user.Discriminator} " : "")}<@{userId}> ({userId})")
+                $"Unbanned {(user != null ? $"{user.Username}#{user.Discriminator} " : "")}<@{job.User}> ({job.User})")
             .WithColor(16737792)
             .WithFooter("Gasp! Does this mean I can invite them to our next traditional unicorn sleepover?")
             .Build();
         
         await _modLogging.CreateModLog(guild)
             .SetEmbed(embed)
-            .SetFileLogContent($"Unbanned {(user != null ? $"{user.Username}#{user.Discriminator} " : "")}<@{userId}> ({userId})")
+            .SetFileLogContent($"Unbanned {(user != null ? $"{user.Username}#{user.Discriminator} " : "")} ({job.User})")
             .Send();
+
+        return true;
     }
 
-    private async Task Unicycle_Echo(ScheduledJob job, SocketGuild guild, DiscordSocketClient client)
+    private async Task<bool> Unicycle_Echo(ScheduledEchoJob job, SocketGuild guild, DiscordSocketClient client)
     {
-        if (!job.Action.Fields.ContainsKey("content")) return;
-        if (job.Action.Fields["content"] == "") return;
-        if (!ulong.TryParse(job.Action.Fields["channelId"], out var channelId)) return;
-        var channel = guild.GetTextChannel(channelId);
+        if (job.Content == "") return false;
+        var channel = guild.GetTextChannel(job.Channel);
         if (channel == null)
         {
-            var user = await client.GetUserAsync(channelId);
-            if (user == null) return;
+            var user = await client.GetUserAsync(job.Channel);
+            if (user == null) return false;
 
-            await user.SendMessageAsync(job.Action.Fields["content"]);
-            return;
+            await user.SendMessageAsync(job.Content);
+            return true;
         }
 
-        await channel.SendMessageAsync(job.Action.Fields["content"]);
+        await channel.SendMessageAsync(job.Content);
+        return true;
     }
 
-    public async Task Unicycle_BannerRotation(ScheduledJob job, SocketGuild guild, DiscordSocketClient client)
+    public async Task<bool> Unicycle_BannerRotation(ScheduledBannerRotationJob job, SocketGuild guild, DiscordSocketClient client)
     {
-        if (_config.BannerMode == ConfigListener.BannerMode.None) return;
-        if (_config.BannerMode == ConfigListener.BannerMode.CustomRotation && _config.BannerImages.Count == 0) return;
+        if (_config.BannerMode == ConfigListener.BannerMode.None) return false;
+        if (_config.BannerMode == ConfigListener.BannerMode.CustomRotation && _config.BannerImages.Count == 0) return false;
 
         if (_config.BannerMode == ConfigListener.BannerMode.CustomRotation)
         {
@@ -402,7 +342,7 @@ public class ScheduleService
                 catch (FlurlHttpException ex)
                 {
                     await _logger.Log($"Recieved HTTP exception when executing Banner Rotation: {ex.Message}");
-                    return;
+                    return false;
                 }
 
                 var image = new Image(stream);
@@ -466,7 +406,7 @@ public class ScheduleService
                         _generalStorage.CurrentBooruFeaturedImage =
                             image; // Cache to not anger CULTPONY or Twilight (API docs say to cache)
                         await FileHelper.SaveGeneralStorageAsync(_generalStorage);
-                        return;
+                        return true;
                     }
                 }
 
@@ -483,7 +423,7 @@ public class ScheduleService
                         .SetFileLogContent(
                             $"Tried to change banner to https://manebooru.art/images/{image.Id} but that image hasn't fully been generated yet. Doing nothing and trying again in {_config.BannerInterval} minutes.")
                         .Send();
-                    return;
+                    return true;
                 }
 
                 if (image.Spoilered)
@@ -495,7 +435,7 @@ public class ScheduleService
                         .SetFileLogContent(
                             $"Tried to change banner to https://manebooru.art/images/{image.Id} but that image is blocked by my filter! Doing nothing.")
                         .Send();
-                    return;
+                    return true;
                 }
 
                 var imageStream = await image.Representations.Full.GetStreamAsync();
@@ -543,6 +483,10 @@ public class ScheduleService
                 await _logger.Log(
                     $"Encountered exception when trying to change banner: {ex.Message}{Environment.NewLine}{ex.StackTrace}");
             }
+
+            return true;
         }
+
+        return false;
     }
 }

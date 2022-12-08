@@ -76,9 +76,9 @@ public class AdminModule : ModuleBase<SocketCommandContext>
         }
 
         var getSingleNewPonyRemoval = new Func<ScheduledJob, bool>(job =>
-            job.Action.Type == ScheduledJobActionType.RemoveRole &&
-            job.Action.Fields["userId"] == member.Id.ToString() &&
-            job.Action.Fields["roleId"] == _config.NewMemberRole.ToString());
+            job.Action is ScheduledRoleRemovalJob removalJob &&
+            removalJob.User == member.Id &&
+            removalJob.Role == _config.NewMemberRole);
 
         if (_schedule.GetScheduledJobs(getSingleNewPonyRemoval).Any(getSingleNewPonyRemoval))
         {
@@ -513,7 +513,7 @@ public class AdminModule : ModuleBase<SocketCommandContext>
                 {
                     { "userId", userId.ToString() }
                 };
-                var action = new ScheduledJobAction(ScheduledJobActionType.Unban, fields);
+                var action = new ScheduledUnbanJob(userId);
                 var job = new ScheduledJob(DateTimeOffset.UtcNow, time.Time, action);
                 await _schedule.CreateScheduledJob(job);
             }
@@ -529,8 +529,8 @@ public class AdminModule : ModuleBase<SocketCommandContext>
         else
         {
             var getUserUnban = new Func<ScheduledJob, bool>(job =>
-                job.Action.Type == ScheduledJobActionType.Unban &&
-                job.Action.Fields["userId"] == userId.ToString());
+                job.Action is ScheduledUnbanJob unbanJob &&
+                unbanJob.User == userId);
             
             // ban exists, make sure a time is declared
             if (time == null)
@@ -590,11 +590,7 @@ public class AdminModule : ModuleBase<SocketCommandContext>
             {
                 // Doesn't exist, it needs to exist.
                 // Create scheduled task!
-                Dictionary<string, string> fields = new Dictionary<string, string>
-                {
-                    { "userId", userId.ToString() }
-                };
-                var action = new ScheduledJobAction(ScheduledJobActionType.Unban, fields);
+                var action = new ScheduledUnbanJob(userId);
                 var job = new ScheduledJob(DateTimeOffset.UtcNow, time.Time, action);
                 await _schedule.CreateScheduledJob(job);
 
@@ -692,9 +688,9 @@ public class AdminModule : ModuleBase<SocketCommandContext>
 
             // Delete any existing scheduled removals for this user and role
             var getRoleRemoval = new Func<ScheduledJob, bool>(job =>
-                job.Action.Type == ScheduledJobActionType.RemoveRole &&
-                job.Action.Fields["userId"] == member.Id.ToString() &&
-                job.Action.Fields["roleId"] == roleId.ToString());
+                job.Action is ScheduledRoleRemovalJob removalJob &&
+                removalJob.User == member.Id &&
+                removalJob.Role == roleId);
 
             var hasExistingRemovalJob = _schedule.GetScheduledJobs(getRoleRemoval).Any();
             if (hasExistingRemovalJob)
@@ -710,16 +706,8 @@ public class AdminModule : ModuleBase<SocketCommandContext>
             if (time is not null)
             {
                 await _logger.Log($"Adding scheduled job to remove role {roleId} from user {userId} at {time.Time}", level: LogLevel.Debug);
-                Dictionary<string, string> fields = new Dictionary<string, string>
-                {
-                    { "roleId", roleId.ToString() },
-                    { "userId", member.Id.ToString() },
-                    {
-                        "reason",
-                        $".assignrole command for user {member.Id} and role {roleId} with duration {duration}."
-                    }
-                };
-                var action = new ScheduledJobAction(ScheduledJobActionType.RemoveRole, fields);
+                var action = new ScheduledRoleRemovalJob(roleId, member.Id,
+                    $".assignrole command for user {member.Id} and role {roleId} with duration {duration}.");
                 var task = new ScheduledJob(DateTimeOffset.UtcNow, time.Time, action);
                 await _schedule.CreateScheduledJob(task);
                 await _logger.Log($"Added scheduled job for new user", level: LogLevel.Debug);
@@ -890,6 +878,19 @@ public class AdminModule : ModuleBase<SocketCommandContext>
         else
         {
             await ReplyAsync($"I didn't find any messages that recent in {channelName}. Deleted nothing.");
+        }
+    }
+
+    [Command("schedule")]
+    [Summary("View and modify Izzy's scheduler.")]
+    [ModCommand(Group = "Permissions")]
+    [DevCommand(Group = "Permissions")]
+    public async Task ScheduleCommandAsync(string argsString = "")
+    {
+        if (argsString == "")
+        {
+            await ReplyAsync($"Heya! Here's a list of commands possible for schedule!{Environment.NewLine}" +
+                             $"`{_config.Prefix}schedule list [category]` - List the current scheduled tasks that exist, ");
         }
     }
 }

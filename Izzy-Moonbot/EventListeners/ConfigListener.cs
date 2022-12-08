@@ -63,16 +63,16 @@ public class ConfigListener
             
             await _logger.Log($"Adding scheduled job to run the banner rotation job in {_config.BannerInterval} minutes", level: LogLevel.Debug);
             Dictionary<string, string> fields = new Dictionary<string, string>();
-            var action = new ScheduledJobAction(ScheduledJobActionType.BannerRotation, fields);
-            var task = new ScheduledJob(currentTime, executeTime, action, ScheduledJobRepeatType.Relative);
-            await _schedule.CreateScheduledJob(task);
+            var action = new ScheduledBannerRotationJob();
+            var job = new ScheduledJob(currentTime, executeTime, action, ScheduledJobRepeatType.Relative);
+            await _schedule.CreateScheduledJob(job);
             await _logger.Log($"Added scheduled job.", level: LogLevel.Debug);
-            await _schedule.Unicycle_BannerRotation(task, client.GetGuild(DiscordHelper.DefaultGuild()), client);
+            await _schedule.Unicycle_BannerRotation(action, client.GetGuild(DiscordHelper.DefaultGuild()), client);
         }
         else if (original != BannerMode.None && current == BannerMode.None)
         {
             // Delete repeated job.
-            var scheduledJobs = _schedule.GetScheduledJobs(job => job.Action.Type == ScheduledJobActionType.BannerRotation);
+            var scheduledJobs = _schedule.GetScheduledJobs(job => job.Action is ScheduledBannerRotationJob);
 
             await _logger.Log($"Cancelling all scheduled jobs for banner rotation.", level: LogLevel.Debug);
             foreach (var scheduledJob in scheduledJobs)
@@ -84,11 +84,11 @@ public class ConfigListener
         if ((original == BannerMode.ManebooruFeatured && current == BannerMode.CustomRotation) ||
             (original == BannerMode.CustomRotation && current == BannerMode.ManebooruFeatured))
         {
-            var scheduledJobs = _schedule.GetScheduledJobs(job => job.Action.Type == ScheduledJobActionType.BannerRotation);
+            var scheduledJobs = _schedule.GetScheduledJobs(job => job.Action is ScheduledBannerRotationJob);
 
             foreach (var scheduledJob in scheduledJobs)
             {
-                await _schedule.Unicycle_BannerRotation(scheduledJob, client.GetGuild(DiscordHelper.DefaultGuild()), client);
+                await _schedule.Unicycle_BannerRotation((ScheduledBannerRotationJob)scheduledJob.Action, client.GetGuild(DiscordHelper.DefaultGuild()), client);
             }
         }
     }
@@ -100,7 +100,7 @@ public class ConfigListener
         var original = e.Original is double originalDouble ? originalDouble : 0;
         var current = e.Current is double currentDouble ? currentDouble : 0;
         
-        var scheduledJobs = _schedule.GetScheduledJobs(job => job.Action.Type == ScheduledJobActionType.BannerRotation);
+        var scheduledJobs = _schedule.GetScheduledJobs(job => job.Action is ScheduledBannerRotationJob);
 
         await _logger.Log($"Updating all scheduled jobs for banner rotation to occur {current} minutes after enabling rotation instead of after {original} minutes.", level: LogLevel.Debug);
         foreach (var scheduledJob in scheduledJobs)
