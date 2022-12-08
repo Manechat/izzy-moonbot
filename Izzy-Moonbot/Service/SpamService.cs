@@ -46,13 +46,11 @@ public class SpamService
     private readonly Regex _mention = new("<@&?[0-9]+>");
     private readonly Regex _url = new("https?://(.+\\.)*(.+)\\.([A-z]+)(/?.+)*", RegexOptions.IgnoreCase);
     private readonly Regex _noUnfurlUrl = new("<{1}https?://(.+\\.)*(.+)\\.([A-z]+)(/?.+)*>{1}", RegexOptions.IgnoreCase);
-    #if DEBUG
     /*
      * The test string is a way to test the spam filter without actually spamming
-     * The test string is programmed to immediately set pressure to Config.SpamMaxPressure and is not defined if the bot is built with the Release flag.
+     * The test string is programmed to immediately set pressure to Config.SpamMaxPressure.
      */
-    public readonly static string _testString = "=+i7B3s+#(-{×jn6Ga3F~lA:IZZY_PRESSURE_TEST:H4fgd3!#!";
-    #endif
+    public static readonly string _testString = "=+i7B3s+#(-{×jn6Ga3F~lA:IZZY_PRESSURE_TEST:H4fgd3!#!";
     
     // Pull services from the service system
     public SpamService(LoggingService logger, ModService mod, ModLoggingService modLogger, Config config, Dictionary<ulong, User> users)
@@ -216,14 +214,12 @@ public class SpamService
         pressure += _config.SpamBasePressure;
         pressureBreakdown.Add((_config.SpamBasePressure, $"Base: {_config.SpamBasePressure}"));
 
-        #if DEBUG
-        // Test string, only exists when built on Debug.
+        // Test string.
         if (message.Content == _testString)
         {
             pressure = _config.SpamMaxPressure;
             pressureBreakdown = new List<(double, string)> { (_config.SpamMaxPressure, "Test string") };
         }
-        #endif
 
         _users[id].PreviousMessage = context.Message.CleanContent;
 

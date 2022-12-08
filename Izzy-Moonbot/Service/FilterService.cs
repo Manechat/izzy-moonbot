@@ -24,15 +24,12 @@ public class FilterService
      * The testString is a specific string that, while not in the actual filter list
      * is treated as if it is. Anyone who says it will be treated the same as if they
      * actually tripped the filter. This is used for testing the filter.
-     * Only gets defined and used if compiled as Debug.
     */
-#if DEBUG
     private readonly string[] _testString =
     {
         "=+i8F8s+#(-{×nsBIo8~lA:IZZY_FILTER_TEST:G8282!#",
         "#!"
     };
-#endif
 
     public FilterService(Config config, ModService mod, ModLoggingService modLog, LoggingService logger)
     {
@@ -174,10 +171,8 @@ public class FilterService
         {
             var filteredWords = words.ToArray().ToList();
             var trip = false;
-#if DEBUG
+            
             filteredWords.Add(_testString[0] + category + _testString[1]);
-#endif
-
 
             foreach (var word in filteredWords)
             {
@@ -210,9 +205,8 @@ public class FilterService
         {
             var filteredWords = words.ToArray().ToList();
             var trip = false;
-#if DEBUG
+            
             filteredWords.Add(_testString[0] + category + _testString[1]);
-#endif
 
 
             foreach (var word in filteredWords)
