@@ -112,11 +112,11 @@ public class SpamServiceTests
         cfg.SpamLinePressure = 2;
 
         await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id,
-            $"hi{Environment.NewLine}{Environment.NewLine}{Environment.NewLine}{Environment.NewLine}{Environment.NewLine}" +
-            $"{Environment.NewLine}{Environment.NewLine}{Environment.NewLine}{Environment.NewLine}{Environment.NewLine}" +
-            $"{Environment.NewLine}{Environment.NewLine}{Environment.NewLine}{Environment.NewLine}{Environment.NewLine}" +
-            $"{Environment.NewLine}{Environment.NewLine}{Environment.NewLine}{Environment.NewLine}{Environment.NewLine}" +
-            $"{Environment.NewLine}{Environment.NewLine}{Environment.NewLine}{Environment.NewLine}{Environment.NewLine}i'm new here");
+            $"hi\n\n\n\n\n" +
+            $"\n\n\n\n\n" +
+            $"\n\n\n\n\n" +
+            $"\n\n\n\n\n" +
+            $"\n\n\n\n\ni'm new here");
 
         Assert.AreEqual(2, modChat.Messages.Count);
         Assert.AreEqual($"<@&0> Spam detected by <@{sunny.Id}>", modChat.Messages.Last().Content);
@@ -125,7 +125,7 @@ public class SpamServiceTests
             ("User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
             ("Channel", $"<#{generalChannel.Id}>"),
             ("Pressure", "This user's last message raised their pressure from 0 to 60, exceeding 60"),
-            ("Breakdown of last message", $"**Lines: 50 ≈ 25 line breaks × 2**{Environment.NewLine}Base: 10"),
+            ("Breakdown of last message", $"**Lines: 50 ≈ 25 line breaks × 2**\nBase: 10"),
         });
 
         DateTimeHelper.FakeUtcNow = DateTimeHelper.FakeUtcNow?.AddHours(1);
@@ -152,7 +152,7 @@ public class SpamServiceTests
             ("User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
             ("Channel", $"<#{generalChannel.Id}>"),
             ("Pressure", "This user's last message raised their pressure from 0 to 68.4, exceeding 60"),
-            ("Breakdown of last message", $"**Length: 58.4 ≈ 584 characters × 0.1**{Environment.NewLine}Base: 10"),
+            ("Breakdown of last message", $"**Length: 58.4 ≈ 584 characters × 0.1**\nBase: 10"),
         });
 
         DateTimeHelper.FakeUtcNow = DateTimeHelper.FakeUtcNow?.AddHours(1);
@@ -175,7 +175,7 @@ public class SpamServiceTests
             ("User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
             ("Channel", $"<#{generalChannel.Id}>"),
             ("Pressure", "This user's last message raised their pressure from 0 to 60, exceeding 60"),
-            ("Breakdown of last message", $"**Mentions: 50 ≈ 20 mentions × 2.5**{Environment.NewLine}Base: 10"),
+            ("Breakdown of last message", $"**Mentions: 50 ≈ 20 mentions × 2.5**\nBase: 10"),
         });
 
         DateTimeHelper.FakeUtcNow = DateTimeHelper.FakeUtcNow?.AddHours(1);
@@ -204,7 +204,7 @@ public class SpamServiceTests
             ("User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
             ("Channel", $"<#{generalChannel.Id}>"),
             ("Pressure", "This user's last message raised their pressure from 0 to 68.1, exceeding 60"),
-            ("Breakdown of last message", $"**Embeds: 58.1 ≈ 7 embeds × 8.3**{Environment.NewLine}Base: 10"),
+            ("Breakdown of last message", $"**Embeds: 58.1 ≈ 7 embeds × 8.3**\nBase: 10"),
         });
 
         DateTimeHelper.FakeUtcNow = DateTimeHelper.FakeUtcNow?.AddHours(1);
@@ -228,7 +228,7 @@ public class SpamServiceTests
             ("User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
             ("Channel", $"<#{generalChannel.Id}>"),
             ("Pressure", "This user's last message raised their pressure from 40 to 70, exceeding 60"),
-            ("Breakdown of last message", $"**Repeat of Previous Message: 20**{Environment.NewLine}Base: 10"),
+            ("Breakdown of last message", $"**Repeat of Previous Message: 20**\nBase: 10"),
         });
 
         DateTimeHelper.FakeUtcNow = DateTimeHelper.FakeUtcNow?.AddHours(1);
@@ -258,7 +258,7 @@ public class SpamServiceTests
             ("User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
             ("Channel", $"<#{generalChannel.Id}>"),
             ("Pressure", "This user's last message raised their pressure from 0 to 64, exceeding 60"),
-            ("Breakdown of last message", $"**Unusual Characters: 54 ≈ 540 unusual characters × 0.1**{Environment.NewLine}Base: 10"),
+            ("Breakdown of last message", $"**Unusual Characters: 54 ≈ 540 unusual characters × 0.1**\nBase: 10"),
         });
     }
 
@@ -277,9 +277,9 @@ public class SpamServiceTests
         cfg.SpamRepeatPressure = 20;
         cfg.SpamUnusualCharacterPressure = 0.05;
 
-        await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, $"<@1234> <@1234> <@1234>{Environment.NewLine}red feather yellow feather");
+        await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, $"<@1234> <@1234> <@1234>\nred feather yellow feather");
         Assert.AreEqual(0, modChat.Messages.Count);
-        await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, $"<@1234> <@1234> <@1234>{Environment.NewLine}red feather yellow feather", attachments: new List<IAttachment> {
+        await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, $"<@1234> <@1234> <@1234>\nred feather yellow feather", attachments: new List<IAttachment> {
             new TestAttachment(new FileAttachment(new MemoryStream(Encoding.UTF8.GetBytes("adoptable character art")), "buy now!")),
         });
         Assert.AreEqual(1, modChat.Messages.Count);
@@ -289,14 +289,14 @@ public class SpamServiceTests
         {
             ("User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
             ("Channel", $"<#{generalChannel.Id}>"),
-            ("Pressure", "This user's last message raised their pressure from 24.9 to 78.1, exceeding 60"),
+            ("Pressure", "This user's last message raised their pressure from 24.8 to 77.89999999999999, exceeding 60"),
             ("Breakdown of last message",
-                $"**Repeat of Previous Message: 20**{Environment.NewLine}" +
-                $"Base: 10{Environment.NewLine}" +
-                $"Embeds: 8.3 ≈ 1 embeds × 8.3{Environment.NewLine}" +
-                $"Mentions: 7.5 ≈ 3 mentions × 2.5{Environment.NewLine}" +
-                $"Length: 5.1 ≈ 51 characters × 0.1{Environment.NewLine}" +
-                $"Lines: 2 ≈ 1 line breaks × 2{Environment.NewLine}" +
+                $"**Repeat of Previous Message: 20**\n" +
+                $"Base: 10\n" +
+                $"Embeds: 8.3 ≈ 1 embeds × 8.3\n" +
+                $"Mentions: 7.5 ≈ 3 mentions × 2.5\n" +
+                $"Length: 5 ≈ 50 characters × 0.1\n" +
+                $"Lines: 2 ≈ 1 line breaks × 2\n" +
                 $"Unusual Characters: 0.3 ≈ 6 unusual characters × 0.05"),
         });
     }
@@ -317,21 +317,21 @@ public class SpamServiceTests
         cfg.SpamUnusualCharacterPressure = 0.05;
 
         await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id,
-            $"░░░░░▐▀█▀▌░░░░▀█▄░░░ {Environment.NewLine}" +
-            $"░░░░░▐█▄█▌░░░░░░▀█▄░░ {Environment.NewLine}" +
-            $"░░░░░░▀▄▀░░░▄▄▄▄▄▀▀░░ {Environment.NewLine}" +
-            $"░░░░▄▄▄██▀▀▀▀░░░░░░░ {Environment.NewLine}" +
-            $"░░░█▀▄▄▄█░▀▀░░ {Environment.NewLine}" +
-            $"░░░▌░▄▄▄▐▌▀▀▀░░ This is Bob{Environment.NewLine}" +
-            $"▄░▐░░░▄▄░█░▀▀ ░░ Copy And Paste Him In {Environment.NewLine}" +
-            $"▀█▌░░░▄░▀█▀░▀ ░░ Every Discord Server, {Environment.NewLine}" +
-            $"░░░░░░░▄▄▐▌▄▄░░░ So, He Can Take {Environment.NewLine}" +
-            $"░░░░░░░▀███▀█░▄░░ Over Discord{Environment.NewLine}" +
-            $"░░░░░░▐▌▀▄▀▄▀▐▄░░  (dont spam him though){Environment.NewLine}" +
-            $"░░░░░░▐▀░░░░░░▐▌░░ {Environment.NewLine}" +
-            $"░░░░░░█░░░░░░░░█░░░░░░░{Environment.NewLine}" +
-            $"░░░░░░█░░░░░░░░█░░░░░░░{Environment.NewLine}" +
-            $"░░░░░░█░░░░░░░░█░░░░░░░{Environment.NewLine}" +
+            $"░░░░░▐▀█▀▌░░░░▀█▄░░░ \n" +
+            $"░░░░░▐█▄█▌░░░░░░▀█▄░░ \n" +
+            $"░░░░░░▀▄▀░░░▄▄▄▄▄▀▀░░ \n" +
+            $"░░░░▄▄▄██▀▀▀▀░░░░░░░ \n" +
+            $"░░░█▀▄▄▄█░▀▀░░ \n" +
+            $"░░░▌░▄▄▄▐▌▀▀▀░░ This is Bob\n" +
+            $"▄░▐░░░▄▄░█░▀▀ ░░ Copy And Paste Him In \n" +
+            $"▀█▌░░░▄░▀█▀░▀ ░░ Every Discord Server, \n" +
+            $"░░░░░░░▄▄▐▌▄▄░░░ So, He Can Take \n" +
+            $"░░░░░░░▀███▀█░▄░░ Over Discord\n" +
+            $"░░░░░░▐▌▀▄▀▄▀▐▄░░  (dont spam him though)\n" +
+            $"░░░░░░▐▀░░░░░░▐▌░░ \n" +
+            $"░░░░░░█░░░░░░░░█░░░░░░░\n" +
+            $"░░░░░░█░░░░░░░░█░░░░░░░\n" +
+            $"░░░░░░█░░░░░░░░█░░░░░░░\n" +
             $"░░░░▄██▄░░░░░▄██▄░░");
 
         Assert.AreEqual(1, modChat.Messages.Count);
@@ -340,12 +340,12 @@ public class SpamServiceTests
         {
             ("User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
             ("Channel", $"<#{generalChannel.Id}>"),
-            ("Pressure", "This user's last message raised their pressure from 0 to 69.64, exceeding 60"),
+            ("Pressure", "This user's last message raised their pressure from 0 to 69.55000000000001, exceeding 60"),
             ("Breakdown of last message",
-                $"**Lines: 42 ≈ 15 line breaks × 2.8**{Environment.NewLine}" +
-                $"Unusual Characters: 14.85 ≈ 297 unusual characters × 0.05{Environment.NewLine}" +
-                $"Base: 10{Environment.NewLine}" +
-                $"Length: 2.79 ≈ 447 characters × 0.00625"),
+                $"**Lines: 42 ≈ 15 line breaks × 2.8**\n" +
+                $"Unusual Characters: 14.85 ≈ 297 unusual characters × 0.05\n" +
+                $"Base: 10\n" +
+                $"Length: 2.7 ≈ 432 characters × 0.00625"),
         });
     }
 }

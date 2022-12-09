@@ -93,7 +93,7 @@ public class SpamModule : ModuleBase<SocketCommandContext>
             );
 
             await context.Channel.SendMessageAsync(
-                $"I consider the following messages from {user.Username}#{user.Discriminator} to be recent: {Environment.NewLine}{string.Join(Environment.NewLine, messageList)}{Environment.NewLine}*Note that these messages may not actually be recent as their age is only checked when the user sends more messages.*");
+                $"I consider the following messages from {user.Username}#{user.Discriminator} to be recent: \n{string.Join('\n', messageList)}\n*Note that these messages may not actually be recent as their age is only checked when the user sends more messages.*");
         }
     }
 }
