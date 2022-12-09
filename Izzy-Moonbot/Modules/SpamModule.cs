@@ -42,7 +42,7 @@ public class SpamModule : ModuleBase<SocketCommandContext>
         if (userName == "") userName = $"<@!{context.User.Id}>";
 
         var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(userName, context);
-        var user = await context.Channel.GetUserAsync(userId);
+        var user = context.Guild?.GetUser(userId);
 
         if (user == null)
         {
@@ -78,7 +78,7 @@ public class SpamModule : ModuleBase<SocketCommandContext>
         if (userName == "") userName = $"<@!{context.User.Id}>";
 
         var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(userName, context);
-        var user = await context.Channel.GetUserAsync(userId);
+        var user = context.Guild?.GetUser(userId);
 
         if (user == null)
         {
