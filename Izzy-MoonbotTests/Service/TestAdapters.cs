@@ -283,7 +283,7 @@ public class TestTextChannel : IIzzySocketTextChannel
             throw new KeyNotFoundException($"CurrentUser is somehow not in this channel");
     }
 
-    public async Task<IIzzyMessage> GetMessageAsync(ulong messageId)
+    public async Task<IIzzyMessage?> GetMessageAsync(ulong messageId)
     {
         var stubMessage = _channel.Messages.Where(m => m.Id == messageId).SingleOrDefault();
         if (stubMessage is null)
