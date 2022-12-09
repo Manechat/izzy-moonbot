@@ -267,4 +267,51 @@ public class SpamServiceTests
                 $"Lines: 2 ≈ 1 line breaks × 2"),
         });
     }
+
+    [TestMethod()]
+    public async Task TheBobTest()
+    {
+        var (cfg, _, (_, sunny), _, (generalChannel, modChat, _), guild, client) = TestUtils.DefaultStubs();
+        SpamSetup(cfg, sunny, modChat, guild, client);
+
+        cfg.SpamBasePressure = 10;
+        cfg.SpamMaxPressure = 60;
+        cfg.SpamLinePressure = 2.8;
+        cfg.SpamLengthPressure = 0.00625;
+        cfg.SpamPingPressure = 2.5;
+        cfg.SpamImagePressure = 8.3;
+        cfg.SpamRepeatPressure = 20;
+
+        await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id,
+            $"░░░░░▐▀█▀▌░░░░▀█▄░░░ {Environment.NewLine}" +
+            $"░░░░░▐█▄█▌░░░░░░▀█▄░░ {Environment.NewLine}" +
+            $"░░░░░░▀▄▀░░░▄▄▄▄▄▀▀░░ {Environment.NewLine}" +
+            $"░░░░▄▄▄██▀▀▀▀░░░░░░░ {Environment.NewLine}" +
+            $"░░░█▀▄▄▄█░▀▀░░ {Environment.NewLine}" +
+            $"░░░▌░▄▄▄▐▌▀▀▀░░ This is Bob{Environment.NewLine}" +
+            $"▄░▐░░░▄▄░█░▀▀ ░░ Copy And Paste Him In {Environment.NewLine}" +
+            $"▀█▌░░░▄░▀█▀░▀ ░░ Every Discord Server, {Environment.NewLine}" +
+            $"░░░░░░░▄▄▐▌▄▄░░░ So, He Can Take {Environment.NewLine}" +
+            $"░░░░░░░▀███▀█░▄░░ Over Discord{Environment.NewLine}" +
+            $"░░░░░░▐▌▀▄▀▄▀▐▄░░  (dont spam him though){Environment.NewLine}" +
+            $"░░░░░░▐▀░░░░░░▐▌░░ {Environment.NewLine}" +
+            $"░░░░░░█░░░░░░░░█░░░░░░░{Environment.NewLine}" +
+            $"░░░░░░█░░░░░░░░█░░░░░░░{Environment.NewLine}" +
+            $"░░░░░░█░░░░░░░░█░░░░░░░{Environment.NewLine}" +
+            $"░░░░▄██▄░░░░░▄██▄░░");
+
+        Assert.AreEqual(1, modChat.Messages.Count);
+        Assert.AreEqual($"<@&0> Spam detected by <@{sunny.Id}>", modChat.Messages.Last().Content);
+        TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, new List<(string, string)>
+        {
+            ("User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
+            ("Channel", $"<#{generalChannel.Id}>"),
+            ("Pressure", "This user's last message raised their pressure from 0 to 60.79, exceeding 60"),
+            ("Breakdown of last message",
+                $"**Lines: 42 ≈ 15 line breaks × 2.8**{Environment.NewLine}" +
+                $"Base: 10{Environment.NewLine}" +
+                $"Unusual Characters: 6 ≈ 120 unusual characters × 0.05{Environment.NewLine}" +
+                $"Length: 2.79 ≈ 447 characters × 0.00625"),
+        });
+    }
 }
