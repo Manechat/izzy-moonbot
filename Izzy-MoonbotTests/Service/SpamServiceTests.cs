@@ -75,6 +75,7 @@ public class SpamServiceTests
             cfg.SpamPingPressure = 0;
             cfg.SpamImagePressure = 0;
             cfg.SpamRepeatPressure = 0;
+            cfg.SpamUnusualCharacterPressure = 0;
         };
 
         // first, test base pressure on its own
@@ -229,6 +230,36 @@ public class SpamServiceTests
             ("Pressure", "This user's last message raised their pressure from 40 to 70, exceeding 60"),
             ("Breakdown of last message", $"**Repeat of Previous Message: 20**{Environment.NewLine}Base: 10"),
         });
+
+        DateTimeHelper.FakeUtcNow = DateTimeHelper.FakeUtcNow?.AddHours(1);
+        await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, "sorry");
+        DateTimeHelper.FakeUtcNow = DateTimeHelper.FakeUtcNow?.AddHours(23);
+
+        // test unusual character pressure
+
+        zeroPenalties();
+        cfg.SpamUnusualCharacterPressure = 0.1;
+
+        await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id,
+            "░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░" +
+            "░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░" +
+            "░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░" +
+            "░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░" +
+            "░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░" +
+            "░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░" +
+            "░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░" +
+            "░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░" +
+            "░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░");
+
+        Assert.AreEqual(7, modChat.Messages.Count);
+        Assert.AreEqual($"<@&0> Spam detected by <@{sunny.Id}>", modChat.Messages.Last().Content);
+        TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, new List<(string, string)>
+        {
+            ("User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
+            ("Channel", $"<#{generalChannel.Id}>"),
+            ("Pressure", "This user's last message raised their pressure from 0 to 64, exceeding 60"),
+            ("Breakdown of last message", $"**Unusual Characters: 54 ≈ 540 unusual characters × 0.1**{Environment.NewLine}Base: 10"),
+        });
     }
 
     [TestMethod()]
@@ -244,6 +275,7 @@ public class SpamServiceTests
         cfg.SpamPingPressure = 2.5;
         cfg.SpamImagePressure = 8.3;
         cfg.SpamRepeatPressure = 20;
+        cfg.SpamUnusualCharacterPressure = 0.05;
 
         await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, $"<@1234> <@1234> <@1234>{Environment.NewLine}red feather yellow feather");
         Assert.AreEqual(0, modChat.Messages.Count);
@@ -257,14 +289,15 @@ public class SpamServiceTests
         {
             ("User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
             ("Channel", $"<#{generalChannel.Id}>"),
-            ("Pressure", "This user's last message raised their pressure from 24.6 to 77.5, exceeding 60"),
+            ("Pressure", "This user's last message raised their pressure from 25 to 78.3, exceeding 60"),
             ("Breakdown of last message",
                 $"**Repeat of Previous Message: 20**{Environment.NewLine}" +
                 $"Base: 10{Environment.NewLine}" +
                 $"Embeds: 8.3 ≈ 1 embeds × 8.3{Environment.NewLine}" +
                 $"Mentions: 7.5 ≈ 3 mentions × 2.5{Environment.NewLine}" +
                 $"Length: 5.1 ≈ 51 characters × 0.1{Environment.NewLine}" +
-                $"Lines: 2 ≈ 1 line breaks × 2"),
+                $"Lines: 2 ≈ 1 line breaks × 2{Environment.NewLine}" +
+                $"Unusual Characters: 0.4 ≈ 8 unusual characters × 0.05"),
         });
     }
 
@@ -307,11 +340,11 @@ public class SpamServiceTests
         {
             ("User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
             ("Channel", $"<#{generalChannel.Id}>"),
-            ("Pressure", "This user's last message raised their pressure from 0 to 60.79, exceeding 60"),
+            ("Pressure", "This user's last message raised their pressure from 0 to 71.14, exceeding 60"),
             ("Breakdown of last message",
                 $"**Lines: 42 ≈ 15 line breaks × 2.8**{Environment.NewLine}" +
+                $"Unusual Characters: 16.35 ≈ 327 unusual characters × 0.05{Environment.NewLine}" +
                 $"Base: 10{Environment.NewLine}" +
-                $"Unusual Characters: 6 ≈ 120 unusual characters × 0.05{Environment.NewLine}" +
                 $"Length: 2.79 ≈ 447 characters × 0.00625"),
         });
     }

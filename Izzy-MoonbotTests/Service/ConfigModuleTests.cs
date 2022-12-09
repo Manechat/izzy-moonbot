@@ -734,6 +734,13 @@ public class ConfigModuleTests
         Assert.AreEqual(cfg.SpamRepeatPressure, 15.0);
         Assert.AreEqual("I've set `SpamRepeatPressure` to the following content: 15", generalChannel.Messages.Last().Content);
 
+        // post ".config SpamUnusualCharacterPressure 0.05"
+        Assert.AreEqual(cfg.SpamUnusualCharacterPressure, 0.01);
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config SpamUnusualCharacterPressure 0.05");
+        await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "SpamUnusualCharacterPressure", "0.05");
+        Assert.AreEqual(cfg.SpamUnusualCharacterPressure, 0.05);
+        Assert.AreEqual("I've set `SpamUnusualCharacterPressure` to the following content: 0.05", generalChannel.Messages.Last().Content);
+
         // post ".config SpamMaxPressure 15"
         Assert.AreEqual(cfg.SpamMaxPressure, 60.0);
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config SpamMaxPressure 15");
@@ -822,7 +829,7 @@ public class ConfigModuleTests
         // Ensure we can't forget to keep this test up to date
         var configPropsCount = typeof(Config).GetProperties().Length;
 
-        Assert.AreEqual(52, configPropsCount,
+        Assert.AreEqual(53, configPropsCount,
             $"{Environment.NewLine}If you just added or removed a config item, then this test is probably out of date");
 
         Assert.AreEqual(configPropsCount * 2, generalChannel.Messages.Count(),
