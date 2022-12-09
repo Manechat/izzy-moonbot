@@ -151,4 +151,42 @@ public class SpamModuleTests
             $"{Environment.NewLine}*Note that these messages may not actually be recent as their age is only checked when the user sends more messages.*",
             generalChannel.Messages.Last().Content);
     }
+
+    [TestMethod()]
+    public async Task GetPressure_OnRegularUser_InPublicOrPrivateChannels_Tests()
+    {
+        var (cfg, _, (_, sunny), _, (generalChannel, modChat, _), guild, client) = TestUtils.DefaultStubs();
+        DiscordHelper.DefaultGuildId = guild.Id;
+        DiscordHelper.DevUserIds = new List<ulong>();
+        DiscordHelper.PleaseAwaitEvents = true;
+        DateTimeHelper.FakeUtcNow = TestUtils.FiMEpoch;
+
+        cfg.ModChannel = modChat.Id;
+
+        var regularUserId = guild.Users[2].Id;
+
+        var users = new Dictionary<ulong, User>();
+        users[sunny.Id] = new User();
+        users[sunny.Id].Timestamp = DateTimeHelper.UtcNow;
+        users[regularUserId] = new User();
+        users[regularUserId].Timestamp = DateTimeHelper.UtcNow;
+
+        var mod = new ModService(cfg, users);
+        var modLog = new ModLoggingService(cfg);
+        var logger = new LoggingService(new TestLogger<Worker>());
+        var ss = new SpamService(logger, mod, modLog, cfg, users);
+        ss.RegisterEvents(client);
+        var sm = new SpamModule(ss);
+
+        var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, $".getpressure {regularUserId}");
+        await sm.TestableGetPressureAsync(context, $"{regularUserId}");
+
+        Assert.AreEqual($"Current Pressure for Zipp#1234: 0", generalChannel.Messages.Last().Content);
+
+        context = await client.AddMessageAsync(guild.Id, modChat.Id, sunny.Id, $".getpressure {regularUserId}");
+        await sm.TestableGetPressureAsync(context, $"{regularUserId}");
+
+        Assert.AreEqual($"Current Pressure for Zipp#1234: 0", modChat.Messages.Last().Content);
+    }
+
 }
