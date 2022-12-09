@@ -18,14 +18,15 @@ public class SpamServiceTests
         DiscordHelper.DefaultGuildId = guild.Id;
         DiscordHelper.DevUserIds = new List<ulong>();
         DiscordHelper.PleaseAwaitEvents = true;
+        DateTimeHelper.FakeUtcNow = TestUtils.FiMEpoch;
 
         cfg.ModChannel = modChat.Id;
-        cfg.FilteredWords.Add("jinxies", new HashSet<string> { "magic", "wing", "feather", "mayonnaise" });
 
-        // SpamService strongly assumes that every MessageReceived event it receives
-        // is for a user who is already in the users Dictionary
+        // SpamService assumes that every MessageReceived event it receives is for
+        // a user who is already in the users Dictionary and has a timestamp
         var users = new Dictionary<ulong, User>();
         users[sunny.Id] = new User();
+        users[sunny.Id].Timestamp = DateTimeHelper.UtcNow;
 
         var mod = new ModService(cfg, users);
         var modLog = new ModLoggingService(cfg);

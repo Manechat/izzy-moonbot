@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
+using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Attributes;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Service;
@@ -27,21 +28,31 @@ public class SpamModule : ModuleBase<SocketCommandContext>
     [Parameter("user", ParameterType.User, "The user to get the pressure of, or yourself if no user is provided.", true)]
     public async Task GetPressureAsync([Remainder] string userName = "")
     {
-        // If no target is specified, target self.
-        if (userName == "") userName = $"<@!{Context.User.Id}>";
+        await TestableGetPressureAsync(
+            new SocketCommandContextAdapter(Context),
+            userName
+        );
+    }
 
-        var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(userName, Context);
-        var user = await Context.Channel.GetUserAsync(userId);
+    public async Task TestableGetPressureAsync(
+        IIzzyContext context,
+        string userName = "")
+    {
+        // If no target is specified, target self.
+        if (userName == "") userName = $"<@!{context.User.Id}>";
+
+        var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(userName, context);
+        var user = await context.Channel.GetUserAsync(userId);
 
         if (user == null)
         {
-            await ReplyAsync("Couldn't find that user in this server");
+            await context.Channel.SendMessageAsync("Couldn't find that user in this server");
         }
         else
         {
             double pressure = _spamService.GetPressure(user.Id);
 
-            await ReplyAsync($"Current Pressure for {user.Username}#{user.Discriminator}: {pressure}");
+            await context.Channel.SendMessageAsync($"Current Pressure for {user.Username}#{user.Discriminator}: {pressure}");
         }
     }
 
