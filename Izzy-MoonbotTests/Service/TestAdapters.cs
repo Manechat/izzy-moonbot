@@ -252,7 +252,20 @@ public class TestTextChannel : IIzzySocketTextChannel
         _clientBackref = client;
     }
 
-    public IReadOnlyCollection<IIzzyUser> Users { get => _guildBackref.Users; }
+    public IReadOnlyCollection<IIzzyUser> Users {
+        get
+        {
+            if (!_guildBackref.ChannelAccessRole.ContainsKey(Id))
+                return _guildBackref.Users;
+            else
+            {
+                var accessRoleId = _guildBackref.ChannelAccessRole[Id];
+                return _guildBackref.Users.Where(u =>
+                    _guildBackref.UserRoles.ContainsKey(u.Id) && _guildBackref.UserRoles[u.Id].Contains(accessRoleId)
+                ).ToList();
+            }
+        }
+    }
 
     public async Task<IIzzyUserMessage> SendMessageAsync(
         string message,
@@ -313,10 +326,16 @@ public class TestMessageChannel : IIzzyMessageChannel
         _clientBackref = client;
     }
 
-    public async Task<IIzzyUser> GetUserAsync(ulong userId)
+    public async Task<IIzzyUser?> GetUserAsync(ulong userId)
     {
         if (_guildBackref.Users.Find(u => u.Id == userId) is IIzzyUser user)
-            return user;
+            if (_guildBackref.ChannelAccessRole.ContainsKey(Id))
+                if (_guildBackref.UserRoles.ContainsKey(userId) && _guildBackref.UserRoles[userId].Contains(_guildBackref.ChannelAccessRole[Id]))
+                    return user;
+                else
+                    return null;
+            else
+                return user;
         else
             throw new KeyNotFoundException($"No user with id {userId}");
     }
@@ -354,6 +373,7 @@ public class StubGuild
     public List<StubChannel> Channels;
 
     public Dictionary<ulong, List<ulong>> UserRoles = new Dictionary<ulong, List<ulong>>();
+    public Dictionary<ulong, ulong> ChannelAccessRole = new Dictionary<ulong, ulong>(); // public channels are absent
 
     public StubGuild(ulong id, string name, List<TestRole> roles, List<TestUser> users, List<StubChannel> channels)
     {

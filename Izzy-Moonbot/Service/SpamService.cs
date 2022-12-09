@@ -81,7 +81,7 @@ public class SpamService
     private async Task<double> GetAndDecayPressure(ulong id)
     {
         // Get current time, calculate pressure loss per second and time difference between now and last pressure task then calculate full pressure loss
-        var now = DateTimeOffset.UtcNow;
+        var now = DateTimeHelper.UtcNow;
         var pressureLossPerSecond = _config.SpamBasePressure / _config.SpamPressureDecay;
         var pressure = _users[id].Pressure;
         var difference = now - _users[id].Timestamp;
@@ -102,7 +102,7 @@ public class SpamService
         foreach (var previousMessageItem in messages)
         {
             if ((previousMessageItem.Timestamp.ToUniversalTime().ToUnixTimeMilliseconds() + (_config.SpamMessageDeleteLookback * 1000)) <=
-                DateTimeOffset.UtcNow.ToUnixTimeMilliseconds())
+                DateTimeHelper.UtcNow.ToUnixTimeMilliseconds())
             {
                 // Message is out of date, remove it
                 _users[id].PreviousMessages.Remove(previousMessageItem);
@@ -121,7 +121,7 @@ public class SpamService
         _users[id].Pressure += pressure;
 
         // Save user
-        _users[id].Timestamp = DateTimeOffset.UtcNow;
+        _users[id].Timestamp = DateTimeHelper.UtcNow;
         await FileHelper.SaveUsersAsync(_users);
 
         // Return new pressure
@@ -224,7 +224,7 @@ public class SpamService
         _users[id].PreviousMessage = context.Message.CleanContent;
 
         var messageItem =
-            new PreviousMessageItem(message.Id, context.Channel.Id, context.Guild.Id, DateTimeOffset.UtcNow);
+            new PreviousMessageItem(message.Id, context.Channel.Id, context.Guild.Id, DateTimeHelper.UtcNow);
         
         _users[id].PreviousMessages.Add(messageItem);
         
@@ -348,7 +348,7 @@ public class SpamService
                         bulkDeletionLog.Select(logElement => logElement.Item2)
                     );
                     var s = new MemoryStream(Encoding.UTF8.GetBytes(bulkDeletionLogString));
-                    var fa = new FileAttachment(s, $"{context.User.Username}_{context.User.Id}_spam_bulk_deletion_log_{DateTimeOffset.UtcNow.ToString()}.txt");
+                    var fa = new FileAttachment(s, $"{context.User.Username}_{context.User.Id}_spam_bulk_deletion_log_{DateTimeHelper.UtcNow.ToString()}.txt");
 
                     var spamBulkDeletionMessage = await logChannel.SendFileAsync(fa,
                         $"Deleted recent messages from {context.User.Username} ({context.User.Id}) after they tripped spam detection, here's the bulk deletion log:");

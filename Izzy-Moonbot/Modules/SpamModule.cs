@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
+using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Attributes;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Service;
@@ -27,21 +28,31 @@ public class SpamModule : ModuleBase<SocketCommandContext>
     [Parameter("user", ParameterType.User, "The user to get the pressure of, or yourself if no user is provided.", true)]
     public async Task GetPressureAsync([Remainder] string userName = "")
     {
-        // If no target is specified, target self.
-        if (userName == "") userName = $"<@!{Context.User.Id}>";
+        await TestableGetPressureAsync(
+            new SocketCommandContextAdapter(Context),
+            userName
+        );
+    }
 
-        var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(userName, Context);
-        var user = await Context.Channel.GetUserAsync(userId);
+    public async Task TestableGetPressureAsync(
+        IIzzyContext context,
+        string userName = "")
+    {
+        // If no target is specified, target self.
+        if (userName == "") userName = $"<@!{context.User.Id}>";
+
+        var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(userName, context);
+        var user = context.Guild?.GetUser(userId);
 
         if (user == null)
         {
-            await ReplyAsync("Couldn't find that user in this server");
+            await context.Channel.SendMessageAsync("Couldn't find that user in this server");
         }
         else
         {
             double pressure = _spamService.GetPressure(user.Id);
 
-            await ReplyAsync($"Current Pressure for {user.Username}#{user.Discriminator}: {pressure}");
+            await context.Channel.SendMessageAsync($"Current Pressure for {user.Username}#{user.Discriminator}: {pressure}");
         }
     }
 
@@ -53,15 +64,25 @@ public class SpamModule : ModuleBase<SocketCommandContext>
     public async Task GetPreviousMessagesAsync(
         [Remainder] string userName = "")
     {
-        // If no target is specified, target self.
-        if (userName == "") userName = $"<@!{Context.User.Id}>";
+        await TestableGetPreviousMessagesAsync(
+            new SocketCommandContextAdapter(Context),
+            userName
+        );
+    }
 
-        var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(userName, Context);
-        var user = await Context.Channel.GetUserAsync(userId);
+    public async Task TestableGetPreviousMessagesAsync(
+        IIzzyContext context,
+        string userName = "")
+    {
+        // If no target is specified, target self.
+        if (userName == "") userName = $"<@!{context.User.Id}>";
+
+        var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(userName, context);
+        var user = context.Guild?.GetUser(userId);
 
         if (user == null)
         {
-            await ReplyAsync("Couldn't find that user in this server");
+            await context.Channel.SendMessageAsync("Couldn't find that user in this server");
         }
         else
         {
@@ -71,7 +92,7 @@ public class SpamModule : ModuleBase<SocketCommandContext>
                 $"https://discord.com/channels/{item.GuildId}/{item.ChannelId}/{item.Id} at <t:{item.Timestamp.ToUniversalTime().ToUnixTimeSeconds()}:F> (<t:{item.Timestamp.ToUniversalTime().ToUnixTimeSeconds()}:R>)"
             );
 
-            await ReplyAsync(
+            await context.Channel.SendMessageAsync(
                 $"I consider the following messages from {user.Username}#{user.Discriminator} to be recent: {Environment.NewLine}{string.Join(Environment.NewLine, messageList)}{Environment.NewLine}*Note that these messages may not actually be recent as their age is only checked when the user sends more messages.*");
         }
     }
