@@ -281,6 +281,7 @@ public class SpamServiceTests
         cfg.SpamPingPressure = 2.5;
         cfg.SpamImagePressure = 8.3;
         cfg.SpamRepeatPressure = 20;
+        cfg.SpamUnusualCharacterPressure = 0.05;
 
         await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id,
             $"░░░░░▐▀█▀▌░░░░▀█▄░░░ {Environment.NewLine}" +

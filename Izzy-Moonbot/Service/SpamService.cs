@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -207,6 +208,27 @@ public class SpamService
         {
             pressure += _config.SpamRepeatPressure;
             pressureBreakdown.Add((_config.SpamRepeatPressure, $"Repeat of Previous Message: {_config.SpamRepeatPressure}"));
+        }
+
+        // Unusual character pressure
+
+        // If you change this list of categories, be sure to update the config item's documentation too
+        var usualCategories = new List<UnicodeCategory> {
+            UnicodeCategory.UppercaseLetter,
+            UnicodeCategory.LowercaseLetter,
+            UnicodeCategory.SpaceSeparator,
+            UnicodeCategory.DecimalDigitNumber,
+            UnicodeCategory.OpenPunctuation,
+            UnicodeCategory.ClosePunctuation,
+            UnicodeCategory.OtherPunctuation,
+            UnicodeCategory.FinalQuotePunctuation
+        };
+        var unusualCharactersCount = message.Content.ToCharArray().Where(c => usualCategories.Contains(CharUnicodeInfo.GetUnicodeCategory(c))).Count();
+        if (unusualCharactersCount > 0)
+        {
+            var unusualCharacterPressure = Math.Round(unusualCharactersCount * _config.SpamUnusualCharacterPressure, 2);
+            pressure += unusualCharacterPressure;
+            pressureBreakdown.Add((unusualCharacterPressure, $"Unusual Characters: {unusualCharacterPressure} ≈ {unusualCharactersCount} unusual characters × {_config.SpamUnusualCharacterPressure}"));
         }
 
         // Add the Base pressure last so that, if one of the other categories happens to equal it,
