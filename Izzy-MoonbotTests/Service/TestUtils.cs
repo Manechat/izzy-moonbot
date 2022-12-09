@@ -24,7 +24,8 @@ public static class TestUtils
         var hitch = new TestUser("Hitch", 5);
         var users = new List<TestUser> { izzyHerself, sunny, zipp, pipp, hitch };
 
-        var roles = new List<TestRole> { new TestRole("Alicorn", 1), new TestRole("Pegasus", 2) };
+        var alicorn = new TestRole("Alicorn", 1);
+        var roles = new List<TestRole> { alicorn, new TestRole("Pegasus", 2) };
 
         var generalChannel = new StubChannel(1, "general");
         var modChat = new StubChannel(2, "modchat");
@@ -32,6 +33,10 @@ public static class TestUtils
         var channels = new List<StubChannel> { generalChannel, modChat, logChat };
 
         var guild = new StubGuild(1, "Maretime Bay", roles, users, channels);
+        guild.UserRoles.Add(sunny.Id, new List<ulong> { alicorn.Id });
+        guild.UserRoles.Add(izzyHerself.Id, new List<ulong> { alicorn.Id }); // bots are honorary alicorns
+        guild.ChannelAccessRole.Add(modChat.Id, alicorn.Id);
+
         var client = new StubClient(izzyHerself, new List<StubGuild> { guild });
 
         var cfg = new Config();

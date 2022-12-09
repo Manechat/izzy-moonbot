@@ -228,10 +228,10 @@ public class DiscordNetMessageChannelAdapter : IIzzyMessageChannel
 
     public string Name { get => _channel.Name; }
 
-    public async Task<IIzzyUser> GetUserAsync(ulong userId)
+    public async Task<IIzzyUser?> GetUserAsync(ulong userId)
     {
         var user = await _channel.GetUserAsync(userId);
-        return new DiscordNetUserAdapter(user);
+        return user is null ? null : new DiscordNetUserAdapter(user);
     }
     public async Task<IIzzyUserMessage> SendMessageAsync(
         string message,

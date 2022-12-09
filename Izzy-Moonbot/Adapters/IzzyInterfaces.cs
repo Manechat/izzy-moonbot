@@ -71,7 +71,7 @@ public interface IIzzyMessageChannel
 {
     ulong Id { get; }
     string Name { get; }
-    Task<IIzzyUser> GetUserAsync(ulong userId);
+    Task<IIzzyUser?> GetUserAsync(ulong userId);
     Task<IIzzyUserMessage> SendMessageAsync(
         string message,
         AllowedMentions? allowedMentions = null,
