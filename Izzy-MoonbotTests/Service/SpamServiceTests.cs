@@ -289,7 +289,7 @@ public class SpamServiceTests
         {
             ("User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
             ("Channel", $"<#{generalChannel.Id}>"),
-            ("Pressure", "This user's last message raised their pressure from 25 to 78.3, exceeding 60"),
+            ("Pressure", "This user's last message raised their pressure from 24.9 to 78.1, exceeding 60"),
             ("Breakdown of last message",
                 $"**Repeat of Previous Message: 20**{Environment.NewLine}" +
                 $"Base: 10{Environment.NewLine}" +
@@ -297,7 +297,7 @@ public class SpamServiceTests
                 $"Mentions: 7.5 ≈ 3 mentions × 2.5{Environment.NewLine}" +
                 $"Length: 5.1 ≈ 51 characters × 0.1{Environment.NewLine}" +
                 $"Lines: 2 ≈ 1 line breaks × 2{Environment.NewLine}" +
-                $"Unusual Characters: 0.4 ≈ 8 unusual characters × 0.05"),
+                $"Unusual Characters: 0.3 ≈ 6 unusual characters × 0.05"),
         });
     }
 
@@ -340,10 +340,10 @@ public class SpamServiceTests
         {
             ("User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
             ("Channel", $"<#{generalChannel.Id}>"),
-            ("Pressure", "This user's last message raised their pressure from 0 to 71.14, exceeding 60"),
+            ("Pressure", "This user's last message raised their pressure from 0 to 69.64, exceeding 60"),
             ("Breakdown of last message",
                 $"**Lines: 42 ≈ 15 line breaks × 2.8**{Environment.NewLine}" +
-                $"Unusual Characters: 16.35 ≈ 327 unusual characters × 0.05{Environment.NewLine}" +
+                $"Unusual Characters: 14.85 ≈ 297 unusual characters × 0.05{Environment.NewLine}" +
                 $"Base: 10{Environment.NewLine}" +
                 $"Length: 2.79 ≈ 447 characters × 0.00625"),
         });

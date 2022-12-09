@@ -223,7 +223,7 @@ public class SpamService
             UnicodeCategory.OtherPunctuation,
             UnicodeCategory.FinalQuotePunctuation
         };
-        var unusualCharactersCount = message.Content.ToCharArray().Where(c => !usualCategories.Contains(CharUnicodeInfo.GetUnicodeCategory(c))).Count();
+        var unusualCharactersCount = message.Content.ToCharArray().Where(c => c != '\r' && c != '\n' && !usualCategories.Contains(CharUnicodeInfo.GetUnicodeCategory(c))).Count();
         var unusualCharacterPressure = Math.Round(unusualCharactersCount * _config.SpamUnusualCharacterPressure, 2);
         if (unusualCharacterPressure > 0)
         {
