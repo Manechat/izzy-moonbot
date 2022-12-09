@@ -10,6 +10,7 @@ using Izzy_Moonbot.Adapters;
 using Microsoft.Extensions.Configuration;
 using System.IO;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 
 namespace Izzy_Moonbot.Helpers;
 
@@ -357,31 +358,24 @@ public static class DiscordHelper
     }
 
     // Where "Discord whitespace" refers to Char.IsWhiteSpace as well as the ":blank:" emoji
-    public static string TrimDiscordWhitespace(string s)
+    public static string TrimDiscordWhitespace(string wholeString)
     {
-        var blankEmoji = ":blank:";
+        var singleCharacterOrEmojiOfWhitespace = new List<string> {
+            @"\s",
+            @":blank:",
+            @"<:blank:[0-9]+>"
+        };
+        var runOfDiscordWhitespace = $"({ string.Join("|", singleCharacterOrEmojiOfWhitespace)})+";
 
-        var substringStartIndex = 0;
-        while ((s.Length >= (substringStartIndex + 1) && Char.IsWhiteSpace(s[substringStartIndex])) ||
-               (s.Length >= (substringStartIndex + blankEmoji.Length) && s.Substring(substringStartIndex, blankEmoji.Length) == blankEmoji))
-        {
-            if (Char.IsWhiteSpace(s[substringStartIndex])) substringStartIndex += 1;
-            else substringStartIndex += blankEmoji.Length;
+        var leadingWhitespaceRegex = new Regex($"^{runOfDiscordWhitespace}");
+        var trailingWhitespaceRegex = new Regex($"{runOfDiscordWhitespace}$");
 
-            if (substringStartIndex == s.Length) return "";
-        }
+        var s = wholeString;
+        if (leadingWhitespaceRegex.Matches(s).Any())
+            s = leadingWhitespaceRegex.Replace(s, "");
+        if (trailingWhitespaceRegex.Matches(s).Any())
+            s = trailingWhitespaceRegex.Replace(s, "");
 
-        var substringEndIndex = s.Length - 1;
-        if (s.Length > 0)
-        {
-            while (Char.IsWhiteSpace(s[substringEndIndex]) ||
-                   (substringEndIndex >= (blankEmoji.Length - 1) && s.Substring(substringEndIndex - blankEmoji.Length + 1, blankEmoji.Length) == blankEmoji))
-            {
-                if (Char.IsWhiteSpace(s[substringEndIndex])) substringEndIndex -= 1;
-                else substringEndIndex -= blankEmoji.Length;
-            }
-        }
-
-        return s.Substring(substringStartIndex, substringEndIndex - substringStartIndex + 1);
+        return s;
     }
 }
