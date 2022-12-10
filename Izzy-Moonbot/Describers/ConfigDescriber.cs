@@ -187,7 +187,7 @@ public class ConfigDescriber
                 ConfigItemCategory.Raid));
         _config.Add("AutoSilenceNewJoins",
             new ConfigItem(ConfigItemType.Boolean,
-                "Whether or not I should automatically silence new users joining the server. Usually toggled on and off by the `ass` and `assoff` commands respectivly.",
+                "Whether or not I should automatically silence new users joining the server. Usually toggled on and off by the `ass` and `assoff` commands during and after a raid. To avoid Izzy being rate limited during a raid, this also causes ModChannel messages to be delayed and posted in batches.",
                 ConfigItemCategory.Raid));
         _config.Add("SmallRaidSize",
             new ConfigItem(ConfigItemType.Integer,
