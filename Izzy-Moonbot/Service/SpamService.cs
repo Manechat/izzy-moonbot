@@ -10,6 +10,7 @@ using Discord.Commands;
 using Discord.Net;
 using Discord.WebSocket;
 using HtmlAgilityPack;
+using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Settings;
 using Microsoft.Extensions.Logging;
@@ -45,13 +46,11 @@ public class SpamService
     private readonly Regex _mention = new("<@&?[0-9]+>");
     private readonly Regex _url = new("https?://(.+\\.)*(.+)\\.([A-z]+)(/?.+)*", RegexOptions.IgnoreCase);
     private readonly Regex _noUnfurlUrl = new("<{1}https?://(.+\\.)*(.+)\\.([A-z]+)(/?.+)*>{1}", RegexOptions.IgnoreCase);
-    #if DEBUG
     /*
      * The test string is a way to test the spam filter without actually spamming
-     * The test string is programmed to immediately set pressure to Config.SpamMaxPressure and is not defined if the bot is built with the Release flag.
+     * The test string is programmed to immediately set pressure to Config.SpamMaxPressure.
      */
-    private readonly string _testString = "=+i7B3s+#(-{×jn6Ga3F~lA:IZZY_PRESSURE_TEST:H4fgd3!#!";
-    #endif
+    public static readonly string _testString = "=+i7B3s+#(-{×jn6Ga3F~lA:IZZY_PRESSURE_TEST:H4fgd3!#!";
     
     // Pull services from the service system
     public SpamService(LoggingService logger, ModService mod, ModLoggingService modLogger, Config config, Dictionary<ulong, User> users)
@@ -64,14 +63,10 @@ public class SpamService
     }
     
     // Register required events
-    public void RegisterEvents(DiscordSocketClient client)
+    public void RegisterEvents(IIzzyClient client)
     {
         // Register MessageReceived event
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
-#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-        client.MessageReceived += async (message) => MessageReceiveEvent(message, client);
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
-#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+        client.MessageReceived += async (message) => await DiscordHelper.LeakOrAwaitTask(MessageReceiveEvent(message, client));
     }
 
     /// <summary>
@@ -86,7 +81,7 @@ public class SpamService
     private async Task<double> GetAndDecayPressure(ulong id)
     {
         // Get current time, calculate pressure loss per second and time difference between now and last pressure task then calculate full pressure loss
-        var now = DateTimeOffset.UtcNow;
+        var now = DateTimeHelper.UtcNow;
         var pressureLossPerSecond = _config.SpamBasePressure / _config.SpamPressureDecay;
         var pressure = _users[id].Pressure;
         var difference = now - _users[id].Timestamp;
@@ -107,7 +102,7 @@ public class SpamService
         foreach (var previousMessageItem in messages)
         {
             if ((previousMessageItem.Timestamp.ToUniversalTime().ToUnixTimeMilliseconds() + (_config.SpamMessageDeleteLookback * 1000)) <=
-                DateTimeOffset.UtcNow.ToUnixTimeMilliseconds())
+                DateTimeHelper.UtcNow.ToUnixTimeMilliseconds())
             {
                 // Message is out of date, remove it
                 _users[id].PreviousMessages.Remove(previousMessageItem);
@@ -126,15 +121,15 @@ public class SpamService
         _users[id].Pressure += pressure;
 
         // Save user
-        _users[id].Timestamp = DateTimeOffset.UtcNow;
+        _users[id].Timestamp = DateTimeHelper.UtcNow;
         await FileHelper.SaveUsersAsync(_users);
 
         // Return new pressure
         return _users[id].Pressure;
     }
 
-    private async Task ProcessPressure(ulong id, SocketUserMessage message, SocketGuildUser user,
-        SocketCommandContext context)
+    private async Task ProcessPressure(ulong id, IIzzyUserMessage message, IIzzyGuildUser user,
+        IIzzyContext context)
     {
         var pressure = 0.0;
         var pressureBreakdown = new List<(double, string)>{};
@@ -219,19 +214,17 @@ public class SpamService
         pressure += _config.SpamBasePressure;
         pressureBreakdown.Add((_config.SpamBasePressure, $"Base: {_config.SpamBasePressure}"));
 
-        #if DEBUG
-        // Test string, only exists when built on Debug.
+        // Test string.
         if (message.Content == _testString)
         {
             pressure = _config.SpamMaxPressure;
             pressureBreakdown = new List<(double, string)> { (_config.SpamMaxPressure, "Test string") };
         }
-        #endif
 
         _users[id].PreviousMessage = context.Message.CleanContent;
 
         var messageItem =
-            new PreviousMessageItem(message.Id, context.Channel.Id, context.Guild.Id, DateTimeOffset.UtcNow);
+            new PreviousMessageItem(message.Id, context.Channel.Id, context.Guild.Id, DateTimeHelper.UtcNow);
         
         _users[id].PreviousMessages.Add(messageItem);
         
@@ -289,7 +282,7 @@ public class SpamService
     }
 
     private async Task ProcessTrip(ulong id, double oldPressureAfterDecay, double pressure, List<(double, string)> pressureBreakdown,
-        SocketUserMessage message, SocketGuildUser user, SocketCommandContext context, bool alreadyAlerted = false)
+        IIzzyMessage message, IIzzyGuildUser user, IIzzyContext context, bool alreadyAlerted = false)
     {
         // Silence user, this also logs the action.
         await _mod.SilenceUser(user, $"Exceeded pressure max ({pressure}/{_config.SpamMaxPressure}) in <#{message.Channel.Id}>");
@@ -355,7 +348,7 @@ public class SpamService
                         bulkDeletionLog.Select(logElement => logElement.Item2)
                     );
                     var s = new MemoryStream(Encoding.UTF8.GetBytes(bulkDeletionLogString));
-                    var fa = new FileAttachment(s, $"{context.User.Username}_{context.User.Id}_spam_bulk_deletion_log_{DateTimeOffset.UtcNow.ToString()}.txt");
+                    var fa = new FileAttachment(s, $"{context.User.Username}_{context.User.Id}_spam_bulk_deletion_log_{DateTimeHelper.UtcNow.ToString()}.txt");
 
                     var spamBulkDeletionMessage = await logChannel.SendFileAsync(fa,
                         $"Deleted recent messages from {context.User.Username} ({context.User.Id}) after they tripped spam detection, here's the bulk deletion log:");
@@ -400,19 +393,19 @@ public class SpamService
         return string.Join(Environment.NewLine, orderedBreakdown);
     }
 
-    private async Task MessageReceiveEvent(SocketMessage messageParam, DiscordSocketClient client)
+    private async Task MessageReceiveEvent(IIzzyMessage messageParam, IIzzyClient client)
     {
         if (!_config.SpamEnabled) return; // anti-spam is off
         if (messageParam.Author.IsBot) return; // Don't listen to bots
         if (!DiscordHelper.IsInGuild(messageParam)) return; // Not in guild (in dm/group)
         if (!DiscordHelper.IsProcessableMessage(messageParam)) return; // Not processable
-        if (messageParam is not SocketUserMessage message) return; // Not processable
+        if (messageParam is not IIzzyUserMessage message) return; // Not processable
         
-        var context = new SocketCommandContext(client, message);
+        var context = client.MakeContext(message);
 
         if (!DiscordHelper.IsDefaultGuild(context)) return;
         
-        var guildUser = context.User as SocketGuildUser;
+        var guildUser = context.User as IIzzyGuildUser;
 
         if (guildUser.Id == client.CurrentUser.Id) return; // Don't process the bot
         if (_config.SpamIgnoredChannels.Contains(context.Channel.Id)) return; // Don't process ignored channels

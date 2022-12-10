@@ -16,11 +16,11 @@ namespace Izzy_Moonbot_Tests.Helpers;
 public class PaginationHelperTests
 {
     [TestMethod()]
-    public void BasicPagingTests()
+    public async Task BasicPagingTestsAsync()
     {
         var (cfg, cd, (izzyHerself, sunny), _, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
 
-        var context = client.AddMessage(guild.Id, generalChannel.Id, sunny.Id, "make some pages");
+        var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, "make some pages");
 
         var ph = new PaginationHelper(
             context,

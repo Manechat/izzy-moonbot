@@ -1,8 +1,10 @@
 ﻿
+using Discord;
 using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Describers;
 using Izzy_Moonbot.Settings;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Collections.Immutable;
 
 namespace Izzy_Moonbot_Tests;
 
@@ -11,6 +13,8 @@ namespace Izzy_Moonbot_Tests;
 
 public static class TestUtils
 {
+    public static DateTimeOffset FiMEpoch = new DateTimeOffset(2010, 10, 10, 0, 0, 0, TimeSpan.Zero);
+
     public static (Config, ConfigDescriber, (TestUser, TestUser), List<TestRole>, (StubChannel, StubChannel, StubChannel), StubGuild, StubClient) DefaultStubs()
     {
         var izzyHerself = new TestUser("Izzy Moonbot", 1);
@@ -20,7 +24,8 @@ public static class TestUtils
         var hitch = new TestUser("Hitch", 5);
         var users = new List<TestUser> { izzyHerself, sunny, zipp, pipp, hitch };
 
-        var roles = new List<TestRole> { new TestRole("Alicorn", 1), new TestRole("Pegasus", 2) };
+        var alicorn = new TestRole("Alicorn", 1);
+        var roles = new List<TestRole> { alicorn, new TestRole("Pegasus", 2) };
 
         var generalChannel = new StubChannel(1, "general");
         var modChat = new StubChannel(2, "modchat");
@@ -28,6 +33,10 @@ public static class TestUtils
         var channels = new List<StubChannel> { generalChannel, modChat, logChat };
 
         var guild = new StubGuild(1, "Maretime Bay", roles, users, channels);
+        guild.UserRoles.Add(sunny.Id, new List<ulong> { alicorn.Id });
+        guild.UserRoles.Add(izzyHerself.Id, new List<ulong> { alicorn.Id }); // bots are honorary alicorns
+        guild.ChannelAccessRole.Add(modChat.Id, alicorn.Id);
+
         var client = new StubClient(izzyHerself, new List<StubGuild> { guild });
 
         var cfg = new Config();
@@ -90,6 +99,18 @@ public static class TestUtils
         foreach (var kv in expected)
         {
             AssertSetsAreEqual(expected[kv.Key], actual[kv.Key], $"\nKey {kv.Key}" + message);
+        }
+    }
+
+    public static void AssertEmbedFieldsAre(IList<EmbedField> actual, IList<(string, string)> expected)
+    {
+        if (expected.Count() != actual.Count())
+            Assert.IsTrue(false, $"\nCount() mismatch: {expected.Count()} != {actual.Count()}");
+
+        foreach (var ((name, value), embedField) in expected.Zip(actual, Tuple.Create))
+        {
+            Assert.AreEqual(name, embedField.Name);
+            Assert.AreEqual(value, embedField.Value);
         }
     }
 }

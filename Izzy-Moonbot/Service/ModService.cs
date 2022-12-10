@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
-using Discord;
 using Discord.WebSocket;
+using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Settings;
 
@@ -21,26 +21,15 @@ public class ModService
         _users = users;
     }
 
-    public async Task KickUser(SocketGuildUser user, DateTimeOffset time, string? reason = null)
-    {
-        await user.KickAsync(reason);
-    }
-
-    public async Task KickUsers(IEnumerable<SocketGuildUser> users, string? reason = null)
-    {
-        if (!users.Any()) throw new NullReferenceException("users must have users in them");
-
-        foreach (var user in users)
-        {
-            await user.KickAsync(reason);
-        }
-    }
-
     public async Task SilenceUser(SocketGuildUser user, string? reason = null)
+    {
+        await SilenceUser(new SocketGuildUserAdapter(user), reason);
+    }
+    public async Task SilenceUser(IIzzyGuildUser user, string? reason = null)
     {
         if (_config.MemberRole == null) throw new TargetException("MemberRole config value is null (not set)");
         
-        await user.RemoveRoleAsync((ulong) _config.MemberRole);
+        await user.RemoveRoleAsync((ulong) _config.MemberRole, reason is null ? null : new Discord.RequestOptions { AuditLogReason = reason });
             
         _users[user.Id].Silenced = true;
         await FileHelper.SaveUsersAsync(_users);
@@ -48,13 +37,17 @@ public class ModService
 
     public async Task SilenceUsers(IEnumerable<SocketGuildUser> users, string? reason = null)
     {
+        await SilenceUsers(users.Select(u => new SocketGuildUserAdapter(u)).ToList(), reason);
+    }
+    public async Task SilenceUsers(IEnumerable<IIzzyGuildUser> users, string? reason = null)
+    {
         if (_config.MemberRole == null) throw new TargetException("MemberRole config value is null (not set)");
         
         if (!users.Any()) throw new NullReferenceException("users must have users in them");
 
         foreach (var user in users)
         {
-            await user.RemoveRoleAsync((ulong)_config.MemberRole);
+            await user.RemoveRoleAsync((ulong)_config.MemberRole, reason is null ? null : new Discord.RequestOptions { AuditLogReason = reason });
 
             _users[user.Id].Silenced = true;
             await FileHelper.SaveUsersAsync(_users);
@@ -63,64 +56,28 @@ public class ModService
 
     public async Task AddRole(SocketGuildUser user, ulong roleId, string? reason = null)
     {
-        await user.AddRoleAsync(roleId);
+        await AddRole(new SocketGuildUserAdapter(user), roleId, reason);
     }
-
-    public async Task AddRoleToUsers(IEnumerable<SocketGuildUser> users, ulong roleId, string? reason = null)
+    public async Task AddRole(IIzzyGuildUser user, ulong roleId, string? reason = null)
     {
-        if (!users.Any()) throw new NullReferenceException("users must have users in them");
-
-        foreach (var socketGuildUser in users)
-        {
-            await socketGuildUser.AddRoleAsync(roleId);
-        }
+        await user.AddRoleAsync(roleId, reason is null ? null : new Discord.RequestOptions { AuditLogReason = reason });
     }
 
     public async Task RemoveRole(SocketGuildUser user, ulong roleId, string? reason = null)
     {
-        await user.RemoveRoleAsync(roleId);
+        await RemoveRole(new SocketGuildUserAdapter(user), roleId, reason);
     }
-
-    public async Task RemoveRoleFromUsers(IEnumerable<SocketGuildUser> users, ulong roleId, string? reason = null)
+    public async Task RemoveRole(IIzzyGuildUser user, ulong roleId, string? reason = null)
     {
-        if (!users.Any()) throw new NullReferenceException("users must have users in them");
-
-        foreach (var socketGuildUser in users)
-        {
-            await socketGuildUser.RemoveRoleAsync(roleId);
-        }
+        await user.RemoveRoleAsync(roleId, reason is null ? null : new Discord.RequestOptions { AuditLogReason = reason });
     }
 
     public async Task AddRoles(SocketGuildUser user, IEnumerable<ulong> roles, string? reason = null)
     {
-        await user.AddRolesAsync(roles);
+        await AddRoles(new SocketGuildUserAdapter(user), roles, reason);
     }
-
-    public async Task AddRolesToUsers(IEnumerable<SocketGuildUser> users, IEnumerable<ulong> roles, string? reason = null)
+    public async Task AddRoles(IIzzyGuildUser user, IEnumerable<ulong> roles, string? reason = null)
     {
-        if (!users.Any()) throw new NullReferenceException("users must have users in them");
-        if (!roles.Any()) throw new NullReferenceException("roles must have role ids in them");
-
-        foreach (var socketGuildUser in users)
-        {
-            await socketGuildUser.AddRolesAsync(roles);
-        }
-    }
-
-    public async Task RemoveRoles(SocketGuildUser user, IEnumerable<ulong> roles, string? reason = null)
-    {
-        if (!roles.Any()) throw new NullReferenceException("roles must have role ids in them");
-        await user.RemoveRolesAsync(roles);
-    }
-
-    public async Task RemoveRolesFromUsers(IEnumerable<SocketGuildUser> users, IEnumerable<ulong> roles, string? reason = null)
-    {
-        if (!users.Any()) throw new NullReferenceException("users must have users in them");
-        if (!roles.Any()) throw new NullReferenceException("roles must have role ids in them");
-
-        foreach (var socketGuildUser in users)
-        {
-            await socketGuildUser.RemoveRolesAsync(roles);
-        }
+        await user.AddRolesAsync(roles, reason is null ? null : new Discord.RequestOptions { AuditLogReason = reason });
     }
 }

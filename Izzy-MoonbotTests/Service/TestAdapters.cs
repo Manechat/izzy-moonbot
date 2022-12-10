@@ -1,5 +1,8 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using Izzy_Moonbot.Settings;
+using System;
+using System.Text.RegularExpressions;
 using static Izzy_Moonbot.Adapters.IIzzyClient;
 
 namespace Izzy_Moonbot.Adapters;
@@ -11,20 +14,69 @@ namespace Izzy_Moonbot.Adapters;
 // an asynchronous API, so there's no way to satisfy it without spawning useless threads.
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
 
-public class TestUser : IIzzyGuildUser
+public class TestUser : IIzzyUser
 {
     public ulong Id { get; }
     public string Username { get; }
+    public string DisplayName => Username; // TODO: implement nicknames
+    public bool IsBot { get; }
 
-    // TODO: implement nicknames
-    public string DisplayName { get => Username; }
-
-    public TestUser(string username, ulong id)
+    public TestUser(string username, ulong id, bool isBot = false)
     {
         Id = id;
         Username = username;
+        IsBot = isBot;
     }
 }
+
+public class TestGuildUser : IIzzyGuildUser
+{
+    public ulong Id { get; }
+    public string Username { get; }
+    public string DisplayName => Username; // TODO: implement nicknames
+    public bool IsBot { get; }
+
+    private readonly StubGuild _guildBackref;
+    private readonly StubClient _clientBackref;
+
+    public TestGuildUser(string username, ulong id, StubGuild guild, StubClient client, bool isBot = false)
+    {
+        Id = id;
+        Username = username;
+        _guildBackref = guild;
+        _clientBackref = client;
+        IsBot = isBot;
+    }
+
+    public IReadOnlyCollection<IIzzyRole> Roles =>
+        _guildBackref.UserRoles.ContainsKey(Id) ?
+            _guildBackref.UserRoles[Id].Select(roleId => _guildBackref.Roles.Where(r => r.Id == roleId).Single()).ToList() :
+            new List<IIzzyRole>();
+
+    public async Task AddRoleAsync(ulong roleId, RequestOptions? _requestOptions)
+    {
+        var ur = _guildBackref.UserRoles;
+        if (ur.ContainsKey(Id))
+            ur[Id].Add(roleId);
+        else
+            ur[Id] = new List<ulong> { roleId };
+    }
+    public async Task AddRolesAsync(IEnumerable<ulong> roles, RequestOptions? _requestOptions)
+    {
+        var ur = _guildBackref.UserRoles;
+        if (ur.ContainsKey(Id))
+            ur[Id].AddRange(roles);
+        else
+            ur[Id] = roles.ToList();
+    }
+    public async Task RemoveRoleAsync(ulong roleId, RequestOptions? _requestOptions)
+    {
+        var ur = _guildBackref.UserRoles;
+        if (ur.ContainsKey(Id))
+            ur[Id].Remove(roleId);
+    }
+}
+
 
 public class TestRole : IIzzyRole
 {
@@ -45,12 +97,40 @@ public class StubMessage
     public ulong Id;
     public string Content;
     public ulong AuthorId;
+    public MessageComponent? Components;
+    public IList<IAttachment> Attachments = new List<IAttachment>();
+    public IList<IEmbed> Embeds = new List<IEmbed>();
+    public IList<IStickerItem> Stickers = new List<IStickerItem>();
 
-    public StubMessage(ulong id, string content, ulong authorId)
+    public StubMessage(ulong id, string content, ulong authorId,
+        MessageComponent? components = null,
+        IList<IEmbed>? embeds = null,
+        IList<IStickerItem>? stickers = null,
+        List<IAttachment>? attachments = null)
     {
         Id = id;
         Content = content;
         AuthorId = authorId;
+        if (components is not null)
+            Components = components;
+        if (embeds is not null)
+            Embeds = embeds;
+        if (stickers is not null)
+            Stickers = stickers;
+        if (attachments is not null)
+            Attachments = attachments;
+    }
+
+    public string CleanContent
+    {
+        // The docs for the real property read:
+        // "A string that contains the body of the message stripped of mentions, markdown, emojis and pings; note that this field may be empty if there is an embed."
+        // For now, our tests do far less than that.
+        get
+        {
+            var regex = new Regex("<(#|@|@&)[0-9]+>");
+            return regex.Replace(Content, "");
+        }
     }
 }
 
@@ -60,20 +140,31 @@ public class StubMessageProperties : IIzzyMessageProperties
     public Optional<MessageComponent> Components { get; set; } = new Optional<MessageComponent>();
 }
 
-public class TestMessage : IIzzyMessage
+public class TestMessage : IIzzyUserMessage
 {
-    public ulong Id { get; }
-    public string Content { get; }
+    public ulong Id => _message.Id;
+    public string Content => _message.Content;
+    public string CleanContent => _message.CleanContent;
     public IIzzyUser Author { get; }
+    public IIzzyMessageChannel Channel => new TestMessageChannel(_channelBackref.Name, _channelBackref.Id, _guildBackref, _clientBackref);
 
-    private StubChannel _channelBackref;
+    public IReadOnlyCollection<IMessageComponent> Components => _message.Components is null ? new List<IMessageComponent>() : _message.Components.Components;
+    public IReadOnlyCollection<IAttachment> Attachments => (IReadOnlyCollection<IAttachment>)_message.Attachments;
+    public IReadOnlyCollection<IEmbed> Embeds => (IReadOnlyCollection<IEmbed>)_message.Embeds;
+    public IReadOnlyCollection<IStickerItem> Stickers => (IReadOnlyCollection<IStickerItem>)_message.Stickers;
 
-    public TestMessage(ulong id, string content, IIzzyUser author, StubChannel channel)
+    private readonly StubMessage _message;
+    private readonly StubChannel _channelBackref;
+    public readonly StubGuild _guildBackref; // TODO: can we use different Discord.NET APIs to avoid having to hackily mimic its circularity?
+    private readonly StubClient _clientBackref;
+
+    public TestMessage(StubMessage message, IIzzyUser author, StubChannel channel, StubGuild guild, StubClient client)
     {
-        Id = id;
-        Content = content;
+        _message = message;
         Author = author;
         _channelBackref = channel;
+        _guildBackref = guild;
+        _clientBackref = client;
     }
 
     public async Task ReplyAsync(string message)
@@ -84,16 +175,37 @@ public class TestMessage : IIzzyMessage
 
     public Task ModifyAsync(Action<IIzzyMessageProperties> action)
     {
-        var messageBackref = _channelBackref.Messages.Where(m => m.Id == Id).Single();
         var stubProps = new StubMessageProperties();
         action(stubProps);
         if (stubProps.Content.IsSpecified)
-        {
-            messageBackref.Content = stubProps.Content.Value;
-        }
-        // TODO: message.Components not implemented yet
+            _message.Content = stubProps.Content.Value;
+        if (stubProps.Components.IsSpecified)
+            _message.Components = stubProps.Components.Value;
         return Task.CompletedTask;
     }
+
+    public async Task DeleteAsync() =>
+        _channelBackref.Messages.RemoveAll(m => m.Id == Id);
+
+    public string GetJumpUrl() => $"https://discord.com/channels/{_guildBackref.Id}/{_channelBackref.Id}/{_message.Id}";
+}
+
+public class TestAttachment : IAttachment
+{
+    private readonly FileAttachment _fileAttachment;
+
+    public TestAttachment(FileAttachment fa) => _fileAttachment = fa;
+
+    public ulong Id => throw new NotImplementedException();
+    public string Filename => _fileAttachment.FileName;
+    public string Url => throw new NotImplementedException();
+    public string ProxyUrl => throw new NotImplementedException();
+    public int Size => throw new NotImplementedException();
+    public int? Height => throw new NotImplementedException();
+    public int? Width => throw new NotImplementedException();
+    public bool Ephemeral => throw new NotImplementedException();
+    public string Description => _fileAttachment.Description;
+    public string ContentType => throw new NotImplementedException();
 }
 
 public class StubChannel
@@ -126,23 +238,36 @@ public class TestGuildChannel : IIzzySocketGuildChannel
 
 public class TestTextChannel : IIzzySocketTextChannel
 {
-    public string Name { get; }
-    public ulong Id { get; }
+    public string Name => _channel.Name;
+    public ulong Id => _channel.Id;
 
+    private readonly StubChannel _channel;
     private readonly StubGuild _guildBackref;
     private readonly StubClient _clientBackref;
 
-    public TestTextChannel(StubGuild guild, ulong id, string name, StubClient client)
+    public TestTextChannel(StubGuild guild, StubChannel channel, StubClient client)
     {
-        Id = id;
-        Name = name;
+        _channel = channel;
         _guildBackref = guild;
         _clientBackref = client;
     }
 
-    public IReadOnlyCollection<IIzzyUser> Users { get => _guildBackref.Users; }
+    public IReadOnlyCollection<IIzzyUser> Users {
+        get
+        {
+            if (!_guildBackref.ChannelAccessRole.ContainsKey(Id))
+                return _guildBackref.Users;
+            else
+            {
+                var accessRoleId = _guildBackref.ChannelAccessRole[Id];
+                return _guildBackref.Users.Where(u =>
+                    _guildBackref.UserRoles.ContainsKey(u.Id) && _guildBackref.UserRoles[u.Id].Contains(accessRoleId)
+                ).ToList();
+            }
+        }
+    }
 
-    public async Task<IIzzyMessage> SendMessageAsync(
+    public async Task<IIzzyUserMessage> SendMessageAsync(
         string message,
         AllowedMentions? allowedMentions = null,
         MessageComponent? components = null,
@@ -150,23 +275,42 @@ public class TestTextChannel : IIzzySocketTextChannel
         Embed[]? embeds = null)
     {
         var maybeUser = _guildBackref.Users.Find(u => u.Id == _clientBackref.CurrentUser.Id);
-        var maybeChannel = _guildBackref.Channels.Find(c => c.Id == Id);
-        if (maybeUser is TestUser user && maybeChannel is StubChannel channel)
+        if (maybeUser is TestUser user)
         {
-            var lastId = channel.Messages.LastOrDefault()?.Id ?? 0;
-            var stubMessage = new StubMessage(lastId + 1, message, user.Id);
-            channel.Messages.Add(stubMessage);
-            return new TestMessage(stubMessage.Id, stubMessage.Content, user, channel);
+            var lastId = _channel.Messages.LastOrDefault()?.Id ?? 0;
+            var stubMessage = new StubMessage(lastId + 1, message, user.Id, components: components, embeds: embeds);
+            _channel.Messages.Add(stubMessage);
+            return new TestMessage(stubMessage, user, _channel, _guildBackref, _clientBackref);
         }
         else
-            if (maybeUser is null)
             throw new KeyNotFoundException($"CurrentUser is somehow not in this channel");
+    }
+
+    public async Task<IIzzyMessage> GetMessageAsync(ulong messageId)
+    {
+        var stubMessage = _channel.Messages.Where(m => m.Id == messageId).SingleOrDefault();
+        if (stubMessage is null)
+            return null;
+        var maybeUser = _guildBackref.Users.Find(u => u.Id == stubMessage.AuthorId);
+        return new TestMessage(stubMessage, maybeUser, _channel, _guildBackref, _clientBackref);
+    }
+
+    public async Task<IIzzyUserMessage> SendFileAsync(FileAttachment fa, string message)
+    {
+        var maybeUser = _guildBackref.Users.Find(u => u.Id == _clientBackref.CurrentUser.Id);
+        if (maybeUser is TestUser user)
+        {
+            var lastId = _channel.Messages.LastOrDefault()?.Id ?? 0;
+            var stubMessage = new StubMessage(lastId + 1, message, user.Id, attachments: new List<IAttachment> { new TestAttachment(fa) });
+            _channel.Messages.Add(stubMessage);
+            return new TestMessage(stubMessage, user, _channel, _guildBackref, _clientBackref);
+        }
         else
-            throw new KeyNotFoundException($"This channel is somehow not in its own guild");
+            throw new KeyNotFoundException($"CurrentUser is somehow not in this channel");
     }
 }
 
-public class TestMessageChannel : IIzzySocketMessageChannel
+public class TestMessageChannel : IIzzyMessageChannel
 {
     public string Name { get; }
     public ulong Id { get; }
@@ -182,15 +326,21 @@ public class TestMessageChannel : IIzzySocketMessageChannel
         _clientBackref = client;
     }
 
-    public async Task<IIzzyUser> GetUserAsync(ulong userId)
+    public async Task<IIzzyUser?> GetUserAsync(ulong userId)
     {
         if (_guildBackref.Users.Find(u => u.Id == userId) is IIzzyUser user)
-            return user;
+            if (_guildBackref.ChannelAccessRole.ContainsKey(Id))
+                if (_guildBackref.UserRoles.ContainsKey(userId) && _guildBackref.UserRoles[userId].Contains(_guildBackref.ChannelAccessRole[Id]))
+                    return user;
+                else
+                    return null;
+            else
+                return user;
         else
             throw new KeyNotFoundException($"No user with id {userId}");
     }
 
-    public async Task<IIzzyMessage> SendMessageAsync(
+    public async Task<IIzzyUserMessage> SendMessageAsync(
         string message,
         AllowedMentions? allowedMentions = null,
         MessageComponent? components = null,
@@ -203,7 +353,7 @@ public class TestMessageChannel : IIzzySocketMessageChannel
             var lastId = channel.Messages.LastOrDefault()?.Id ?? 0;
             var stubMessage = new StubMessage(lastId + 1, message, user.Id);
             channel.Messages.Add(stubMessage);
-            return new TestMessage(stubMessage.Id, stubMessage.Content, user, channel);
+            return new TestMessage(stubMessage, user, channel, _guildBackref, _clientBackref);
         }
         else
             if (maybeUser is null)
@@ -217,9 +367,13 @@ public class StubGuild
 {
     public ulong Id { get; }
     public string Name { get; }
+
     public List<TestRole> Roles;
     public List<TestUser> Users;
     public List<StubChannel> Channels;
+
+    public Dictionary<ulong, List<ulong>> UserRoles = new Dictionary<ulong, List<ulong>>();
+    public Dictionary<ulong, ulong> ChannelAccessRole = new Dictionary<ulong, ulong>(); // public channels are absent
 
     public StubGuild(ulong id, string name, List<TestRole> roles, List<TestUser> users, List<StubChannel> channels)
     {
@@ -245,7 +399,7 @@ public class TestGuild : IIzzyGuild
     {
         _stubGuild = stub;
         _clientBackref = client;
-        TextChannels = stub.Channels.Select(c => new TestTextChannel(stub, c.Id, c.Name, client)).ToList();
+        TextChannels = stub.Channels.Select(channel => new TestTextChannel(stub, channel, client)).ToList();
     }
 
     public Task<IReadOnlyCollection<IIzzyUser>> SearchUsersAsync(string userSearchQuery)
@@ -253,7 +407,8 @@ public class TestGuild : IIzzyGuild
         return Task.FromResult((IReadOnlyCollection<IIzzyUser>)_stubGuild.Users.Where(user => user.Username.StartsWith(userSearchQuery)).ToList());
     }
 
-    public IIzzyGuildUser? GetUser(ulong userId) => _stubGuild.Users.Where(user => user.Id == userId).SingleOrDefault();
+    public IIzzyGuildUser? GetUser(ulong userId) =>
+        _stubGuild.Users.Where(user => user.Id == userId).Select(user => new TestGuildUser(user.Username, user.Id, _stubGuild, _clientBackref)).SingleOrDefault();
     public IIzzyRole? GetRole(ulong roleId) => Roles.Where(role => role.Id == roleId).SingleOrDefault();
     public IIzzySocketGuildChannel? GetChannel(ulong channelId)
     {
@@ -262,21 +417,21 @@ public class TestGuild : IIzzyGuild
     }
     public IIzzySocketTextChannel? GetTextChannel(ulong channelId)
     {
-        var tc = TextChannels.Where(tc => tc.Id == channelId).SingleOrDefault();
-        return tc is null ? null : new TestTextChannel(_stubGuild, tc.Id, tc.Name, _clientBackref);
+        var stubChannel = _stubGuild.Channels.Where(tc => tc.Id == channelId).SingleOrDefault();
+        return stubChannel is null ? null : new TestTextChannel(_stubGuild, stubChannel, _clientBackref);
     }
 }
 
 public class TestIzzyContext : IIzzyContext
 {
     public bool IsPrivate { get; }
-    public IIzzyGuild Guild { get; }
+    public IIzzyGuild? Guild { get; }
     public IIzzyClient Client { get; }
-    public IIzzySocketMessageChannel Channel { get; }
-    public IIzzyMessage Message { get; }
+    public IIzzyMessageChannel Channel { get; }
+    public IIzzyUserMessage Message { get; }
     public IIzzyUser User { get; }
 
-    public TestIzzyContext(bool isPrivate, IIzzyGuild guild, IIzzyClient client, IIzzySocketMessageChannel messageChannel, IIzzyMessage message, IIzzyUser user)
+    public TestIzzyContext(bool isPrivate, IIzzyGuild guild, IIzzyClient client, IIzzyMessageChannel messageChannel, IIzzyUserMessage message, IIzzyUser user)
     {
         IsPrivate = isPrivate;
         Guild = guild;
@@ -306,6 +461,8 @@ public class StubClient : IIzzyClient
 
     public event Func<IIzzySocketMessageComponent, Task>? ButtonExecuted;
     public event Func<IIzzyHasId, IIzzyHasId, Task>? MessageDeleted;
+    public event Func<IIzzyMessage, Task>? MessageReceived;
+    public event Func<IIzzyMessage, IIzzyMessageChannel, Task>? MessageUpdated;
 
     public StubClient(TestUser user, List<StubGuild> guilds)
     {
@@ -318,7 +475,7 @@ public class StubClient : IIzzyClient
     private TestUser _currentUser;
     private List<StubGuild> _guilds;
 
-    public TestIzzyContext AddMessage(ulong guildId, ulong channelId, ulong userId, string textContent)
+    public async Task<TestIzzyContext> AddMessageAsync(ulong guildId, ulong channelId, ulong userId, string textContent)
     {
         if (_guilds.Find(g => g.Id == guildId) is StubGuild guild)
         {
@@ -328,13 +485,20 @@ public class StubClient : IIzzyClient
             {
                 var stubMessage = new StubMessage(NextId++, textContent, userId);
                 channel.Messages.Add(stubMessage);
+
+                var testMessage = new TestMessage(stubMessage, user, channel, guild, this);
+                var t = MessageReceived?.Invoke(testMessage);
+                if (t is not null) await t;
+
                 return new TestIzzyContext(
                     false,
                     new TestGuild(guild, this),
                     this,
                     new TestMessageChannel(channel.Name, channelId, guild, this),
-                    new TestMessage(stubMessage.Id, stubMessage.Content, user, channel),
-                    user
+                    testMessage,
+                    // note: runtime type must be IIzzyGuildUser whenever possible, not just IIzzyUser
+                    // since we don't support DMs yet, that means it's always a *GuildUser
+                    new TestGuildUser(user.Username, user.Id, guild, this)
                 );
             }
             else
@@ -375,5 +539,21 @@ public class StubClient : IIzzyClient
     public void FireMessageDeleted(ulong messageId, ulong channelId)
     {
         MessageDeleted?.Invoke(new IdHaver(messageId), new IdHaver(channelId));
+    }
+
+    public IIzzyContext MakeContext(IIzzyUserMessage message)
+    {
+        var stubGuild = (message as TestMessage)._guildBackref;
+        var testGuild = new TestGuild(stubGuild, this);
+        return new TestIzzyContext(
+            false,
+            testGuild,
+            this,
+            message.Channel,
+            message,
+            // note: runtime type must be IIzzyGuildUser whenever possible, not just IIzzyUser
+            // since we don't support DMs yet, that means it's always a *GuildUser
+            new TestGuildUser(message.Author.Username, message.Author.Id, stubGuild, this)
+        );
     }
 }
