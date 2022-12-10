@@ -94,7 +94,9 @@ public class ModLogBuilder
             await File.AppendAllTextAsync(filepath, modLogFileContent);
         }
 
-        if (_config.BatchSendLogs)
+        // if we're in the middle of a raid serious enough that either Izzy herself or a human moderator
+        // decided to enable auto-silencing, then also use batch logging to avoid being rate limited
+        if (_config.AutoSilenceNewJoins)
             _batchLogger.AddModLog(_log);
         else
             await _log.Channel.SendMessageAsync(_log.Content, embeds: _log.Embed != null ? new []{ _log.Embed } : null);
