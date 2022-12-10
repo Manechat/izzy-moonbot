@@ -108,6 +108,8 @@ public class BatchLogger
     private readonly List<ModLog> _modLogs = new();
     private readonly Config _config;
 
+    private static readonly int _batchLogsSendRate = 10_000; // 10 seconds
+
     public BatchLogger(Config config)
     {
         _config = config;
@@ -124,7 +126,7 @@ public class BatchLogger
     {
         Task.Factory.StartNew(async () =>
         {
-            await Task.Delay(Convert.ToInt32(_config.BatchLogsSendRate * 1000));
+            await Task.Delay(_batchLogsSendRate);
 
             IIzzySocketTextChannel? modLogChannel = null;
             var modLogContent = new List<string>();
