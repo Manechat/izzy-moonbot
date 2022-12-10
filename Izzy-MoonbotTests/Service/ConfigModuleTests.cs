@@ -446,20 +446,6 @@ public class ConfigModuleTests
         Assert.AreEqual(cfg.UnicycleInterval, 42);
         Assert.AreEqual("I've set `UnicycleInterval` to the following content: 42", generalChannel.Messages.Last().Content);
 
-        // post ".config BatchSendLogs true"
-        Assert.AreEqual(cfg.BatchSendLogs, false);
-        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config BatchSendLogs true");
-        await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "BatchSendLogs", "true");
-        Assert.AreEqual(cfg.BatchSendLogs, true);
-        Assert.AreEqual("I've set `BatchSendLogs` to the following content: True", generalChannel.Messages.Last().Content);
-
-        // post ".config BatchLogsSendRate 999"
-        Assert.AreEqual(cfg.BatchLogsSendRate, 10);
-        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config BatchLogsSendRate 999");
-        await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "BatchLogsSendRate", "999");
-        Assert.AreEqual(cfg.BatchLogsSendRate, 999);
-        Assert.AreEqual("I've set `BatchLogsSendRate` to the following content: 999", generalChannel.Messages.Last().Content);
-
         // post ".config MentionResponseEnabled true"
         Assert.AreEqual(cfg.MentionResponseEnabled, false);
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config MentionResponseEnabled true");
@@ -829,7 +815,7 @@ public class ConfigModuleTests
         // Ensure we can't forget to keep this test up to date
         var configPropsCount = typeof(Config).GetProperties().Length;
 
-        Assert.AreEqual(53, configPropsCount,
+        Assert.AreEqual(51, configPropsCount,
             $"{Environment.NewLine}If you just added or removed a config item, then this test is probably out of date");
 
         Assert.AreEqual(configPropsCount * 2, generalChannel.Messages.Count(),

@@ -18,13 +18,6 @@ public class ConfigDescriber
             new ConfigItem(ConfigItemType.Integer,
                 "How often, in milliseconds, I'll check scheduled jobs for execution.",
                 ConfigItemCategory.Core));
-        _config.Add("BatchSendLogs",
-            new ConfigItem(ConfigItemType.Boolean,
-                "If set to true, I will batch send mod/action logs instead of sending them immediately. This is managed automatically by the Raid service to prevent me from being ratelimited.",
-                ConfigItemCategory.Core));
-        _config.Add("BatchLogsSendRate",
-            new ConfigItem(ConfigItemType.Double, "The amount of seconds between each batch send.",
-                ConfigItemCategory.Core));
         _config.Add("MentionResponseEnabled",
             new ConfigItem(ConfigItemType.Boolean, "Whether I will respond to someone mentioning me.",
                 ConfigItemCategory.Core));
