@@ -104,8 +104,8 @@ public class SpamModuleTests
         await sm.TestableGetPreviousMessagesAsync(context, "");
 
         Assert.AreEqual($"I consider the following messages from Sunny#1234 to be recent: " +
-            $"{Environment.NewLine}https://discord.com/channels/{guild.Id}/{generalChannel.Id}/0 at <t:1286668800:F> (<t:1286668800:R>)" +
-            $"{Environment.NewLine}*Note that these messages may not actually be recent as their age is only checked when the user sends more messages.*",
+            $"\nhttps://discord.com/channels/{guild.Id}/{generalChannel.Id}/0 at <t:1286668800:F> (<t:1286668800:R>)" +
+            $"\n*Note that these messages may not actually be recent as their age is only checked when the user sends more messages.*",
             generalChannel.Messages.Last().Content);
 
         // say a few normal messages without any time passing
@@ -118,11 +118,11 @@ public class SpamModuleTests
         await sm.TestableGetPreviousMessagesAsync(context, "");
 
         Assert.AreEqual($"I consider the following messages from Sunny#1234 to be recent: " +
-            $"{Environment.NewLine}https://discord.com/channels/{guild.Id}/{generalChannel.Id}/0 at <t:1286668800:F> (<t:1286668800:R>)" +
-            $"{Environment.NewLine}https://discord.com/channels/{guild.Id}/{generalChannel.Id}/1 at <t:1286668800:F> (<t:1286668800:R>)" +
-            $"{Environment.NewLine}https://discord.com/channels/{guild.Id}/{generalChannel.Id}/2 at <t:1286668800:F> (<t:1286668800:R>)" +
-            $"{Environment.NewLine}https://discord.com/channels/{guild.Id}/{generalChannel.Id}/3 at <t:1286668800:F> (<t:1286668800:R>)" +
-            $"{Environment.NewLine}*Note that these messages may not actually be recent as their age is only checked when the user sends more messages.*",
+            $"\nhttps://discord.com/channels/{guild.Id}/{generalChannel.Id}/0 at <t:1286668800:F> (<t:1286668800:R>)" +
+            $"\nhttps://discord.com/channels/{guild.Id}/{generalChannel.Id}/1 at <t:1286668800:F> (<t:1286668800:R>)" +
+            $"\nhttps://discord.com/channels/{guild.Id}/{generalChannel.Id}/2 at <t:1286668800:F> (<t:1286668800:R>)" +
+            $"\nhttps://discord.com/channels/{guild.Id}/{generalChannel.Id}/3 at <t:1286668800:F> (<t:1286668800:R>)" +
+            $"\n*Note that these messages may not actually be recent as their age is only checked when the user sends more messages.*",
             generalChannel.Messages.Last().Content);
 
         // simulate 10 seconds, which should still count as "recent"
@@ -132,12 +132,12 @@ public class SpamModuleTests
         await sm.TestableGetPreviousMessagesAsync(context, "");
 
         Assert.AreEqual($"I consider the following messages from Sunny#1234 to be recent: " +
-            $"{Environment.NewLine}https://discord.com/channels/{guild.Id}/{generalChannel.Id}/0 at <t:1286668800:F> (<t:1286668800:R>)" +
-            $"{Environment.NewLine}https://discord.com/channels/{guild.Id}/{generalChannel.Id}/1 at <t:1286668800:F> (<t:1286668800:R>)" +
-            $"{Environment.NewLine}https://discord.com/channels/{guild.Id}/{generalChannel.Id}/2 at <t:1286668800:F> (<t:1286668800:R>)" +
-            $"{Environment.NewLine}https://discord.com/channels/{guild.Id}/{generalChannel.Id}/3 at <t:1286668800:F> (<t:1286668800:R>)" +
-            $"{Environment.NewLine}https://discord.com/channels/{guild.Id}/{generalChannel.Id}/4 at <t:1286668810:F> (<t:1286668810:R>)" + // slightly different timestamp
-            $"{Environment.NewLine}*Note that these messages may not actually be recent as their age is only checked when the user sends more messages.*",
+            $"\nhttps://discord.com/channels/{guild.Id}/{generalChannel.Id}/0 at <t:1286668800:F> (<t:1286668800:R>)" +
+            $"\nhttps://discord.com/channels/{guild.Id}/{generalChannel.Id}/1 at <t:1286668800:F> (<t:1286668800:R>)" +
+            $"\nhttps://discord.com/channels/{guild.Id}/{generalChannel.Id}/2 at <t:1286668800:F> (<t:1286668800:R>)" +
+            $"\nhttps://discord.com/channels/{guild.Id}/{generalChannel.Id}/3 at <t:1286668800:F> (<t:1286668800:R>)" +
+            $"\nhttps://discord.com/channels/{guild.Id}/{generalChannel.Id}/4 at <t:1286668810:F> (<t:1286668810:R>)" + // slightly different timestamp
+            $"\n*Note that these messages may not actually be recent as their age is only checked when the user sends more messages.*",
             generalChannel.Messages.Last().Content);
 
         // simulate enough time that none of the above messages should remain "recent"
@@ -147,8 +147,8 @@ public class SpamModuleTests
         await sm.TestableGetPreviousMessagesAsync(context, "");
 
         Assert.AreEqual($"I consider the following messages from Sunny#1234 to be recent: " +
-            $"{Environment.NewLine}https://discord.com/channels/{guild.Id}/{generalChannel.Id}/5 at <t:1286669410:F> (<t:1286669410:R>)" +
-            $"{Environment.NewLine}*Note that these messages may not actually be recent as their age is only checked when the user sends more messages.*",
+            $"\nhttps://discord.com/channels/{guild.Id}/{generalChannel.Id}/5 at <t:1286669410:F> (<t:1286669410:R>)" +
+            $"\n*Note that these messages may not actually be recent as their age is only checked when the user sends more messages.*",
             generalChannel.Messages.Last().Content);
     }
 

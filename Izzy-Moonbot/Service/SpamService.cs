@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -209,6 +210,27 @@ public class SpamService
             pressureBreakdown.Add((_config.SpamRepeatPressure, $"Repeat of Previous Message: {_config.SpamRepeatPressure}"));
         }
 
+        // Unusual character pressure
+
+        // If you change this list of categories, be sure to update the config item's documentation too
+        var usualCategories = new List<UnicodeCategory> {
+            UnicodeCategory.UppercaseLetter,
+            UnicodeCategory.LowercaseLetter,
+            UnicodeCategory.SpaceSeparator,
+            UnicodeCategory.DecimalDigitNumber,
+            UnicodeCategory.OpenPunctuation,
+            UnicodeCategory.ClosePunctuation,
+            UnicodeCategory.OtherPunctuation,
+            UnicodeCategory.FinalQuotePunctuation
+        };
+        var unusualCharactersCount = message.Content.ToCharArray().Where(c => c != '\r' && c != '\n' && !usualCategories.Contains(CharUnicodeInfo.GetUnicodeCategory(c))).Count();
+        var unusualCharacterPressure = Math.Round(unusualCharactersCount * _config.SpamUnusualCharacterPressure, 2);
+        if (unusualCharacterPressure > 0)
+        {
+            pressure += unusualCharacterPressure;
+            pressureBreakdown.Add((unusualCharacterPressure, $"Unusual Characters: {unusualCharacterPressure} ≈ {unusualCharactersCount} unusual characters × {_config.SpamUnusualCharacterPressure}"));
+        }
+
         // Add the Base pressure last so that, if one of the other categories happens to equal it,
         // that other category will show up higher in the sorted breakdown.
         pressure += _config.SpamBasePressure;
@@ -236,7 +258,7 @@ public class SpamService
 
         var newPressure = await IncreasePressure(id, pressure);
 
-        await _logger.Log($"Pressure increase from {oldPressureAfterDecay} by {pressure} to {newPressure}/{_config.SpamMaxPressure}. Pressure breakdown: {string.Join(Environment.NewLine, pressureBreakdown)}", context, level: LogLevel.Debug);
+        await _logger.Log($"Pressure increase from {oldPressureAfterDecay} by {pressure} to {newPressure}/{_config.SpamMaxPressure}. Pressure breakdown: {string.Join('\n', pressureBreakdown)}", context, level: LogLevel.Debug);
 
         // If this user already tripped spam pressure, but was either immune to silencing or managed to
         // send another message before Izzy could respond, we don't want duplicate notifications
@@ -267,8 +289,8 @@ public class SpamService
                     .SetContent($"Spam detected by <@{user.Id}>")
                     .SetEmbed(embedBuilder.Build())
                     .SetFileLogContent(
-                        $"{user.Username}#{user.Discriminator} ({user.DisplayName}) (`{user.Id}`) exceeded pressure max ({newPressure}/{_config.SpamMaxPressure}) in #{message.Channel.Name} (`{message.Channel.Id}`).{Environment.NewLine}" +
-                        $"Pressure breakdown: {PonyReadableBreakdown(pressureBreakdown)}{Environment.NewLine}" +
+                        $"{user.Username}#{user.Discriminator} ({user.DisplayName}) (`{user.Id}`) exceeded pressure max ({newPressure}/{_config.SpamMaxPressure}) in #{message.Channel.Name} (`{message.Channel.Id}`).\n" +
+                        $"Pressure breakdown: {PonyReadableBreakdown(pressureBreakdown)}\n" +
                         $"Did nothing: User has a role which bypasses punishment or has dev bypass.") 
                     .Send();
             }
@@ -343,10 +365,7 @@ public class SpamService
                 {
                     await _logger.Log($"Assembling a bulk deletion log from the content of {bulkDeletionLog.Count} deleted messages");
                     bulkDeletionLog.Sort((x, y) => x.Item1.CompareTo(y.Item1));
-                    var bulkDeletionLogString = string.Join(
-                        Environment.NewLine + Environment.NewLine,
-                        bulkDeletionLog.Select(logElement => logElement.Item2)
-                    );
+                    var bulkDeletionLogString = string.Join("\n\n", bulkDeletionLog.Select(logElement => logElement.Item2));
                     var s = new MemoryStream(Encoding.UTF8.GetBytes(bulkDeletionLogString));
                     var fa = new FileAttachment(s, $"{context.User.Username}_{context.User.Id}_spam_bulk_deletion_log_{DateTimeHelper.UtcNow.ToString()}.txt");
 
@@ -380,8 +399,8 @@ public class SpamService
             .SetContent($"<@&{_config.ModRole}> Spam detected by <@{user.Id}>")
             .SetEmbed(embedBuilder.Build())
             .SetFileLogContent(
-                $"{user.Username}#{user.Discriminator} ({user.DisplayName}) (`{user.Id}`) was silenced for exceeding pressure max ({pressure}/{_config.SpamMaxPressure}) in #{message.Channel.Name} (`{message.Channel.Id}`).{Environment.NewLine}" +
-                $"Pressure breakdown: {PonyReadableBreakdown(pressureBreakdown)}{Environment.NewLine}" +
+                $"{user.Username}#{user.Discriminator} ({user.DisplayName}) (`{user.Id}`) was silenced for exceeding pressure max ({pressure}/{_config.SpamMaxPressure}) in #{message.Channel.Name} (`{message.Channel.Id}`).\n" +
+                $"Pressure breakdown: {PonyReadableBreakdown(pressureBreakdown)}\n" +
                 $"{(alreadyDeletedMessages != 0 ? $"I was unable to delete {alreadyDeletedMessages} messages from this user, please double check whether their messages have been deleted." : "")}")
             .Send();
     }
@@ -390,7 +409,7 @@ public class SpamService
     {
         var orderedBreakdown = pressureBreakdown.OrderBy(tuple => -tuple.Item1).Select(tuple => tuple.Item2).ToList();
         orderedBreakdown[0] = "**" + orderedBreakdown[0] + "**"; // show the top contributor in bold
-        return string.Join(Environment.NewLine, orderedBreakdown);
+        return string.Join('\n', orderedBreakdown);
     }
 
     private async Task MessageReceiveEvent(IIzzyMessage messageParam, IIzzyClient client)

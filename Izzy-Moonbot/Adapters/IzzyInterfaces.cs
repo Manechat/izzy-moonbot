@@ -95,7 +95,7 @@ public interface IIzzySocketTextChannel
         RequestOptions? options = null,
         Embed[]? embeds = null
     );
-    Task<IIzzyMessage> GetMessageAsync(ulong messageId);
+    Task<IIzzyMessage?> GetMessageAsync(ulong messageId);
     Task<IIzzyUserMessage> SendFileAsync(FileAttachment fa, string message);
 }
 
