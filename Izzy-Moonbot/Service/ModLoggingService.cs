@@ -20,7 +20,7 @@ public class ModLoggingService
     public ModLoggingService(Config config)
     {
         _config = config;
-        _batchLogger = new BatchLogger(_config);
+        _batchLogger = new BatchLogger();
     }
 
     public ModLogBuilder CreateModLog(SocketGuild guild)
@@ -106,14 +106,11 @@ public class ModLogBuilder
 public class BatchLogger
 {
     private readonly List<ModLog> _modLogs = new();
-    private readonly Config _config;
 
     private static readonly int _batchLogsSendRate = 10_000; // 10 seconds
 
-    public BatchLogger(Config config)
+    public BatchLogger()
     {
-        _config = config;
-
         RefreshBatchInterval();
     }
 
