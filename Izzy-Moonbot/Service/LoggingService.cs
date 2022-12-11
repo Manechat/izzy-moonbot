@@ -46,7 +46,9 @@ public class LoggingService
         var logMessage = "";
         if (memberName != "" || sourceFilePath != "" || sourceLineNumber != 0)
         {
-            var sourceFile = sourceFilePath.Substring(sourceFilePath.LastIndexOf('\\') + 1);
+            // The whole filepath is overkill, but we do have to account for both Windows and Linux separators here
+            var sourceFile = sourceFilePath.Substring(sourceFilePath.LastIndexOf('\\') + 1)
+                                           .Substring(sourceFilePath.LastIndexOf('/') + 1);
             logMessage += $"[{sourceFile}:{memberName}:{sourceLineNumber}] ";
         }
         if (header)
