@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Discord.Commands;
 using Izzy_Moonbot.Adapters;
@@ -17,30 +18,37 @@ public class LoggingService
         _logger = logger;
     }
 
-    public async Task Log(string message)
+    public async Task Log(string message, SocketCommandContext? context, LogLevel level = LogLevel.Information,
+        [CallerMemberName] string memberName = "",
+        [CallerFilePath] string sourceFilePath = "",
+        [CallerLineNumber] int sourceLineNumber = 0)
     {
-        await Log(message, (IIzzyContext?)null, LogLevel.Information);
+        await Log(message, context is not null ? new SocketCommandContextAdapter(context) : null, level, memberName, sourceFilePath, sourceLineNumber);
     }
 
-    public async Task Log(string message, LogLevel level)
+    public async Task Log(string message, IIzzyContext? context = null, LogLevel level = LogLevel.Information,
+        [CallerMemberName] string memberName = "",
+        [CallerFilePath] string sourceFilePath = "",
+        [CallerLineNumber] int sourceLineNumber = 0)
     {
-        await Log(message, (IIzzyContext?)null, level);
-    }
-
-    public async Task Log(string message, SocketCommandContext? context, LogLevel level = LogLevel.Information)
-    {
-        await Log(message, context is not null ? new SocketCommandContextAdapter(context) : null, level);
-    }
-
-    public async Task Log(string message, IIzzyContext? context = null, LogLevel level = LogLevel.Information)
-    {
-        var logMessage = PrepareMessageForLogging(message, context);
+        var logMessage = PrepareMessageForLogging(message, context, false, memberName, sourceFilePath, sourceLineNumber);
         _logger.Log(level, logMessage);
     }
 
-    public static string PrepareMessageForLogging(string message, IIzzyContext? context, bool header = false)
+    public static string PrepareMessageForLogging(
+        string message,
+        IIzzyContext? context,
+        bool header = false,
+        string memberName = "",
+        string sourceFilePath = "",
+        int sourceLineNumber = 0)
     {
         var logMessage = "";
+        if (memberName != "" || sourceFilePath != "" || sourceLineNumber != 0)
+        {
+            var sourceFile = sourceFilePath.Substring(sourceFilePath.LastIndexOf('\\') + 1);
+            logMessage += $"[{sourceFile}:{memberName}:{sourceLineNumber}] ";
+        }
         if (header)
         {
             logMessage += $"[{DateTime.UtcNow:O}] ";
