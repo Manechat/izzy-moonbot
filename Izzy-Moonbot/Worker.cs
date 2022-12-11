@@ -440,10 +440,12 @@ namespace Izzy_Moonbot
                 {
                     await context.Channel.SendMessageAsync(
                         $"Sorry, something went wrong while processing that command.");
-                    
-                    _logger.LogError($"An exception occured while processing a command: {Environment.NewLine}" +
-                                     $"Command: {parsedMessage}" +
-                                     $"Exception: {result.ErrorReason}");
+
+                    var underlyingException = ((Discord.Commands.ExecuteResult)result).Exception;
+                    _logger.LogError($"An exception occured while processing a command:\n" +
+                                     $"Command: {parsedMessage}\n" +
+                                     $"Exception Message: {underlyingException.Message}\n" +
+                                     $"Exception Stack: {underlyingException.StackTrace}");
                 }
             }
         }
