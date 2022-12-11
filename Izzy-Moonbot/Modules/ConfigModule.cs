@@ -79,7 +79,18 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
         if (configItem == null && configCategory == null)
         {
             // Invalid .config arguments
-            await context.Channel.SendMessageAsync($"Sorry, I couldn't find a config value or category called `{configItemKey}`!");
+            var userInput = configItemKey;
+            Func<string, bool> isSuggestable = item =>
+                DiscordHelper.WithinLevenshteinDistanceOf(userInput, item, Convert.ToUInt32(item.Length / 2));
+
+            var itemsToSuggest = configDescriber.GetSettableConfigItems().Where(isSuggestable);
+            var categoriesToSuggest = Enum.GetNames<ConfigItemCategory>().Select(c => c.ToLower()).Where(isSuggestable);
+
+            var errorMessage = $"Sorry, I couldn't find a config value or category called `{configItemKey}`!";
+            if (itemsToSuggest.Any() || categoriesToSuggest.Any()) {
+                errorMessage += $"\nDid you mean {string.Join(" or ", itemsToSuggest.Concat(categoriesToSuggest).Select(s => $"`{s}`"))}?";
+            }
+            await context.Channel.SendMessageAsync(errorMessage);
             return;
         }
 
