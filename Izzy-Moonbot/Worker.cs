@@ -179,6 +179,15 @@ namespace Izzy_Moonbot
             }
 
             ResyncUsers();
+
+            TaskScheduler.UnobservedTaskException += (object? sender, UnobservedTaskExceptionEventArgs eventArgs) =>
+            {
+                var unobservedException = eventArgs.Exception.InnerException;
+                _logger.LogError($"An UnobservedTaskException occured, i.e. one of Izzy's async tasks threw an exception that remained unhandled " +
+                                  "until the task was GC'd. That usually means the issue was in an event handler rather than a command handler.\n" +
+                                 $"Unobserved Exception Message: {unobservedException?.Message}\n" +
+                                 $"Unobserved Exception Stack: {unobservedException?.StackTrace}");
+            };
         }
 
         private void ResyncUsers()
