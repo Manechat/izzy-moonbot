@@ -845,7 +845,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
 
                     await context.Channel.SendMessageAsync(
                         $"Added the quote to **{quoteUser.Username}#{quoteUser.Discriminator}** as quote number {newAliasUserQuote.Id + 1}.{Environment.NewLine}" +
-                        $"> {newAliasUserQuote.Content}", allowedMentions: AllowedMentions.None);
+                        $">>> {newAliasUserQuote.Content}", allowedMentions: AllowedMentions.None);
                     return;
                 }
                 var quoteCategory = _quoteService.ProcessAlias(user, context.Guild);
@@ -854,7 +854,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
 
                 await context.Channel.SendMessageAsync(
                     $"Added the quote to **{newAliasCategoryQuote.Name}** as quote number {newAliasCategoryQuote.Id + 1}.{Environment.NewLine}" +
-                    $"> {newAliasCategoryQuote.Content}", allowedMentions: AllowedMentions.None);
+                    $">>> {newAliasCategoryQuote.Content}", allowedMentions: AllowedMentions.None);
                 return;
             }
 
@@ -866,7 +866,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
 
                 await context.Channel.SendMessageAsync(
                     $"Added the quote to **{user}** as quote number {newCategoryQuote.Id + 1}.{Environment.NewLine}" +
-                    $"> {newCategoryQuote.Content}", allowedMentions: AllowedMentions.None);
+                    $">>> {newCategoryQuote.Content}", allowedMentions: AllowedMentions.None);
                 return;
             }
                 
@@ -881,7 +881,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
 
                 await context.Channel.SendMessageAsync(
                     $"Added the quote to **{user}** as quote number {newCategoryNewQuote.Id + 1}.{Environment.NewLine}" +
-                    $"> {newCategoryNewQuote.Content}", allowedMentions: AllowedMentions.None);
+                    $">>> {newCategoryNewQuote.Content}", allowedMentions: AllowedMentions.None);
                 return;
             }
                 
@@ -889,7 +889,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
 
             await context.Channel.SendMessageAsync(
                 $"Added the quote to **{newUserQuote.Name}** as quote number {newUserQuote.Id + 1}.{Environment.NewLine}" +
-                $"> {newUserQuote.Content}", allowedMentions: AllowedMentions.None);
+                $">>> {newUserQuote.Content}", allowedMentions: AllowedMentions.None);
             return;
         }
 

@@ -1,7 +1,4 @@
 ﻿using Discord;
-using Discord.WebSocket;
-using Izzy_Moonbot.Settings;
-using System;
 using System.Text.RegularExpressions;
 using static Izzy_Moonbot.Adapters.IIzzyClient;
 
@@ -286,7 +283,7 @@ public class TestTextChannel : IIzzySocketTextChannel
             throw new KeyNotFoundException($"CurrentUser is somehow not in this channel");
     }
 
-    public async Task<IIzzyMessage> GetMessageAsync(ulong messageId)
+    public async Task<IIzzyMessage?> GetMessageAsync(ulong messageId)
     {
         var stubMessage = _channel.Messages.Where(m => m.Id == messageId).SingleOrDefault();
         if (stubMessage is null)
@@ -475,7 +472,9 @@ public class StubClient : IIzzyClient
     private TestUser _currentUser;
     private List<StubGuild> _guilds;
 
-    public async Task<TestIzzyContext> AddMessageAsync(ulong guildId, ulong channelId, ulong userId, string textContent)
+    public async Task<TestIzzyContext> AddMessageAsync(ulong guildId, ulong channelId, ulong userId, string textContent,
+        List<IAttachment>? attachments = null,
+        Embed[]? embeds = null)
     {
         if (_guilds.Find(g => g.Id == guildId) is StubGuild guild)
         {
@@ -483,7 +482,7 @@ public class StubClient : IIzzyClient
             var maybeChannel = guild.Channels.Find(c => c.Id == channelId);
             if (maybeUser is TestUser user && maybeChannel is StubChannel channel)
             {
-                var stubMessage = new StubMessage(NextId++, textContent, userId);
+                var stubMessage = new StubMessage(NextId++, textContent, userId, attachments: attachments, embeds: embeds);
                 channel.Messages.Add(stubMessage);
 
                 var testMessage = new TestMessage(stubMessage, user, channel, guild, this);

@@ -179,6 +179,15 @@ namespace Izzy_Moonbot
             }
 
             ResyncUsers();
+
+            TaskScheduler.UnobservedTaskException += (object? sender, UnobservedTaskExceptionEventArgs eventArgs) =>
+            {
+                var unobservedException = eventArgs.Exception.InnerException;
+                _logger.LogError($"An UnobservedTaskException occured, i.e. one of Izzy's async tasks threw an exception that remained unhandled " +
+                                  "until the task was GC'd. That usually means the issue was in an event handler rather than a command handler.\n" +
+                                 $"Unobserved Exception Message: {unobservedException?.Message}\n" +
+                                 $"Unobserved Exception Stack: {unobservedException?.StackTrace}");
+            };
         }
 
         private void ResyncUsers()
@@ -440,10 +449,12 @@ namespace Izzy_Moonbot
                 {
                     await context.Channel.SendMessageAsync(
                         $"Sorry, something went wrong while processing that command.");
-                    
-                    _logger.LogError($"An exception occured while processing a command: {Environment.NewLine}" +
-                                     $"Command: {parsedMessage}" +
-                                     $"Exception: {result.ErrorReason}");
+
+                    var underlyingException = ((Discord.Commands.ExecuteResult)result).Exception;
+                    _logger.LogError($"An exception occured while processing a command:\n" +
+                                     $"Command: {parsedMessage}\n" +
+                                     $"Exception Message: {underlyingException.Message}\n" +
+                                     $"Exception Stack: {underlyingException.StackTrace}");
                 }
             }
         }

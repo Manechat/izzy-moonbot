@@ -20,7 +20,7 @@ public class ModLoggingService
     public ModLoggingService(Config config)
     {
         _config = config;
-        _batchLogger = new BatchLogger(_config);
+        _batchLogger = new BatchLogger();
     }
 
     public ModLogBuilder CreateModLog(SocketGuild guild)
@@ -94,7 +94,9 @@ public class ModLogBuilder
             await File.AppendAllTextAsync(filepath, modLogFileContent);
         }
 
-        if (_config.BatchSendLogs)
+        // if we're in the middle of a raid serious enough that either Izzy herself or a human moderator
+        // decided to enable auto-silencing, then also use batch logging to avoid being rate limited
+        if (_config.AutoSilenceNewJoins)
             _batchLogger.AddModLog(_log);
         else
             await _log.Channel.SendMessageAsync(_log.Content, embeds: _log.Embed != null ? new []{ _log.Embed } : null);
@@ -104,12 +106,11 @@ public class ModLogBuilder
 public class BatchLogger
 {
     private readonly List<ModLog> _modLogs = new();
-    private readonly Config _config;
 
-    public BatchLogger(Config config)
+    private static readonly int _batchLogsSendRate = 10_000; // 10 seconds
+
+    public BatchLogger()
     {
-        _config = config;
-
         RefreshBatchInterval();
     }
 
@@ -122,7 +123,7 @@ public class BatchLogger
     {
         Task.Factory.StartNew(async () =>
         {
-            await Task.Delay(Convert.ToInt32(_config.BatchLogsSendRate * 1000));
+            await Task.Delay(_batchLogsSendRate);
 
             IIzzySocketTextChannel? modLogChannel = null;
             var modLogContent = new List<string>();

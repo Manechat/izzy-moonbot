@@ -16,8 +16,6 @@ public class Config
         // Core settings
         Prefix = '.';
         UnicycleInterval = 100;
-        BatchSendLogs = false;
-        BatchLogsSendRate = 10;
         MentionResponseEnabled = false;
         MentionResponses = new HashSet<string>();
         MentionResponseCooldown = 600;
@@ -64,6 +62,7 @@ public class Config
         SpamLinePressure = 0.714;
         SpamPingPressure = 2.5;
         SpamRepeatPressure = 10.0;
+        SpamUnusualCharacterPressure = 0.01;
         SpamMaxPressure = 60.0;
         SpamPressureDecay = 2.5;
         SpamMessageDeleteLookback = 60;
@@ -83,8 +82,6 @@ public class Config
     // Core settings
     public char Prefix { get; set; }
     public int UnicycleInterval { get; set; }
-    public bool BatchSendLogs { get; set; }
-    public double BatchLogsSendRate { get; set; }
     public bool MentionResponseEnabled { get; set; }
     public HashSet<string> MentionResponses { get; set; }
     public double MentionResponseCooldown { get; set; }
@@ -157,6 +154,7 @@ public class Config
     public double SpamLinePressure { get; set; }
     public double SpamPingPressure { get; set; }
     public double SpamRepeatPressure { get; set; }
+    public double SpamUnusualCharacterPressure { get; set; }
     public double SpamMaxPressure { get; set; }
     public double SpamPressureDecay { get; set; }
     public double? SpamMessageDeleteLookback { get; set; }

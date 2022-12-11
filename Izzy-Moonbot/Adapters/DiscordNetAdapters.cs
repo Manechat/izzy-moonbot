@@ -196,10 +196,10 @@ public class SocketTextChannelAdapter : IIzzySocketTextChannel
         var sentMesssage = await _channel.SendMessageAsync(message, allowedMentions: allowedMentions, components: components, options: options, embeds: embeds);
         return new DiscordNetUserMessageAdapter(sentMesssage);
     }
-    public async Task<IIzzyMessage> GetMessageAsync(ulong messageId)
+    public async Task<IIzzyMessage?> GetMessageAsync(ulong messageId)
     {
         var msg = await _channel.GetMessageAsync(messageId);
-        return new DiscordNetMessageAdapter(msg);
+        return msg is null ? null : new DiscordNetMessageAdapter(msg);
     }
     public async Task<IIzzyUserMessage> SendFileAsync(FileAttachment fa, string message)
     {
