@@ -62,7 +62,6 @@ public class RaidService
     public async Task SilenceRecentJoins(SocketCommandContext context)
     {
         _config.AutoSilenceNewJoins = true;
-        _config.BatchSendLogs = true;
 
         var recentJoins = _state.RecentJoins.Select(recentJoin =>
         {
@@ -84,7 +83,6 @@ public class RaidService
         _generalStorage.CurrentRaidMode = RaidMode.None;
 
         _config.AutoSilenceNewJoins = false;
-        _config.BatchSendLogs = false;
 
         await FileHelper.SaveConfigAsync(_config);
 
@@ -126,7 +124,6 @@ public class RaidService
         _generalStorage.CurrentRaidMode = RaidMode.None;
 
         _config.AutoSilenceNewJoins = false;
-        _config.BatchSendLogs = false;
         
         await FileHelper.SaveConfigAsync(_config);
 
@@ -173,7 +170,6 @@ public class RaidService
         _generalStorage.CurrentRaidMode = RaidMode.Small;
 
         if (!_generalStorage.ManualRaidSilence) _config.AutoSilenceNewJoins = false;
-        _config.BatchSendLogs = false;
 
         var manualRaidActive =
             "`.ass` was ran manually, not disabling `AutoSilenceNewJoins`. Run `.assoff` to end the raid.";
