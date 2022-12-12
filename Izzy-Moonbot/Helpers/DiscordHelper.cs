@@ -11,6 +11,7 @@ using Microsoft.Extensions.Configuration;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
+using System.Runtime.Intrinsics.Arm;
 
 namespace Izzy_Moonbot.Helpers;
 
@@ -377,5 +378,58 @@ public static class DiscordHelper
             s = trailingWhitespaceRegex.Replace(s, "");
 
         return s;
+    }
+
+    public static bool WithinLevenshteinDistanceOf(string source, string target, uint maxDist)
+    {
+        // only null checks are necessary here, but we might as well early return on empty strings too
+        if (String.IsNullOrEmpty(source) && String.IsNullOrEmpty(target))
+            return true;
+        if (String.IsNullOrEmpty(source))
+            return target.Length <= maxDist;
+        if (String.IsNullOrEmpty(target))
+            return source.Length <= maxDist;
+
+        // The idea is that after j iterations of the main loop, we want:
+        // currDists[i] == LD(s[0..i], t[0..j+1])
+        // prevDists[i] == LD(s[0..i], t[0..j])
+        // So when the loop is over LD(s, t) == currDists[s.Length]
+
+        int[] currDists = new int[source.Length + 1];
+        int[] prevDists = new int[source.Length + 1];
+
+        // For the j == 0 base case, there are no prevDists yet, but
+        // LD(s[0..i], t[0..j]) == LD(s[0..i], "") == i so that's easy.
+        // Set these to currDists so the initial swap puts them in prevDists
+        for (int i = 0; i <= source.Length; i++) { currDists[i] = i; }
+
+        // actually compute LD(s[0..i], t[0..j+1]) for every i and j
+        for (int j = 0; j < target.Length; j++)
+        {
+            int[] swap = prevDists;
+            prevDists = currDists;
+            currDists = swap;
+
+            currDists[0] = j + 1; // i == 0 base case: LD(s[0..0], t[0..j+1]) == j+1
+
+            for (int i = 0; i < source.Length; i++)
+            {
+                int deletion = currDists[i] + 1;      // if s[i+1] gets deleted,          then LD(s[0..i+1], t[0..j]) == 1        + LD(s[0..i],   t[0..j])
+                                                      // example:                              LD("Izzy",    "Izz")   == 1        + LD("Izz",     "Izz") = 1
+                int insertion = prevDists[i + 1] + 1; // if t[j] gets inserted at s[i+1], then LD(s[0..i+1], t[0..j]) == 1        + LD(s[0..i+1], t[0..j-1])
+                                                      // example:                              LD("Izz",     "Izzy")  == 1        + LD("Izz",     "Izz") = 1
+                int substitution = prevDists[i] +     // if s[i+1] gets set to t[j],      then LD(s[0..i+1], t[0..j]) == (0 or 1) + LD(s[0..i],   t[0..j-1])
+                    (source[i] == target[j] ? 0 : 1); // example:                              LD("Izzz",    "Izzy")  == 1        + LD("Izz",     "Izz") = 1
+                                                      //                                       LD("Izzy",    "Izzy")  == 0        + LD("Izz",     "Izz") = 0
+
+                currDists[i + 1] = Math.Min(deletion, Math.Min(insertion, substitution));
+            }
+
+            // if all of currDists is already too high, then we know the final LD will be too
+            if (currDists.Min() > maxDist) return false;
+        }
+
+        var actualLevenshteinDistance = currDists[source.Length];
+        return actualLevenshteinDistance <= maxDist;
     }
 }

@@ -223,4 +223,38 @@ public class DiscordHelperTests
         Assert.AreEqual("IzzyIzzyIzzy", TrimDiscordWhitespace("\n<:blank:833008517257756752> \n<:blank:833008517257756752> \nIzzyIzzyIzzy\n"));
 
     }
+
+    [TestMethod()]
+    public void LevenshteinDistance_Tests()
+    {
+        Assert.IsTrue(WithinLevenshteinDistanceOf("", "", 0));
+        Assert.IsTrue(WithinLevenshteinDistanceOf("Izzy", "Izzy", 0));
+
+        Assert.IsFalse(WithinLevenshteinDistanceOf("", "Izzy", 0));
+        Assert.IsFalse(WithinLevenshteinDistanceOf("Izzy", "", 0));
+        Assert.IsFalse(WithinLevenshteinDistanceOf("", "Izzy", 3));
+        Assert.IsFalse(WithinLevenshteinDistanceOf("Izzy", "", 3));
+        Assert.IsTrue(WithinLevenshteinDistanceOf("", "Izzy", 4));
+        Assert.IsTrue(WithinLevenshteinDistanceOf("Izzy", "", 4));
+
+        Assert.IsFalse(WithinLevenshteinDistanceOf("Izzy", "Iggy", 1));
+        Assert.IsTrue(WithinLevenshteinDistanceOf("Izzy", "Iggy", 2));
+        Assert.IsTrue(WithinLevenshteinDistanceOf("Izzy", "Iggy", 3));
+
+        Assert.IsFalse(WithinLevenshteinDistanceOf("Izzy", "Izzy!", 0));
+        Assert.IsTrue(WithinLevenshteinDistanceOf("Izzy", "Izzy!", 1));
+        Assert.IsTrue(WithinLevenshteinDistanceOf("Izzy", "Izzy!", 2));
+
+        Assert.IsFalse(WithinLevenshteinDistanceOf("Izzy", "Izz", 0));
+        Assert.IsTrue(WithinLevenshteinDistanceOf("Izzy", "Izz", 1));
+        Assert.IsTrue(WithinLevenshteinDistanceOf("Izzy", "Izz", 2));
+
+        Assert.IsFalse(WithinLevenshteinDistanceOf("Izzy", "izy!", 2));
+        Assert.IsTrue(WithinLevenshteinDistanceOf("Izzy", "izy!", 3));
+        Assert.IsTrue(WithinLevenshteinDistanceOf("Izzy", "izy!", 4));
+
+        Assert.IsFalse(WithinLevenshteinDistanceOf("SpamMaxPressure", "SpamPressureMax", 5));
+        Assert.IsTrue(WithinLevenshteinDistanceOf("SpamMaxPressure", "SpamPressureMax", 6));
+        Assert.IsTrue(WithinLevenshteinDistanceOf("SpamMaxPressure", "SpamPressureMax", 7));
+    }
 }
