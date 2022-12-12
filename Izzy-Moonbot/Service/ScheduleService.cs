@@ -404,15 +404,11 @@ public class ScheduleService
                     {
                         // Update the cache in case of change, but return
                         _generalStorage.CurrentBooruFeaturedImage =
-                            image; // Cache to not anger CULTPONY or Twilight (API docs say to cache)
+                            image;
                         await FileHelper.SaveGeneralStorageAsync(_generalStorage);
                         return true;
                     }
                 }
-
-                _generalStorage.CurrentBooruFeaturedImage =
-                    image; // Cache to not anger CULTPONY or Twilight (API docs say to cache)
-                await FileHelper.SaveGeneralStorageAsync(_generalStorage);
 
                 // Don't check the images if they're not ready yet!
                 if (!image.ThumbnailsGenerated || image.Representations == null)
@@ -438,9 +434,13 @@ public class ScheduleService
                     return true;
                 }
 
-                var imageStream = await image.Representations.Full.GetStreamAsync();
+                var imageStream = await image.Representations.Thumbnail.GetStreamAsync();
 
                 await guild.ModifyAsync(properties => properties.Banner = new Image(imageStream));
+                
+                _generalStorage.CurrentBooruFeaturedImage =
+                    image;
+                await FileHelper.SaveGeneralStorageAsync(_generalStorage);
                 
                 await _modLogging.CreateModLog(guild)
                     .SetContent(
@@ -465,9 +465,17 @@ public class ScheduleService
                 // Http request failure.
                 await _modLogging.CreateModLog(guild)
                     .SetContent(
-                        $"Tried to change banner and received a {ex.StatusCode} status code when attempting to ask Manebooru for the featured image. Doing nothing.")
+                        $"Tried to change banner and received a {ex.StatusCode} status code when attempting to ask Manebooru for the featured image. Doing nothing.\n" +
+                        $"Likely causes:\n" +
+                        $"  - I sent a badly formatted request to Manebooru.\n" +
+                        $"  - Manebooru thinks I sent a badly formatted request when I didn't.\n" +
+                        $"  - Manebooru is down and Cloudflare is giving me a error page.")
                     .SetFileLogContent(
-                        $"Tried to change banner and recieved a {ex.StatusCode} status code when attempting to ask Manebooru for the featured image. Doing nothing.")
+                        $"Tried to change banner and recieved a {ex.StatusCode} status code when attempting to ask Manebooru for the featured image. Doing nothing.\n" +
+                        $"Likely causes:\n" +
+                        $"  - I sent a badly formatted request to Manebooru.\n" +
+                        $"  - Manebooru thinks I sent a badly formatted request when I didn't.\n" +
+                        $"  - Manebooru is down and Cloudflare is giving me a error page.")
                     .Send();
                 await _logger.Log(
                     $"Encountered HTTP exception when trying to change banner: {ex.Message}{Environment.NewLine}{ex.StackTrace}");
@@ -476,9 +484,17 @@ public class ScheduleService
             {
                 await _modLogging.CreateModLog(guild)
                     .SetContent(
-                        $"Tried to change banner and received a general error when attempting to ask Manebooru for the featured image. Doing nothing.")
+                        $"Tried to change banner and received a general error when attempting to ask Manebooru for the featured image. Doing nothing.\n" +
+                        $"Likely causes:\n" +
+                        $"  - The image is too big for Discord.\n" +
+                        $"  - This server cannot have a banner.\n" +
+                        $"  - The banner rotation job is an unexpected state.")
                     .SetFileLogContent(
-                        $"Tried to change banner and received a general error when attempting to ask Manebooru for the featured image. Doing nothing.")
+                        $"Tried to change banner and received a general error when attempting to ask Manebooru for the featured image. Doing nothing.\n" +
+                        $"Likely causes:\n" +
+                        $"  - The image is too big for Discord.\n" +
+                        $"  - This server cannot have a banner.\n" +
+                        $"  - The banner rotation job is an unexpected state.")
                     .Send();
                 await _logger.Log(
                     $"Encountered exception when trying to change banner: {ex.Message}{Environment.NewLine}{ex.StackTrace}");

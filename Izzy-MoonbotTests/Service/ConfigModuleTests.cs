@@ -15,21 +15,21 @@ public class ConfigModuleTests
     {
         var (cfg, cd, (izzyHerself, sunny), _, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
 
-        // post ".config prefix *", mis-capitalized on purpose
+        // post ".config asdf *"
 
-        var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config prefix *");
+        var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config asdf *");
 
         Assert.AreEqual(cfg.Prefix, '.');
-        await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "prefix", "*");
+        await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "asdf", "*");
         Assert.AreEqual(cfg.Prefix, '.');
 
         Assert.AreEqual(2, generalChannel.Messages.Count);
 
         Assert.AreEqual(sunny.Id, generalChannel.Messages[0].AuthorId);
-        Assert.AreEqual(".config prefix *", generalChannel.Messages[0].Content);
+        Assert.AreEqual(".config asdf *", generalChannel.Messages[0].Content);
 
         Assert.AreEqual(izzyHerself.Id, generalChannel.Messages[1].AuthorId);
-        Assert.AreEqual("Sorry, I couldn't find a config value or category called `prefix`!", generalChannel.Messages[1].Content);
+        Assert.AreEqual("Sorry, I couldn't find a config value or category called `asdf`!", generalChannel.Messages[1].Content);
 
         // post ".config Prefix *"
 
@@ -42,10 +42,10 @@ public class ConfigModuleTests
         Assert.AreEqual(4, generalChannel.Messages.Count);
 
         Assert.AreEqual(sunny.Id, generalChannel.Messages[0].AuthorId);
-        Assert.AreEqual(".config prefix *", generalChannel.Messages[0].Content);
+        Assert.AreEqual(".config asdf *", generalChannel.Messages[0].Content);
 
         Assert.AreEqual(izzyHerself.Id, generalChannel.Messages[1].AuthorId);
-        Assert.AreEqual("Sorry, I couldn't find a config value or category called `prefix`!", generalChannel.Messages[1].Content);
+        Assert.AreEqual("Sorry, I couldn't find a config value or category called `asdf`!", generalChannel.Messages[1].Content);
 
         Assert.AreEqual(sunny.Id, generalChannel.Messages[2].AuthorId);
         Assert.AreEqual(".config Prefix *", generalChannel.Messages[2].Content);
@@ -820,5 +820,79 @@ public class ConfigModuleTests
 
         Assert.AreEqual(configPropsCount * 2, generalChannel.Messages.Count(),
             $"{Environment.NewLine}If you just added or removed a config item, then this test is probably out of date");
+    }
+
+    [TestMethod()]
+    public async Task ConfigCommand_SuggestionTestsAsync()
+    {
+        var (cfg, cd, (izzyHerself, sunny), _, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
+
+        // mis-capitalization
+
+        var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config prefix");
+        await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "prefix", "");
+
+        Assert.AreEqual("Sorry, I couldn't find a config value or category called `prefix`!" +
+            "\nDid you mean `Prefix`?",
+            generalChannel.Messages.Last().Content);
+
+        // missing letters
+
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config Prefi");
+        await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "Prefi", "");
+
+        Assert.AreEqual("Sorry, I couldn't find a config value or category called `Prefi`!" +
+            "\nDid you mean `Prefix`?",
+            generalChannel.Messages.Last().Content);
+
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config Pref");
+        await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "Pref", "");
+
+        Assert.AreEqual("Sorry, I couldn't find a config value or category called `Pref`!" +
+            "\nDid you mean `Prefix`?",
+            generalChannel.Messages.Last().Content);
+
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config Pre");
+        await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "Pre", "");
+
+        Assert.AreEqual("Sorry, I couldn't find a config value or category called `Pre`!" +
+            "\nDid you mean `Prefix` or `core`?",
+            generalChannel.Messages.Last().Content);
+
+        // extra letters
+
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config Prefixes");
+        await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "Prefixes", "");
+
+        Assert.AreEqual("Sorry, I couldn't find a config value or category called `Prefixes`!" +
+            "\nDid you mean `Prefix`?",
+            generalChannel.Messages.Last().Content);
+
+        // multiple kinds of typo at once
+
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config prefz");
+        await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "prefz", "");
+
+        Assert.AreEqual("Sorry, I couldn't find a config value or category called `prefz`!" +
+            "\nDid you mean `Prefix`?",
+            generalChannel.Messages.Last().Content);
+
+        // with additional arguments
+
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config alias set moonlaser addquote moon");
+        await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "alias", "set moonlaser addquote moon");
+
+        Assert.AreEqual("Sorry, I couldn't find a config value or category called `alias`!" +
+            "\nDid you mean `Aliases`?",
+            generalChannel.Messages.Last().Content);
+
+        // many suggestions
+
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config spampressure");
+        await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "spampressure", "");
+
+        Assert.AreEqual("Sorry, I couldn't find a config value or category called `spampressure`!" +
+            "\nDid you mean `SpamBasePressure` or `SpamImagePressure` or `SpamLengthPressure` or `SpamLinePressure` or `SpamPingPressure` or `SpamRepeatPressure` or `SpamMaxPressure` or `SpamPressureDecay`?",
+            generalChannel.Messages.Last().Content);
     }
 }

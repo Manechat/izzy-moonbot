@@ -74,56 +74,70 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
 
         var configItem = configDescriber.GetItem(configItemKey);
 
-        if (configItem == null)
+        var configCategory = configDescriber.StringToCategory(configItemKey);
+
+        if (configItem == null && configCategory == null)
         {
-            // Config item not found, but could be a category.
-            var configCategory = configDescriber.StringToCategory(configItemKey);
-            if (configCategory.HasValue)
-            {
-                // it's not null we literally check above u stupid piece of code
-                var category = configCategory.Value;
+            // Invalid .config arguments
+            var userInput = configItemKey;
+            Func<string, bool> isSuggestable = item =>
+                DiscordHelper.WithinLevenshteinDistanceOf(userInput, item, Convert.ToUInt32(item.Length / 2));
 
-                var itemList = configDescriber.GetSettableConfigItemsByCategory(category);
+            var itemsToSuggest = configDescriber.GetSettableConfigItems().Where(isSuggestable);
+            var categoriesToSuggest = Enum.GetNames<ConfigItemCategory>().Select(c => c.ToLower()).Where(isSuggestable);
 
-                if (itemList.Count > 10)
-                {
-                    // Use pagination
-                    var pages = new List<string>();
-                    var pageNumber = -1;
-                    for (var i = 0; i < itemList.Count; i++)
-                    {
-                        if (i % 10 == 0)
-                        {
-                            pageNumber += 1;
-                            pages.Add("");
-                        }
-
-                        pages[pageNumber] += itemList[i] + Environment.NewLine;
-                    }
-
-
-                    string[] staticParts =
-                    {
-                        $"Hii!! Here's a list of all the config items I could find in the {configDescriber.CategoryToString(category)} category!",
-                        $"Run `{config.Prefix}config <item>` to view information about an item! Please note that config items are *case sensitive*."
-                    };
-
-                    var paginationMessage = new PaginationHelper(context, pages.ToArray(), staticParts);
-                }
-                else
-                {
-                    await context.Channel.SendMessageAsync(
-                        $"Hii!! Here's a list of all the config items I could find in the {configDescriber.CategoryToString(category)} category!" +
-                        $"{Environment.NewLine}```{Environment.NewLine}{string.Join(Environment.NewLine, itemList)}{Environment.NewLine}```{Environment.NewLine}" +
-                        $"Run `{config.Prefix}config <item>` to view information about an item! Please note that config items are *case sensitive*.");
-                }
-
-                return;
+            var errorMessage = $"Sorry, I couldn't find a config value or category called `{configItemKey}`!";
+            if (itemsToSuggest.Any() || categoriesToSuggest.Any()) {
+                errorMessage += $"\nDid you mean {string.Join(" or ", itemsToSuggest.Concat(categoriesToSuggest).Select(s => $"`{s}`"))}?";
             }
-
-            await context.Channel.SendMessageAsync($"Sorry, I couldn't find a config value or category called `{configItemKey}`!");
+            await context.Channel.SendMessageAsync(errorMessage);
             return;
         }
+
+        if (configItem == null && configCategory != null)
+        {
+            // .config <category>
+            var category = configCategory.Value;
+
+            var itemList = configDescriber.GetSettableConfigItemsByCategory(category);
+
+            if (itemList.Count > 10)
+            {
+                // Use pagination
+                var pages = new List<string>();
+                var pageNumber = -1;
+                for (var i = 0; i < itemList.Count; i++)
+                {
+                    if (i % 10 == 0)
+                    {
+                        pageNumber += 1;
+                        pages.Add("");
+                    }
+
+                    pages[pageNumber] += itemList[i] + Environment.NewLine;
+                }
+
+
+                string[] staticParts =
+                {
+                    $"Hii!! Here's a list of all the config items I could find in the {configDescriber.CategoryToString(category)} category!",
+                    $"Run `{config.Prefix}config <item>` to view information about an item! Please note that config items are *case sensitive*."
+                };
+
+                var paginationMessage = new PaginationHelper(context, pages.ToArray(), staticParts);
+            }
+            else
+            {
+                await context.Channel.SendMessageAsync(
+                    $"Hii!! Here's a list of all the config items I could find in the {configDescriber.CategoryToString(category)} category!" +
+                    $"{Environment.NewLine}```{Environment.NewLine}{string.Join(Environment.NewLine, itemList)}{Environment.NewLine}```{Environment.NewLine}" +
+                    $"Run `{config.Prefix}config <item>` to view information about an item! Please note that config items are *case sensitive*.");
+            }
+
+            return;
+        }
+    
+        // .config <itemKey>
 
         if (value == "")
         {
