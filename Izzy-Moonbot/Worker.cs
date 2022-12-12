@@ -412,14 +412,32 @@ namespace Izzy_Moonbot
                 
                 if (checkCommands)
                 {
+                    var inputCommandName = parsedMessage.Split(" ")[0];
                     var validCommand = _commands.Commands.Any(command => 
-                        command.Name == parsedMessage.Split(" ")[0] 
-                        || command.Aliases.Contains(parsedMessage.Split(" ")[0]));
+                        command.Name == inputCommandName || command.Aliases.Contains(inputCommandName));
 
                     if (!validCommand)
                     {
-                        _logger.Log(LogLevel.Information, $"Ignoring message {messageParam.CleanContent} because it doesn't match any command or alias names");
-                        return;
+                        Func<string, bool> isSuggestable = item =>
+                            DiscordHelper.WithinLevenshteinDistanceOf(inputCommandName, item, Convert.ToUInt32(item.Length / 2));
+
+                        // don't bother searching command.Name because command.Aliases always includes the main name
+                        var alternateNamesToSuggest = _commands.Commands.SelectMany(c => c.Aliases).Where(isSuggestable);
+                        var aliasesToSuggest = _config.Aliases.Keys.Where(isSuggestable);
+
+                        if (alternateNamesToSuggest.Any() || aliasesToSuggest.Any())
+                        {
+                            var suggestibles = alternateNamesToSuggest.Concat(aliasesToSuggest).Select(s => $"`.{s}`");
+                            var suggestionMessage = $"Sorry, I don't have a `.{inputCommandName}` command. Did you mean {string.Join(" or ", suggestibles)}?";
+                            await context.Channel.SendMessageAsync(suggestionMessage);
+                            return;
+                        }
+                        else
+                        {
+                            _logger.Log(LogLevel.Information, $"Ignoring message {messageParam.CleanContent} because it doesn't match " +
+                                $"any command or alias names, and is not similar enough to any of them to make a suggestion.");
+                            return;
+                        }
                     }
                 }
                 
