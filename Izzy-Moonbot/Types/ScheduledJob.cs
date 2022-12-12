@@ -18,7 +18,7 @@ public class ScheduledJob
         RepeatType = repeatType;
     }
 
-    public string Id { get; }
+    public string Id { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset? LastExecutedAt { get; set; }
     public DateTimeOffset ExecuteAt { get; set; }
@@ -29,11 +29,28 @@ public class ScheduledJob
     {
         return $"`{Id}`: {Action} <t:{ExecuteAt.ToUnixTimeSeconds()}:R>{(RepeatType != ScheduledJobRepeatType.None ? $", repeating {RepeatType.ToString()}{(LastExecutedAt != null ? $", last executed <t:{LastExecutedAt.Value.ToUnixTimeSeconds()}:R>": "")}" : "")}. Created <t:{CreatedAt.ToUnixTimeSeconds()}:F>";
     }
+
+    public string ToFileString()
+    {
+        return $"{Id}: {Action.ToFileString()} at {ExecuteAt:F}{(RepeatType != ScheduledJobRepeatType.None ? $", repeating {RepeatType.ToString()}{(LastExecutedAt != null ? $", last executed at {LastExecutedAt.Value:F}": "")}" : "")}. Created at {CreatedAt:F}";
+    }
 }
 
 // Class only exists to be extended so we can have a single ScheduledJob class.
 public class ScheduledJobAction
-{ }
+{
+    public ScheduledJobActionType Type { get; protected set; }
+
+    public override string ToString()
+    {
+        return "Unknown Scheduled Job Action";
+    }
+
+    public virtual string ToFileString()
+    {
+        throw new NotImplementedException();
+    }
+}
 
 /* Scheduled Job Action types */
 public class ScheduledRoleJob : ScheduledJobAction
@@ -47,6 +64,8 @@ public class ScheduledRoleRemovalJob : ScheduledRoleJob
 {
     public ScheduledRoleRemovalJob(ulong role, ulong user, string? reason = null)
     {
+        Type = ScheduledJobActionType.RemoveRole;
+        
         Role = role;
         User = user;
         Reason = reason;
@@ -54,6 +73,8 @@ public class ScheduledRoleRemovalJob : ScheduledRoleJob
 
     public ScheduledRoleRemovalJob(IRole role, IGuildUser user, string? reason = null)
     {
+        Type = ScheduledJobActionType.RemoveRole;
+        
         Role = role.Id;
         User = user.Id;
         Reason = reason;
@@ -63,12 +84,19 @@ public class ScheduledRoleRemovalJob : ScheduledRoleJob
     {
         return $"Remove <@&{Role}> (`{Role}`) from <@{User}> (`{User}`)";
     }
+
+    public override string ToFileString()
+    {
+        return $"Remove role {Role} from user {User}";
+    }
 }
 
 public class ScheduledRoleAdditionJob : ScheduledRoleJob
 {
     public ScheduledRoleAdditionJob(ulong role, ulong user, string? reason = null)
     {
+        Type = ScheduledJobActionType.AddRole;
+        
         Role = role;
         User = user;
         Reason = reason;
@@ -76,6 +104,8 @@ public class ScheduledRoleAdditionJob : ScheduledRoleJob
     
     public ScheduledRoleAdditionJob(IRole role, IGuildUser user, string? reason = null)
     {
+        Type = ScheduledJobActionType.AddRole;
+        
         Role = role.Id;
         User = user.Id;
         Reason = reason;
@@ -85,17 +115,26 @@ public class ScheduledRoleAdditionJob : ScheduledRoleJob
     {
         return $"Add <@&{Role}> (`{Role}`) to <@{User}> (`{User}`)";
     }
+    
+    public override string ToFileString()
+    {
+        return $"Add role {Role} to user {User}";
+    }
 }
 
 public class ScheduledUnbanJob : ScheduledJobAction
 {
     public ScheduledUnbanJob(ulong user)
     {
+        Type = ScheduledJobActionType.Unban;
+        
         User = user;
     }
 
     public ScheduledUnbanJob(IUser user)
     {
+        Type = ScheduledJobActionType.Unban;
+        
         User = user.Id;
     }
     
@@ -105,24 +144,35 @@ public class ScheduledUnbanJob : ScheduledJobAction
     {
         return $"Unban <@{User}> (`{User}`)";
     }
+    
+    public override string ToFileString()
+    {
+        return $"Unban user {User}";
+    }
 }
 
 public class ScheduledEchoJob : ScheduledJobAction
 {
     public ScheduledEchoJob(ulong channel, string content)
     {
+        Type = ScheduledJobActionType.Echo;
+        
         Channel = channel;
         Content = content;
     }
 
     public ScheduledEchoJob(IMessageChannel channel, string content)
     {
+        Type = ScheduledJobActionType.Echo;
+        
         Channel = channel.Id;
         Content = content;
     }
 
     public ScheduledEchoJob(IUser user, string content)
     {
+        Type = ScheduledJobActionType.Echo;
+        
         Channel = user.Id;
         Content = content;
     }
@@ -134,16 +184,40 @@ public class ScheduledEchoJob : ScheduledJobAction
     {
         return $"Send \"{Content}\" to <#{Channel}> (`{Channel}`)";
     }
+    
+    public override string ToFileString()
+    {
+        return $"Send \"{Content}\" to channel/user {Channel}";
+    }
 }
 
 // Banner rotation doesn't need it's own data, but this class
 // exists in order for the job to exist.
 public class ScheduledBannerRotationJob : ScheduledJobAction
 {
+    public ScheduledBannerRotationJob()
+    {
+        Type = ScheduledJobActionType.BannerRotation;
+    }
+    
     public override string ToString()
     {
         return $"Run Banner Rotation";
     }
+    
+    public override string ToFileString()
+    {
+        return $"Run Banner Rotation";
+    }
+}
+
+public enum ScheduledJobActionType
+{
+    RemoveRole,
+    AddRole,
+    Unban,
+    Echo,
+    BannerRotation
 }
 
 public enum ScheduledJobRepeatType

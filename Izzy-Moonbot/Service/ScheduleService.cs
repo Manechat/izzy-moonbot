@@ -138,9 +138,16 @@ public class ScheduleService
         }
     }
 
-    public ScheduledJob GetScheduledJob(string id)
+    public ScheduledJob? GetScheduledJob(string id)
     {
-        return _scheduledJobs.Single(job => job.Id == id);
+        try
+        {
+            return _scheduledJobs.Single(job => job.Id == id);
+        }
+        catch (InvalidOperationException)
+        {
+            return null;
+        }
     }
 
     public ScheduledJob GetScheduledJob(Func<ScheduledJob, bool> predicate)
