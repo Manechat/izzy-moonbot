@@ -305,6 +305,23 @@ public class TestTextChannel : IIzzySocketTextChannel
         else
             throw new KeyNotFoundException($"CurrentUser is somehow not in this channel");
     }
+
+    public async IAsyncEnumerable<IReadOnlyCollection<IIzzyMessage>> GetMessagesAsync(ulong firstMessageId, Direction dir, int limit)
+    {
+        var firstMessageIndex = _channel.Messages.FindIndex(m => m.Id == firstMessageId);
+
+        var stubMessages = (dir == Direction.After) ?
+            _channel.Messages.Skip(firstMessageIndex + 1).Take(limit) :
+            Enumerable.Reverse(_channel.Messages).Skip(_channel.Messages.Count - firstMessageIndex + 1).Take(limit);
+
+        foreach (var m in stubMessages)
+        {
+            var user = _guildBackref.Users.Find(u => u.Id == m.AuthorId);
+            yield return new List<IIzzyMessage>{
+                new TestMessage(m, user, _channel, _guildBackref, _clientBackref)
+            };
+        }
+    }
 }
 
 public class TestMessageChannel : IIzzyMessageChannel
@@ -368,6 +385,7 @@ public class StubGuild
     public List<TestRole> Roles;
     public List<TestUser> Users;
     public List<StubChannel> Channels;
+    public StubChannel? RulesChannel = null;
 
     public Dictionary<ulong, List<ulong>> UserRoles = new Dictionary<ulong, List<ulong>>();
     public Dictionary<ulong, ulong> ChannelAccessRole = new Dictionary<ulong, ulong>(); // public channels are absent
@@ -428,6 +446,8 @@ public class TestGuild : IIzzyGuild
         _stubGuild.BannedUserIds.Remove(userId);
     public async Task SetBanner(Image image) =>
         _bannerImage = image;
+    public IIzzySocketTextChannel? RulesChannel => _stubGuild.RulesChannel is null ? null :
+        new TestTextChannel(_stubGuild, _stubGuild.RulesChannel, _clientBackref);
 }
 
 public class TestIzzyContext : IIzzyContext

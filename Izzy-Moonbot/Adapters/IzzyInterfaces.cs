@@ -95,6 +95,7 @@ public interface IIzzySocketTextChannel
     );
     Task<IIzzyMessage?> GetMessageAsync(ulong messageId);
     Task<IIzzyUserMessage> SendFileAsync(FileAttachment fa, string message);
+    IAsyncEnumerable<IReadOnlyCollection<IIzzyMessage>> GetMessagesAsync(ulong firstMessageId, Direction dir, int limit);
 }
 
 public interface IIzzySocketGuildChannel
@@ -118,6 +119,7 @@ public interface IIzzyGuild
     Task<bool> GetIsBannedAsync(ulong userId); // replaces the real GetBanAsync method
     Task RemoveBanAsync(ulong userId);
     Task SetBanner(Image image); // replaces the real ModifyAsync(props => ...) method
+    IIzzySocketTextChannel? RulesChannel { get; }
 }
 
 public interface IIzzyClient

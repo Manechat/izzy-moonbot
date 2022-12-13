@@ -186,29 +186,39 @@ public class MiscModule : ModuleBase<SocketCommandContext>
     [ExternalUsageAllowed]
     public async Task RuleCommandAsync([Remainder] string argString = "")
     {
+        await TestableRuleCommandAsync(
+            new SocketCommandContextAdapter(Context),
+            argString
+        );
+    }
+
+    public async Task TestableRuleCommandAsync(
+        IIzzyContext context,
+        string argString = "")
+    {
         argString = argString.Trim();
         if (argString == "")
         {
-            await ReplyAsync("You need to give me a rule number to look up!");
+            await context.Channel.SendMessageAsync("You need to give me a rule number to look up!");
             return;
         }
 
         if (_config.HiddenRules.ContainsKey(argString))
         {
-            await ReplyAsync(_config.HiddenRules[argString]);
+            await context.Channel.SendMessageAsync(_config.HiddenRules[argString]);
             return;
         }
 
         var firstMessageId = _config.FirstRuleMessageId;
         if (firstMessageId == 0)
         {
-            await ReplyAsync("I can't look up rules without knowing where the first one is. Please ask a mod to use `.config FirstRuleMessageId`.");
+            await context.Channel.SendMessageAsync("I can't look up rules without knowing where the first one is. Please ask a mod to use `.config FirstRuleMessageId`.");
             return;
         }
 
         if (int.TryParse(argString, out var ruleNumber))
         {
-            var rulesChannel = Context.Guild.RulesChannel;
+            var rulesChannel = context.Guild.RulesChannel;
 
             string ruleMessage;
             if (ruleNumber == 1)
@@ -228,7 +238,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
 
                 if (rulesAfterFirst.Count < (ruleNumber - 1))
                 {
-                    await ReplyAsync($"Sorry, there doesn't seem to be a rule {ruleNumber}");
+                    await context.Channel.SendMessageAsync($"Sorry, there doesn't seem to be a rule {ruleNumber}");
                     return;
                 }
 
@@ -237,11 +247,11 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                 ruleMessage = rulesAfterFirst.OrderBy(t => t.Item1).ElementAt(ruleNumber - 2).Item2;
             }
 
-            await ReplyAsync(DiscordHelper.TrimDiscordWhitespace(ruleMessage), allowedMentions: AllowedMentions.None);
+            await context.Channel.SendMessageAsync(DiscordHelper.TrimDiscordWhitespace(ruleMessage), allowedMentions: AllowedMentions.None);
         }
         else
         {
-            await ReplyAsync($"Sorry, I couldn't convert {argString} to a number.");
+            await context.Channel.SendMessageAsync($"Sorry, I couldn't convert {argString} to a number.");
         }
     }
 

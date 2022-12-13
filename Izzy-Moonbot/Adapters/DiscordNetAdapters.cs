@@ -205,6 +205,11 @@ public class SocketTextChannelAdapter : IIzzySocketTextChannel
         var sentMesssage = await _channel.SendFileAsync(fa, message);
         return new DiscordNetUserMessageAdapter(sentMesssage);
     }
+    public async IAsyncEnumerable<IReadOnlyCollection<IIzzyMessage>> GetMessagesAsync(ulong firstMessageId, Direction dir, int limit)
+    {
+        await foreach (var syncEnumerable in _channel.GetMessagesAsync(firstMessageId, dir, limit))
+            yield return syncEnumerable.Select(m => new DiscordNetMessageAdapter(m)).ToList();
+    }
 
     public override string? ToString()
     {
@@ -322,6 +327,7 @@ public class SocketGuildAdapter : IIzzyGuild
         await _guild.RemoveBanAsync(userId);
     public async Task SetBanner(Image image) =>
         await _guild.ModifyAsync(properties => properties.Banner = image);
+    public IIzzySocketTextChannel? RulesChannel => new SocketTextChannelAdapter(_guild.RulesChannel);
 }
 
 public class IdHaver : IIzzyHasId
