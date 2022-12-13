@@ -48,6 +48,7 @@ public class SocketGuildUserAdapter : IIzzyGuildUser
     public string Username { get => _user.Username; }
     public string Discriminator { get => _user.Discriminator; }
     public string DisplayName { get => _user.DisplayName; }
+    public int Hierarchy { get => _user.Hierarchy; }
     public bool IsBot => _user.IsBot;
     public async Task<IIzzyUserMessage> SendMessageAsync(string text) =>
         new DiscordNetUserMessageAdapter(await _user.SendMessageAsync(text));

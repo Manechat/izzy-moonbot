@@ -16,7 +16,9 @@ public interface IIzzyUser
 public interface IIzzyGuildUser : IIzzyUser
 {
     string DisplayName { get; }
+    int Hierarchy => DisplayName.Contains("Izzy") ? 1 : 0; // not used enough to be worth accurately imitating in tests
     IReadOnlyCollection<IIzzyRole> Roles { get; }
+
     Task AddRoleAsync(ulong roleId, RequestOptions? requestOptions);
     Task AddRolesAsync(IEnumerable<ulong> roles, RequestOptions? requestOptions);
     Task RemoveRoleAsync(ulong memberRole, RequestOptions? requestOptions);
