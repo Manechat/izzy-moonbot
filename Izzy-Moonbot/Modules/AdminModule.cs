@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Attributes;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Service;
@@ -239,9 +240,19 @@ public class AdminModule : ModuleBase<SocketCommandContext>
     public async Task EchoCommandAsync(
         [Remainder] string argsString = "")
     {
+        await TestableEchoCommandAsync(
+            new SocketCommandContextAdapter(Context),
+            argsString
+        );
+    }
+
+    public async Task TestableEchoCommandAsync(
+        IIzzyContext context,
+        string argsString = "")
+    {
         if (argsString == "")
         {
-            await ReplyAsync("You must provide a channel and a message, or just a message.");
+            await context.Channel.SendMessageAsync("You must provide a channel and a message, or just a message.");
             return;
         }
 
@@ -259,14 +270,14 @@ public class AdminModule : ModuleBase<SocketCommandContext>
             message = "";
         }
 
-        var channelId = await DiscordHelper.GetChannelIdIfAccessAsync(channelName, Context);
+        var channelId = await DiscordHelper.GetChannelIdIfAccessAsync(channelName, context);
 
         if (channelId > 0)
         {
-            var channel = Context.Guild.GetTextChannel(channelId);
+            var channel = context.Guild.GetTextChannel(channelId);
             if (message == "")
             {
-                await ReplyAsync("There's no message to send there.");
+                await context.Channel.SendMessageAsync("There's no message to send there.");
                 return;
             }
 
@@ -276,11 +287,11 @@ public class AdminModule : ModuleBase<SocketCommandContext>
                 return;
             }
 
-            await ReplyAsync("I can't send a message there.");
+            await context.Channel.SendMessageAsync("I can't send a message there.");
             return;
         }
 
-        await ReplyAsync(DiscordHelper.StripQuotes(argsString));
+        await context.Channel.SendMessageAsync(DiscordHelper.StripQuotes(argsString));
     }
 
     [Command("userinfo")]
