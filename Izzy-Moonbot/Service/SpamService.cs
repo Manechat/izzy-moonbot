@@ -204,7 +204,7 @@ public class SpamService
         }
 
         // Repeat pressure
-        if (message.CleanContent.ToLower() == _users[id].PreviousMessage.ToLower())
+        if (message.CleanContent.ToLower() == _users[id].PreviousMessage.ToLower() && message.CleanContent != "")
         {
             pressure += _config.SpamRepeatPressure;
             pressureBreakdown.Add((_config.SpamRepeatPressure, $"Repeat of Previous Message: {_config.SpamRepeatPressure}"));
