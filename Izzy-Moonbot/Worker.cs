@@ -412,14 +412,49 @@ namespace Izzy_Moonbot
                 
                 if (checkCommands)
                 {
+                    var inputCommandName = parsedMessage.Split(" ")[0];
                     var validCommand = _commands.Commands.Any(command => 
-                        command.Name == parsedMessage.Split(" ")[0] 
-                        || command.Aliases.Contains(parsedMessage.Split(" ")[0]));
+                        command.Name == inputCommandName || command.Aliases.Contains(inputCommandName));
 
                     if (!validCommand)
                     {
-                        _logger.Log(LogLevel.Information, $"Ignoring message {messageParam.CleanContent} because it doesn't match any command or alias names");
-                        return;
+                        var isDev = DiscordHelper.IsDev(context.User.Id);
+                        var isMod = (context.User is SocketGuildUser guildUser) && (guildUser.Roles.Any(r => r.Id == _config.ModRole));
+
+                        Func<string, bool> isSuggestable = item =>
+                            DiscordHelper.WithinLevenshteinDistanceOf(inputCommandName, item, Convert.ToUInt32(item.Length / 2));
+
+                        Func<CommandInfo, bool> canRunCommand = cinfo =>
+                        {
+                            if (cinfo.Preconditions.Any(attribute => attribute is ModCommandAttribute)) return isMod;
+                            if (cinfo.Preconditions.Any(attribute => attribute is DevCommandAttribute)) return isDev;
+                            return true;
+                        };
+                        Func<string, bool> canRunCommandName = name =>
+                        {
+                            var cinfo = _commands.Commands.Where(c => c.Name == name).SingleOrDefault((CommandInfo?)null);
+                            return cinfo is null ? false : canRunCommand(cinfo);
+                        };
+
+                        // don't bother searching command.Name because command.Aliases always includes the main name
+                        var alternateNamesToSuggest = _commands.Commands.Where(canRunCommand)
+                            .SelectMany(c => c.Aliases).Where(isSuggestable);
+                        var aliasesToSuggest = _config.Aliases.Where(pair => canRunCommandName(pair.Value.TrimStart().Split(" ")[0]))
+                            .Select(pair => pair.Key).Where(isSuggestable);
+
+                        if (alternateNamesToSuggest.Any() || aliasesToSuggest.Any())
+                        {
+                            var suggestibles = alternateNamesToSuggest.Concat(aliasesToSuggest).Select(s => $"`.{s}`");
+                            var suggestionMessage = $"Sorry, I don't have a `.{inputCommandName}` command. Did you mean {string.Join(" or ", suggestibles)}?";
+                            await context.Channel.SendMessageAsync(suggestionMessage);
+                            return;
+                        }
+                        else
+                        {
+                            _logger.Log(LogLevel.Information, $"Ignoring message {messageParam.CleanContent} because it doesn't match " +
+                                $"any command or alias names, and is not similar enough to any of them to make a suggestion.");
+                            return;
+                        }
                     }
                 }
                 
