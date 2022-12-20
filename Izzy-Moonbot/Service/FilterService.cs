@@ -55,8 +55,7 @@ public class FilterService
             .AddField("Category", category, true)
             .AddField("Channel", $"<#{context.Channel.Id}>", true)
             .AddField("Trigger Word", $"{word}")
-            .AddField("Filtered Message", $"{context.Message.CleanContent}")
-            .WithTimestamp(onEdit ? (DateTimeOffset)context.Message.EditedTimestamp : context.Message.Timestamp);
+            .AddField("Filtered Message", $"{context.Message.CleanContent}");
 
         var actions = new List<string>();
         actions.Add(":x: - **I've deleted the offending message.**");
