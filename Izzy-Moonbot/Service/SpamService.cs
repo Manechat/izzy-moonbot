@@ -383,7 +383,7 @@ public class SpamService
         var embedBuilder = new EmbedBuilder()
             .WithTitle(":warning: Spam detected")
             .WithColor(16776960)
-            .AddField("User", $"<@{context.User.Id}> (`{context.User.Id}`)", true)
+            .AddField("Silenced User", $"<@{context.User.Id}> (`{context.User.Id}`)", true)
             .AddField("Channel", $"<#{context.Channel.Id}>", true)
             .AddField("Pressure", $"This user's last message raised their pressure from {oldPressureAfterDecay} to {pressure}, exceeding {_config.SpamMaxPressure}")
             .AddField("Breakdown of last message", $"{PonyReadableBreakdown(pressureBreakdown)}");
@@ -396,7 +396,7 @@ public class SpamService
                 $":information_source: **I was unable to delete {alreadyDeletedMessages} messages by this user. Please double check that these messages have been deleted.**");
 
         await _modLogger.CreateModLog(context.Guild)
-            .SetContent($"<@&{_config.ModRole}> Spam detected by <@{user.Id}>")
+            .SetContent($"<@&{_config.ModRole}> I've silenced <@{user.Id}> for spamming")
             .SetEmbed(embedBuilder.Build())
             .SetFileLogContent(
                 $"{user.Username}#{user.Discriminator} ({user.DisplayName}) (`{user.Id}`) was silenced for exceeding pressure max ({pressure}/{_config.SpamMaxPressure}) in #{message.Channel.Name} (`{message.Channel.Id}`).\n" +

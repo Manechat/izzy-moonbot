@@ -49,10 +49,10 @@ public class SpamServiceTests
         Assert.AreEqual(0, generalChannel.Messages.Count);
 
         Assert.AreEqual(1, modChat.Messages.Count);
-        Assert.AreEqual("<@&0> Spam detected by <@2>", modChat.Messages.Last().Content);
+        Assert.AreEqual("<@&0> I've silenced <@2> for spamming", modChat.Messages.Last().Content);
         TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, new List<(string, string)>
         {
-            ("User", "<@2> (`2`)"),
+            ("Silenced User", "<@2> (`2`)"),
             ("Channel", "<#1>"),
             ("Pressure", "This user's last message raised their pressure from 0 to 60, exceeding 60"),
             ("Breakdown of last message", "**Test string**"),
@@ -91,10 +91,10 @@ public class SpamServiceTests
         await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, "so very dead");
         Assert.AreEqual(1, modChat.Messages.Count);
 
-        Assert.AreEqual($"<@&0> Spam detected by <@{sunny.Id}>", modChat.Messages.Last().Content);
+        Assert.AreEqual($"<@&0> I've silenced <@{sunny.Id}> for spamming", modChat.Messages.Last().Content);
         TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, new List<(string, string)>
         {
-            ("User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
+            ("Silenced User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
             ("Channel", $"<#{generalChannel.Id}>"),
             ("Pressure", "This user's last message raised their pressure from 50 to 60, exceeding 60"),
             ("Breakdown of last message", "**Base: 10**"),
@@ -119,10 +119,10 @@ public class SpamServiceTests
             $"\n\n\n\n\ni'm new here");
 
         Assert.AreEqual(2, modChat.Messages.Count);
-        Assert.AreEqual($"<@&0> Spam detected by <@{sunny.Id}>", modChat.Messages.Last().Content);
+        Assert.AreEqual($"<@&0> I've silenced <@{sunny.Id}> for spamming", modChat.Messages.Last().Content);
         TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, new List<(string, string)>
         {
-            ("User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
+            ("Silenced User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
             ("Channel", $"<#{generalChannel.Id}>"),
             ("Pressure", "This user's last message raised their pressure from 0 to 60, exceeding 60"),
             ("Breakdown of last message", $"**Lines: 50 ≈ 25 line breaks × 2**\nBase: 10"),
@@ -146,10 +146,10 @@ public class SpamServiceTests
             "i cwan wite wike dis fwor owors, swo dwont cwalengbe mii..");
 
         Assert.AreEqual(3, modChat.Messages.Count);
-        Assert.AreEqual($"<@&0> Spam detected by <@{sunny.Id}>", modChat.Messages.Last().Content);
+        Assert.AreEqual($"<@&0> I've silenced <@{sunny.Id}> for spamming", modChat.Messages.Last().Content);
         TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, new List<(string, string)>
         {
-            ("User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
+            ("Silenced User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
             ("Channel", $"<#{generalChannel.Id}>"),
             ("Pressure", "This user's last message raised their pressure from 0 to 68.4, exceeding 60"),
             ("Breakdown of last message", $"**Length: 58.4 ≈ 584 characters × 0.1**\nBase: 10"),
@@ -169,10 +169,10 @@ public class SpamServiceTests
             "<@1234> <@1234> <@1234> <@1234> <@1234> <@1234> <@1234> <@1234> <@1234> <@1234>");
 
         Assert.AreEqual(4, modChat.Messages.Count);
-        Assert.AreEqual($"<@&0> Spam detected by <@{sunny.Id}>", modChat.Messages.Last().Content);
+        Assert.AreEqual($"<@&0> I've silenced <@{sunny.Id}> for spamming", modChat.Messages.Last().Content);
         TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, new List<(string, string)>
         {
-            ("User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
+            ("Silenced User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
             ("Channel", $"<#{generalChannel.Id}>"),
             ("Pressure", "This user's last message raised their pressure from 0 to 60, exceeding 60"),
             ("Breakdown of last message", $"**Mentions: 50 ≈ 20 mentions × 2.5**\nBase: 10"),
@@ -198,10 +198,10 @@ public class SpamServiceTests
         });
 
         Assert.AreEqual(5, modChat.Messages.Count);
-        Assert.AreEqual($"<@&0> Spam detected by <@{sunny.Id}>", modChat.Messages.Last().Content);
+        Assert.AreEqual($"<@&0> I've silenced <@{sunny.Id}> for spamming", modChat.Messages.Last().Content);
         TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, new List<(string, string)>
         {
-            ("User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
+            ("Silenced User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
             ("Channel", $"<#{generalChannel.Id}>"),
             ("Pressure", "This user's last message raised their pressure from 0 to 68.1, exceeding 60"),
             ("Breakdown of last message", $"**Embeds: 58.1 ≈ 7 embeds × 8.3**\nBase: 10"),
@@ -222,10 +222,10 @@ public class SpamServiceTests
         await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, "hi");
 
         Assert.AreEqual(6, modChat.Messages.Count);
-        Assert.AreEqual($"<@&0> Spam detected by <@{sunny.Id}>", modChat.Messages.Last().Content);
+        Assert.AreEqual($"<@&0> I've silenced <@{sunny.Id}> for spamming", modChat.Messages.Last().Content);
         TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, new List<(string, string)>
         {
-            ("User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
+            ("Silenced User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
             ("Channel", $"<#{generalChannel.Id}>"),
             ("Pressure", "This user's last message raised their pressure from 40 to 70, exceeding 60"),
             ("Breakdown of last message", $"**Repeat of Previous Message: 20**\nBase: 10"),
@@ -252,10 +252,10 @@ public class SpamServiceTests
             "░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░");
 
         Assert.AreEqual(7, modChat.Messages.Count);
-        Assert.AreEqual($"<@&0> Spam detected by <@{sunny.Id}>", modChat.Messages.Last().Content);
+        Assert.AreEqual($"<@&0> I've silenced <@{sunny.Id}> for spamming", modChat.Messages.Last().Content);
         TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, new List<(string, string)>
         {
-            ("User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
+            ("Silenced User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
             ("Channel", $"<#{generalChannel.Id}>"),
             ("Pressure", "This user's last message raised their pressure from 0 to 64, exceeding 60"),
             ("Breakdown of last message", $"**Unusual Characters: 54 ≈ 540 unusual characters × 0.1**\nBase: 10"),
@@ -284,10 +284,10 @@ public class SpamServiceTests
         });
         Assert.AreEqual(1, modChat.Messages.Count);
 
-        Assert.AreEqual($"<@&0> Spam detected by <@{sunny.Id}>", modChat.Messages.Last().Content);
+        Assert.AreEqual($"<@&0> I've silenced <@{sunny.Id}> for spamming", modChat.Messages.Last().Content);
         TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, new List<(string, string)>
         {
-            ("User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
+            ("Silenced User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
             ("Channel", $"<#{generalChannel.Id}>"),
             ("Pressure", "This user's last message raised their pressure from 24.8 to 77.89999999999999, exceeding 60"),
             ("Breakdown of last message",
@@ -335,10 +335,10 @@ public class SpamServiceTests
             $"░░░░▄██▄░░░░░▄██▄░░");
 
         Assert.AreEqual(1, modChat.Messages.Count);
-        Assert.AreEqual($"<@&0> Spam detected by <@{sunny.Id}>", modChat.Messages.Last().Content);
+        Assert.AreEqual($"<@&0> I've silenced <@{sunny.Id}> for spamming", modChat.Messages.Last().Content);
         TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, new List<(string, string)>
         {
-            ("User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
+            ("Silenced User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
             ("Channel", $"<#{generalChannel.Id}>"),
             ("Pressure", "This user's last message raised their pressure from 0 to 69.55000000000001, exceeding 60"),
             ("Breakdown of last message",
