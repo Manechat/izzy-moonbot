@@ -88,40 +88,31 @@ public class ScheduleService
             try
             {
                 // Do processing here I guess!
-                bool completed;
                 
-                switch (job.Action.GetType().Name)
+                switch (job.Action)
                 {
-                    case "ScheduledRoleRemovalJob":
-                        completed = await Unicycle_RemoveRole((ScheduledRoleRemovalJob)job.Action,
+                    case ScheduledRoleRemovalJob roleRemovalJob:
+                        await Unicycle_RemoveRole(roleRemovalJob,
                             client.GetGuild(DiscordHelper.DefaultGuild()));
                         break;
-                    case "ScheduledRoleAdditionJob":
-                        completed = await Unicycle_AddRole((ScheduledRoleAdditionJob)job.Action,
+                    case ScheduledRoleAdditionJob roleAdditionJob:
+                        await Unicycle_AddRole(roleAdditionJob,
                             client.GetGuild(DiscordHelper.DefaultGuild()));
                         break;
-                    case "ScheduledUnbanJob":
-                        completed = await Unicycle_Unban((ScheduledUnbanJob)job.Action,
+                    case ScheduledUnbanJob unbanJob:
+                        await Unicycle_Unban(unbanJob,
                             client.GetGuild(DiscordHelper.DefaultGuild()), client);
                         break;
-                    case "ScheduledEchoJob":
-                        completed = await Unicycle_Echo((ScheduledEchoJob)job.Action,
+                    case ScheduledEchoJob echoJob:
+                        await Unicycle_Echo(echoJob,
                             client.GetGuild(DiscordHelper.DefaultGuild()), client);
                         break;
-                    case "ScheduledBannerRotationJob":
-                        completed = await Unicycle_BannerRotation((ScheduledBannerRotationJob)job.Action,
+                    case ScheduledBannerRotationJob bannerRotationJob:
+                        await Unicycle_BannerRotation(bannerRotationJob,
                             client.GetGuild(DiscordHelper.DefaultGuild()), client);
                         break;
                     default:
                         throw new NotSupportedException($"{job.Action.GetType().Name} is currently not supported.");
-                }
-
-                if (!completed)
-                {
-                    await _logger.Log(
-                        $"Scheduled job did not complete successfully but didn't throw an error. It likely received invalid data.{Environment.NewLine}" +
-                        $"Job: {job}",
-                        level: LogLevel.Warning);
                 }
             }
             catch (Exception ex)
@@ -140,19 +131,12 @@ public class ScheduleService
 
     public ScheduledJob? GetScheduledJob(string id)
     {
-        try
-        {
-            return _scheduledJobs.Single(job => job.Id == id);
-        }
-        catch (InvalidOperationException)
-        {
-            return null;
-        }
+        return _scheduledJobs.SingleOrDefault(job => job.Id == id);
     }
 
-    public ScheduledJob GetScheduledJob(Func<ScheduledJob, bool> predicate)
+    public ScheduledJob? GetScheduledJob(Func<ScheduledJob, bool> predicate)
     {
-        return _scheduledJobs.Single(predicate);
+        return _scheduledJobs.SingleOrDefault(predicate);
     }
     
     public List<ScheduledJob> GetScheduledJobs()
@@ -238,11 +222,11 @@ public class ScheduleService
     }
     
     // Executors for different types.
-    private async Task<bool> Unicycle_AddRole(ScheduledRoleAdditionJob job, SocketGuild guild)
+    private async Task Unicycle_AddRole(ScheduledRoleAdditionJob job, SocketGuild guild)
     {
         var role = guild.GetRole(job.Role);
         var user = guild.GetUser(job.User);
-        if (role == null || user == null) return false;
+        if (role == null || user == null) return;
 
         var reason = job.Reason;
         
@@ -256,15 +240,13 @@ public class ScheduleService
             .SetFileLogContent(
                 $"Gave {role.Name} ({role.Id}) to {user.Username}#{user.Discriminator} ({user.Id}). {(reason != null ? $"Reason: {reason}." : "")}")
             .Send();
-
-        return true;
     }
     
-    private async Task<bool> Unicycle_RemoveRole(ScheduledRoleRemovalJob job, SocketGuild guild)
+    private async Task Unicycle_RemoveRole(ScheduledRoleRemovalJob job, SocketGuild guild)
     {
         var role = guild.GetRole(job.Role);
         var user = guild.GetUser(job.User);
-        if (role == null || user == null) return false;
+        if (role == null || user == null) return;
 
         string? reason = job.Reason;
         
@@ -278,13 +260,11 @@ public class ScheduleService
             .SetFileLogContent(
                 $"Removed {role.Name} ({role.Id}) from {user.Username}#{user.Discriminator} ({user.Id}). {(reason != null ? $"Reason: {reason}." : "")}")
             .Send();
-
-        return true;
     }
 
-    private async Task<bool> Unicycle_Unban(ScheduledUnbanJob job, SocketGuild guild, DiscordSocketClient client)
+    private async Task Unicycle_Unban(ScheduledUnbanJob job, SocketGuild guild, DiscordSocketClient client)
     {
-        if (await guild.GetBanAsync(job.User) == null) return false;
+        if (await guild.GetBanAsync(job.User) == null) return;
 
         var user = await client.GetUserAsync(job.User);
         
@@ -305,31 +285,29 @@ public class ScheduleService
             .SetEmbed(embed)
             .SetFileLogContent($"Unbanned {(user != null ? $"{user.Username}#{user.Discriminator} " : "")} ({job.User})")
             .Send();
-
-        return true;
     }
 
-    private async Task<bool> Unicycle_Echo(ScheduledEchoJob job, SocketGuild guild, DiscordSocketClient client)
+    private async Task Unicycle_Echo(ScheduledEchoJob job, SocketGuild guild, DiscordSocketClient client)
     {
-        if (job.Content == "") return false;
+        if (job.Content == "") return;
         var channel = guild.GetTextChannel(job.Channel);
         if (channel == null)
         {
             var user = await client.GetUserAsync(job.Channel);
-            if (user == null) return false;
+            if (user == null) return;
 
             await user.SendMessageAsync(job.Content);
-            return true;
+            return;
         }
 
         await channel.SendMessageAsync(job.Content);
-        return true;
     }
 
-    public async Task<bool> Unicycle_BannerRotation(ScheduledBannerRotationJob job, SocketGuild guild, DiscordSocketClient client)
+    public async Task Unicycle_BannerRotation(ScheduledBannerRotationJob job, SocketGuild guild,
+        DiscordSocketClient client)
     {
-        if (_config.BannerMode == ConfigListener.BannerMode.None) return false;
-        if (_config.BannerMode == ConfigListener.BannerMode.CustomRotation && _config.BannerImages.Count == 0) return false;
+        if (_config.BannerMode == ConfigListener.BannerMode.None) return;
+        if (_config.BannerMode == ConfigListener.BannerMode.CustomRotation && _config.BannerImages.Count == 0) return;
 
         if (_config.BannerMode == ConfigListener.BannerMode.CustomRotation)
         {
@@ -349,7 +327,7 @@ public class ScheduleService
                 catch (FlurlHttpException ex)
                 {
                     await _logger.Log($"Recieved HTTP exception when executing Banner Rotation: {ex.Message}");
-                    return false;
+                    return;
                 }
 
                 var image = new Image(stream);
@@ -413,7 +391,7 @@ public class ScheduleService
                         _generalStorage.CurrentBooruFeaturedImage =
                             image;
                         await FileHelper.SaveGeneralStorageAsync(_generalStorage);
-                        return true;
+                        return;
                     }
                 }
 
@@ -426,7 +404,7 @@ public class ScheduleService
                         .SetFileLogContent(
                             $"Tried to change banner to https://manebooru.art/images/{image.Id} but that image hasn't fully been generated yet. Doing nothing and trying again in {_config.BannerInterval} minutes.")
                         .Send();
-                    return true;
+                    return;
                 }
 
                 if (image.Spoilered)
@@ -438,7 +416,7 @@ public class ScheduleService
                         .SetFileLogContent(
                             $"Tried to change banner to https://manebooru.art/images/{image.Id} but that image is blocked by my filter! Doing nothing.")
                         .Send();
-                    return true;
+                    return;
                 }
 
                 var imageStream = await image.Representations.Thumbnail.GetStreamAsync();
@@ -506,10 +484,6 @@ public class ScheduleService
                 await _logger.Log(
                     $"Encountered exception when trying to change banner: {ex.Message}{Environment.NewLine}{ex.StackTrace}");
             }
-
-            return true;
         }
-
-        return false;
     }
 }
