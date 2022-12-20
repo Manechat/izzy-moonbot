@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Discord.Commands;
 using Izzy_Moonbot.Settings;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Izzy_Moonbot.Helpers;
 
@@ -112,20 +114,52 @@ public static class FileHelper
 
     public static async Task<List<ScheduledJob>> LoadScheduleAsync()
     {
-        var scheduledTasks = new List<ScheduledJob>();
+        var scheduledJobs = new List<ScheduledJob>();
         var filepath = SetUpFilepath(FilePathType.Root, "scheduled-tasks", "conf");
         if (!File.Exists(filepath))
         {
-            var defaultFileContents = JsonConvert.SerializeObject(scheduledTasks, Formatting.Indented);
+            var defaultFileContents = JsonConvert.SerializeObject(scheduledJobs, Formatting.Indented);
             await File.WriteAllTextAsync(filepath, defaultFileContents);
         }
         else
         {
             var fileContents = await File.ReadAllTextAsync(filepath);
-            scheduledTasks = JsonConvert.DeserializeObject<List<ScheduledJob>>(fileContents);
+            scheduledJobs = JsonConvert.DeserializeObject<List<ScheduledJob>>(fileContents);
+            
+            if (scheduledJobs.Count == 0) return scheduledJobs;
+            
+            var fileJson = JArray.Parse(fileContents);
+
+            for (var i = fileJson.Count - 1; i >= 0; i--)
+            {
+                if (fileJson[i]["Id"] == null) continue;
+                if (fileJson[i]["Action"] == null) continue;
+                if (fileJson[i]["Action"]!["Type"] == null) continue;
+                    
+                // The following aren't null because we check above. Suppress with !
+                var id = fileJson[i]["Id"]!.Value<string>();
+                var type = fileJson[i]["Action"]!["Type"]!.Value<int>();
+                
+                var jobIndex = scheduledJobs.FindIndex(job => job.Id == id);
+                
+                scheduledJobs[jobIndex].Action = type switch
+                {
+                    0 => new ScheduledRoleRemovalJob(fileJson[i]["Action"]!["User"]!.Value<ulong>(),
+                        fileJson[i]["Action"]!["Role"]!.Value<ulong>(),
+                        fileJson[i]["Action"]!["Reason"]!.Value<string>()),
+                    1 => new ScheduledRoleAdditionJob(fileJson[i]["Action"]!["User"]!.Value<ulong>(),
+                        fileJson[i]["Action"]!["Role"]!.Value<ulong>(),
+                        fileJson[i]["Action"]!["Reason"]!.Value<string>()),
+                    2 => new ScheduledUnbanJob(fileJson[i]["Action"]!["User"]!.Value<ulong>()),
+                    3 => new ScheduledEchoJob(fileJson[i]["Action"]!["Channel"]!.Value<ulong>(),
+                        fileJson[i]["Action"]!["Content"]!.Value<string>()!),
+                    4 => new ScheduledBannerRotationJob(),
+                    _ => throw new NotImplementedException("This scheduled job type is not implemented.")
+                };
+            }
         }
 
-        return scheduledTasks;
+        return scheduledJobs;
     }
 
     public static async Task SaveScheduleAsync(List<ScheduledJob> scheduledTasks)

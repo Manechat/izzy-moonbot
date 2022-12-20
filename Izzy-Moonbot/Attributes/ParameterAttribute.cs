@@ -10,15 +10,7 @@ public class ParameterAttribute : Attribute
      public string Summary { get; }
      public bool Optional { get; }
 
-     public ParameterAttribute(string name, ParameterType type, string summary)
-     {
-         Name = name;
-         Type = type;
-         Summary = summary;
-         Optional = false;
-     }
-     
-     public ParameterAttribute(string name, ParameterType type, string summary, bool optional)
+     public ParameterAttribute(string name, ParameterType type, string summary, bool optional = false)
      {
          Name = name;
          Type = type;
@@ -42,6 +34,13 @@ public class ParameterAttribute : Attribute
              ParameterType.DateTime => "Date/Time",
              _ => "Unknown"
          };
+         
+         if (Type == ParameterType.Complex)
+         {
+             return "/!\\ This commands parameters change depending on the input provided.\n" +
+                    "Please run this command without any arguments to view it's usage.";
+         }
+         
          return $"{Name} [{typeName}]{(Optional ? " {OPTIONAL}" : "")} - {Summary}";
      }
 }
@@ -57,5 +56,6 @@ public enum ParameterType
     Role,
     Channel,
     Snowflake,
-    DateTime
+    DateTime,
+    Complex
 }

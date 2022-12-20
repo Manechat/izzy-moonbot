@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reactive.Concurrency;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Rest;
@@ -48,13 +49,15 @@ public class UserListener
         
         await _logger.Log($"User was unbanned: {user.Username}#{user.Discriminator}.", level: LogLevel.Debug);
         var scheduledJobs = _schedule.GetScheduledJobs(job => 
-            (job.Action.Fields.ContainsKey("userId") && job.Action.Fields["userId"] == user.Id.ToString()) ||
-            (job.Action.Fields.ContainsKey("channelId") && job.Action.Fields["channelId"] == user.Id.ToString()));
-
+            job.Action switch
+            {
+                ScheduledUnbanJob unbanJob => unbanJob.User == user.Id,
+                _ => false
+            }
+        );
         await _logger.Log($"Cancelling all scheduled unban jobs for this user", level: LogLevel.Debug);
         foreach (var scheduledJob in scheduledJobs)
         {
-            if (scheduledJob.Action.Type != ScheduledJobActionType.Unban) continue;
             await _schedule.DeleteScheduledJob(scheduledJob);
         }
         await _logger.Log($"Cancelled all scheduled unban jobs for this user", level: LogLevel.Debug);
@@ -101,16 +104,8 @@ public class UserListener
             expiresString = $"{Environment.NewLine}New Member role expires in <t:{(DateTimeOffset.UtcNow + TimeSpan.FromMinutes(_config.NewMemberRoleDecay)).ToUnixTimeSeconds()}:R>";
 
             await _logger.Log($"Adding scheduled job to remove Config.NewMemberRole from new user in {_config.NewMemberRoleDecay} minutes", level: LogLevel.Debug);
-            Dictionary<string, string> fields = new Dictionary<string, string>
-            {
-                { "roleId", _config.NewMemberRole.Value.ToString() },
-                { "userId", member.Id.ToString() },
-                {
-                    "reason",
-                    $"New member role removal, {_config.NewMemberRoleDecay} minutes (`NewMemberRoleDecay`) passed."
-                }
-            };
-            var action = new ScheduledJobAction(ScheduledJobActionType.RemoveRole, fields);
+            var action = new ScheduledRoleRemovalJob(_config.NewMemberRole.Value, member.Id,
+                $"New member role removal, {_config.NewMemberRoleDecay} minutes (`NewMemberRoleDecay`) passed.");
             var task = new ScheduledJob(DateTimeOffset.UtcNow, 
                 (DateTimeOffset.UtcNow + TimeSpan.FromMinutes(_config.NewMemberRoleDecay)), action);
             await _schedule.CreateScheduledJob(task);
@@ -264,13 +259,17 @@ public class UserListener
 
         await _logger.Log($"Fetch all scheduled jobs for this user", level: LogLevel.Debug);
         var scheduledTasks = _schedule.GetScheduledJobs(job => 
-            (job.Action.Fields.ContainsKey("userId") && job.Action.Fields["userId"] == user.Id.ToString()) ||
-            (job.Action.Fields.ContainsKey("channelId") && job.Action.Fields["channelId"] == user.Id.ToString()));
-
+            job.Action switch
+            {
+                ScheduledRoleJob roleJob => roleJob.User == user.Id,
+                ScheduledEchoJob echoJob => echoJob.Channel == user.Id,
+                _ => false
+            }
+        );
         await _logger.Log($"Cancelling all scheduled jobs for this user", level: LogLevel.Debug);
-        foreach (var scheduledTask in scheduledTasks)
+        foreach (var scheduledTask in scheduledTasks.Where(scheduledTask => 
+                     scheduledTask.Action is not ScheduledUnbanJob))
         {
-            if (scheduledTask.Action.Type == ScheduledJobActionType.Unban) continue;
             await _schedule.DeleteScheduledJob(scheduledTask);
         }
         await _logger.Log($"Cancelled all scheduled jobs for this user", level: LogLevel.Debug);

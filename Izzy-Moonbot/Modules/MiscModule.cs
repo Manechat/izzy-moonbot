@@ -153,12 +153,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
 
             await _logger.Log($"Adding scheduled job to remind user to \"{content}\" at {timeHelperResponse.Time:F}",
                 context: Context, level: LogLevel.Debug);
-            var fields = new Dictionary<string, string>
-            {
-                { "channelId", Context.User.Id.ToString() },
-                { "content", content }
-            };
-            var action = new ScheduledJobAction(ScheduledJobActionType.Echo, fields);
+            var action = new ScheduledEchoJob(Context.User, content);
             var task = new ScheduledJob(DateTimeOffset.UtcNow,
                 timeHelperResponse.Time, action);
             await _schedule.CreateScheduledJob(task);

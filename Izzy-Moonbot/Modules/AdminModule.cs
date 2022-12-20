@@ -76,9 +76,9 @@ public class AdminModule : ModuleBase<SocketCommandContext>
         }
 
         var getSingleNewPonyRemoval = new Func<ScheduledJob, bool>(job =>
-            job.Action.Type == ScheduledJobActionType.RemoveRole &&
-            job.Action.Fields["userId"] == member.Id.ToString() &&
-            job.Action.Fields["roleId"] == _config.NewMemberRole.ToString());
+            job.Action is ScheduledRoleRemovalJob removalJob &&
+            removalJob.User == member.Id &&
+            removalJob.Role == _config.NewMemberRole);
 
         if (_schedule.GetScheduledJobs(getSingleNewPonyRemoval).Any(getSingleNewPonyRemoval))
         {
@@ -513,7 +513,7 @@ public class AdminModule : ModuleBase<SocketCommandContext>
                 {
                     { "userId", userId.ToString() }
                 };
-                var action = new ScheduledJobAction(ScheduledJobActionType.Unban, fields);
+                var action = new ScheduledUnbanJob(userId);
                 var job = new ScheduledJob(DateTimeOffset.UtcNow, time.Time, action);
                 await _schedule.CreateScheduledJob(job);
             }
@@ -529,8 +529,8 @@ public class AdminModule : ModuleBase<SocketCommandContext>
         else
         {
             var getUserUnban = new Func<ScheduledJob, bool>(job =>
-                job.Action.Type == ScheduledJobActionType.Unban &&
-                job.Action.Fields["userId"] == userId.ToString());
+                job.Action is ScheduledUnbanJob unbanJob &&
+                unbanJob.User == userId);
             
             // ban exists, make sure a time is declared
             if (time == null)
@@ -590,11 +590,7 @@ public class AdminModule : ModuleBase<SocketCommandContext>
             {
                 // Doesn't exist, it needs to exist.
                 // Create scheduled task!
-                Dictionary<string, string> fields = new Dictionary<string, string>
-                {
-                    { "userId", userId.ToString() }
-                };
-                var action = new ScheduledJobAction(ScheduledJobActionType.Unban, fields);
+                var action = new ScheduledUnbanJob(userId);
                 var job = new ScheduledJob(DateTimeOffset.UtcNow, time.Time, action);
                 await _schedule.CreateScheduledJob(job);
 
@@ -692,9 +688,9 @@ public class AdminModule : ModuleBase<SocketCommandContext>
 
             // Delete any existing scheduled removals for this user and role
             var getRoleRemoval = new Func<ScheduledJob, bool>(job =>
-                job.Action.Type == ScheduledJobActionType.RemoveRole &&
-                job.Action.Fields["userId"] == member.Id.ToString() &&
-                job.Action.Fields["roleId"] == roleId.ToString());
+                job.Action is ScheduledRoleRemovalJob removalJob &&
+                removalJob.User == member.Id &&
+                removalJob.Role == roleId);
 
             var hasExistingRemovalJob = _schedule.GetScheduledJobs(getRoleRemoval).Any();
             if (hasExistingRemovalJob)
@@ -710,16 +706,8 @@ public class AdminModule : ModuleBase<SocketCommandContext>
             if (time is not null)
             {
                 await _logger.Log($"Adding scheduled job to remove role {roleId} from user {userId} at {time.Time}", level: LogLevel.Debug);
-                Dictionary<string, string> fields = new Dictionary<string, string>
-                {
-                    { "roleId", roleId.ToString() },
-                    { "userId", member.Id.ToString() },
-                    {
-                        "reason",
-                        $".assignrole command for user {member.Id} and role {roleId} with duration {duration}."
-                    }
-                };
-                var action = new ScheduledJobAction(ScheduledJobActionType.RemoveRole, fields);
+                var action = new ScheduledRoleRemovalJob(roleId, member.Id,
+                    $".assignrole command for user {member.Id} and role {roleId} with duration {duration}.");
                 var task = new ScheduledJob(DateTimeOffset.UtcNow, time.Time, action);
                 await _schedule.CreateScheduledJob(task);
                 await _logger.Log($"Added scheduled job for new user", level: LogLevel.Debug);
@@ -899,5 +887,381 @@ public class AdminModule : ModuleBase<SocketCommandContext>
         {
             await ReplyAsync($"I didn't find any messages that recent in {channelName}. Deleted nothing.");
         }
+    }
+
+    [Command("schedule")]
+    [Summary("View and modify Izzy's scheduler.")]
+    [ModCommand(Group = "Permissions")]
+    [DevCommand(Group = "Permissions")]
+    [Parameter("[...]", ParameterType.Complex, "")]
+    public async Task ScheduleCommandAsync([Remainder]string argsString = "")
+    {
+        if (argsString == "")
+        {
+            await ReplyAsync($"Heya! Here's a list of commands possible for schedule!{Environment.NewLine}" +
+                             $"`{_config.Prefix}schedule list [category]` - List the current scheduled job that exist, optionally specifying the category to list.{Environment.NewLine}" +
+                             $"`{_config.Prefix}schedule list-full [category]` - Get the **full** list of scheduled jobs that exist, optionally specifying the category to list.{Environment.NewLine}" +
+                             $"`{_config.Prefix}schedule about <category>` - Get information about a schedule job category, including the arguments for `.schedule add`.{Environment.NewLine}" +
+                             $"`{_config.Prefix}schedule about <id>` - Get information about a specific scheduled job by its ID.{Environment.NewLine}" +
+                             $"`{_config.Prefix}schedule add <category> <time> [...]` - Add a scheduled job to the specified category to execute at the specified time, run `{_config.Prefix}schedule about <category>` to figure out the arguments.{Environment.NewLine}" +
+                             $"`{_config.Prefix}schedule remove <id>` - Remove a scheduled job by its ID.");
+            return;
+        }
+
+        var args = DiscordHelper.GetArguments(argsString);
+        
+        if (args.Arguments[0].ToLower() == "list")
+        {
+            if (args.Arguments.Length == 1)
+            {
+                // All
+                var jobs = _schedule.GetScheduledJobs().Select(job => job.ToDiscordString()).ToList();
+                if (jobs.Count > 10)
+                {
+                    // Use pagination
+                    var pages = new List<string>();
+                    var pageNumber = -1;
+                    for (var i = 0; i < jobs.Count; i++)
+                    {
+                        if (i % 10 == 0)
+                        {
+                            pageNumber += 1;
+                            pages.Add("");
+                        }
+
+                        pages[pageNumber] += $"{jobs[i]}{Environment.NewLine}";
+                    }
+
+                    string[] staticParts =
+                    {
+                        "Heya! Here's a list of all the scheduled jobs!",
+                        "If you need a raw text list, run `.schedule list-full`."
+                    };
+
+                    var paginationMessage =
+                        new PaginationHelper(Context, pages.ToArray(), staticParts, codeblock: false);
+                }
+                else
+                {
+                    await ReplyAsync($"Heya! Here's a list of all the scheduled jobs!{Environment.NewLine}{Environment.NewLine}" +
+                                     string.Join(Environment.NewLine, jobs) +
+                                     $"{Environment.NewLine}{Environment.NewLine}If you need a raw text file, run `.schedule list-full`.");
+                }
+            }
+            else
+            {
+                // Specific category
+                var category = string.Join("", argsString.Skip(args.Indices[0]));
+                
+                var type = category.ToLower() switch
+                {
+                    "remove-role" or "role-removal" =>
+                        typeof(ScheduledRoleRemovalJob),
+                    "add-role" or "role-addition" =>
+                        typeof(ScheduledRoleAdditionJob),
+                    "unban" or "unban-user" => typeof(ScheduledUnbanJob),
+                    "echo" or "reminders" => typeof(ScheduledEchoJob),
+                    "banner" or "banner-rotation" => typeof(ScheduledBannerRotationJob),
+                    _ => null
+                };
+                
+                if (type == null)
+                {
+                    await ReplyAsync(
+                        $"The category \"{category}\" doesn't exist. Below is a list of acceptable inputs.{Environment.NewLine}" +
+                        $"`remove-role`, `role-removal` - Role removal jobs.{Environment.NewLine}" +
+                        $"`add-role`, `role-addition` - Role addition jobs.{Environment.NewLine}" +
+                        $"`unban`, `unban-user` - User unban jobs.{Environment.NewLine}" +
+                        $"`echo`, `reminders` - Echo jobs.{Environment.NewLine}" +
+                        $"`banner`, `banner-rotation` - Banner rotation jobs.");
+                    return;
+                }
+                
+                var jobs = _schedule.GetScheduledJobs().Where(job => job.Action.GetType().FullName == type.FullName).Select(job => job.ToDiscordString()).ToList();
+                if (jobs.Count > 10)
+                {
+                    // Use pagination
+                    var pages = new List<string>();
+                    var pageNumber = -1;
+                    for (var i = 0; i < jobs.Count; i++)
+                    {
+                        if (i % 10 == 0)
+                        {
+                            pageNumber += 1;
+                            pages.Add("");
+                        }
+
+                        pages[pageNumber] += $"{jobs[i]}{Environment.NewLine}";
+                    }
+
+                    string[] staticParts =
+                    {
+                        $"Heya! Here's a list of all the scheduled jobs in the {category} category!",
+                        $"If you need a raw text list, run `.schedule list-full {category}`."
+                    };
+
+                    var paginationMessage =
+                        new PaginationHelper(Context, pages.ToArray(), staticParts, codeblock: false);
+                }
+                else
+                {
+                    await ReplyAsync($"Heya! Here's a list of all the scheduled jobs in the {category} category!{Environment.NewLine}{Environment.NewLine}" +
+                                     string.Join(Environment.NewLine, jobs) +
+                                     $"{Environment.NewLine}{Environment.NewLine}If you need a raw text list, run `.schedule list-full {category}`.");
+                }
+            }
+        }
+        else if (args.Arguments[0].ToLower() == "list-full")
+        {
+            if (args.Arguments.Length == 1)
+            {
+                // All
+                var jobs = _schedule.GetScheduledJobs().Select(job => job.ToFileString()).ToList();
+                
+                var s = new MemoryStream(Encoding.UTF8.GetBytes(string.Join(Environment.NewLine, jobs)));
+                var fa = new FileAttachment(s, $"all_scheduled_jobs_{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}.txt");
+
+                await Context.Channel.SendFileAsync(fa, $"Here's the file list of all scheduled jobs!");
+            }
+            else
+            {
+                // Specific category
+                var category = string.Join("", argsString.Skip(args.Indices[0]));
+                
+                var type = category.ToLower() switch
+                {
+                    "remove-role" or "role-removal" =>
+                        typeof(ScheduledRoleRemovalJob),
+                    "add-role" or "role-addition" =>
+                        typeof(ScheduledRoleAdditionJob),
+                    "unban" or "unban-user" => typeof(ScheduledUnbanJob),
+                    "echo" or "reminders" => typeof(ScheduledEchoJob),
+                    "banner" or "banner-rotation" => typeof(ScheduledBannerRotationJob),
+                    _ => null
+                };
+
+                if (type == null)
+                {
+                    await ReplyAsync(
+                        $"The category \"{category}\" doesn't exist. Below is a list of acceptable inputs.{Environment.NewLine}" +
+                        $"`remove-role`, `role-removal` - Role removal jobs.{Environment.NewLine}" +
+                        $"`add-role`, `role-addition` - Role addition jobs.{Environment.NewLine}" +
+                        $"`unban`, `unban-user` - User unban jobs.{Environment.NewLine}" +
+                        $"`echo`, `reminders` - Echo jobs.{Environment.NewLine}" +
+                        $"`banner`, `banner-rotation` - Banner rotation jobs.");
+                    return;
+                }
+                
+                var typeName = type.Name switch
+                {
+                    "ScheduledRoleRemovalJob" => "role_removal",
+                    "ScheduledRoleAdditionJob" => "role_addition",
+                    "ScheduledUnbanJob" => "unban",
+                    "ScheduledEchoJob" => "echo",
+                    "ScheduledBannerRotationJob" => "banner_rotation",
+                    _ => "????"
+                };
+                
+                var jobs = _schedule.GetScheduledJobs().Where(job => job.Action.GetType().FullName == type.FullName).Select(job => job.ToFileString()).ToList();
+                
+                var s = new MemoryStream(Encoding.UTF8.GetBytes(string.Join(Environment.NewLine, jobs)));
+                var fa = new FileAttachment(s, $"{typeName}_scheduled_jobs_{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}.txt");
+
+                await Context.Channel.SendFileAsync(fa, $"Here's the file list of all scheduled jobs in the {category} category!");
+            }
+        }
+        else if (args.Arguments[0].ToLower() == "about")
+        {
+            var searchString = string.Join("", argsString.Skip(args.Indices[0]));
+
+            if (searchString == "")
+            {
+                await ReplyAsync("You need to provide either a category name, or an ID for a specific scheduled job.");
+                return;
+            }
+            
+            // Check IDs first
+            var potentialJob = _schedule.GetScheduledJob(searchString);
+            if (potentialJob != null)
+            {
+                // Not null, this job exists. Display information about it.
+                var jobType = potentialJob.Action switch
+                {
+                    ScheduledRoleRemovalJob => "Role Removal",
+                    ScheduledRoleAdditionJob => "Role Addition",
+                    ScheduledUnbanJob => "Unban",
+                    ScheduledEchoJob => "Echo",
+                    ScheduledBannerRotationJob => "Banner Rotation",
+                    _ => throw new NotImplementedException("This job type is not implemented.")
+                };
+
+                var expandedJobInfo = potentialJob.Action switch
+                {
+                    ScheduledRoleJob roleJob => $"Target user: <@{roleJob.User}>\n" +
+                                                $"Target role: <@&{roleJob.Role}>\n" +
+                                                $"{(roleJob.Reason != null ? $"Reason: {roleJob.Reason}\n" : "")}",
+                    ScheduledUnbanJob unbanJob => $"Target user: <@{unbanJob.User}>\n",
+                    ScheduledEchoJob echoJob => $"Target channel/user: <#{echoJob.Channel}> / <@{echoJob.Channel}>\n" +
+                                                $"Content:\n```\n{echoJob.Content}\n```\n",
+                    ScheduledBannerRotationJob => $"Current banner mode: {_config.BannerMode}\n" +
+                                                  $"Configure this job via `.config`.\n",
+                    _ => ""
+                };
+                
+                var expandedRepeatInfo = potentialJob.RepeatType switch
+                {
+                    ScheduledJobRepeatType.None => "",
+                    ScheduledJobRepeatType.Relative => ConstructRelativeRepeatTimeString(potentialJob) + "\n",
+                    ScheduledJobRepeatType.Daily => $"Every day at {potentialJob.ExecuteAt:T} UTC\n",
+                    ScheduledJobRepeatType.Weekly => $"Every week at {potentialJob.ExecuteAt:T} on {potentialJob.ExecuteAt:dddd}\n",
+                    ScheduledJobRepeatType.Yearly => $"Every year at {potentialJob.ExecuteAt:T} on {potentialJob.ExecuteAt:dd MMMM}\n",
+                    _ => throw new NotImplementedException("Unknown repeat type.")
+                };
+                
+                await ReplyAsync($"Here's information regarding the scheduled job with ID of `{potentialJob.Id}`:\n" +
+                                 $"Job type: {jobType}\n" +
+                                 $"Created <t:{potentialJob.CreatedAt.ToUnixTimeSeconds()}:F>\n" +
+                                 $"Executes <t:{potentialJob.ExecuteAt.ToUnixTimeSeconds()}:R>\n" +
+                                 $"{expandedRepeatInfo}" +
+                                 $"{expandedJobInfo}");
+            }
+            else
+            {
+                // Likely a category, just use a switch statement
+                
+                var type = searchString.ToLower() switch
+                {
+                    "remove-role" or "role-removal" =>
+                        typeof(ScheduledRoleRemovalJob),
+                    "add-role" or "role-addition" =>
+                        typeof(ScheduledRoleAdditionJob),
+                    "unban" or "unban-user" => typeof(ScheduledUnbanJob),
+                    "echo" or "reminders" => typeof(ScheduledEchoJob),
+                    "banner" or "banner-rotation" => typeof(ScheduledBannerRotationJob),
+                    _ => null
+                };
+                
+                if (type == null)
+                {
+                    await ReplyAsync(
+                        $"The category \"{searchString}\" doesn't exist. Below is a list of acceptable inputs.\n" +
+                        "`remove-role`, `role-removal` - Role removal jobs.\n" +
+                        "`add-role`, `role-addition` - Role addition jobs.\n" +
+                        "`unban`, `unban-user` - User unban jobs.\n" +
+                        "`echo`, `reminders` - Echo jobs.\n" +
+                        "`banner`, `banner-rotation` - Banner rotation jobs.");
+                    return;
+                }
+                
+                var content = "";
+                switch (type.Name)
+                {
+                    case "ScheduledRoleRemovalJob":
+                        content = "**Role Removal**\n" +
+                                  "*Removes a role from a user after a specified amount of time.*\n" +
+                                  "Example of adding a job in this category:\n" +
+                                  "```\n" +
+                                  $"{_config.Prefix}schedule add {searchString} <date> <user> <role> [reason]\n" +
+                                  "```\n" +
+                                  "`user` - The user to remove the role from.\n" +
+                                  "`role` - The role to remove.\n" +
+                                  "`reason` - Optional reason.";
+                        break;
+                    case "ScheduledRoleAdditionJob":
+                        content = "**Role Addition**\n" +
+                                  "*Adds a role to a user in a specified amount of time.*\n" +
+                                  "Example of adding a job in this category:\n" +
+                                  "```\n" +
+                                  $"{_config.Prefix}schedule add {searchString} <date> <user> <role> [reason]\n" +
+                                  "```\n" +
+                                  "`user` - The user to add the role to.\n" +
+                                  "`role` - The role to add.\n" +
+                                  "`reason` - Optional reason.";
+                        break;
+                    case "ScheduledUnbanJob":
+                        content = "**Unban User**\n" +
+                                  "*Unbans a user after a specified amount of time.*\n" +
+                                  "Example of adding a job in this category:\n" +
+                                  "```\n" +
+                                  $"{_config.Prefix}schedule add {searchString} <date> <user>\n" +
+                                  "```\n" +
+                                  "`user` - The user to unban.";
+                        break;
+                    case "ScheduledEchoJob":
+                        content = "**Echo**\n" +
+                                  "*Sends a message in a channel, or to a users DMs.*\n" +
+                                  "Example of adding a job in this category:\n" +
+                                  "```\n" +
+                                  $"{_config.Prefix}schedule add {searchString} <date> <channel/user> <content>\n" +
+                                  "```\n" +
+                                  "`channel/user` - Either the channel or user to send the message to.\n" +
+                                  "`content` - The message to send.";
+                        break;
+                    case "ScheduledBannerRotationJob":
+                        content = "**Banner Rotation**\n" +
+                                  "*Runs banner rotation, or checks Manebooru for featured image depending on `BannerMode`.*\n" +
+                                  "Example of adding a job in this category:\n" +
+                                  ":warning: This scheduled job is managed by Izzy internally. It is best not to modify it with this command.\n" +
+                                  "```\n" +
+                                  $"{_config.Prefix}schedule add {searchString} <date>\n" +
+                                  "```";
+                        break;
+                    default:
+                        content = "**Unknown type**\n" +
+                                  "*I don't know what this type is?*";
+                        break;
+                }
+
+                await ReplyAsync(content);
+            }
+        } 
+        else if (args.Arguments[0].ToLower() == "add")
+        {
+            await ReplyAsync($":warning: This subcommand isn't written yet, as other features have higher priority than it. Please ask Cloudburst (Leah) to add the job you wish to add.");
+        }
+        else if (args.Arguments[0].ToLower() == "remove")
+        {
+            var searchString = string.Join("", argsString.Skip(args.Indices[0]));
+
+            if (searchString == "")
+            {
+                await ReplyAsync("You need to provide an ID for a specific scheduled job.");
+                return;
+            }
+            
+            // Check IDs first
+            var potentialJob = _schedule.GetScheduledJob(searchString);
+            if (potentialJob == null)
+            {
+                await ReplyAsync("Sorry, I couldn't find that job.");
+                return;
+            }
+
+            try
+            {
+                await _schedule.DeleteScheduledJob(potentialJob);
+
+                await ReplyAsync("Successfully deleted scheduled job.");
+            }
+            catch (NullReferenceException)
+            {
+                await ReplyAsync("Sorry, I couldn't find that job.");
+            }
+        }
+    } 
+    
+    private static string ConstructRelativeRepeatTimeString(ScheduledJob job)
+    {
+        var secondsBetweenExecution = job.ExecuteAt.ToUnixTimeSeconds() - (job.LastExecutedAt?.ToUnixTimeSeconds() ?? job.CreatedAt.ToUnixTimeSeconds());
+
+        var seconds = Math.Floor(double.Parse(secondsBetweenExecution.ToString()) % 60);
+        var minutes = Math.Floor(double.Parse(secondsBetweenExecution.ToString()) / 60 % 60);
+        var hours = Math.Floor(double.Parse(secondsBetweenExecution.ToString()) / 60 / 60 % 24);
+        var days = Math.Floor(double.Parse(secondsBetweenExecution.ToString()) / 60 / 60 / 24);
+
+        return $"Executes every {(days == 0 ? "" : $"{days} Day{(days is < 1.9 and > 0.9 ? "" : "s")}")} " +
+               $"{(hours == 0 ? "" : $"{hours} Hour{(hours is < 1.9 and > 0.9 ? "" : "s")}")} " +
+               $"{(minutes == 0 ? "" : $"{minutes} Minute{(minutes is < 1.9 and > 0.9 ? "" : "s")}")} " +
+               $"{(seconds == 0 ? "" : $"{seconds} Second{(seconds is < 1.9 and > 0.9 ? "" : "s")}")}";
     }
 }
