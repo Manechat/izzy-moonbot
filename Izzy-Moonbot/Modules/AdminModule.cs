@@ -915,7 +915,7 @@ public class AdminModule : ModuleBase<SocketCommandContext>
             if (args.Arguments.Length == 1)
             {
                 // All
-                var jobs = _schedule.GetScheduledJobs().Select(job => job.ToString()).ToList();
+                var jobs = _schedule.GetScheduledJobs().Select(job => job.ToDiscordString()).ToList();
                 if (jobs.Count > 10)
                 {
                     // Use pagination
@@ -977,7 +977,7 @@ public class AdminModule : ModuleBase<SocketCommandContext>
                     return;
                 }
                 
-                var jobs = _schedule.GetScheduledJobs().Where(job => job.Action.GetType().FullName == type.FullName).ToList();
+                var jobs = _schedule.GetScheduledJobs().Where(job => job.Action.GetType().FullName == type.FullName).Select(job => job.ToDiscordString()).ToList();
                 if (jobs.Count > 10)
                 {
                     // Use pagination

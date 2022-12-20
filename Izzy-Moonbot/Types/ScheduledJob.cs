@@ -25,9 +25,9 @@ public class ScheduledJob
     public ScheduledJobAction Action { get; set; }
     public ScheduledJobRepeatType RepeatType { get; set; }
     
-    public override string ToString()
+    public string ToDiscordString()
     {
-        return $"`{Id}`: {Action} <t:{ExecuteAt.ToUnixTimeSeconds()}:R>{(RepeatType != ScheduledJobRepeatType.None ? $", repeating {RepeatType.ToString()}{(LastExecutedAt != null ? $", last executed <t:{LastExecutedAt.Value.ToUnixTimeSeconds()}:R>": "")}" : "")}. Created <t:{CreatedAt.ToUnixTimeSeconds()}:F>";
+        return $"`{Id}`: {Action.ToDiscordString()} <t:{ExecuteAt.ToUnixTimeSeconds()}:R>{(RepeatType != ScheduledJobRepeatType.None ? $", repeating {RepeatType.ToString()}{(LastExecutedAt != null ? $", last executed <t:{LastExecutedAt.Value.ToUnixTimeSeconds()}:R>": "")}" : "")}. Created <t:{CreatedAt.ToUnixTimeSeconds()}:F>";
     }
 
     public string ToFileString()
@@ -41,14 +41,14 @@ public class ScheduledJobAction
 {
     public ScheduledJobActionType Type { get; protected set; }
 
-    public override string ToString()
+    public virtual string ToDiscordString()
     {
         return "Unknown Scheduled Job Action";
     }
 
     public virtual string ToFileString()
     {
-        throw new NotImplementedException();
+        return ToDiscordString();
     }
 }
 
@@ -80,7 +80,7 @@ public class ScheduledRoleRemovalJob : ScheduledRoleJob
         Reason = reason;
     }
 
-    public override string ToString()
+    public override string ToDiscordString()
     {
         return $"Remove <@&{Role}> (`{Role}`) from <@{User}> (`{User}`)";
     }
@@ -111,7 +111,7 @@ public class ScheduledRoleAdditionJob : ScheduledRoleJob
         Reason = reason;
     }
     
-    public override string ToString()
+    public override string ToDiscordString()
     {
         return $"Add <@&{Role}> (`{Role}`) to <@{User}> (`{User}`)";
     }
@@ -140,7 +140,7 @@ public class ScheduledUnbanJob : ScheduledJobAction
     
     public ulong User { get; }
     
-    public override string ToString()
+    public override string ToDiscordString()
     {
         return $"Unban <@{User}> (`{User}`)";
     }
@@ -180,7 +180,7 @@ public class ScheduledEchoJob : ScheduledJobAction
     public ulong Channel { get; }
     public string Content { get; }
     
-    public override string ToString()
+    public override string ToDiscordString()
     {
         return $"Send \"{Content}\" to <#{Channel}> (`{Channel}`)";
     }
@@ -200,14 +200,14 @@ public class ScheduledBannerRotationJob : ScheduledJobAction
         Type = ScheduledJobActionType.BannerRotation;
     }
     
-    public override string ToString()
+    public override string ToDiscordString()
     {
         return $"Run Banner Rotation";
     }
     
     public override string ToFileString()
     {
-        return $"Run Banner Rotation";
+        return ToDiscordString();
     }
 }
 
