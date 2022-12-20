@@ -51,14 +51,12 @@ public class UserListener
         var scheduledJobs = _schedule.GetScheduledJobs(job => 
             job.Action switch
             {
-                ScheduledRoleJob roleJob => roleJob.User == user.Id,
-                ScheduledEchoJob echoJob => echoJob.Channel == user.Id,
+                ScheduledUnbanJob unbanJob => unbanJob.User == user.Id,
                 _ => false
             }
         );
         await _logger.Log($"Cancelling all scheduled unban jobs for this user", level: LogLevel.Debug);
-        foreach (var scheduledJob in scheduledJobs.Where(scheduledJob => 
-                     scheduledJob.Action is not ScheduledUnbanJob))
+        foreach (var scheduledJob in scheduledJobs)
         {
             await _schedule.DeleteScheduledJob(scheduledJob);
         }
