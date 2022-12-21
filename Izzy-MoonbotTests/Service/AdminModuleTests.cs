@@ -122,4 +122,67 @@ public class AdminModuleTests
         TestUtils.AssertSetsAreEqual(new HashSet<ulong>(), guild.BannedUserIds);
         Assert.AreEqual(0, ss.GetScheduledJobs().Count);
     }
+
+    [TestMethod()]
+    public async Task AssignRole_Command_Tests()
+    {
+        var (cfg, _, (_, sunny), roles, (generalChannel, modChat, _), guild, client) = TestUtils.DefaultStubs();
+        DiscordHelper.DefaultGuildId = guild.Id;
+        cfg.ModChannel = modChat.Id;
+        var (ss, am) = SetupAdminModule(cfg);
+
+        var alicornId = roles[0].Id;
+        var pippId = guild.Users[3].Id;
+        var hitchId = guild.Users[4].Id;
+
+        DateTimeHelper.FakeUtcNow = TestUtils.FiMEpoch;
+        Assert.IsFalse(guild.UserRoles.ContainsKey(pippId));
+        Assert.IsFalse(guild.UserRoles.ContainsKey(hitchId));
+
+        // .assignrole with no duration
+
+        var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, $".assignrole <@&{alicornId}> {hitchId}");
+        await am.TestableAssignRoleCommandAsync(context, $"<@&{alicornId}> {hitchId}");
+
+        Assert.AreEqual(generalChannel.Messages.Last().Content, $"I've given <@&{alicornId}> to <@{hitchId}>.");
+        Assert.IsFalse(guild.UserRoles.ContainsKey(pippId));
+        TestUtils.AssertListsAreEqual(new List<ulong> { alicornId }, guild.UserRoles[hitchId]);
+        Assert.AreEqual(0, ss.GetScheduledJobs().Count);
+
+        // .assignrole with duration
+
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, $".assignrole <@&{alicornId}> <@{pippId}> 5 minutes");
+        await am.TestableAssignRoleCommandAsync(context, $"<@&{alicornId}> <@{pippId}> 5 minutes");
+
+        Assert.AreEqual(generalChannel.Messages.Last().Content, $"I've given <@&{alicornId}> to <@{pippId}>. I've scheduled a removal <t:1286669100:R>.");
+        TestUtils.AssertListsAreEqual(new List<ulong> { alicornId }, guild.UserRoles[pippId]);
+        TestUtils.AssertListsAreEqual(new List<ulong> { alicornId }, guild.UserRoles[hitchId]);
+        Assert.AreEqual(1, ss.GetScheduledJobs().Count);
+
+        // changing an existing role assignment from indefinite to finite
+
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, $".assignrole <@&{alicornId}> {hitchId} 10 minutes");
+        await am.TestableAssignRoleCommandAsync(context, $"<@&{alicornId}> {hitchId} 10 minutes");
+
+        StringAssert.Contains(generalChannel.Messages.Last().Content, $"<@{hitchId}> already has that role. I've scheduled a removal <t:1286669400:R>.");
+        TestUtils.AssertListsAreEqual(new List<ulong> { alicornId }, guild.UserRoles[pippId]);
+        TestUtils.AssertListsAreEqual(new List<ulong> { alicornId }, guild.UserRoles[hitchId]);
+        Assert.AreEqual(2, ss.GetScheduledJobs().Count);
+
+        DateTimeHelper.FakeUtcNow = DateTimeHelper.FakeUtcNow?.AddMinutes(5);
+        await ss.Unicycle(client);
+
+        Assert.AreEqual($"Removed <@&{alicornId}> from <@{pippId}> (`{pippId}`)", modChat.Messages.Last().Content);
+        TestUtils.AssertListsAreEqual(new List<ulong>(), guild.UserRoles[pippId]);
+        TestUtils.AssertListsAreEqual(new List<ulong> { alicornId }, guild.UserRoles[hitchId]);
+        Assert.AreEqual(1, ss.GetScheduledJobs().Count);
+
+        DateTimeHelper.FakeUtcNow = DateTimeHelper.FakeUtcNow?.AddMinutes(5);
+        await ss.Unicycle(client);
+
+        Assert.AreEqual($"Removed <@&{alicornId}> from <@{hitchId}> (`{hitchId}`)", modChat.Messages.Last().Content);
+        TestUtils.AssertListsAreEqual(new List<ulong>(), guild.UserRoles[pippId]);
+        TestUtils.AssertListsAreEqual(new List<ulong>(), guild.UserRoles[hitchId]);
+        Assert.AreEqual(0, ss.GetScheduledJobs().Count);
+    }
 }

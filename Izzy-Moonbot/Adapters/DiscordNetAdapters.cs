@@ -79,6 +79,7 @@ public class DiscordNetRoleAdapter : IIzzyRole
     public string Name { get => _role.Name; }
 
     public ulong Id { get => _role.Id; }
+    public int Position { get => _role.Position; }
 
     public override string? ToString()
     {

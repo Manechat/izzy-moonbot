@@ -29,6 +29,7 @@ public interface IIzzyRole
     string Name { get; }
     ulong Id { get; }
     string Mention { get => $"<@&{Id}>"; }
+    int Position => 0; // not used enough to be worth accurately imitating in tests
 }
 
 public interface IIzzyMessageProperties

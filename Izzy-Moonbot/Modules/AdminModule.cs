@@ -640,9 +640,19 @@ public class AdminModule : ModuleBase<SocketCommandContext>
     public async Task AssignRoleCommandAsync(
         [Remainder] string argsString = "")
     {
+        await TestableAssignRoleCommandAsync(
+            new SocketCommandContextAdapter(Context),
+            argsString
+        );
+    }
+
+    public async Task TestableAssignRoleCommandAsync(
+        IIzzyContext context,
+        string argsString = "")
+    {
         if (argsString == "")
         {
-            await ReplyAsync($"Please provide a user and a role to assign. Refer to `{_config.Prefix}help assignrole` for more information.");
+            await context.Channel.SendMessageAsync($"Please provide a user and a role to assign. Refer to `{_config.Prefix}help assignrole` for more information.");
             return;
         }
 
@@ -654,21 +664,21 @@ public class AdminModule : ModuleBase<SocketCommandContext>
 
         duration = DiscordHelper.StripQuotes(duration);
 
-        var roleId = DiscordHelper.GetRoleIdIfAccessAsync(roleResolvable, Context);
+        var roleId = DiscordHelper.GetRoleIdIfAccessAsync(roleResolvable, context);
         if (roleId == 0)
         {
-            await ReplyAsync("I couldn't find that role, sorry!");
+            await context.Channel.SendMessageAsync("I couldn't find that role, sorry!");
             return;
         }
-        var role = Context.Guild.GetRole(roleId);
+        var role = context.Guild.GetRole(roleId);
 
-        var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(userResolvable, Context);
+        var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(userResolvable, context);
         if (userId == 0)
         {
-            await ReplyAsync("I couldn't find that user, sorry!");
+            await context.Channel.SendMessageAsync("I couldn't find that user, sorry!");
             return;
         }
-        var maybeMember = Context.Guild.GetUser(userId);
+        var maybeMember = context.Guild.GetUser(userId);
 
         // Comprehend time
         TimeHelperResponse? time = null;
@@ -679,21 +689,21 @@ public class AdminModule : ModuleBase<SocketCommandContext>
         }
         catch (FormatException exception)
         {
-            await ReplyAsync($"I encountered an error while attempting to comprehend time: {exception.Message.Split(": ")[1]}");
+            await context.Channel.SendMessageAsync($"I encountered an error while attempting to comprehend time: {exception.Message.Split(": ")[1]}");
             return;
         }
 
         if (time is { Repeats: true })
         {
-            await ReplyAsync("I can't assign a role repeatedly! Please give me a time that isn't repeating.");
+            await context.Channel.SendMessageAsync("I can't assign a role repeatedly! Please give me a time that isn't repeating.");
             return;
         }
 
-        if (maybeMember is SocketGuildUser member)
+        if (maybeMember is IIzzyGuildUser member)
         {
-            if (role.Position >= Context.Guild.GetUser(Context.Client.CurrentUser.Id).Hierarchy)
+            if (role.Position >= context.Guild.GetUser(context.Client.CurrentUser.Id).Hierarchy)
             {
-                await ReplyAsync(
+                await context.Channel.SendMessageAsync(
                     "That role is either at the same level or higher than me in the role hierarchy, I cannot assign it. <:izzynothoughtsheadempty:910198222255972382>");
                 return;
             }
@@ -750,11 +760,11 @@ public class AdminModule : ModuleBase<SocketCommandContext>
                 }
             }
 
-            await ReplyAsync(message, allowedMentions: AllowedMentions.None);
+            await context.Channel.SendMessageAsync(message, allowedMentions: AllowedMentions.None);
         }
         else
         {
-            await ReplyAsync("I couldn't find that user, sorry!");
+            await context.Channel.SendMessageAsync("I couldn't find that user, sorry!");
             return;
         }
     }
