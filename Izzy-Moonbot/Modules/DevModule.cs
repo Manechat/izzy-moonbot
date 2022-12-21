@@ -124,11 +124,11 @@ public class DevModule : ModuleBase<SocketCommandContext>
                 var paginationHelper = new PaginationHelper(Context, pages, staticParts);
                 break;
             case "pressure-hook":
-                Context.Message.ReplyAsync(
+                await Context.Message.ReplyAsync(
                     $"**Test utility** - Pressure hookin test.{Environment.NewLine}*Other services or modules can hook into the pressure service to do specific things.*{Environment.NewLine}*An example of this is getting pressure for a user.*{Environment.NewLine}*Like, your current pressure is `{_pressureService.GetPressure(Context.User.Id)}`*");
                 break;
             case "dump-users-size":
-                Context.Message.ReplyAsync($"UserStore size: {_users.Count}");
+                await Context.Message.ReplyAsync($"UserStore size: {_users.Count}");
                 break;
             case "create-echo-task":
                 var action = new ScheduledEchoJob(Context.Channel.Id,
@@ -160,82 +160,86 @@ public class DevModule : ModuleBase<SocketCommandContext>
 
                 break;
             case "import-filter":
-                var toFilter = Context.Message.ReferencedMessage.CleanContent.Split(Environment.NewLine).AsEnumerable();
-                if (args[1] == "no") toFilter = toFilter.Skip(1);
-                else toFilter = toFilter.Skip(2);
-
-                var msg = await ReplyAsync(
-                    $"Confirm: Import the list of words you replied to into the `{args[0]}` list? Checking reactions in 10 seconds.");
-                await msg.AddReactionAsync(Emoji.Parse("✅"));
-                Task.Factory.StartNew(async () =>
                 {
-                    await Task.Delay(Convert.ToInt32(10000));
-                    var users = msg.GetReactionUsersAsync(Emoji.Parse("✅"), 2);
-                    if (users.AnyAsync(users =>
+                    var toFilter = Context.Message.ReferencedMessage.CleanContent.Split(Environment.NewLine).AsEnumerable();
+                    if (args[1] == "no") toFilter = toFilter.Skip(1);
+                    else toFilter = toFilter.Skip(2);
+
+                    var msg = await ReplyAsync(
+                        $"Confirm: Import the list of words you replied to into the `{args[0]}` list? Checking reactions in 10 seconds.");
+                    await msg.AddReactionAsync(Emoji.Parse("✅"));
+                    var _ = Task.Factory.StartNew(async () =>
+                    {
+                        await Task.Delay(Convert.ToInt32(10000));
+                        var users = msg.GetReactionUsersAsync(Emoji.Parse("✅"), 2);
+                        if (users.AnyAsync(users =>
                         {
                             return users.Any(user => user.Id == Context.User.Id) ? true : false;
                         }).Result)
-                    {
-                        await msg.RemoveAllReactionsAsync();
-                        await msg.ModifyAsync(message => message.Content = "⚠  **Importing. Please wait...**");
+                        {
+                            await msg.RemoveAllReactionsAsync();
+                            await msg.ModifyAsync(message => message.Content = "⚠  **Importing. Please wait...**");
 
-                        _config.FilteredWords[args[1]].UnionWith(toFilter);
+                            _config.FilteredWords[args[1]].UnionWith(toFilter);
 
-                        await FileHelper.SaveConfigAsync(_config);
-                        await msg.ModifyAsync(message => message.Content = "⚠  **Done!**");
-                    }
-                });
+                            await FileHelper.SaveConfigAsync(_config);
+                            await msg.ModifyAsync(message => message.Content = "⚠  **Done!**");
+                        }
+                    });
 
-                break;
+                    break;
+                }
             case "raid":
-                // Simulates a raid.
-                // args[0] is time in seconds between joins
-                // rest is user ids.
-                var timePeriod = Convert.ToInt32(args[0]) * 1000;
-                var users = args.Skip(1).Select(user =>
                 {
-                    if (ulong.TryParse(user, out var id)) return Context.Guild.GetUser(id);
-                    return null;
-                }).Where(user =>
-                {
-                    if (user == null) return false;
-                    return true;
-                });
-
-                var raidMsg = await ReplyAsync(
-                    $"Confirm: Simulate {users.Count()} users joining {timePeriod} milliseconds apart? Checking reactions in 10 seconds.");
-                await raidMsg.AddReactionAsync(Emoji.Parse("✅"));
-                Task.Factory.StartNew(async () =>
-                {
-                    await Task.Delay(Convert.ToInt32(10000));
-                    var raidMsgUsers = raidMsg.GetReactionUsersAsync(Emoji.Parse("✅"), 2);
-                    if (raidMsgUsers.AnyAsync(raidMsgUsersActual =>
-                        {
-                            return raidMsgUsersActual.Any(user => user.Id == Context.User.Id) ? true : false;
-                        }).Result)
+                    // Simulates a raid.
+                    // args[0] is time in seconds between joins
+                    // rest is user ids.
+                    var timePeriod = Convert.ToInt32(args[0]) * 1000;
+                    var users = args.Skip(1).Select(user =>
                     {
-                        await raidMsg.RemoveAllReactionsAsync();
-                        await raidMsg.ModifyAsync(message => message.Content = "⚠  **Executing...**");
+                        if (ulong.TryParse(user, out var id)) return Context.Guild.GetUser(id);
+                        return null;
+                    }).Where(user =>
+                    {
+                        if (user == null) return false;
+                        return true;
+                    });
 
-                        Task.Factory.StartNew(async () =>
-                        {
-                            foreach (var user in users)
+                    var raidMsg = await ReplyAsync(
+                        $"Confirm: Simulate {users.Count()} users joining {timePeriod} milliseconds apart? Checking reactions in 10 seconds.");
+                    await raidMsg.AddReactionAsync(Emoji.Parse("✅"));
+                    var _ = Task.Factory.StartNew(async () =>
+                    {
+                        await Task.Delay(Convert.ToInt32(10000));
+                        var raidMsgUsers = raidMsg.GetReactionUsersAsync(Emoji.Parse("✅"), 2);
+                        if (raidMsgUsers.AnyAsync(raidMsgUsersActual =>
                             {
-                                await Task.Delay(timePeriod);
-                                await _raidService.ProcessMemberJoin(user);
-                            }
-                        });
+                                return raidMsgUsersActual.Any(user => user.Id == Context.User.Id) ? true : false;
+                            }).Result)
+                        {
+                            await raidMsg.RemoveAllReactionsAsync();
+                            await raidMsg.ModifyAsync(message => message.Content = "⚠  **Executing...**");
 
-                        await raidMsg.ModifyAsync(message =>
-                            message.Content = "⚠  **Executed. Expect raid alarms if hit.**");
-                    }
-                    else
-                    {
-                        await raidMsg.RemoveAllReactionsAsync();
-                        await raidMsg.ModifyAsync(message => message.Content = "⚠  **Cancelled.**");
-                    }
-                });
-                break;
+                            var _ = Task.Factory.StartNew(async () =>
+                            {
+                                foreach (var user in users)
+                                {
+                                    await Task.Delay(timePeriod);
+                                    await _raidService.ProcessMemberJoin(user);
+                                }
+                            });
+
+                            await raidMsg.ModifyAsync(message =>
+                                message.Content = "⚠  **Executed. Expect raid alarms if hit.**");
+                        }
+                        else
+                        {
+                            await raidMsg.RemoveAllReactionsAsync();
+                            await raidMsg.ModifyAsync(message => message.Content = "⚠  **Cancelled.**");
+                        }
+                    });
+                    break;
+                }
             case "state":
                 _state.CurrentSmallJoinCount++;
                 await ReplyAsync($"At {_state.CurrentSmallJoinCount}.");
@@ -265,15 +269,17 @@ public class DevModule : ModuleBase<SocketCommandContext>
                 Console.WriteLine("Task {0} returned {1:N0}", asyncTask.Id, asyncTask.Result);
                 break;
             case "overloadFilter":
-                var izzyContext = new SocketCommandContextAdapter(Context);
-                for (var i = 0; i < 10; i++)
                 {
-                    Task.Run(async () => await _filterService.ProcessMessage(izzyContext.Message, izzyContext.Client));
+                    var izzyContext = new SocketCommandContextAdapter(Context);
+                    for (var i = 0; i < 10; i++)
+                    {
+                        var _ = Task.Run(async () => await _filterService.ProcessMessage(izzyContext.Message, izzyContext.Client));
+                    }
+                    break;
                 }
-                break;
             case "logTest":
                 var pressureTracer = new Dictionary<string, double>{ {"Base", _config.SpamBasePressure} };
-                await _loggingService.Log($"Pressure increase by 0 to 0/{_config.SpamMaxPressure}.{Environment.NewLine}                          Pressure trace: {string.Join(", ", pressureTracer)}", Context, level: LogLevel.Debug);
+                _loggingService.Log($"Pressure increase by 0 to 0/{_config.SpamMaxPressure}.{Environment.NewLine}                          Pressure trace: {string.Join(", ", pressureTracer)}", Context, level: LogLevel.Debug);
                 break;
             case "invitesDisabled":
                 await ReplyAsync("Invites disabled: " + Context.Guild.Features.HasFeature("INVITES_DISABLED"));
@@ -336,7 +342,7 @@ public class DevModule : ModuleBase<SocketCommandContext>
                         _ => ScheduledJobRepeatType.None
                     };
 
-                    await _loggingService.Log($"{time.Time:F} {time.RepeatType}");
+                    _loggingService.Log($"{time.Time:F} {time.RepeatType}");
                     var repeataction = new ScheduledEchoJob(Context.Channel.Id, "misty");
                     var repeattask = new ScheduledJob(DateTimeOffset.UtcNow,
                         time.Time, repeataction, repeatType);
@@ -397,7 +403,7 @@ public class DevModule : ModuleBase<SocketCommandContext>
                 await Context.Channel.SendFileAsync(attachment, "Test Success");
                 break;
             default:
-                Context.Message.ReplyAsync("Unknown test.");
+                await Context.Message.ReplyAsync("Unknown test.");
                 break;
         }
     }

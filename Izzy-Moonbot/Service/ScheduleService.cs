@@ -62,7 +62,7 @@ public class ScheduleService
             }
             catch (Exception exception)
             {
-                await _logger.Log($"{exception.Message}{Environment.NewLine}{exception.StackTrace}", level: LogLevel.Error);
+                _logger.Log($"{exception.Message}{Environment.NewLine}{exception.StackTrace}", level: LogLevel.Error);
             }
 
             // Call self
@@ -84,7 +84,7 @@ public class ScheduleService
 
         foreach (var job in scheduledJobsToExecute)
         {
-            await _logger.Log($"Executing scheduled job queued for execution at {job.ExecuteAt:F}", level: LogLevel.Debug);
+            _logger.Log($"Executing scheduled job queued for execution at {job.ExecuteAt:F}", level: LogLevel.Debug);
 
             try
             {
@@ -118,7 +118,7 @@ public class ScheduleService
             }
             catch (Exception ex)
             {
-                await _logger.Log(
+                _logger.Log(
                     $"Scheduled job threw an exception when trying to execute!{Environment.NewLine}" +
                     $"Type: {ex.GetType().Name}{Environment.NewLine}" +
                     $"Message: {ex.Message}{Environment.NewLine}" +
@@ -231,7 +231,7 @@ public class ScheduleService
 
         var reason = job.Reason;
         
-        await _logger.Log(
+        _logger.Log(
             $"Adding {role.Name} ({role.Id}) to {user.Username}#{user.Discriminator} ({user.Id})", level: LogLevel.Debug);
         
         await _mod.AddRole(user, role.Id, reason);
@@ -251,7 +251,7 @@ public class ScheduleService
 
         string? reason = job.Reason;
         
-        await _logger.Log(
+        _logger.Log(
             $"Removing {role.Name} ({role.Id}) from {user.Username}#{user.Discriminator} ({user.Id})", level: LogLevel.Debug);
         
         await _mod.RemoveRole(user, role.Id, reason);
@@ -269,7 +269,7 @@ public class ScheduleService
 
         var user = await client.GetUserAsync(job.User);
         
-        await _logger.Log(
+        _logger.Log(
             $"Unbanning {(user == null ? job.User : $"")}.",
             level: LogLevel.Debug);
 
@@ -324,7 +324,7 @@ public class ScheduleService
                 }
                 catch (FlurlHttpException ex)
                 {
-                    await _logger.Log($"Recieved HTTP exception when executing Banner Rotation: {ex.Message}");
+                    _logger.Log($"Recieved HTTP exception when executing Banner Rotation: {ex.Message}");
                     return;
                 }
 
@@ -347,7 +347,7 @@ public class ScheduleService
                     .SetFileLogContent(
                         $"Tried to change banner but the host server didn't respond fast enough, is it down? If so please run `.config BannerMode None` to avoid unnecessarily pinging Manebooru.")
                     .Send();
-                await _logger.Log(
+                _logger.Log(
                     $"Encountered HTTP timeout exception when trying to change banner: {ex.Message}{Environment.NewLine}{ex.StackTrace}");
             }
             catch (FlurlHttpException ex)
@@ -359,7 +359,7 @@ public class ScheduleService
                     .SetFileLogContent(
                         $"Tried to change banner and received a {ex.StatusCode} status code when attempting to ask the host server for the image. Doing nothing.")
                     .Send();
-                await _logger.Log(
+                _logger.Log(
                     $"Encountered HTTP exception when trying to change banner: {ex.Message}{Environment.NewLine}{ex.StackTrace}");
             }
             catch (Exception ex)
@@ -370,7 +370,7 @@ public class ScheduleService
                     .SetFileLogContent(
                         $"Tried to change banner and received a general error when attempting to ask the host server for the image. Doing nothing.")
                     .Send();
-                await _logger.Log(
+                _logger.Log(
                     $"Encountered exception when trying to change banner: {ex.Message}{Environment.NewLine}{ex.StackTrace}");
             }
         }
@@ -440,7 +440,7 @@ public class ScheduleService
                     .SetFileLogContent(
                         $"Tried to change banner but Manebooru didn't respond fast enough, is it down? If so please run `.config BannerMode None` to avoid unnecessarily pinging Manebooru.")
                     .Send();
-                await _logger.Log(
+                _logger.Log(
                     $"Encountered HTTP timeout exception when trying to change banner: {ex.Message}{Environment.NewLine}{ex.StackTrace}");
             }
             catch (FlurlHttpException ex)
@@ -460,7 +460,7 @@ public class ScheduleService
                         $"  - Manebooru thinks I sent a badly formatted request when I didn't.\n" +
                         $"  - Manebooru is down and Cloudflare is giving me a error page.")
                     .Send();
-                await _logger.Log(
+                _logger.Log(
                     $"Encountered HTTP exception when trying to change banner: {ex.Message}{Environment.NewLine}{ex.StackTrace}");
             }
             catch (Exception ex)
@@ -479,7 +479,7 @@ public class ScheduleService
                         $"  - This server cannot have a banner.\n" +
                         $"  - The banner rotation job is an unexpected state.")
                     .Send();
-                await _logger.Log(
+                _logger.Log(
                     $"Encountered exception when trying to change banner: {ex.Message}{Environment.NewLine}{ex.StackTrace}");
             }
         }

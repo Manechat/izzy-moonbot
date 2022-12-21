@@ -104,7 +104,7 @@ public class AdminModule : ModuleBase<SocketCommandContext>
     [DevCommand(Group = "Permissions")]
     public async Task ScanCommandAsync()
     {
-        Task.Run(async () =>
+        var _ = Task.Run(async () =>
         {
             if (!Context.Guild.HasAllMembers) await Context.Guild.DownloadUsersAsync();
 
@@ -732,12 +732,12 @@ public class AdminModule : ModuleBase<SocketCommandContext>
             // If a duration was provided, schedule removal.
             if (time is not null)
             {
-                await _logger.Log($"Adding scheduled job to remove role {roleId} from user {userId} at {time.Time}", level: LogLevel.Debug);
+                _logger.Log($"Adding scheduled job to remove role {roleId} from user {userId} at {time.Time}", level: LogLevel.Debug);
                 var action = new ScheduledRoleRemovalJob(roleId, member.Id,
                     $".assignrole command for user {member.Id} and role {roleId} with duration {duration}.");
                 var task = new ScheduledJob(DateTimeOffset.UtcNow, time.Time, action);
                 await _schedule.CreateScheduledJob(task);
-                await _logger.Log($"Added scheduled job for new user", level: LogLevel.Debug);
+                _logger.Log($"Added scheduled job for new user", level: LogLevel.Debug);
 
                 if (hasExistingRemovalJob)
                 {
@@ -839,7 +839,7 @@ public class AdminModule : ModuleBase<SocketCommandContext>
             return;
         }
 
-        await _logger.Log($"Parsed .wipe command arguments. Scanning for messages in channel {channelName} more recent than {wipeThreshold}");
+        _logger.Log($"Parsed .wipe command arguments. Scanning for messages in channel {channelName} more recent than {wipeThreshold}");
 
         // Gather up all the messages we need to delete and log.
 
@@ -868,7 +868,7 @@ public class AdminModule : ModuleBase<SocketCommandContext>
 
         // Actually do the deletion
         var messagesToDeleteCount = messageIdsToDelete.Count;
-        await _logger.Log($"Deleting {messagesToDeleteCount} messages from channel {channelName}");
+        _logger.Log($"Deleting {messagesToDeleteCount} messages from channel {channelName}");
         var discordBulkDeletionLimit = 100;
         while (messageIdsToDelete.Any())
         {
@@ -894,7 +894,7 @@ public class AdminModule : ModuleBase<SocketCommandContext>
 
         if (messagesToDeleteCount > 0)
         {
-            await _logger.Log($"Assembling a bulk deletion log from the content of {messagesToDeleteCount} deleted messages");
+            _logger.Log($"Assembling a bulk deletion log from the content of {messagesToDeleteCount} deleted messages");
             bulkDeletionLog.Sort((x, y) => x.Item1.CompareTo(y.Item1));
 
             var bulkDeletionLogString = string.Join(

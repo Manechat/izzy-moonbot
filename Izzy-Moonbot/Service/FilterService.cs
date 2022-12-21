@@ -135,7 +135,7 @@ public class FilterService
 
             if (shouldSilence)
             {
-                _mod.SilenceUser(context.Guild.GetUser(context.User.Id), $"Filter violation ({category} category)");
+                await _mod.SilenceUser(context.Guild.GetUser(context.User.Id), $"Filter violation ({category} category)");
                 actions.Add("silence");
             }
 

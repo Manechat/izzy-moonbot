@@ -18,15 +18,15 @@ public class LoggingService
         _logger = logger;
     }
 
-    public async Task Log(string message, SocketCommandContext? context, LogLevel level = LogLevel.Information,
+    public void Log(string message, SocketCommandContext? context, LogLevel level = LogLevel.Information,
         [CallerMemberName] string memberName = "",
         [CallerFilePath] string sourceFilePath = "",
         [CallerLineNumber] int sourceLineNumber = 0)
     {
-        await Log(message, context is not null ? new SocketCommandContextAdapter(context) : null, level, memberName, sourceFilePath, sourceLineNumber);
+        Log(message, context is not null ? new SocketCommandContextAdapter(context) : null, level, memberName, sourceFilePath, sourceLineNumber);
     }
 
-    public async Task Log(string message, IIzzyContext? context = null, LogLevel level = LogLevel.Information,
+    public void Log(string message, IIzzyContext? context = null, LogLevel level = LogLevel.Information,
         [CallerMemberName] string memberName = "",
         [CallerFilePath] string sourceFilePath = "",
         [CallerLineNumber] int sourceLineNumber = 0)

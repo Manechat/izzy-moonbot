@@ -31,13 +31,13 @@ public class LoggingServiceTests
         var logger = new TestLogger<Worker>();
         var logService = new LoggingService(logger);
 
-        await logService.Log("test");
+        logService.Log("test");
         TestUtils.AssertListsAreEqual(new List<string> { "[LoggingServiceTests.cs:BasicTests:34] test" }, logger.Logs);
 
         var (_, _, (_, sunny), _, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
         var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, "good morning everypony");
 
-        await logService.Log("sunny said something", context);
+        logService.Log("sunny said something", context);
         TestUtils.AssertListsAreEqual(new List<string> {
             $"[LoggingServiceTests.cs:BasicTests:34] test",
             $"[LoggingServiceTests.cs:BasicTests:40] server: Maretime Bay ({guild.Id}) #general ({generalChannel.Id}) @Sunny#1234 ({sunny.Id}), sunny said something"
