@@ -176,7 +176,7 @@ public class FilterService
             foreach (var word in filteredWords)
             {
                 if (trip) continue;
-                if (context.Message.Content.Contains(word))
+                if (context.Message.Content.ToLower().Contains(word.ToLower()))
                 {
                     // Filter Trip!
                     await ProcessFilterTrip(context, word, category);
@@ -211,7 +211,7 @@ public class FilterService
             foreach (var word in filteredWords)
             {
                 if (trip) continue;
-                if (context.Message.Content.Contains(word))
+                if (context.Message.Content.ToLower().Contains(word.ToLower()))
                 {
                     // Filter Trip!
                     await ProcessFilterTrip(context, word, category);

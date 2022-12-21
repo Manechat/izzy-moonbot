@@ -11,16 +11,11 @@ namespace Izzy_Moonbot_Tests.Services;
 [TestClass()]
 public class FilterServiceTests
 {
-    [TestMethod()]
-    public async Task Breathing_Tests()
+    public static void SetupFilterService(Config cfg, StubGuild guild, StubClient client)
     {
-        var (cfg, _, (_, sunny), _, (generalChannel, modChat, _), guild, client) = TestUtils.DefaultStubs();
         DiscordHelper.DefaultGuildId = guild.Id;
         DiscordHelper.DevUserIds = new List<ulong>();
         DiscordHelper.PleaseAwaitEvents = true;
-
-        cfg.ModChannel = modChat.Id;
-        cfg.FilteredWords.Add("jinxies", new HashSet<string> { "magic", "wing", "feather", "mayonnaise" });
 
         var users = new Dictionary<ulong, User>();
         var mod = new ModService(cfg, users);
@@ -29,6 +24,15 @@ public class FilterServiceTests
         var fs = new FilterService(cfg, mod, modLog, logger);
 
         fs.RegisterEvents(client);
+    }
+
+    [TestMethod()]
+    public async Task Breathing_Tests()
+    {
+        var (cfg, _, (_, sunny), _, (generalChannel, modChat, _), guild, client) = TestUtils.DefaultStubs();
+        cfg.ModChannel = modChat.Id;
+        cfg.FilteredWords.Add("jinxies", new HashSet<string> { "magic", "wing", "feather", "mayonnaise" });
+        SetupFilterService(cfg, guild, client);
 
         await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, "this is a completely ordinary chat message");
 
@@ -52,5 +56,26 @@ public class FilterServiceTests
             ("Filtered Message", "magic wings of mayonnaise"),
             ("What have I done in response?", ":x: - **I've deleted the offending message.**"),
         });
+    }
+
+    [TestMethod()]
+    public async Task FilteringIsCaseInsensitive_Tests()
+    {
+        var (cfg, _, (_, sunny), _, (generalChannel, modChat, _), guild, client) = TestUtils.DefaultStubs();
+        cfg.ModChannel = modChat.Id;
+        cfg.FilteredWords.Add("jinxies", new HashSet<string> { "magic", "wing", "feather", "mayonnaise" });
+        SetupFilterService(cfg, guild, client);
+
+        Assert.AreEqual(0, modChat.Messages.Count);
+
+        await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, "MaGiC");
+
+        Assert.AreEqual(1, modChat.Messages.Count);
+        Assert.AreEqual($" Filter Violation for <@{sunny.Id}>", modChat.Messages.Last().Content);
+
+        await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, "fEatHer");
+
+        Assert.AreEqual(2, modChat.Messages.Count);
+        Assert.AreEqual($" Filter Violation for <@{sunny.Id}>", modChat.Messages.Last().Content);
     }
 }
