@@ -324,7 +324,7 @@ public class SocketGuildAdapter : IIzzyGuild
     public async Task AddBanAsync(ulong userId, int pruneDays, string reason) =>
         await _guild.AddBanAsync(userId, pruneDays: pruneDays, reason: reason);
     public async Task<bool> GetIsBannedAsync(ulong userId) =>
-        await _guild.GetBanAsync(userId) == null;
+        await _guild.GetBanAsync(userId) != null;
     public async Task RemoveBanAsync(ulong userId) =>
         await _guild.RemoveBanAsync(userId);
     public async Task SetBanner(Image image) =>
