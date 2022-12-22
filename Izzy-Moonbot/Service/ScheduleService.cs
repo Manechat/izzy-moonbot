@@ -276,9 +276,9 @@ public class ScheduleService
 
         var embed = new EmbedBuilder()
             .WithTitle(
-                $"Unbanned {(user != null ? $"{user.Username}#{user.Discriminator} " : "")}<@{job.User}> ({job.User})")
+                $"Unbanned {(user != null ? $"{user.Username}#{user.Discriminator} " : "")} ({job.User})")
             .WithColor(16737792)
-            .WithFooter("Gasp! Does this mean I can invite them to our next traditional unicorn sleepover?")
+            .WithDescription($"Gasp! Does this mean I can invite <@{job.User}> to our next traditional unicorn sleepover?")
             .Build();
         
         await _modLogging.CreateModLog(guild)
