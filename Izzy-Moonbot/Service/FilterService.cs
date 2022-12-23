@@ -46,7 +46,7 @@ public class FilterService
     }
 
     private async Task LogFilterTrip(IIzzyContext context, string word, string category,
-        List<string> actionsTaken, bool onEdit = false, IIzzyMessage message = null)
+        List<string> actionsTaken, bool onEdit)
     {
         var embedBuilder = new EmbedBuilder()
             .WithTitle(":warning: Filter violation detected" + (onEdit ? " on message edit" : ""))
@@ -102,8 +102,7 @@ public class FilterService
             .Send();
     }
 
-    private async Task ProcessFilterTrip(IIzzyContext context, string word, string category,
-        bool onEdit = false)
+    private async Task ProcessFilterTrip(IIzzyContext context, string word, string category, bool onEdit)
     {
         var roleIds = context.Guild.GetUser(context.User.Id).Roles.Select(role => role.Id).ToList();
 
@@ -179,7 +178,7 @@ public class FilterService
                 if (context.Message.Content.ToLower().Contains(word.ToLower()))
                 {
                     // Filter Trip!
-                    await ProcessFilterTrip(context, word, category);
+                    await ProcessFilterTrip(context, word, category, true);
                     trip = true;
                 }
             }
@@ -214,7 +213,7 @@ public class FilterService
                 if (context.Message.Content.ToLower().Contains(word.ToLower()))
                 {
                     // Filter Trip!
-                    await ProcessFilterTrip(context, word, category);
+                    await ProcessFilterTrip(context, word, category, false);
                     trip = true;
                 }
             }
