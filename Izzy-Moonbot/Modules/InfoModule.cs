@@ -152,9 +152,14 @@ public class InfoModule : ModuleBase<SocketCommandContext>
             // Alternate detected!
             var commandInfo = _commands.Commands.Single<CommandInfo>(command => command.Aliases.Select(alias => alias.ToLower()).Contains(item.ToLower()));
             var alternateName = commandInfo.Aliases.Single(alias => alias.ToLower() == item.ToLower());
-            var ponyReadable = PonyReadableCommandHelp(prefix, item, commandInfo, alternateName);
-            ponyReadable += PonyReadableRelevantAliases(prefix, item);
-            await context.Channel.SendMessageAsync(ponyReadable);
+            if (canRunCommand(commandInfo))
+            {
+                var ponyReadable = PonyReadableCommandHelp(prefix, item, commandInfo, alternateName);
+                ponyReadable += PonyReadableRelevantAliases(prefix, item);
+                await context.Channel.SendMessageAsync(ponyReadable);
+            }
+            else await context.Channel.SendMessageAsync(
+                $"Sorry, you don't have permission to use the {prefix}{alternateName} command.");
         }
         // Try aliases
         else if (_config.Aliases.Any(alias => alias.Key.ToLower() == item.ToLower()))

@@ -188,5 +188,22 @@ public class InfoModuleTests
         await im.TestableHelpCommandAsync(context, "ban");
 
         Assert.AreEqual("Sorry, you don't have permission to use the .ban command.", generalChannel.Messages.Last().Content);
+
+        // Alternate name for a mod-only command
+
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".help uinfo");
+        await im.TestableHelpCommandAsync(context, "uinfo");
+
+        description = generalChannel.Messages.Last().Content;
+        StringAssert.Contains(description, "**.uinfo** (alternate name of **.userinfo**) - Admin category", null, null);
+        StringAssert.Contains(description, "ℹ  *This is a moderator", null, null);
+        StringAssert.Contains(description, "*Get information about a user", null, null);
+        StringAssert.Contains(description, "Syntax: `.userinfo [user]`", null, null);
+        StringAssert.Contains(description, "user [User]", null, null);
+
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, pippId, ".help uinfo");
+        await im.TestableHelpCommandAsync(context, "uinfo");
+
+        Assert.AreEqual("Sorry, you don't have permission to use the .uinfo command.", generalChannel.Messages.Last().Content);
     }
 }
