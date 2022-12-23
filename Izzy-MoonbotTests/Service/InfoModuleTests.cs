@@ -61,8 +61,9 @@ public class InfoModuleTests
     [TestMethod()]
     public async Task HelpCommand_BreathingTestsAsync()
     {
-        var (cfg, _, (_, sunny), _, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
+        var (cfg, _, (_, sunny), roles, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
         var im = new InfoModule(cfg, await SetupCommandService());
+        cfg.ModRole = roles[0].Id;
 
         var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".help");
         await im.TestableHelpCommandAsync(context, "");
@@ -92,8 +93,9 @@ public class InfoModuleTests
     [TestMethod()]
     public async Task HelpCommand_Aliases_TestsAsync()
     {
-        var (cfg, _, (_, sunny), _, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
+        var (cfg, _, (_, sunny), roles, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
         var im = new InfoModule(cfg, await SetupCommandService());
+        cfg.ModRole = roles[0].Id;
 
         // Check .help's regular behavior before adding aliases
         var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".help addquote");
@@ -106,7 +108,8 @@ public class InfoModuleTests
         await im.TestableHelpCommandAsync(context, "moonlaser");
 
         var description = generalChannel.Messages.Last().Content;
-        StringAssert.Contains(description, "Sorry, I was unable to find \"moonlaser\"", null, null);
+        StringAssert.Contains(description, "Sorry, I was unable to", null, null);
+        StringAssert.Contains(description, "\"moonlaser\"", null, null);
 
         cfg.Aliases.Add("moonlaser", "addquote moon");
         cfg.Aliases.Add("sayhi", "echo <#1> hi");
@@ -138,9 +141,10 @@ public class InfoModuleTests
     [TestMethod()]
     public async Task HelpCommand_AliasesAreLowPriority_Async()
     {
-        var (cfg, _, (_, sunny), _, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
+        var (cfg, _, (_, sunny), roles, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
         var im = new InfoModule(cfg, await SetupCommandService());
 
+        cfg.ModRole = roles[0].Id;
         // Adding a ".ban" alias has no effect on the output of ".help ban", because ".ban" is already a command
         cfg.Aliases.Add("ban", "echo bye-bye");
 
@@ -155,5 +159,34 @@ public class InfoModuleTests
         StringAssert.Contains(description, "user [User]", null, null);
         StringAssert.Contains(description, "duration [Date/Time] {OPTIONAL}", null, null);
         StringAssert.Contains(description, "Example: ", null, null);
+    }
+
+    [TestMethod()]
+    public async Task HelpCommand_RegularUsers_Async()
+    {
+        var (cfg, _, (_, sunny), roles, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
+        var im = new InfoModule(cfg, await SetupCommandService());
+
+        cfg.ModRole = roles[0].Id; // Sunny is a moderator
+        var pippId = guild.Users[3].Id; // Pipp is NOT a moderator
+
+        // Mod-only command
+
+        var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".help ban");
+        await im.TestableHelpCommandAsync(context, "ban");
+
+        var description = generalChannel.Messages.Last().Content;
+        StringAssert.Contains(description, "**.ban** - Admin category", null, null);
+        StringAssert.Contains(description, "ℹ  *This is a moderator", null, null);
+        StringAssert.Contains(description, "*Bans a user", null, null);
+        StringAssert.Contains(description, "Syntax: `.ban user [duration]`", null, null);
+        StringAssert.Contains(description, "user [User]", null, null);
+        StringAssert.Contains(description, "duration [Date/Time] {OPTIONAL}", null, null);
+        StringAssert.Contains(description, "Example: ", null, null);
+
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, pippId, ".help ban");
+        await im.TestableHelpCommandAsync(context, "ban");
+
+        Assert.AreEqual("Sorry, you don't have permission to use the .ban command.", generalChannel.Messages.Last().Content);
     }
 }

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
+using Discord.WebSocket;
 using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Attributes;
 using Izzy_Moonbot.Helpers;
@@ -42,6 +43,16 @@ public class InfoModule : ModuleBase<SocketCommandContext>
     {
         var prefix = _config.Prefix;
 
+        var isDev = DiscordHelper.IsDev(context.User.Id);
+        var isMod = (context.User is IIzzyGuildUser guildUser) && (guildUser.Roles.Any(r => r.Id == _config.ModRole));
+
+        Func<CommandInfo, bool> canRunCommand = cinfo =>
+        {
+            if (cinfo.Preconditions.Any(attribute => attribute is ModCommandAttribute)) return isMod;
+            if (cinfo.Preconditions.Any(attribute => attribute is DevCommandAttribute)) return isDev;
+            return true;
+        };
+
         if (item == "")
         {
             // List modules.
@@ -70,9 +81,14 @@ public class InfoModule : ModuleBase<SocketCommandContext>
         {
             // It's a command!
             var commandInfo = _commands.Commands.Single<CommandInfo>(command => command.Name.ToLower() == item.ToLower());
-            var ponyReadable = PonyReadableCommandHelp(prefix, item, commandInfo);
-            ponyReadable += PonyReadableRelevantAliases(prefix, item);
-            await context.Channel.SendMessageAsync(ponyReadable);
+            if (canRunCommand(commandInfo))
+            {
+                var ponyReadable = PonyReadableCommandHelp(prefix, item, commandInfo);
+                ponyReadable += PonyReadableRelevantAliases(prefix, item);
+                await context.Channel.SendMessageAsync(ponyReadable);
+            }
+            else await context.Channel.SendMessageAsync(
+                $"Sorry, you don't have permission to use the {prefix}{commandInfo.Name} command.");
         }
         // Module.
         else if (_commands.Modules.Any(module => module.Name.ToLower() == item.ToLower() ||
@@ -161,7 +177,7 @@ public class InfoModule : ModuleBase<SocketCommandContext>
         }
         else
         {
-            await context.Channel.SendMessageAsync($"Sorry, I was unable to find \"{item}\" as either a command, category, or alias.");
+            await context.Channel.SendMessageAsync($"Sorry, I was unable to find any command, category, or alias named \"{item}\" that you have access to.");
         }
     }
 
