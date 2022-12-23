@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
-using Discord.WebSocket;
 using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Attributes;
 using Izzy_Moonbot.Helpers;
@@ -55,27 +54,47 @@ public class InfoModule : ModuleBase<SocketCommandContext>
 
         if (item == "")
         {
-            // List modules.
-            var moduleList = new List<string>();
-
-            foreach (var module in _commands.Modules)
+            if (isDev || isMod)
             {
-                if (module.IsSubmodule) continue;
-                if (module.Name == "DevModule") continue; // Hide dev module
-                var moduleInfo = $"{module.Name.Replace("Module", "").ToLower()} - {module.Summary}";
-                foreach (var submodule in module.Submodules)
-                    moduleInfo += $"{Environment.NewLine}    {submodule.Name.Replace("Submodule", "").ToLower()} - {submodule.Summary}";
+                // List modules.
+                var moduleList = new List<string>();
 
-                moduleList.Add(moduleInfo);
+                foreach (var module in _commands.Modules)
+                {
+                    if (module.IsSubmodule) continue;
+                    if (module.Name == "DevModule") continue; // Hide dev module
+                    var moduleInfo = $"{module.Name.Replace("Module", "").ToLower()} - {module.Summary}";
+                    foreach (var submodule in module.Submodules)
+                        moduleInfo += $"{Environment.NewLine}    {submodule.Name.Replace("Submodule", "").ToLower()} - {submodule.Summary}";
+
+                    moduleList.Add(moduleInfo);
+                }
+
+                await context.Channel.SendMessageAsync(
+                    $"Hii! Here's how to use the help command!{Environment.NewLine}" +
+                    $"Run `{prefix}help <category>` to list the commands in a category.{Environment.NewLine}" +
+                    $"Run `{prefix}help <command>` to view information about a command.{Environment.NewLine}{Environment.NewLine}" +
+                    $"Here's a list of all the categories I have!{Environment.NewLine}" +
+                    $"```{Environment.NewLine}{string.Join(Environment.NewLine, moduleList)}{Environment.NewLine}```{Environment.NewLine}" +
+                    $"ℹ  **See also: `{prefix}config`. Run `{prefix}help config` for more information.**");
             }
+            else
+            {
+                // List non-mod/non-dev commands
+                var regularUserCommands = _commands.Commands.Where(cinfo =>
+                    !cinfo.Preconditions.Any(attribute => attribute is DevCommandAttribute) &&
+                    !cinfo.Preconditions.Any(attribute => attribute is ModCommandAttribute));
 
-            await context.Channel.SendMessageAsync(
-                $"Hii! Here's how to use the help command!{Environment.NewLine}" +
-                $"Run `{prefix}help <category>` to list the commands in a category.{Environment.NewLine}" +
-                $"Run `{prefix}help <command>` to view information about a command.{Environment.NewLine}{Environment.NewLine}" +
-                $"Here's a list of all the categories I have!{Environment.NewLine}" +
-                $"```{Environment.NewLine}{string.Join(Environment.NewLine, moduleList)}{Environment.NewLine}```{Environment.NewLine}" +
-                $"ℹ  **See also: `{prefix}config`. Run `{prefix}help config` for more information.**");
+                var commandSummaries = regularUserCommands.Select<CommandInfo, string>(command =>
+                    $"{prefix}{command.Name} - {command.Summary}"
+                ).ToList();
+
+                // Izzy is not expected to get enough non-mod commands to ever need pagination here
+                await context.Channel.SendMessageAsync(
+                    $"Hii! Here's a list of all the commands you can run!{Environment.NewLine}" +
+                    $"```{Environment.NewLine}{string.Join(Environment.NewLine, commandSummaries)}{Environment.NewLine}```{Environment.NewLine}" +
+                    $"Run `{prefix}help <command>` for help regarding a specific command!");
+            }
         }
         else if (_commands.Commands.Any(command => command.Name.ToLower() == item.ToLower()))
         {
@@ -91,9 +110,10 @@ public class InfoModule : ModuleBase<SocketCommandContext>
                 $"Sorry, you don't have permission to use the {prefix}{commandInfo.Name} command.");
         }
         // Module.
-        else if (_commands.Modules.Any(module => module.Name.ToLower() == item.ToLower() ||
-                                                 module.Name.ToLower() == item.ToLower() + "module" ||
-                                                 module.Name.ToLower() == item.ToLower() + "submodule"))
+        else if ((isDev || isMod) &&
+            _commands.Modules.Any(module => module.Name.ToLower() == item.ToLower() ||
+                                            module.Name.ToLower() == item.ToLower() + "module" ||
+                                            module.Name.ToLower() == item.ToLower() + "submodule"))
         {
             // It's a module!
             var moduleInfo = _commands.Modules.Single<ModuleInfo>(module =>

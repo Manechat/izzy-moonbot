@@ -76,6 +76,14 @@ public class InfoModuleTests
         StringAssert.Contains(description, "spam - ");
         StringAssert.Contains(description, "ℹ  **See also: `.config`");
 
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".help admin");
+        await im.TestableHelpCommandAsync(context, "admin");
+
+        description = generalChannel.Messages.Last().Content;
+        StringAssert.Contains(description, "list of all the commands");
+        StringAssert.Contains(description, "echo - ");
+        StringAssert.Contains(description, "ban - ");
+
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".help ban");
         await im.TestableHelpCommandAsync(context, "ban");
 
@@ -162,7 +170,7 @@ public class InfoModuleTests
     }
 
     [TestMethod()]
-    public async Task HelpCommand_RegularUsers_Async()
+    public async Task HelpCommand_RegularUsers_ModOnlyCommands_Async()
     {
         var (cfg, _, (_, sunny), roles, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
         var im = new InfoModule(cfg, await SetupCommandService());
@@ -221,5 +229,36 @@ public class InfoModuleTests
         await im.TestableHelpCommandAsync(context, "b");
 
         Assert.AreEqual("Sorry, you don't have permission to use the .b command.", generalChannel.Messages.Last().Content);
+    }
+
+    [TestMethod()]
+    public async Task HelpCommand_RegularUsers_ListingCommands_Async()
+    {
+        var (cfg, _, (_, sunny), roles, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
+        var im = new InfoModule(cfg, await SetupCommandService());
+
+        cfg.ModRole = roles[0].Id; // Sunny is a moderator
+        var pippId = guild.Users[3].Id; // Pipp is NOT a moderator
+
+        // For regular users, command categories don't exist, because they have so few commands it's not worth it
+
+        var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, pippId, ".help admin");
+        await im.TestableHelpCommandAsync(context, "admin");
+
+        Assert.AreEqual("Sorry, I was unable to find any command, category, or alias named \"admin\" that you have access to.", generalChannel.Messages.Last().Content);
+
+        // So just `.help` with no args lists not categories, but the commands regular users can run
+
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, pippId, ".help");
+        await im.TestableHelpCommandAsync(context, "");
+
+        var description = generalChannel.Messages.Last().Content;
+        StringAssert.StartsWith(description, "Hii! Here's a list of all the commands you can run!");
+        StringAssert.Contains(description, "help -");
+        StringAssert.Contains(description, "about -");
+        StringAssert.Contains(description, "banner -");
+        StringAssert.Contains(description, "remindme -");
+        StringAssert.Contains(description, "quote -");
+        StringAssert.Contains(description, "Run `.help <command>` for help regarding a specific command!");
     }
 }
