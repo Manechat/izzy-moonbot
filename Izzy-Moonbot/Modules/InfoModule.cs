@@ -37,7 +37,7 @@ public class InfoModule : ModuleBase<SocketCommandContext>
     }
 
     public async Task TestableHelpCommandAsync(
-        IIzzyContext Context,
+        IIzzyContext context,
         string item = "")
     {
         var prefix = _config.Prefix;
@@ -58,7 +58,7 @@ public class InfoModule : ModuleBase<SocketCommandContext>
                 moduleList.Add(moduleInfo);
             }
 
-            await Context.Channel.SendMessageAsync(
+            await context.Channel.SendMessageAsync(
                 $"Hii! Here's how to use the help command!{Environment.NewLine}" +
                 $"Run `{prefix}help <category>` to list the commands in a category.{Environment.NewLine}" +
                 $"Run `{prefix}help <command>` to view information about a command.{Environment.NewLine}{Environment.NewLine}" +
@@ -72,7 +72,7 @@ public class InfoModule : ModuleBase<SocketCommandContext>
             var commandInfo = _commands.Commands.Single<CommandInfo>(command => command.Name.ToLower() == item.ToLower());
             var ponyReadable = PonyReadableCommandHelp(prefix, item, commandInfo);
             ponyReadable += PonyReadableRelevantAliases(prefix, item);
-            await Context.Channel.SendMessageAsync(ponyReadable);
+            await context.Channel.SendMessageAsync(ponyReadable);
         }
         // Module.
         else if (_commands.Modules.Any(module => module.Name.ToLower() == item.ToLower() ||
@@ -115,14 +115,14 @@ public class InfoModule : ModuleBase<SocketCommandContext>
                             $"{(potentialAliases.Length != 0 ? $"{Environment.NewLine}ℹ  This category shares a name with an alias. For information regarding this alias, run `{prefix}help {potentialAliases.First().Name.ToLower()}`.": "")}"
                         };
 
-                var paginationMessage = new PaginationHelper(Context, pages.ToArray(), staticParts);
+                var paginationMessage = new PaginationHelper(context, pages.ToArray(), staticParts);
             }
             else
             {
                 var potentialAliases = _commands.Commands.Where(command =>
                     command.Aliases.Select(alias => alias.ToLower()).Contains(item.ToLower())).ToArray();
 
-                await Context.Channel.SendMessageAsync(
+                await context.Channel.SendMessageAsync(
                     $"Hii! Here's a list of all the commands I could find in the {moduleInfo.Name.Replace("Module", "").Replace("Submodule", "")} category!{Environment.NewLine}" +
                     $"```{Environment.NewLine}{string.Join(Environment.NewLine, commands)}{Environment.NewLine}```{Environment.NewLine}" +
                     $"Run `{prefix}help <command>` for help regarding a specific command!" +
@@ -138,7 +138,7 @@ public class InfoModule : ModuleBase<SocketCommandContext>
             var alternateName = commandInfo.Aliases.Single(alias => alias.ToLower() == item.ToLower());
             var ponyReadable = PonyReadableCommandHelp(prefix, item, commandInfo, alternateName);
             ponyReadable += PonyReadableRelevantAliases(prefix, item);
-            await Context.Channel.SendMessageAsync(ponyReadable);
+            await context.Channel.SendMessageAsync(ponyReadable);
         }
         // Try aliases
         else if (_config.Aliases.Any(alias => alias.Key.ToLower() == item.ToLower()))
@@ -151,17 +151,17 @@ public class InfoModule : ModuleBase<SocketCommandContext>
             if (commandInfo != null)
             {
                 ponyReadable += PonyReadableCommandHelp(prefix, item, commandInfo);
-                await Context.Channel.SendMessageAsync(ponyReadable);
+                await context.Channel.SendMessageAsync(ponyReadable);
                 return;
             }
 
             // Complain
-            await Context.Channel.SendMessageAsync(
+            await context.Channel.SendMessageAsync(
                 $"**Warning!** This alias directs to a non-existent command!{Environment.NewLine}Please remove this alias or redirect it to an existing command.");
         }
         else
         {
-            await Context.Channel.SendMessageAsync($"Sorry, I was unable to find \"{item}\" as either a command, category, or alias.");
+            await context.Channel.SendMessageAsync($"Sorry, I was unable to find \"{item}\" as either a command, category, or alias.");
         }
     }
 
