@@ -205,5 +205,21 @@ public class InfoModuleTests
         await im.TestableHelpCommandAsync(context, "uinfo");
 
         Assert.AreEqual("Sorry, you don't have permission to use the .uinfo command.", generalChannel.Messages.Last().Content);
+
+        // Alias for a mod-only command
+
+        cfg.Aliases.Add("b", "ban");
+
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".help b");
+        await im.TestableHelpCommandAsync(context, "b");
+
+        description = generalChannel.Messages.Last().Content;
+        StringAssert.Contains(description, "**.b** is an alias for **.ban** (see .config Aliases)", null, null);
+        StringAssert.Contains(description, "**.ban** - Admin category", null, null);
+
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, pippId, ".help b");
+        await im.TestableHelpCommandAsync(context, "b");
+
+        Assert.AreEqual("Sorry, you don't have permission to use the .b command.", generalChannel.Messages.Last().Content);
     }
 }

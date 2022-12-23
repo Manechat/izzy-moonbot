@@ -169,16 +169,21 @@ public class InfoModule : ModuleBase<SocketCommandContext>
 
             var commandInfo = _commands.Commands.FirstOrDefault(command => command.Name.ToLower() == alias.Value.Split(" ")[0].ToLower());
 
-            if (commandInfo != null)
+            if (commandInfo == null)
             {
-                ponyReadable += PonyReadableCommandHelp(prefix, item, commandInfo);
-                await context.Channel.SendMessageAsync(ponyReadable);
+                await context.Channel.SendMessageAsync($"**Warning!** This alias directs to a non-existent command!{Environment.NewLine}" +
+                    $"Please remove this alias or redirect it to an existing command.");
+                return;
+            }
+            if (!canRunCommand(commandInfo))
+            {
+                await context.Channel.SendMessageAsync(
+                    $"Sorry, you don't have permission to use the {prefix}{alias.Key} command.");
                 return;
             }
 
-            // Complain
-            await context.Channel.SendMessageAsync(
-                $"**Warning!** This alias directs to a non-existent command!{Environment.NewLine}Please remove this alias or redirect it to an existing command.");
+            ponyReadable += PonyReadableCommandHelp(prefix, item, commandInfo);
+            await context.Channel.SendMessageAsync(ponyReadable);
         }
         else
         {
