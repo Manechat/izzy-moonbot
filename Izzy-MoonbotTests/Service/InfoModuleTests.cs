@@ -134,4 +134,26 @@ public class InfoModuleTests
 
         Assert.IsFalse(generalChannel.Messages.Last().Content.Contains("Relevant aliases:"));
     }
+
+    [TestMethod()]
+    public async Task HelpCommand_AliasesAreLowPriority_Async()
+    {
+        var (cfg, _, (_, sunny), _, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
+        var im = new InfoModule(cfg, await SetupCommandService());
+
+        // Adding a ".ban" alias has no effect on the output of ".help ban", because ".ban" is already a command
+        cfg.Aliases.Add("ban", "echo bye-bye");
+
+        var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".help ban");
+        await im.TestableHelpCommandAsync(context, "ban");
+
+        var description = generalChannel.Messages.Last().Content;
+        StringAssert.Contains(description, "**.ban** - Admin category", null, null);
+        StringAssert.Contains(description, "ℹ  *This is a moderator", null, null);
+        StringAssert.Contains(description, "*Bans a user", null, null);
+        StringAssert.Contains(description, "Syntax: `.ban user [duration]`", null, null);
+        StringAssert.Contains(description, "user [User]", null, null);
+        StringAssert.Contains(description, "duration [Date/Time] {OPTIONAL}", null, null);
+        StringAssert.Contains(description, "Example: ", null, null);
+    }
 }
