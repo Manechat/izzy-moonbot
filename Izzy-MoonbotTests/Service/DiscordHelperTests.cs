@@ -163,6 +163,34 @@ public class DiscordHelperTests
     }
 
     [TestMethod()]
+    public void GetArguments_EscapedQuotesTests()
+    {
+        // TODO: if we ever upgrade to .NET 7 & C# 11, *please* use raw string literals here
+        var argsString = "\"\\\"\""; // = [ ", \, ", " ]
+        AssertArgumentResultsAreEqual(new ArgumentResult { Arguments = new[] { "\\\"" }, Indices = new[] { 4 } }, DiscordHelper.GetArguments(argsString));
+        Assert.AreEqual("", SkippedArgsString(argsString, 0));
+
+        argsString = "\"foo\\\"bar\"";
+        AssertArgumentResultsAreEqual(new ArgumentResult { Arguments = new[] { "foo\\\"bar" }, Indices = new[] { 10 } }, DiscordHelper.GetArguments(argsString));
+        Assert.AreEqual("", SkippedArgsString(argsString, 0));
+
+        argsString = "\"fo\\\"o b\\\"ar\"";
+        AssertArgumentResultsAreEqual(new ArgumentResult { Arguments = new[] { "fo\\\"o b\\\"ar" }, Indices = new[] { 13 } }, DiscordHelper.GetArguments(argsString));
+        Assert.AreEqual("", SkippedArgsString(argsString, 0));
+
+        argsString = "foo\\\" \"bar\"";
+        AssertArgumentResultsAreEqual(new ArgumentResult { Arguments = new[] { "foo\\\"", "bar" }, Indices = new[] { 6, 11 } }, DiscordHelper.GetArguments(argsString));
+        Assert.AreEqual("\"bar\"", SkippedArgsString(argsString, 0));
+        Assert.AreEqual("", SkippedArgsString(argsString, 1));
+
+        argsString = "foo \"bar baz\\\"\" quux";
+        AssertArgumentResultsAreEqual(new ArgumentResult { Arguments = new[] { "foo", "bar baz\\\"", "quux" }, Indices = new[] { 4, 16, 20 } }, DiscordHelper.GetArguments(argsString));
+        Assert.AreEqual("\"bar baz\\\"\" quux", SkippedArgsString(argsString, 0));
+        Assert.AreEqual("quux", SkippedArgsString(argsString, 1));
+        Assert.AreEqual("", SkippedArgsString(argsString, 2));
+    }
+
+    [TestMethod()]
     public async Task UserRoleChannel_GettersTests()
     {
         var (_, _, (izzyHerself, _), _, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
