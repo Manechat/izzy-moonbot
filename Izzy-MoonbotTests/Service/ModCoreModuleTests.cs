@@ -7,6 +7,7 @@ using Izzy_Moonbot.Modules;
 using Izzy_Moonbot;
 using Izzy_Moonbot_Tests.Services;
 using Discord.Commands;
+using Izzy_Moonbot.Describers;
 
 namespace Izzy_Moonbot_Tests.Modules;
 
@@ -23,7 +24,8 @@ public class ModCoreModuleTests
         var ss = new ScheduleService(cfg, mod, modLog, logger, generalStorage, scheduledJobs);
 
         var users = new Dictionary<ulong, User>();
-        return (ss, new ModCoreModule(logger, cfg, users, ss, mod));
+        var cfgDescriber = new ConfigDescriber();
+        return (ss, new ModCoreModule(logger, cfg, users, ss, mod, cfgDescriber));
     }
 
     [TestMethod()]

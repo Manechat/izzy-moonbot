@@ -8,6 +8,7 @@ using Discord;
 using Discord.Commands;
 using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Attributes;
+using Izzy_Moonbot.Describers;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Service;
 using Izzy_Moonbot.Settings;
@@ -23,15 +24,37 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
     private readonly ScheduleService _schedule;
     private readonly Dictionary<ulong, User> _users;
     private readonly ModService _mod;
+    private readonly ConfigDescriber _configDescriber;
 
     public ModCoreModule(LoggingService logger, Config config, Dictionary<ulong, User> users,
-        ScheduleService schedule, ModService mod)
+        ScheduleService schedule, ModService mod, ConfigDescriber configDescriber)
     {
         _logger = logger;
         _config = config;
         _schedule = schedule;
         _users = users;
         _mod = mod;
+        _configDescriber = configDescriber;
+    }
+
+    [Command("config")]
+    [Summary("Config management")]
+    [RequireContext(ContextType.Guild)]
+    [ModCommand(Group = "Permissions")]
+    [DevCommand(Group = "Permissions")]
+    [Parameter("key", ParameterType.String, "The config item to get/modify. This is case sensitive.")]
+    [Parameter("[...]", ParameterType.String, "...", true)]
+    public async Task ConfigCommandAsync(
+        [Summary("The item to get/modify.")] string configItemKey = "",
+        [Summary("")][Remainder] string? value = "")
+    {
+        await ConfigCommand.TestableConfigCommandAsync(
+            new SocketCommandContextAdapter(Context),
+            _config,
+            _configDescriber,
+            configItemKey,
+            value
+        );
     }
 
     [Command("userinfo")]
