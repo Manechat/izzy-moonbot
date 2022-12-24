@@ -1,11 +1,24 @@
-﻿
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Discord;
+using Discord.Commands;
+using Izzy_Moonbot.Adapters;
+using Izzy_Moonbot.Attributes;
+using Izzy_Moonbot.Helpers;
+using Izzy_Moonbot.Service;
+using Izzy_Moonbot.Settings;
+
+namespace Izzy_Moonbot.Modules;
+
 [Summary("Commands for viewing and modifying quotes.")]
-public class QuotesSubmodule : ModuleBase<SocketCommandContext>
+public class QuotesModule : ModuleBase<SocketCommandContext>
 {
     private readonly Config _config;
     private readonly QuoteService _quoteService;
 
-    public QuotesSubmodule(Config config, QuoteService quoteService)
+    public QuotesModule(Config config, QuoteService quoteService)
     {
         _config = config;
         _quoteService = quoteService;

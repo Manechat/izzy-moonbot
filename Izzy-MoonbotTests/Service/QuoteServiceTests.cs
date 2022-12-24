@@ -30,8 +30,6 @@ public class QuoteServiceTests
 
         var qs = new QuoteService(quotes, users);
 
-        var qm = new QuotesSubmodule(cfg, qs);
-
         Assert.AreEqual(new Quote(0, "Sunny", "gonna be my day"), qs.GetRandomQuote(testGuild));
         Assert.AreEqual(new Quote(0, "Sunny", "gonna be my day"), qs.GetRandomQuote(sunny));
 
