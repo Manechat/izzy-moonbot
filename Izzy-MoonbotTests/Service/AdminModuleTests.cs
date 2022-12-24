@@ -101,7 +101,7 @@ public class AdminModuleTests
         await ss.Unicycle(client);
 
         Assert.AreEqual(1, modChat.Messages.Last().Embeds.Count);
-        Assert.AreEqual("Unbanned Pipp#1234 <@4> (4)", modChat.Messages.Last().Embeds.Last().Title);
+        Assert.AreEqual("Unbanned Pipp#1234 (4)", modChat.Messages.Last().Embeds.Last().Title);
         TestUtils.AssertSetsAreEqual(new HashSet<ulong> { hitchId }, guild.BannedUserIds);
         Assert.AreEqual(1, ss.GetScheduledJobs().Count);
 
@@ -109,7 +109,7 @@ public class AdminModuleTests
         await ss.Unicycle(client);
 
         Assert.AreEqual(1, modChat.Messages.Last().Embeds.Count);
-        Assert.AreEqual("Unbanned Hitch#1234 <@5> (5)", modChat.Messages.Last().Embeds.Last().Title);
+        Assert.AreEqual("Unbanned Hitch#1234 (5)", modChat.Messages.Last().Embeds.Last().Title);
         TestUtils.AssertSetsAreEqual(new HashSet<ulong>(), guild.BannedUserIds);
         Assert.AreEqual(0, ss.GetScheduledJobs().Count);
 
