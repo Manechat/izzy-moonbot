@@ -1,13 +1,8 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Settings;
 using Izzy_Moonbot.Service;
-using static Izzy_Moonbot.Modules.MiscModule;
+using Izzy_Moonbot.Modules;
 
 namespace Izzy_Moonbot_Tests.Modules;
 
@@ -26,7 +21,7 @@ public class QuoteModuleTests
 
         var userinfo = new Dictionary<ulong, User>();
         var qs = new QuoteService(quotes, userinfo);
-        var qm = new QuotesSubmodule(cfg, qs);
+        var qm = new QuotesModule(cfg, qs);
 
         var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".quote");
         await qm.TestableQuoteCommandAsync(context, "");
@@ -71,7 +66,7 @@ public class QuoteModuleTests
 
         var userinfo = new Dictionary<ulong, User>();
         var qs = new QuoteService(quotes, userinfo);
-        var qm = new QuotesSubmodule(cfg, qs);
+        var qm = new QuotesModule(cfg, qs);
 
         var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".listquotes");
         await qm.TestableListQuotesCommandAsync(context, "");
@@ -135,7 +130,7 @@ public class QuoteModuleTests
 
         var userinfo = new Dictionary<ulong, User>();
         var qs = new QuoteService(quotes, userinfo);
-        var qm = new QuotesSubmodule(cfg, qs);
+        var qm = new QuotesModule(cfg, qs);
 
         var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".listquotes");
         await qm.TestableListQuotesCommandAsync(context, "");
@@ -161,7 +156,7 @@ public class QuoteModuleTests
 
         var userinfo = new Dictionary<ulong, User>();
         var qs = new QuoteService(quotes, userinfo);
-        var qm = new QuotesSubmodule(cfg, qs);
+        var qm = new QuotesModule(cfg, qs);
 
         var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".listquotes Sunny");
         await qm.TestableListQuotesCommandAsync(context, "Sunny");
@@ -189,7 +184,7 @@ public class QuoteModuleTests
 
         var userinfo = new Dictionary<ulong, User>();
         var qs = new QuoteService(quotes, userinfo);
-        var qm = new QuotesSubmodule(cfg, qs);
+        var qm = new QuotesModule(cfg, qs);
 
         var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".addquote");
         await qm.TestableAddQuoteCommandAsync(context, "");

@@ -1,53 +1,17 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord;
-using Discord.Commands;
 using Izzy_Moonbot.Adapters;
-using Izzy_Moonbot.Attributes;
 using Izzy_Moonbot.Describers;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Settings;
-using Microsoft.AspNetCore.Authorization.Infrastructure;
 
 namespace Izzy_Moonbot.Modules;
 
-[Summary("Configuration management related commands.")]
-public class ConfigModule : ModuleBase<SocketCommandContext>
+public class ConfigCommand
 {
-    private readonly Config _config;
-    private readonly ConfigDescriber _configDescriber;
-
-
-    public ConfigModule(Config config, ConfigDescriber configDescriber)
-    {
-        _config = config;
-        _configDescriber = configDescriber;
-    }
-
-# nullable enable
-    [Command("config")]
-    [Summary("Config management")]
-    [RequireContext(ContextType.Guild)]
-    [ModCommand(Group = "Permissions")]
-    [DevCommand(Group = "Permissions")]
-    [Parameter("key", ParameterType.String, "The config item to get/modify. This is case sensitive.")]
-    [Parameter("[...]", ParameterType.String, "...", true)]
-    public async Task ConfigCommandAsync(
-        [Summary("The item to get/modify.")] string configItemKey = "",
-        [Summary("")] [Remainder] string? value = "")
-    {
-        await TestableConfigCommandAsync(
-            new SocketCommandContextAdapter(Context),
-            _config,
-            _configDescriber,
-            configItemKey,
-            value
-        );
-    }
-
     public static async Task TestableConfigCommandAsync(
         IIzzyContext context,
         Config config,
