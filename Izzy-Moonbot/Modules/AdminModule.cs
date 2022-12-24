@@ -350,23 +350,6 @@ public class AdminModule : ModuleBase<SocketCommandContext>
         await ReplyAsync(output, allowedMentions: AllowedMentions.None);
     }
 
-    [Command("<mention>")]
-    [Summary("Runs when someone mentions Izzy")]
-    public async Task MentionCommandAsync()
-    {
-        if (!_config.MentionResponseEnabled) return; // Responding to mention is disabled.
-        if ((DateTimeOffset.UtcNow - _state.LastMentionResponse).TotalMinutes < _config.MentionResponseCooldown)
-            return; // Still on cooldown.
-
-        var random = new Random();
-        var index = random.Next(_config.MentionResponses.Count);
-        var response = _config.MentionResponses.ElementAt(index); // Random response
-
-        _state.LastMentionResponse = DateTimeOffset.UtcNow;
-
-        await ReplyAsync($"{response}");
-    }
-
     [Command("stowaways")]
     [Summary("List users who do not have the member role.")]
     [RequireContext(ContextType.Guild)]

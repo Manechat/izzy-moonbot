@@ -38,6 +38,7 @@ namespace Izzy_Moonbot
         private readonly ScheduleService _scheduleService;
         private readonly IServiceCollection _services;
         private readonly Config _config;
+        private readonly State _state;
         private readonly Dictionary<ulong, User> _users;
         private readonly ConfigListener _configListener;
         private readonly UserListener _userListener;
@@ -47,7 +48,7 @@ namespace Izzy_Moonbot
 
         public Worker(ILogger<Worker> logger, ModLoggingService modLog, IServiceCollection services, ModService modService, RaidService raidService,
             FilterService filterService, ScheduleService scheduleService, IOptions<DiscordSettings> discordSettings,
-            Config config, Dictionary<ulong, User> users, UserListener userListener, SpamService spamService, ConfigListener configListener)
+            Config config, State state, Dictionary<ulong, User> users, UserListener userListener, SpamService spamService, ConfigListener configListener)
         {
             _logger = logger;
             _modLog = modLog;
@@ -59,6 +60,7 @@ namespace Izzy_Moonbot
             _discordSettings = discordSettings.Value;
             _services = services;
             _config = config;
+            _state = state;
             _users = users;
             _userListener = userListener;
             _spamService = spamService;
@@ -363,98 +365,101 @@ namespace Izzy_Moonbot
             {
                 _logger.Log(LogLevel.Information, $"Received possible command: {messageParam.CleanContent}");
 
-                string parsedMessage;
-                var checkCommands = true;
                 if (message.Content.StartsWith($"<@{_client.CurrentUser.Id}>"))
                 {
-                    checkCommands = false;
-                    parsedMessage = "<mention>";
+                    if (!_config.MentionResponseEnabled) return; // Responding to mention is disabled.
+                    if ((DateTimeOffset.UtcNow - _state.LastMentionResponse).TotalMinutes < _config.MentionResponseCooldown)
+                        return; // Still on cooldown.
+
+                    var random = new Random();
+                    var index = random.Next(_config.MentionResponses.Count);
+                    var response = _config.MentionResponses.ElementAt(index); // Random response
+
+                    _state.LastMentionResponse = DateTimeOffset.UtcNow;
+
+                    await context.Channel.SendMessageAsync($"{response}");
+                    return;
                 }
-                else
-                {
-                    parsedMessage = message.Content[1..].TrimStart();
+
+                string parsedMessage = message.Content[1..].TrimStart();
                     
-                    if (_config.Aliases.Count != 0)
-                    {
-                        var command = parsedMessage.Split(" ");
+                if (_config.Aliases.Count != 0)
+                {
+                    var command = parsedMessage.Split(" ");
                         
-                        foreach (var keyValuePair in _config.Aliases)
+                    foreach (var keyValuePair in _config.Aliases)
+                    {
+                        if (command[0] != keyValuePair.Key) continue;
+                        // Alias match
+                            
+                        var commandAlias = keyValuePair.Value.StartsWith(_config.Prefix)
+                            ? keyValuePair.Value[1..].TrimStart().Split(" ")[0]
+                            : keyValuePair.Value.TrimStart().Split(" ")[0];
+                            
+                        if (_config.Aliases.Any(alias => alias.Key == commandAlias))
                         {
-                            if (command[0] != keyValuePair.Key) continue;
-                            // Alias match
-                            
-                            var commandAlias = keyValuePair.Value.StartsWith(_config.Prefix)
-                                ? keyValuePair.Value[1..].TrimStart().Split(" ")[0]
-                                : keyValuePair.Value.TrimStart().Split(" ")[0];
-                            
-                            if (_config.Aliases.Any(alias => alias.Key == commandAlias))
-                            {
-                                await context.Channel.SendMessageAsync(
-                                    $"**Warning!** This alias directs to another alias!{Environment.NewLine}Izzy doesn't support aliases feeding into aliases. Please remove this alias or redirect it to an existing command.");
-                                return;
-                            }
-
-                            if (_commands.Commands.All(cmd => cmd.Name != commandAlias))
-                            {
-                                await context.Channel.SendMessageAsync(
-                                    $"**Warning!** This alias directs to a non-existent command!{Environment.NewLine}Please remove this alias or redirect it to an existing command.");
-                                return;
-                            }
-
-                            command[0] = keyValuePair.Value.StartsWith(_config.Prefix)
-                                ? keyValuePair.Value[1..]
-                                : keyValuePair.Value;
+                            await context.Channel.SendMessageAsync(
+                                $"**Warning!** This alias directs to another alias!{Environment.NewLine}Izzy doesn't support aliases feeding into aliases. Please remove this alias or redirect it to an existing command.");
+                            return;
                         }
 
-                        parsedMessage = string.Join(" ", command);
+                        if (_commands.Commands.All(cmd => cmd.Name != commandAlias))
+                        {
+                            await context.Channel.SendMessageAsync(
+                                $"**Warning!** This alias directs to a non-existent command!{Environment.NewLine}Please remove this alias or redirect it to an existing command.");
+                            return;
+                        }
+
+                        command[0] = keyValuePair.Value.StartsWith(_config.Prefix)
+                            ? keyValuePair.Value[1..]
+                            : keyValuePair.Value;
                     }
+
+                    parsedMessage = string.Join(" ", command);
                 }
                 
-                if (checkCommands)
+                var inputCommandName = parsedMessage.Split(" ")[0];
+                var validCommand = _commands.Commands.Any(command => 
+                    command.Name == inputCommandName || command.Aliases.Contains(inputCommandName));
+
+                if (!validCommand)
                 {
-                    var inputCommandName = parsedMessage.Split(" ")[0];
-                    var validCommand = _commands.Commands.Any(command => 
-                        command.Name == inputCommandName || command.Aliases.Contains(inputCommandName));
+                    var isDev = DiscordHelper.IsDev(context.User.Id);
+                    var isMod = (context.User is SocketGuildUser guildUser) && (guildUser.Roles.Any(r => r.Id == _config.ModRole));
 
-                    if (!validCommand)
+                    Func<string, bool> isSuggestable = item =>
+                        DiscordHelper.WithinLevenshteinDistanceOf(inputCommandName, item, Convert.ToUInt32(item.Length / 2));
+
+                    Func<CommandInfo, bool> canRunCommand = cinfo =>
                     {
-                        var isDev = DiscordHelper.IsDev(context.User.Id);
-                        var isMod = (context.User is SocketGuildUser guildUser) && (guildUser.Roles.Any(r => r.Id == _config.ModRole));
+                        if (cinfo.Preconditions.Any(attribute => attribute is ModCommandAttribute)) return isMod;
+                        if (cinfo.Preconditions.Any(attribute => attribute is DevCommandAttribute)) return isDev;
+                        return true;
+                    };
+                    Func<string, bool> canRunCommandName = name =>
+                    {
+                        var cinfo = _commands.Commands.Where(c => c.Name == name).SingleOrDefault((CommandInfo?)null);
+                        return cinfo is null ? false : canRunCommand(cinfo);
+                    };
 
-                        Func<string, bool> isSuggestable = item =>
-                            DiscordHelper.WithinLevenshteinDistanceOf(inputCommandName, item, Convert.ToUInt32(item.Length / 2));
+                    // don't bother searching command.Name because command.Aliases always includes the main name
+                    var alternateNamesToSuggest = _commands.Commands.Where(canRunCommand)
+                        .SelectMany(c => c.Aliases).Where(isSuggestable);
+                    var aliasesToSuggest = _config.Aliases.Where(pair => canRunCommandName(pair.Value.TrimStart().Split(" ")[0]))
+                        .Select(pair => pair.Key).Where(isSuggestable);
 
-                        Func<CommandInfo, bool> canRunCommand = cinfo =>
-                        {
-                            if (cinfo.Preconditions.Any(attribute => attribute is ModCommandAttribute)) return isMod;
-                            if (cinfo.Preconditions.Any(attribute => attribute is DevCommandAttribute)) return isDev;
-                            return true;
-                        };
-                        Func<string, bool> canRunCommandName = name =>
-                        {
-                            var cinfo = _commands.Commands.Where(c => c.Name == name).SingleOrDefault((CommandInfo?)null);
-                            return cinfo is null ? false : canRunCommand(cinfo);
-                        };
-
-                        // don't bother searching command.Name because command.Aliases always includes the main name
-                        var alternateNamesToSuggest = _commands.Commands.Where(canRunCommand)
-                            .SelectMany(c => c.Aliases).Where(isSuggestable);
-                        var aliasesToSuggest = _config.Aliases.Where(pair => canRunCommandName(pair.Value.TrimStart().Split(" ")[0]))
-                            .Select(pair => pair.Key).Where(isSuggestable);
-
-                        if (alternateNamesToSuggest.Any() || aliasesToSuggest.Any())
-                        {
-                            var suggestibles = alternateNamesToSuggest.Concat(aliasesToSuggest).Select(s => $"`.{s}`");
-                            var suggestionMessage = $"Sorry, I don't have a `.{inputCommandName}` command. Did you mean {string.Join(" or ", suggestibles)}?";
-                            await context.Channel.SendMessageAsync(suggestionMessage);
-                            return;
-                        }
-                        else
-                        {
-                            _logger.Log(LogLevel.Information, $"Ignoring message {messageParam.CleanContent} because it doesn't match " +
-                                $"any command or alias names, and is not similar enough to any of them to make a suggestion.");
-                            return;
-                        }
+                    if (alternateNamesToSuggest.Any() || aliasesToSuggest.Any())
+                    {
+                        var suggestibles = alternateNamesToSuggest.Concat(aliasesToSuggest).Select(s => $"`.{s}`");
+                        var suggestionMessage = $"Sorry, I don't have a `.{inputCommandName}` command. Did you mean {string.Join(" or ", suggestibles)}?";
+                        await context.Channel.SendMessageAsync(suggestionMessage);
+                        return;
+                    }
+                    else
+                    {
+                        _logger.Log(LogLevel.Information, $"Ignoring message {messageParam.CleanContent} because it doesn't match " +
+                            $"any command or alias names, and is not similar enough to any of them to make a suggestion.");
+                        return;
                     }
                 }
                 
