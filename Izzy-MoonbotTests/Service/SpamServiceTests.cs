@@ -53,7 +53,7 @@ public class SpamServiceTests
         TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, new List<(string, string)>
         {
             ("Silenced User", "<@2> (`2`)"),
-            ("Channel", "<#1>"),
+            ("Channel", $"<#{generalChannel.Id}>"),
             ("Pressure", "This user's last message raised their pressure from 0 to 60, exceeding 60"),
             ("Breakdown of last message", "**Test string**"),
         });

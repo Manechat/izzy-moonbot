@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
 using Flurl.Http;
+using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.EventListeners;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Settings;
@@ -40,14 +41,14 @@ public class ScheduleService
         _scheduledJobs = scheduledJobs;
     }
 
-    public void BeginUnicycleLoop(DiscordSocketClient client)
+    public void BeginUnicycleLoop(IIzzyClient client)
     {
         if (_alreadyInitiated) return;
         _alreadyInitiated = true;
         UnicycleLoop(client);
     }
 
-    private void UnicycleLoop(DiscordSocketClient client)
+    private void UnicycleLoop(IIzzyClient client)
     {
         // Core event loop. Executes every Config.UnicycleInterval seconds.
         Task.Run(async () =>
@@ -69,13 +70,13 @@ public class ScheduleService
         });
     }
 
-    private async Task Unicycle(DiscordSocketClient client)
+    public async Task Unicycle(IIzzyClient client)
     {
         var scheduledJobsToExecute = new List<ScheduledJob>();
 
         foreach (var job in _scheduledJobs)
         {
-            if (job.ExecuteAt.ToUnixTimeMilliseconds() <= DateTimeOffset.UtcNow.ToUnixTimeMilliseconds())
+            if (job.ExecuteAt.ToUnixTimeMilliseconds() <= DateTimeHelper.UtcNow.ToUnixTimeMilliseconds())
             {
                 scheduledJobsToExecute.Add(job);
             }
@@ -222,7 +223,7 @@ public class ScheduleService
     }
     
     // Executors for different types.
-    private async Task Unicycle_AddRole(ScheduledRoleAdditionJob job, SocketGuild guild)
+    private async Task Unicycle_AddRole(ScheduledRoleAdditionJob job, IIzzyGuild guild)
     {
         var role = guild.GetRole(job.Role);
         var user = guild.GetUser(job.User);
@@ -242,7 +243,7 @@ public class ScheduleService
             .Send();
     }
     
-    private async Task Unicycle_RemoveRole(ScheduledRoleRemovalJob job, SocketGuild guild)
+    private async Task Unicycle_RemoveRole(ScheduledRoleRemovalJob job, IIzzyGuild guild)
     {
         var role = guild.GetRole(job.Role);
         var user = guild.GetUser(job.User);
@@ -262,9 +263,9 @@ public class ScheduleService
             .Send();
     }
 
-    private async Task Unicycle_Unban(ScheduledUnbanJob job, SocketGuild guild, DiscordSocketClient client)
+    private async Task Unicycle_Unban(ScheduledUnbanJob job, IIzzyGuild guild, IIzzyClient client)
     {
-        if (await guild.GetBanAsync(job.User) == null) return;
+        if (!await guild.GetIsBannedAsync(job.User)) return;
 
         var user = await client.GetUserAsync(job.User);
         
@@ -287,24 +288,21 @@ public class ScheduleService
             .Send();
     }
 
-    private async Task Unicycle_Echo(ScheduledEchoJob job, SocketGuild guild, DiscordSocketClient client)
+    private async Task Unicycle_Echo(ScheduledEchoJob job, IIzzyGuild guild, IIzzyClient client)
     {
         if (job.Content == "") return;
         var channel = guild.GetTextChannel(job.Channel);
         if (channel == null)
         {
-            var user = await client.GetUserAsync(job.Channel);
-            if (user == null) return;
-
-            await user.SendMessageAsync(job.Content);
+            await client.SendDirectMessageAsync(job.Channel, job.Content);
             return;
         }
 
         await channel.SendMessageAsync(job.Content);
     }
 
-    public async Task Unicycle_BannerRotation(ScheduledBannerRotationJob job, SocketGuild guild,
-        DiscordSocketClient client)
+    public async Task Unicycle_BannerRotation(ScheduledBannerRotationJob job, IIzzyGuild guild,
+        IIzzyClient client)
     {
         if (_config.BannerMode == ConfigListener.BannerMode.None) return;
         if (_config.BannerMode == ConfigListener.BannerMode.CustomRotation && _config.BannerImages.Count == 0) return;
@@ -332,7 +330,7 @@ public class ScheduleService
 
                 var image = new Image(stream);
 
-                await guild.ModifyAsync(properties => properties.Banner = image);
+                await guild.SetBanner(image);
 
                 await _modLogging.CreateModLog(guild)
                     .SetContent(
@@ -421,7 +419,7 @@ public class ScheduleService
 
                 var imageStream = await image.Representations.Thumbnail.GetStreamAsync();
 
-                await guild.ModifyAsync(properties => properties.Banner = new Image(imageStream));
+                await guild.SetBanner(new Image(imageStream));
                 
                 _generalStorage.CurrentBooruFeaturedImage =
                     image;

@@ -1,9 +1,7 @@
 ﻿using Discord;
-using Discord.WebSocket;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace Izzy_Moonbot.Adapters;
 
@@ -18,7 +16,9 @@ public interface IIzzyUser
 public interface IIzzyGuildUser : IIzzyUser
 {
     string DisplayName { get; }
+    int Hierarchy => DisplayName.Contains("Izzy") ? 1 : 0; // not used enough to be worth accurately imitating in tests
     IReadOnlyCollection<IIzzyRole> Roles { get; }
+
     Task AddRoleAsync(ulong roleId, RequestOptions? requestOptions);
     Task AddRolesAsync(IEnumerable<ulong> roles, RequestOptions? requestOptions);
     Task RemoveRoleAsync(ulong memberRole, RequestOptions? requestOptions);
@@ -29,6 +29,7 @@ public interface IIzzyRole
     string Name { get; }
     ulong Id { get; }
     string Mention { get => $"<@&{Id}>"; }
+    int Position => 0; // not used enough to be worth accurately imitating in tests
 }
 
 public interface IIzzyMessageProperties
@@ -97,6 +98,7 @@ public interface IIzzySocketTextChannel
     );
     Task<IIzzyMessage?> GetMessageAsync(ulong messageId);
     Task<IIzzyUserMessage> SendFileAsync(FileAttachment fa, string message);
+    IAsyncEnumerable<IReadOnlyCollection<IIzzyMessage>> GetMessagesAsync(ulong firstMessageId, Direction dir, int limit);
 }
 
 public interface IIzzySocketGuildChannel
@@ -116,6 +118,11 @@ public interface IIzzyGuild
     IIzzyRole? GetRole(ulong roleId);
     IIzzySocketGuildChannel? GetChannel(ulong channelId);
     IIzzySocketTextChannel? GetTextChannel(ulong channelId);
+    Task AddBanAsync(ulong userId, int pruneDays, string reason);
+    Task<bool> GetIsBannedAsync(ulong userId); // replaces the real GetBanAsync method
+    Task RemoveBanAsync(ulong userId);
+    Task SetBanner(Image image); // replaces the real ModifyAsync(props => ...) method
+    IIzzySocketTextChannel? RulesChannel { get; }
 }
 
 public interface IIzzyClient
@@ -140,6 +147,9 @@ public interface IIzzyClient
     event Func<IIzzyHasId, IIzzyHasId, Task> MessageDeleted;
 
     IIzzyContext MakeContext(IIzzyUserMessage message);
+    Task<IIzzyUser?> GetUserAsync(ulong userId);
+    IIzzyGuild? GetGuild(ulong v);
+    Task SendDirectMessageAsync(ulong userId, string text);
 }
 
 public interface IIzzyContext

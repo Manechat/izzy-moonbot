@@ -171,7 +171,7 @@ namespace Izzy_Moonbot
         public async Task ReadyEvent()
         {
             _logger.LogTrace("Ready event called");
-            _scheduleService.BeginUnicycleLoop(_client);
+            _scheduleService.BeginUnicycleLoop(new DiscordSocketClientAdapter(_client));
             
             foreach (var clientGuild in _client.Guilds)
             {

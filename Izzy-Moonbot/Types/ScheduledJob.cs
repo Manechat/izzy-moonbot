@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Discord;
 using Discord.WebSocket;
+using Izzy_Moonbot.Adapters;
 
 namespace Izzy_Moonbot.Settings;
 
@@ -102,7 +103,7 @@ public class ScheduledRoleAdditionJob : ScheduledRoleJob
         Reason = reason;
     }
     
-    public ScheduledRoleAdditionJob(IRole role, IGuildUser user, string? reason = null)
+    public ScheduledRoleAdditionJob(IIzzyRole role, IIzzyGuildUser user, string? reason = null)
     {
         Type = ScheduledJobActionType.AddRole;
         
@@ -131,7 +132,7 @@ public class ScheduledUnbanJob : ScheduledJobAction
         User = user;
     }
 
-    public ScheduledUnbanJob(IUser user)
+    public ScheduledUnbanJob(IIzzyUser user)
     {
         Type = ScheduledJobActionType.Unban;
         
@@ -161,7 +162,7 @@ public class ScheduledEchoJob : ScheduledJobAction
         Content = content;
     }
 
-    public ScheduledEchoJob(IMessageChannel channel, string content)
+    public ScheduledEchoJob(IIzzyMessageChannel channel, string content)
     {
         Type = ScheduledJobActionType.Echo;
         
@@ -169,7 +170,7 @@ public class ScheduledEchoJob : ScheduledJobAction
         Content = content;
     }
 
-    public ScheduledEchoJob(IUser user, string content)
+    public ScheduledEchoJob(IIzzyUser user, string content)
     {
         Type = ScheduledJobActionType.Echo;
         

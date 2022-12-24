@@ -45,13 +45,13 @@ public class FilterServiceTests
         Assert.AreEqual(1, generalChannel.Messages.Count);
         Assert.AreEqual("this is a completely ordinary chat message", generalChannel.Messages.Last().Content);
         Assert.AreEqual(1, modChat.Messages.Count);
-        Assert.AreEqual(" Filter Violation for <@2>", modChat.Messages.Last().Content);
+        Assert.AreEqual($" Filter Violation for <@{sunny.Id}>", modChat.Messages.Last().Content);
 
         TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, new List<(string, string)>
         {
-            ("User", "<@2> (`2`)"),
+            ("User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
             ("Category", "jinxies"),
-            ("Channel", "<#1>"),
+            ("Channel", $"<#{generalChannel.Id}>"),
             ("Trigger Word", "magic"),
             ("Filtered Message", "magic wings of mayonnaise"),
             ("What have I done in response?", ":x: - **I've deleted the offending message.**"),

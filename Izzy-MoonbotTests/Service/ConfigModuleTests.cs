@@ -308,21 +308,21 @@ public class ConfigModuleTests
     [TestMethod()]
     public async Task ConfigCommand_EditChannelSetTestsAsync()
     {
-        var (cfg, cd, (_, sunny), _, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
+        var (cfg, cd, (_, sunny), _, (generalChannel, modChat, _), guild, client) = TestUtils.DefaultStubs();
 
-        cfg.SpamIgnoredChannels.Add(2ul);
-        var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config SpamIgnoredChannels add <#1>");
-        await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "SpamIgnoredChannels", "add <#1>");
-        TestUtils.AssertSetsAreEqual(cfg.SpamIgnoredChannels, new HashSet<ulong> { 2ul, 1ul });
+        cfg.SpamIgnoredChannels.Add(modChat.Id);
+        var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, $".config SpamIgnoredChannels add <#{generalChannel.Id}>");
+        await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "SpamIgnoredChannels", $"add <#{generalChannel.Id}>");
+        TestUtils.AssertSetsAreEqual(cfg.SpamIgnoredChannels, new HashSet<ulong> { modChat.Id, generalChannel.Id });
 
         var description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "SpamIgnoredChannels");
         StringAssert.Contains(description, "I added the following");
         StringAssert.Contains(description, $"{Environment.NewLine}general");
 
-        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config SpamIgnoredChannels remove <#2>");
-        await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "SpamIgnoredChannels", "remove <#2>");
-        TestUtils.AssertSetsAreEqual(cfg.SpamIgnoredChannels, new HashSet<ulong> { 1ul });
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, $".config SpamIgnoredChannels remove <#{modChat.Id}>");
+        await ConfigModule.TestableConfigCommandAsync(context, cfg, cd, "SpamIgnoredChannels", $"remove <#{modChat.Id}>");
+        TestUtils.AssertSetsAreEqual(cfg.SpamIgnoredChannels, new HashSet<ulong> { generalChannel.Id });
 
         description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "SpamIgnoredChannels");

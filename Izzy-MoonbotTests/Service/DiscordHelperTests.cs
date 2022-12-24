@@ -153,13 +153,13 @@ public class DiscordHelperTests
         var (_, _, (izzyHerself, _), _, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
         var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, izzyHerself.Id, "hello");
 
-        Assert.AreEqual(1ul, await GetChannelIdIfAccessAsync("1", context));
+        Assert.AreEqual(generalChannel.Id, await GetChannelIdIfAccessAsync($"{generalChannel.Id}", context));
         Assert.AreEqual(0ul, await GetChannelIdIfAccessAsync("999", context));
 
-        Assert.AreEqual(1ul, await GetChannelIdIfAccessAsync("<#1>", context));
+        Assert.AreEqual(generalChannel.Id, await GetChannelIdIfAccessAsync($"<#{generalChannel.Id}>", context));
         Assert.AreEqual(0ul, await GetChannelIdIfAccessAsync("<#999>", context));
 
-        Assert.AreEqual(1ul, await GetChannelIdIfAccessAsync("general", context));
+        Assert.AreEqual(generalChannel.Id, await GetChannelIdIfAccessAsync("general", context));
         Assert.AreEqual(0ul, await GetChannelIdIfAccessAsync("other", context));
 
         Assert.AreEqual(1ul, GetRoleIdIfAccessAsync("1", context));

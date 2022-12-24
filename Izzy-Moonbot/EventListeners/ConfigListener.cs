@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Discord.WebSocket;
+using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Service;
 using Izzy_Moonbot.Settings;
@@ -67,7 +68,7 @@ public class ConfigListener
             var job = new ScheduledJob(currentTime, executeTime, action, ScheduledJobRepeatType.Relative);
             await _schedule.CreateScheduledJob(job);
             await _logger.Log($"Added scheduled job.", level: LogLevel.Debug);
-            await _schedule.Unicycle_BannerRotation(action, client.GetGuild(DiscordHelper.DefaultGuild()), client);
+            await _schedule.Unicycle_BannerRotation(action, new SocketGuildAdapter(client.GetGuild(DiscordHelper.DefaultGuild())), new DiscordSocketClientAdapter(client));
         }
         else if (original != BannerMode.None && current == BannerMode.None)
         {
@@ -88,7 +89,7 @@ public class ConfigListener
 
             foreach (var scheduledJob in scheduledJobs)
             {
-                await _schedule.Unicycle_BannerRotation((ScheduledBannerRotationJob)scheduledJob.Action, client.GetGuild(DiscordHelper.DefaultGuild()), client);
+                await _schedule.Unicycle_BannerRotation((ScheduledBannerRotationJob)scheduledJob.Action, new SocketGuildAdapter(client.GetGuild(DiscordHelper.DefaultGuild())), new DiscordSocketClientAdapter(client));
             }
         }
     }

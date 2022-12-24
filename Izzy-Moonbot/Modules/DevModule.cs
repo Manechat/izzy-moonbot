@@ -131,7 +131,7 @@ public class DevModule : ModuleBase<SocketCommandContext>
                 Context.Message.ReplyAsync($"UserStore size: {_users.Count}");
                 break;
             case "create-echo-task":
-                var action = new ScheduledEchoJob(Context.Channel,
+                var action = new ScheduledEchoJob(Context.Channel.Id,
                     "Hello! Exactly 1 minute should have passed between the test command and this message!");
                 var task = new ScheduledJob(DateTimeOffset.UtcNow,
                     DateTimeOffset.UtcNow + TimeSpan.FromMinutes(1), action);
@@ -308,7 +308,7 @@ public class DevModule : ModuleBase<SocketCommandContext>
                         "yearly" => ScheduledJobRepeatType.Yearly,
                         _ => ScheduledJobRepeatType.None
                     };
-                    var repeataction = new ScheduledEchoJob(Context.Channel,
+                    var repeataction = new ScheduledEchoJob(Context.Channel.Id,
                         $"Hello! I'm a repeating job occuring `{timeinput}`!");
                     var repeattask = new ScheduledJob(DateTimeOffset.UtcNow,
                         time.Time, repeataction, repeatType);
@@ -337,7 +337,7 @@ public class DevModule : ModuleBase<SocketCommandContext>
                     };
 
                     await _loggingService.Log($"{time.Time:F} {time.RepeatType}");
-                    var repeataction = new ScheduledEchoJob(Context.Channel, "misty");
+                    var repeataction = new ScheduledEchoJob(Context.Channel.Id, "misty");
                     var repeattask = new ScheduledJob(DateTimeOffset.UtcNow,
                         time.Time, repeataction, repeatType);
                     await _scheduleService.CreateScheduledJob(repeattask);

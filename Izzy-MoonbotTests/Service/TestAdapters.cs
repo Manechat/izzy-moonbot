@@ -305,6 +305,23 @@ public class TestTextChannel : IIzzySocketTextChannel
         else
             throw new KeyNotFoundException($"CurrentUser is somehow not in this channel");
     }
+
+    public async IAsyncEnumerable<IReadOnlyCollection<IIzzyMessage>> GetMessagesAsync(ulong firstMessageId, Direction dir, int limit)
+    {
+        var firstMessageIndex = _channel.Messages.FindIndex(m => m.Id == firstMessageId);
+
+        var stubMessages = (dir == Direction.After) ?
+            _channel.Messages.Skip(firstMessageIndex + 1).Take(limit) :
+            Enumerable.Reverse(_channel.Messages).Skip(_channel.Messages.Count - firstMessageIndex + 1).Take(limit);
+
+        foreach (var m in stubMessages)
+        {
+            var user = _guildBackref.Users.Find(u => u.Id == m.AuthorId);
+            yield return new List<IIzzyMessage>{
+                new TestMessage(m, user, _channel, _guildBackref, _clientBackref)
+            };
+        }
+    }
 }
 
 public class TestMessageChannel : IIzzyMessageChannel
@@ -368,9 +385,11 @@ public class StubGuild
     public List<TestRole> Roles;
     public List<TestUser> Users;
     public List<StubChannel> Channels;
+    public StubChannel? RulesChannel = null;
 
     public Dictionary<ulong, List<ulong>> UserRoles = new Dictionary<ulong, List<ulong>>();
     public Dictionary<ulong, ulong> ChannelAccessRole = new Dictionary<ulong, ulong>(); // public channels are absent
+    public ISet<ulong> BannedUserIds { get; } = new HashSet<ulong>();
 
     public StubGuild(ulong id, string name, List<TestRole> roles, List<TestUser> users, List<StubChannel> channels)
     {
@@ -391,6 +410,7 @@ public class TestGuild : IIzzyGuild
 
     private StubGuild _stubGuild;
     private StubClient _clientBackref;
+    private Image? _bannerImage = null;
 
     public TestGuild(StubGuild stub, StubClient client)
     {
@@ -417,6 +437,17 @@ public class TestGuild : IIzzyGuild
         var stubChannel = _stubGuild.Channels.Where(tc => tc.Id == channelId).SingleOrDefault();
         return stubChannel is null ? null : new TestTextChannel(_stubGuild, stubChannel, _clientBackref);
     }
+
+    public async Task AddBanAsync(ulong userId, int _pruneDays, string _reason) =>
+        _stubGuild.BannedUserIds.Add(userId);
+    public async Task<bool> GetIsBannedAsync(ulong userId) =>
+        _stubGuild.BannedUserIds.Contains(userId);
+    public async Task RemoveBanAsync(ulong userId) =>
+        _stubGuild.BannedUserIds.Remove(userId);
+    public async Task SetBanner(Image image) =>
+        _bannerImage = image;
+    public IIzzySocketTextChannel? RulesChannel => _stubGuild.RulesChannel is null ? null :
+        new TestTextChannel(_stubGuild, _stubGuild.RulesChannel, _clientBackref);
 }
 
 public class TestIzzyContext : IIzzyContext
@@ -554,5 +585,37 @@ public class StubClient : IIzzyClient
             // since we don't support DMs yet, that means it's always a *GuildUser
             new TestGuildUser(message.Author.Username, message.Author.Id, stubGuild, this)
         );
+    }
+
+    public async Task<IIzzyUser?> GetUserAsync(ulong userId)
+    {
+        if (CurrentUser.Id == userId) return CurrentUser;
+        foreach (var g in _guilds)
+        {
+            var u = g.Users.Find(u => u.Id == userId);
+            if (u is not null) return u;
+        }
+        return null;
+    }
+
+    public IIzzyGuild? GetGuild(ulong guildId)
+    {
+        var g = _guilds.Find(g => g.Id == guildId);
+        return g is null ? null : new TestGuild(g, this);
+    }
+
+    // Fortunately Izzy only has to think about DMs between herself and another user,
+    // so pretending that there is a single List of DMs for each userId is fine.
+    public Dictionary<ulong, List<StubMessage>> DirectMessages { get; } = new Dictionary<ulong, List<StubMessage>>();
+
+    public async Task SendDirectMessageAsync(ulong userId, string text)
+    {
+        if (await GetUserAsync(userId) == null) return;
+
+        var dm = new StubMessage(Convert.ToUInt64(DirectMessages.Count), text, CurrentUser.Id);
+        if (DirectMessages.ContainsKey(userId))
+            DirectMessages[userId].Add(dm);
+        else
+            DirectMessages[userId] = new List<StubMessage> { dm };
     }
 }

@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Attributes;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Service;
@@ -235,9 +236,19 @@ public class AdminModule : ModuleBase<SocketCommandContext>
     public async Task EchoCommandAsync(
         [Remainder] string argsString = "")
     {
+        await TestableEchoCommandAsync(
+            new SocketCommandContextAdapter(Context),
+            argsString
+        );
+    }
+
+    public async Task TestableEchoCommandAsync(
+        IIzzyContext context,
+        string argsString = "")
+    {
         if (argsString == "")
         {
-            await ReplyAsync("You must provide a channel and a message, or just a message.");
+            await context.Channel.SendMessageAsync("You must provide a channel and a message, or just a message.");
             return;
         }
 
@@ -255,14 +266,14 @@ public class AdminModule : ModuleBase<SocketCommandContext>
             message = "";
         }
 
-        var channelId = await DiscordHelper.GetChannelIdIfAccessAsync(channelName, Context);
+        var channelId = await DiscordHelper.GetChannelIdIfAccessAsync(channelName, context);
 
         if (channelId > 0)
         {
-            var channel = Context.Guild.GetTextChannel(channelId);
+            var channel = context.Guild.GetTextChannel(channelId);
             if (message == "")
             {
-                await ReplyAsync("There's no message to send there.");
+                await context.Channel.SendMessageAsync("There's no message to send there.");
                 return;
             }
 
@@ -272,11 +283,11 @@ public class AdminModule : ModuleBase<SocketCommandContext>
                 return;
             }
 
-            await ReplyAsync("I can't send a message there.");
+            await context.Channel.SendMessageAsync("I can't send a message there.");
             return;
         }
 
-        await ReplyAsync(DiscordHelper.StripQuotes(argsString));
+        await context.Channel.SendMessageAsync(DiscordHelper.StripQuotes(argsString));
     }
 
     [Command("userinfo")]
@@ -427,9 +438,19 @@ public class AdminModule : ModuleBase<SocketCommandContext>
     public async Task BanCommandAsync(
         [Remainder] string argsString = "")
     {
+        await TestableBanCommandAsync(
+            new SocketCommandContextAdapter(Context),
+            argsString
+        );
+    }
+
+    public async Task TestableBanCommandAsync(
+        IIzzyContext Context,
+        string argsString = "")
+    {
         if (argsString == "")
         {
-            await ReplyAsync($"Please provide a user to ban. Refer to `{_config.Prefix}help ban` for more information.");
+            await Context.Channel.SendMessageAsync($"Please provide a user to ban. Refer to `{_config.Prefix}help ban` for more information.");
             return;
         }
         
@@ -448,15 +469,15 @@ public class AdminModule : ModuleBase<SocketCommandContext>
             var rnd = new Random();
             if (rnd.Next(100) == 0)
             {
-                await ReplyAsync("<:izzydeletethis:1028964499723661372>");
+                await Context.Channel.SendMessageAsync("<:izzydeletethis:1028964499723661372>");
             }
             else if (rnd.NextSingle() > 0.5)
             {
-                await ReplyAsync("<:sweetiebroken:399725081674383360>");
+                await Context.Channel.SendMessageAsync("<:sweetiebroken:399725081674383360>");
             }
             else
             {
-                await ReplyAsync("<:izzysadness:910198257702031362>");
+                await Context.Channel.SendMessageAsync("<:izzysadness:910198257702031362>");
             }
 
             return;
@@ -464,13 +485,13 @@ public class AdminModule : ModuleBase<SocketCommandContext>
 
         if (member != null && member.Roles.Select(role => role.Id).Contains(_config.ModRole))
         {
-            await ReplyAsync("I can't ban a mod. <:izzynothoughtsheadempty:910198222255972382>");
+            await Context.Channel.SendMessageAsync("I can't ban a mod. <:izzynothoughtsheadempty:910198222255972382>");
             return;
         }
 
         if (member != null && member.Hierarchy >= Context.Guild.GetUser(Context.Client.CurrentUser.Id).Hierarchy)
         {
-            await ReplyAsync(
+            await Context.Channel.SendMessageAsync(
                 "That user is either at the same level or higher than me in the role hierarchy, I cannot ban them. <:izzynothoughtsheadempty:910198222255972382>");
             return;
         }
@@ -484,20 +505,20 @@ public class AdminModule : ModuleBase<SocketCommandContext>
         }
         catch (FormatException exception)
         {
-            await ReplyAsync($"I encountered an error while attempting to comprehend time: {exception.Message.Split(": ")[1]}");
+            await Context.Channel.SendMessageAsync($"I encountered an error while attempting to comprehend time: {exception.Message.Split(": ")[1]}");
             return;
         }
 
         if (time is { Repeats: true })
         {
-            await ReplyAsync("I can't ban a user repeatedly! Please give me a time that isn't repeating.");
+            await Context.Channel.SendMessageAsync("I can't ban a user repeatedly! Please give me a time that isn't repeating.");
             return;
         }
 
         // Okay, enough joking around, serious Izzy time
-        var existingBan = await Context.Guild.GetBanAsync(userId);
+        var hasExistingBan = await Context.Guild.GetIsBannedAsync(userId);
 
-        if (existingBan == null)
+        if (!hasExistingBan)
         {
             // No ban exists, very serious Izzy time.
             await Context.Guild.AddBanAsync(userId, pruneDays:0, reason:$"Banned by {Context.User.Username}#{Context.User.Discriminator}{(time == null ? "" : $" for {duration}")}.");
@@ -514,7 +535,7 @@ public class AdminModule : ModuleBase<SocketCommandContext>
                 await _schedule.CreateScheduledJob(job);
             }
 
-            await ReplyAsync(
+            await Context.Channel.SendMessageAsync(
                 $"<:izzydeletethis:1028964499723661372> I've banned {(member == null ? $"<@{userId}>" : member.DisplayName)} ({userId}).{(time != null ? $" They'll be unbanned <t:{time.Time.ToUnixTimeSeconds()}:R>." : "")}{Environment.NewLine}{Environment.NewLine}" +
                 $"Here's a userlog I unicycled that you can use if you want to!{Environment.NewLine}```{Environment.NewLine}" +
                 $"Type: Ban ({(duration == "" ? "" : $"{duration} ")}{(time == null ? "Indefinite" : $"<t:{time.Time.ToUnixTimeSeconds()}:R>")}){Environment.NewLine}" +
@@ -538,7 +559,7 @@ public class AdminModule : ModuleBase<SocketCommandContext>
 
                     await _schedule.DeleteScheduledJob(job);
 
-                    await ReplyAsync($"This user is already banned. I have removed an existing unban for them which was scheduled <t:{job.ExecuteAt.ToUnixTimeSeconds()}:R>.{Environment.NewLine}{Environment.NewLine}" +
+                    await Context.Channel.SendMessageAsync($"This user is already banned. I have removed an existing unban for them which was scheduled <t:{job.ExecuteAt.ToUnixTimeSeconds()}:R>.{Environment.NewLine}{Environment.NewLine}" +
                                      $"Here's a userlog I unicycled that you can use if you want to!{Environment.NewLine}```{Environment.NewLine}" +
                                      $"Type: Ban (Indefinite){Environment.NewLine}" +
                                      $"User: <@{userId}> {(member != null ? $"({member.Username}#{member.Discriminator})" : "")} ({userId}){Environment.NewLine}" +
@@ -548,7 +569,7 @@ public class AdminModule : ModuleBase<SocketCommandContext>
                 else
                 {
                     // Doesn't exist, it's already permanent.
-                    await ReplyAsync("This user is already banned, with no scheduled unban. No changes made.");
+                    await Context.Channel.SendMessageAsync("This user is already banned, with no scheduled unban. No changes made.");
                 }
                 
                 return;
@@ -575,7 +596,7 @@ public class AdminModule : ModuleBase<SocketCommandContext>
 
                 await _schedule.ModifyScheduledJob(job.Id, job);
 
-                await ReplyAsync($"This user is already banned. I have modified an existing scheduled unban for them from <t:{jobOriginalExecution}:R> to <t:{job.ExecuteAt.ToUnixTimeSeconds()}:R>.{Environment.NewLine}{Environment.NewLine}" +
+                await Context.Channel.SendMessageAsync($"This user is already banned. I have modified an existing scheduled unban for them from <t:{jobOriginalExecution}:R> to <t:{job.ExecuteAt.ToUnixTimeSeconds()}:R>.{Environment.NewLine}{Environment.NewLine}" +
                                  $"Here's a userlog I unicycled that you can use if you want to!{Environment.NewLine}```{Environment.NewLine}" +
                                  $"Type: Ban ({duration} <t:{time.Time.ToUnixTimeSeconds()}:R>){Environment.NewLine}" +
                                  $"User: <@{userId}> {(member != null ? $"({member.Username}#{member.Discriminator})" : "")} ({userId}){Environment.NewLine}" +
@@ -590,7 +611,7 @@ public class AdminModule : ModuleBase<SocketCommandContext>
                 var job = new ScheduledJob(DateTimeOffset.UtcNow, time.Time, action);
                 await _schedule.CreateScheduledJob(job);
 
-                await ReplyAsync(
+                await Context.Channel.SendMessageAsync(
                     $"This user is already banned. I have scheduled an unban for this user. They'll be unbanned <t:{time.Time.ToUnixTimeSeconds()}:R>{Environment.NewLine}{Environment.NewLine}" +
                     $"Here's a userlog I unicycled that you can use if you want to!{Environment.NewLine}```{Environment.NewLine}" +
                     $"Type: Ban ({duration} <t:{time.Time.ToUnixTimeSeconds()}:R>){Environment.NewLine}" +
@@ -615,9 +636,19 @@ public class AdminModule : ModuleBase<SocketCommandContext>
     public async Task AssignRoleCommandAsync(
         [Remainder] string argsString = "")
     {
+        await TestableAssignRoleCommandAsync(
+            new SocketCommandContextAdapter(Context),
+            argsString
+        );
+    }
+
+    public async Task TestableAssignRoleCommandAsync(
+        IIzzyContext context,
+        string argsString = "")
+    {
         if (argsString == "")
         {
-            await ReplyAsync($"Please provide a user and a role to assign. Refer to `{_config.Prefix}help assignrole` for more information.");
+            await context.Channel.SendMessageAsync($"Please provide a user and a role to assign. Refer to `{_config.Prefix}help assignrole` for more information.");
             return;
         }
 
@@ -629,21 +660,21 @@ public class AdminModule : ModuleBase<SocketCommandContext>
 
         duration = DiscordHelper.StripQuotes(duration);
 
-        var roleId = DiscordHelper.GetRoleIdIfAccessAsync(roleResolvable, Context);
+        var roleId = DiscordHelper.GetRoleIdIfAccessAsync(roleResolvable, context);
         if (roleId == 0)
         {
-            await ReplyAsync("I couldn't find that role, sorry!");
+            await context.Channel.SendMessageAsync("I couldn't find that role, sorry!");
             return;
         }
-        var role = Context.Guild.GetRole(roleId);
+        var role = context.Guild.GetRole(roleId);
 
-        var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(userResolvable, Context);
+        var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(userResolvable, context);
         if (userId == 0)
         {
-            await ReplyAsync("I couldn't find that user, sorry!");
+            await context.Channel.SendMessageAsync("I couldn't find that user, sorry!");
             return;
         }
-        var maybeMember = Context.Guild.GetUser(userId);
+        var maybeMember = context.Guild.GetUser(userId);
 
         // Comprehend time
         TimeHelperResponse? time = null;
@@ -654,21 +685,21 @@ public class AdminModule : ModuleBase<SocketCommandContext>
         }
         catch (FormatException exception)
         {
-            await ReplyAsync($"I encountered an error while attempting to comprehend time: {exception.Message.Split(": ")[1]}");
+            await context.Channel.SendMessageAsync($"I encountered an error while attempting to comprehend time: {exception.Message.Split(": ")[1]}");
             return;
         }
 
         if (time is { Repeats: true })
         {
-            await ReplyAsync("I can't assign a role repeatedly! Please give me a time that isn't repeating.");
+            await context.Channel.SendMessageAsync("I can't assign a role repeatedly! Please give me a time that isn't repeating.");
             return;
         }
 
-        if (maybeMember is SocketGuildUser member)
+        if (maybeMember is IIzzyGuildUser member)
         {
-            if (role.Position >= Context.Guild.GetUser(Context.Client.CurrentUser.Id).Hierarchy)
+            if (role.Position >= context.Guild.GetUser(context.Client.CurrentUser.Id).Hierarchy)
             {
-                await ReplyAsync(
+                await context.Channel.SendMessageAsync(
                     "That role is either at the same level or higher than me in the role hierarchy, I cannot assign it. <:izzynothoughtsheadempty:910198222255972382>");
                 return;
             }
@@ -725,11 +756,11 @@ public class AdminModule : ModuleBase<SocketCommandContext>
                 }
             }
 
-            await ReplyAsync(message, allowedMentions: AllowedMentions.None);
+            await context.Channel.SendMessageAsync(message, allowedMentions: AllowedMentions.None);
         }
         else
         {
-            await ReplyAsync("I couldn't find that user, sorry!");
+            await context.Channel.SendMessageAsync("I couldn't find that user, sorry!");
             return;
         }
     }
