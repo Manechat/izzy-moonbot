@@ -401,37 +401,4 @@ public class DevModule : ModuleBase<SocketCommandContext>
                 break;
         }
     }
-
-    [Summary("Submodule for viewing and modifying the realtime state of Izzy Moonbot")]
-    public class StateSubmodule : ModuleBase<SocketCommandContext>
-    {
-        private State _state;
-
-        public StateSubmodule(State state)
-        {
-            _state = state;
-        }
-
-        [Command("state")]
-        [Summary("State values")]
-        public async Task StateCommandAsync([Summary("State name")] string stateKey = "")
-        {
-            if (stateKey == "")
-            {
-                var stateKeys = typeof(State).GetProperties().Select(info => info.Name);
-                await ReplyAsync(
-                    $"Please provide a state to view the value of (`.state <state>`):{Environment.NewLine}```{Environment.NewLine}" +
-                    string.Join(", ", stateKeys) +
-                    $"{Environment.NewLine}```");
-            }
-        }
-
-        public static bool DoesStateExist<T>(string key) where T : State
-        {
-            var t = typeof(T);
-
-            if (t.GetProperty(key) == null) return false;
-            return true;
-        }
-    }
 }
