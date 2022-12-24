@@ -37,47 +37,83 @@ public class InfoModule : ModuleBase<SocketCommandContext>
     }
 
     public async Task TestableHelpCommandAsync(
-        IIzzyContext Context,
+        IIzzyContext context,
         string item = "")
     {
         var prefix = _config.Prefix;
 
+        var isDev = DiscordHelper.IsDev(context.User.Id);
+        var isMod = (context.User is IIzzyGuildUser guildUser) && (guildUser.Roles.Any(r => r.Id == _config.ModRole));
+
+        Func<CommandInfo, bool> canRunCommand = cinfo =>
+        {
+            if (cinfo.Preconditions.Any(attribute => attribute is ModCommandAttribute)) return isMod;
+            if (cinfo.Preconditions.Any(attribute => attribute is DevCommandAttribute)) return isDev;
+            return true;
+        };
+
         if (item == "")
         {
-            // List modules.
-            var moduleList = new List<string>();
-
-            foreach (var module in _commands.Modules)
+            if (isDev || isMod)
             {
-                if (module.IsSubmodule) continue;
-                if (module.Name == "DevModule") continue; // Hide dev module
-                var moduleInfo = $"{module.Name.Replace("Module", "").ToLower()} - {module.Summary}";
-                foreach (var submodule in module.Submodules)
-                    moduleInfo += $"{Environment.NewLine}    {submodule.Name.Replace("Submodule", "").ToLower()} - {submodule.Summary}";
+                // List modules.
+                var moduleList = new List<string>();
 
-                moduleList.Add(moduleInfo);
+                foreach (var module in _commands.Modules)
+                {
+                    if (module.IsSubmodule) continue;
+                    if (module.Name == "DevModule") continue; // Hide dev module
+                    var moduleInfo = $"{module.Name.Replace("Module", "").ToLower()} - {module.Summary}";
+                    foreach (var submodule in module.Submodules)
+                        moduleInfo += $"{Environment.NewLine}    {submodule.Name.Replace("Submodule", "").ToLower()} - {submodule.Summary}";
+
+                    moduleList.Add(moduleInfo);
+                }
+
+                await context.Channel.SendMessageAsync(
+                    $"Hii! Here's how to use the help command!{Environment.NewLine}" +
+                    $"Run `{prefix}help <category>` to list the commands in a category.{Environment.NewLine}" +
+                    $"Run `{prefix}help <command>` to view information about a command.{Environment.NewLine}{Environment.NewLine}" +
+                    $"Here's a list of all the categories I have!{Environment.NewLine}" +
+                    $"```{Environment.NewLine}{string.Join(Environment.NewLine, moduleList)}{Environment.NewLine}```{Environment.NewLine}" +
+                    $"ℹ  **See also: `{prefix}config`. Run `{prefix}help config` for more information.**");
             }
+            else
+            {
+                // List non-mod/non-dev commands
+                var regularUserCommands = _commands.Commands.Where(cinfo =>
+                    !cinfo.Preconditions.Any(attribute => attribute is DevCommandAttribute) &&
+                    !cinfo.Preconditions.Any(attribute => attribute is ModCommandAttribute));
 
-            await Context.Channel.SendMessageAsync(
-                $"Hii! Here's how to use the help command!{Environment.NewLine}" +
-                $"Run `{prefix}help <category>` to list the commands in a category.{Environment.NewLine}" +
-                $"Run `{prefix}help <command>` to view information about a command.{Environment.NewLine}{Environment.NewLine}" +
-                $"Here's a list of all the categories I have!{Environment.NewLine}" +
-                $"```{Environment.NewLine}{string.Join(Environment.NewLine, moduleList)}{Environment.NewLine}```{Environment.NewLine}" +
-                $"ℹ  **See also: `{prefix}config`. Run `{prefix}help config` for more information.**");
+                var commandSummaries = regularUserCommands.Select<CommandInfo, string>(command =>
+                    $"{prefix}{command.Name} - {command.Summary}"
+                ).ToList();
+
+                // Izzy is not expected to get enough non-mod commands to ever need pagination here
+                await context.Channel.SendMessageAsync(
+                    $"Hii! Here's a list of all the commands you can run!{Environment.NewLine}" +
+                    $"```{Environment.NewLine}{string.Join(Environment.NewLine, commandSummaries)}{Environment.NewLine}```{Environment.NewLine}" +
+                    $"Run `{prefix}help <command>` for help regarding a specific command!");
+            }
         }
         else if (_commands.Commands.Any(command => command.Name.ToLower() == item.ToLower()))
         {
             // It's a command!
             var commandInfo = _commands.Commands.Single<CommandInfo>(command => command.Name.ToLower() == item.ToLower());
-            var ponyReadable = PonyReadableCommandHelp(prefix, item, commandInfo);
-            ponyReadable += PonyReadableRelevantAliases(prefix, item);
-            await Context.Channel.SendMessageAsync(ponyReadable);
+            if (canRunCommand(commandInfo))
+            {
+                var ponyReadable = PonyReadableCommandHelp(prefix, item, commandInfo);
+                ponyReadable += PonyReadableRelevantAliases(prefix, item);
+                await context.Channel.SendMessageAsync(ponyReadable);
+            }
+            else await context.Channel.SendMessageAsync(
+                $"Sorry, you don't have permission to use the {prefix}{commandInfo.Name} command.");
         }
         // Module.
-        else if (_commands.Modules.Any(module => module.Name.ToLower() == item.ToLower() ||
-                                                 module.Name.ToLower() == item.ToLower() + "module" ||
-                                                 module.Name.ToLower() == item.ToLower() + "submodule"))
+        else if ((isDev || isMod) &&
+            _commands.Modules.Any(module => module.Name.ToLower() == item.ToLower() ||
+                                            module.Name.ToLower() == item.ToLower() + "module" ||
+                                            module.Name.ToLower() == item.ToLower() + "submodule"))
         {
             // It's a module!
             var moduleInfo = _commands.Modules.Single<ModuleInfo>(module =>
@@ -115,14 +151,14 @@ public class InfoModule : ModuleBase<SocketCommandContext>
                             $"{(potentialAliases.Length != 0 ? $"{Environment.NewLine}ℹ  This category shares a name with an alias. For information regarding this alias, run `{prefix}help {potentialAliases.First().Name.ToLower()}`.": "")}"
                         };
 
-                var paginationMessage = new PaginationHelper(Context, pages.ToArray(), staticParts);
+                var paginationMessage = new PaginationHelper(context, pages.ToArray(), staticParts);
             }
             else
             {
                 var potentialAliases = _commands.Commands.Where(command =>
                     command.Aliases.Select(alias => alias.ToLower()).Contains(item.ToLower())).ToArray();
 
-                await Context.Channel.SendMessageAsync(
+                await context.Channel.SendMessageAsync(
                     $"Hii! Here's a list of all the commands I could find in the {moduleInfo.Name.Replace("Module", "").Replace("Submodule", "")} category!{Environment.NewLine}" +
                     $"```{Environment.NewLine}{string.Join(Environment.NewLine, commands)}{Environment.NewLine}```{Environment.NewLine}" +
                     $"Run `{prefix}help <command>` for help regarding a specific command!" +
@@ -136,9 +172,14 @@ public class InfoModule : ModuleBase<SocketCommandContext>
             // Alternate detected!
             var commandInfo = _commands.Commands.Single<CommandInfo>(command => command.Aliases.Select(alias => alias.ToLower()).Contains(item.ToLower()));
             var alternateName = commandInfo.Aliases.Single(alias => alias.ToLower() == item.ToLower());
-            var ponyReadable = PonyReadableCommandHelp(prefix, item, commandInfo, alternateName);
-            ponyReadable += PonyReadableRelevantAliases(prefix, item);
-            await Context.Channel.SendMessageAsync(ponyReadable);
+            if (canRunCommand(commandInfo))
+            {
+                var ponyReadable = PonyReadableCommandHelp(prefix, item, commandInfo, alternateName);
+                ponyReadable += PonyReadableRelevantAliases(prefix, item);
+                await context.Channel.SendMessageAsync(ponyReadable);
+            }
+            else await context.Channel.SendMessageAsync(
+                $"Sorry, you don't have permission to use the {prefix}{alternateName} command.");
         }
         // Try aliases
         else if (_config.Aliases.Any(alias => alias.Key.ToLower() == item.ToLower()))
@@ -148,20 +189,25 @@ public class InfoModule : ModuleBase<SocketCommandContext>
 
             var commandInfo = _commands.Commands.FirstOrDefault(command => command.Name.ToLower() == alias.Value.Split(" ")[0].ToLower());
 
-            if (commandInfo != null)
+            if (commandInfo == null)
             {
-                ponyReadable += PonyReadableCommandHelp(prefix, item, commandInfo);
-                await Context.Channel.SendMessageAsync(ponyReadable);
+                await context.Channel.SendMessageAsync($"**Warning!** This alias directs to a non-existent command!{Environment.NewLine}" +
+                    $"Please remove this alias or redirect it to an existing command.");
+                return;
+            }
+            if (!canRunCommand(commandInfo))
+            {
+                await context.Channel.SendMessageAsync(
+                    $"Sorry, you don't have permission to use the {prefix}{alias.Key} command.");
                 return;
             }
 
-            // Complain
-            await Context.Channel.SendMessageAsync(
-                $"**Warning!** This alias directs to a non-existent command!{Environment.NewLine}Please remove this alias or redirect it to an existing command.");
+            ponyReadable += PonyReadableCommandHelp(prefix, item, commandInfo);
+            await context.Channel.SendMessageAsync(ponyReadable);
         }
         else
         {
-            await Context.Channel.SendMessageAsync($"Sorry, I was unable to find \"{item}\" as either a command, category, or alias.");
+            await context.Channel.SendMessageAsync($"Sorry, I was unable to find any command, category, or alias named \"{item}\" that you have access to.");
         }
     }
 

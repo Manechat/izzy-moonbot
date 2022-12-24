@@ -61,8 +61,9 @@ public class InfoModuleTests
     [TestMethod()]
     public async Task HelpCommand_BreathingTestsAsync()
     {
-        var (cfg, _, (_, sunny), _, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
+        var (cfg, _, (_, sunny), roles, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
         var im = new InfoModule(cfg, await SetupCommandService());
+        cfg.ModRole = roles[0].Id;
 
         var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".help");
         await im.TestableHelpCommandAsync(context, "");
@@ -74,6 +75,14 @@ public class InfoModuleTests
         StringAssert.Contains(description, "raid - ");
         StringAssert.Contains(description, "spam - ");
         StringAssert.Contains(description, "ℹ  **See also: `.config`");
+
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".help admin");
+        await im.TestableHelpCommandAsync(context, "admin");
+
+        description = generalChannel.Messages.Last().Content;
+        StringAssert.Contains(description, "list of all the commands");
+        StringAssert.Contains(description, "echo - ");
+        StringAssert.Contains(description, "ban - ");
 
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".help ban");
         await im.TestableHelpCommandAsync(context, "ban");
@@ -92,8 +101,9 @@ public class InfoModuleTests
     [TestMethod()]
     public async Task HelpCommand_Aliases_TestsAsync()
     {
-        var (cfg, _, (_, sunny), _, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
+        var (cfg, _, (_, sunny), roles, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
         var im = new InfoModule(cfg, await SetupCommandService());
+        cfg.ModRole = roles[0].Id;
 
         // Check .help's regular behavior before adding aliases
         var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".help addquote");
@@ -106,7 +116,8 @@ public class InfoModuleTests
         await im.TestableHelpCommandAsync(context, "moonlaser");
 
         var description = generalChannel.Messages.Last().Content;
-        StringAssert.Contains(description, "Sorry, I was unable to find \"moonlaser\"", null, null);
+        StringAssert.Contains(description, "Sorry, I was unable to", null, null);
+        StringAssert.Contains(description, "\"moonlaser\"", null, null);
 
         cfg.Aliases.Add("moonlaser", "addquote moon");
         cfg.Aliases.Add("sayhi", "echo <#1> hi");
@@ -133,5 +144,121 @@ public class InfoModuleTests
         await im.TestableHelpCommandAsync(context, "ass");
 
         Assert.IsFalse(generalChannel.Messages.Last().Content.Contains("Relevant aliases:"));
+    }
+
+    [TestMethod()]
+    public async Task HelpCommand_AliasesAreLowPriority_Async()
+    {
+        var (cfg, _, (_, sunny), roles, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
+        var im = new InfoModule(cfg, await SetupCommandService());
+
+        cfg.ModRole = roles[0].Id;
+        // Adding a ".ban" alias has no effect on the output of ".help ban", because ".ban" is already a command
+        cfg.Aliases.Add("ban", "echo bye-bye");
+
+        var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".help ban");
+        await im.TestableHelpCommandAsync(context, "ban");
+
+        var description = generalChannel.Messages.Last().Content;
+        StringAssert.Contains(description, "**.ban** - Admin category", null, null);
+        StringAssert.Contains(description, "ℹ  *This is a moderator", null, null);
+        StringAssert.Contains(description, "*Bans a user", null, null);
+        StringAssert.Contains(description, "Syntax: `.ban user [duration]`", null, null);
+        StringAssert.Contains(description, "user [User]", null, null);
+        StringAssert.Contains(description, "duration [Date/Time] {OPTIONAL}", null, null);
+        StringAssert.Contains(description, "Example: ", null, null);
+    }
+
+    [TestMethod()]
+    public async Task HelpCommand_RegularUsers_ModOnlyCommands_Async()
+    {
+        var (cfg, _, (_, sunny), roles, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
+        var im = new InfoModule(cfg, await SetupCommandService());
+
+        cfg.ModRole = roles[0].Id; // Sunny is a moderator
+        var pippId = guild.Users[3].Id; // Pipp is NOT a moderator
+
+        // Mod-only command
+
+        var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".help ban");
+        await im.TestableHelpCommandAsync(context, "ban");
+
+        var description = generalChannel.Messages.Last().Content;
+        StringAssert.Contains(description, "**.ban** - Admin category", null, null);
+        StringAssert.Contains(description, "ℹ  *This is a moderator", null, null);
+        StringAssert.Contains(description, "*Bans a user", null, null);
+        StringAssert.Contains(description, "Syntax: `.ban user [duration]`", null, null);
+        StringAssert.Contains(description, "user [User]", null, null);
+        StringAssert.Contains(description, "duration [Date/Time] {OPTIONAL}", null, null);
+        StringAssert.Contains(description, "Example: ", null, null);
+
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, pippId, ".help ban");
+        await im.TestableHelpCommandAsync(context, "ban");
+
+        Assert.AreEqual("Sorry, you don't have permission to use the .ban command.", generalChannel.Messages.Last().Content);
+
+        // Alternate name for a mod-only command
+
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".help uinfo");
+        await im.TestableHelpCommandAsync(context, "uinfo");
+
+        description = generalChannel.Messages.Last().Content;
+        StringAssert.Contains(description, "**.uinfo** (alternate name of **.userinfo**) - Admin category", null, null);
+        StringAssert.Contains(description, "ℹ  *This is a moderator", null, null);
+        StringAssert.Contains(description, "*Get information about a user", null, null);
+        StringAssert.Contains(description, "Syntax: `.userinfo [user]`", null, null);
+        StringAssert.Contains(description, "user [User]", null, null);
+
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, pippId, ".help uinfo");
+        await im.TestableHelpCommandAsync(context, "uinfo");
+
+        Assert.AreEqual("Sorry, you don't have permission to use the .uinfo command.", generalChannel.Messages.Last().Content);
+
+        // Alias for a mod-only command
+
+        cfg.Aliases.Add("b", "ban");
+
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".help b");
+        await im.TestableHelpCommandAsync(context, "b");
+
+        description = generalChannel.Messages.Last().Content;
+        StringAssert.Contains(description, "**.b** is an alias for **.ban** (see .config Aliases)", null, null);
+        StringAssert.Contains(description, "**.ban** - Admin category", null, null);
+
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, pippId, ".help b");
+        await im.TestableHelpCommandAsync(context, "b");
+
+        Assert.AreEqual("Sorry, you don't have permission to use the .b command.", generalChannel.Messages.Last().Content);
+    }
+
+    [TestMethod()]
+    public async Task HelpCommand_RegularUsers_ListingCommands_Async()
+    {
+        var (cfg, _, (_, sunny), roles, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
+        var im = new InfoModule(cfg, await SetupCommandService());
+
+        cfg.ModRole = roles[0].Id; // Sunny is a moderator
+        var pippId = guild.Users[3].Id; // Pipp is NOT a moderator
+
+        // For regular users, command categories don't exist, because they have so few commands it's not worth it
+
+        var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, pippId, ".help admin");
+        await im.TestableHelpCommandAsync(context, "admin");
+
+        Assert.AreEqual("Sorry, I was unable to find any command, category, or alias named \"admin\" that you have access to.", generalChannel.Messages.Last().Content);
+
+        // So just `.help` with no args lists not categories, but the commands regular users can run
+
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, pippId, ".help");
+        await im.TestableHelpCommandAsync(context, "");
+
+        var description = generalChannel.Messages.Last().Content;
+        StringAssert.StartsWith(description, "Hii! Here's a list of all the commands you can run!");
+        StringAssert.Contains(description, "help -");
+        StringAssert.Contains(description, "about -");
+        StringAssert.Contains(description, "banner -");
+        StringAssert.Contains(description, "remindme -");
+        StringAssert.Contains(description, "quote -");
+        StringAssert.Contains(description, "Run `.help <command>` for help regarding a specific command!");
     }
 }
