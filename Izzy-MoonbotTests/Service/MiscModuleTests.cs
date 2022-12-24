@@ -170,12 +170,12 @@ public class MiscModuleTests
         StringAssert.Contains(description, "spam - ");
         StringAssert.Contains(description, "ℹ  **See also: `.config`");
 
-        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".help admin");
-        await mm.TestableHelpCommandAsync(context, "admin");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".help modcore");
+        await mm.TestableHelpCommandAsync(context, "modcore");
 
         description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "list of all the commands");
-        StringAssert.Contains(description, "echo - ");
+        StringAssert.Contains(description, "assignrole - ");
         StringAssert.Contains(description, "ban - ");
 
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".help ban");
@@ -183,7 +183,7 @@ public class MiscModuleTests
 
         description = generalChannel.Messages.Last().Content;
         // StringAssert.Contains is broken for strings with {}s, but explicitly passing some nulls works around that
-        StringAssert.Contains(description, "**.ban** - Admin category", null, null);
+        StringAssert.Contains(description, "**.ban** - ModCore category", null, null);
         StringAssert.Contains(description, "ℹ  *This is a moderator", null, null);
         StringAssert.Contains(description, "*Bans a user", null, null);
         StringAssert.Contains(description, "Syntax: `.ban user [duration]`", null, null);
@@ -254,7 +254,7 @@ public class MiscModuleTests
         await mm.TestableHelpCommandAsync(context, "ban");
 
         var description = generalChannel.Messages.Last().Content;
-        StringAssert.Contains(description, "**.ban** - Admin category", null, null);
+        StringAssert.Contains(description, "**.ban** - ModCore category", null, null);
         StringAssert.Contains(description, "ℹ  *This is a moderator", null, null);
         StringAssert.Contains(description, "*Bans a user", null, null);
         StringAssert.Contains(description, "Syntax: `.ban user [duration]`", null, null);
@@ -278,7 +278,7 @@ public class MiscModuleTests
         await mm.TestableHelpCommandAsync(context, "ban");
 
         var description = generalChannel.Messages.Last().Content;
-        StringAssert.Contains(description, "**.ban** - Admin category", null, null);
+        StringAssert.Contains(description, "**.ban** - ModCore category", null, null);
         StringAssert.Contains(description, "ℹ  *This is a moderator", null, null);
         StringAssert.Contains(description, "*Bans a user", null, null);
         StringAssert.Contains(description, "Syntax: `.ban user [duration]`", null, null);
@@ -297,7 +297,7 @@ public class MiscModuleTests
         await mm.TestableHelpCommandAsync(context, "uinfo");
 
         description = generalChannel.Messages.Last().Content;
-        StringAssert.Contains(description, "**.uinfo** (alternate name of **.userinfo**) - Admin category", null, null);
+        StringAssert.Contains(description, "**.uinfo** (alternate name of **.userinfo**) - ModCore category", null, null);
         StringAssert.Contains(description, "ℹ  *This is a moderator", null, null);
         StringAssert.Contains(description, "*Get information about a user", null, null);
         StringAssert.Contains(description, "Syntax: `.userinfo [user]`", null, null);
@@ -317,7 +317,7 @@ public class MiscModuleTests
 
         description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "**.b** is an alias for **.ban** (see .config Aliases)", null, null);
-        StringAssert.Contains(description, "**.ban** - Admin category", null, null);
+        StringAssert.Contains(description, "**.ban** - ModCore category", null, null);
 
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, pippId, ".help b");
         await mm.TestableHelpCommandAsync(context, "b");
