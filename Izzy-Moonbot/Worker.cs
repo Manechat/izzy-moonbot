@@ -368,7 +368,7 @@ namespace Izzy_Moonbot
                 if (message.Content.StartsWith($"<@{_client.CurrentUser.Id}>"))
                 {
                     if (!_config.MentionResponseEnabled) return; // Responding to mention is disabled.
-                    if ((DateTimeOffset.UtcNow - _state.LastMentionResponse).TotalMinutes < _config.MentionResponseCooldown)
+                    if ((DateTimeOffset.UtcNow - _state.LastMentionResponse).TotalSeconds < _config.MentionResponseCooldown)
                         return; // Still on cooldown.
 
                     var random = new Random();
