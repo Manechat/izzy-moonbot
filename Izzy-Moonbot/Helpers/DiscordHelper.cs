@@ -149,20 +149,21 @@ public static class DiscordHelper
             var argument = characters[i];
             if (!IsSpace(argument))
             {
-                var start = 0;
-                var end = 0;
-
+                int rawLength;
                 var safePrevious = (char?)GetSafely(characters, i - 1);
                 
                 if (argument == '"' && (i < 1 || safePrevious != '\\'))
                 {
                     i++;
-                    start = i;
-                    
+                    var start = i;
+
                     while (i < content.Length && (characters[i] != '"' || characters[i-1] == '\\'))
                     {
                         i++;
                     }
+                    rawLength = i - start + 2;
+
+                    int end;
                     if (i-1 >= 0 && characters[i-1] == '\\')
                     {
                         end = i - 1;
@@ -171,10 +172,11 @@ public static class DiscordHelper
                     {
                         end = i;
                     }
+                    arguments.Add(string.Join("", content[new Range(start, end)]));
                 }
                 else
                 {
-                    start = i;
+                    var start = i;
                     i++;
                     
                     while (i < content.Length && !IsSpace(characters[i]) &&
@@ -182,14 +184,14 @@ public static class DiscordHelper
                     {
                         i++;
                     }
-                    end = i;
+                    rawLength = i - start;
+                    arguments.Add(string.Join("", content[new Range(start, i)]));
                 }
-                arguments.Add(string.Join("", content[new Range(start, end)]));
 
                 var previousIndex = 0;
                 if (indices.Count >= 1) previousIndex = indices[^1];
 
-                var nextIndex = previousIndex + (end - start);
+                var nextIndex = previousIndex + rawLength;
                 while (nextIndex < characters.Length && IsSpace(characters[nextIndex]))
                     nextIndex++;
 
