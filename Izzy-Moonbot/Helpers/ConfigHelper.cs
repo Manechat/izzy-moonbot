@@ -85,7 +85,7 @@ public static class ConfigHelper
 
                 if (roleId == 0) throw new MemberAccessException($"Couldn't find role using resolvable `{roleResolvable}`");
 
-                role = context.Guild.GetRole(roleId);
+                role = context.Guild?.GetRole(roleId);
 
                 pinfo.SetValue(settings, roleId, null);
             }
@@ -113,7 +113,7 @@ public static class ConfigHelper
 
                 if (channelId == 0) throw new MemberAccessException($"Couldn't find channel using resolvable `{channelResolvable}`");
 
-                channel = context.Guild.GetChannel(channelId);
+                channel = context.Guild?.GetChannel(channelId);
 
                 pinfo.SetValue(settings, channelId, null);
             }
@@ -212,7 +212,9 @@ public static class ConfigHelper
     {
         HashSet<IIzzyUser> finalSet = new();
 
-        foreach (var user in set) finalSet.Add(context.Guild.GetUser(user));
+        foreach (var userId in set)
+            if (context.Guild?.GetUser(userId) is IIzzyUser user)
+                finalSet.Add(user);
 
         return finalSet;
     }
@@ -235,7 +237,7 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<IIzzyUser> AddToUserSet(Config settings, string key,
+    public static async Task<IIzzyUser?> AddToUserSet(Config settings, string key,
         string userResolvable, IIzzyContext context)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
@@ -248,7 +250,7 @@ public static class ConfigHelper
                 var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(userResolvable, context);
                 if (userId == 0) throw new MemberAccessException($"Cannot access user '{userResolvable}'.");
 
-                var user = context.Guild.GetUser(userId);
+                var user = context.Guild?.GetUser(userId);
 
                 var result = set.Add(userId);
                 if (!result) throw new ArgumentOutOfRangeException($"'{userId}' is already present within the HashSet.");
@@ -263,7 +265,7 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<IIzzyUser> RemoveFromUserSet(Config settings, string key,
+    public static async Task<IIzzyUser?> RemoveFromUserSet(Config settings, string key,
         string userResolvable, IIzzyContext context)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
@@ -276,7 +278,7 @@ public static class ConfigHelper
                 var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(userResolvable, context);
                 if (userId == 0) throw new MemberAccessException($"Cannot access user '{userResolvable}'.");
 
-                var user = context.Guild.GetUser(userId);
+                var user = context.Guild?.GetUser(userId);
 
                 var result = set.Remove(userId);
                 if (!result) throw new ArgumentOutOfRangeException($"'{userResolvable}' was not in the HashSet to begin with.");
@@ -295,7 +297,9 @@ public static class ConfigHelper
     {
         HashSet<IIzzyRole> finalSet = new();
 
-        foreach (var role in set) finalSet.Add(context.Guild.GetRole(role));
+        foreach (var roleId in set)
+            if (context.Guild?.GetRole(roleId) is IIzzyRole role)
+                finalSet.Add(role);
 
         return finalSet;
     }
@@ -317,7 +321,7 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<IIzzyRole> AddToRoleSet(Config settings, string key, string roleResolvable,
+    public static async Task<IIzzyRole?> AddToRoleSet(Config settings, string key, string roleResolvable,
         IIzzyContext context)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
@@ -330,7 +334,7 @@ public static class ConfigHelper
                 var roleId = DiscordHelper.GetRoleIdIfAccessAsync(roleResolvable, context);
                 if (roleId == 0) throw new MemberAccessException($"Cannot access role '{roleResolvable}'.");
 
-                var role = context.Guild.GetRole(roleId);
+                var role = context.Guild?.GetRole(roleId);
 
                 var result = set.Add(roleId);
                 if (!result) throw new ArgumentOutOfRangeException($"'{roleId}' is already present within the HashSet.");
@@ -345,7 +349,7 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<IIzzyRole> RemoveFromRoleSet(Config settings, string key,
+    public static async Task<IIzzyRole?> RemoveFromRoleSet(Config settings, string key,
         string roleResolvable, IIzzyContext context)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
@@ -358,7 +362,7 @@ public static class ConfigHelper
                 var roleId = DiscordHelper.GetRoleIdIfAccessAsync(roleResolvable, context);
                 if (roleId == 0) throw new MemberAccessException($"Cannot access role '{roleResolvable}'.");
 
-                var role = context.Guild.GetRole(roleId);
+                var role = context.Guild?.GetRole(roleId);
 
                 var result = set.Remove(roleId);
                 if (!result) throw new ArgumentOutOfRangeException($"'{roleId}' was not in the HashSet to begin with.");
@@ -377,7 +381,9 @@ public static class ConfigHelper
     {
         HashSet<IIzzySocketGuildChannel> finalSet = new();
 
-        foreach (var channel in set) finalSet.Add(context.Guild.GetChannel(channel));
+        foreach (var channelId in set)
+            if (context.Guild?.GetChannel(channelId) is IIzzySocketGuildChannel channel)
+                finalSet.Add(channel);
 
         return finalSet;
     }
@@ -400,7 +406,7 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<IIzzySocketGuildChannel> AddToChannelSet(Config settings, string key,
+    public static async Task<IIzzySocketGuildChannel?> AddToChannelSet(Config settings, string key,
         string channelResolvable, IIzzyContext context)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
@@ -413,7 +419,7 @@ public static class ConfigHelper
                 var channelId = await DiscordHelper.GetChannelIdIfAccessAsync(channelResolvable, context);
                 if (channelId == 0) throw new MemberAccessException($"Cannot access channel '{channelResolvable}'.");
 
-                var channel = context.Guild.GetChannel(channelId);
+                var channel = context.Guild?.GetChannel(channelId);
 
                 var result = set.Add(channelId);
                 if (!result) throw new ArgumentOutOfRangeException($"'{channelId}' is already present within the HashSet.");
@@ -428,7 +434,7 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
-    public static async Task<IIzzySocketGuildChannel> RemoveFromChannelSet(Config settings, string key,
+    public static async Task<IIzzySocketGuildChannel?> RemoveFromChannelSet(Config settings, string key,
         string channelResolvable, IIzzyContext context)
     {
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
@@ -441,7 +447,7 @@ public static class ConfigHelper
                 var channelId = await DiscordHelper.GetChannelIdIfAccessAsync(channelResolvable, context);
                 if (channelId == 0) throw new MemberAccessException($"Cannot access channel '{channelResolvable}'.");
 
-                var channel = context.Guild.GetChannel(channelId);
+                var channel = context.Guild?.GetChannel(channelId);
 
                 var result = set.Remove(channelId);
                 if (!result) throw new ArgumentOutOfRangeException($"'{channelId}' was not in the HashSet to begin with.");
