@@ -97,10 +97,7 @@ public class Config
         get => _bannerMode;
         set
         {
-            var eventData = new ConfigValueChangeEvent();
-            eventData.Name = "BannerMode";
-            eventData.Original = _bannerMode;
-            eventData.Current = value;
+            var eventData = new ConfigValueChangeEvent("BannerMode", _bannerMode, value);
             Changed?.Invoke(this, eventData);
             _bannerMode = value;
         }
@@ -111,10 +108,7 @@ public class Config
         get => _bannerInterval;
         set
         {
-            var eventData = new ConfigValueChangeEvent();
-            eventData.Name = "BannerInterval";
-            eventData.Original = _bannerInterval;
-            eventData.Current = value;
+            var eventData = new ConfigValueChangeEvent("BannerInterval", _bannerInterval, value);
             Changed?.Invoke(this, eventData);
             _bannerInterval = value;
         }
