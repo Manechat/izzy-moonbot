@@ -121,7 +121,7 @@ namespace Izzy_Moonbot
 
                 _client.Disconnected += async (Exception ex) =>
                 {
-                    Task.Run(async () =>
+                    var _ = Task.Run(async () =>
                     {
                         await Task.Delay(5000, stoppingToken);
                         if (_client.ConnectionState is ConnectionState.Disconnected or ConnectionState.Disconnecting)
@@ -159,11 +159,7 @@ namespace Izzy_Moonbot
 
         private async Task InstallCommandsAsync()
         {
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
-#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-            _client.MessageReceived += async (message) => HandleMessageReceivedAsync(message);
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
-#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+            _client.MessageReceived += async (message) => await DiscordHelper.LeakOrAwaitTask(HandleMessageReceivedAsync(message));
 
             await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), _services.BuildServiceProvider());
         }
@@ -213,7 +209,7 @@ namespace Izzy_Moonbot
                         _users.Add(socketGuildUser.Id, newUser);
                         
                         // Process new member
-                        _userListener.MemberJoinEvent(socketGuildUser, true);
+                        await _userListener.MemberJoinEvent(socketGuildUser, true);
                         
                         newUserCount += 1;
                         skip = true;

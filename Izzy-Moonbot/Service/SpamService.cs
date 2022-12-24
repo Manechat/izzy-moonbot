@@ -258,7 +258,7 @@ public class SpamService
 
         var newPressure = await IncreasePressure(id, pressure);
 
-        await _logger.Log($"Pressure increase from {oldPressureAfterDecay} by {pressure} to {newPressure}/{_config.SpamMaxPressure}. Pressure breakdown: {string.Join('\n', pressureBreakdown)}", context, level: LogLevel.Debug);
+        _logger.Log($"Pressure increase from {oldPressureAfterDecay} by {pressure} to {newPressure}/{_config.SpamMaxPressure}. Pressure breakdown: {string.Join('\n', pressureBreakdown)}", context, level: LogLevel.Debug);
 
         // If this user already tripped spam pressure, but was either immune to silencing or managed to
         // send another message before Izzy could respond, we don't want duplicate notifications
@@ -266,13 +266,13 @@ public class SpamService
 
         if (newPressure >= _config.SpamMaxPressure)
         {
-            await _logger.Log("Spam pressure trip, checking whether user should be silenced or not...", context, level: LogLevel.Debug);
+            _logger.Log("Spam pressure trip, checking whether user should be silenced or not...", context, level: LogLevel.Debug);
             var roleIds = user.Roles.Select(roles => roles.Id).ToList();
             if (_config.SpamBypassRoles.Overlaps(roleIds) || 
                 (DiscordHelper.IsDev(user.Id) && _config.SpamDevBypass))
             {
                 // User has a role which bypasses the punishment of spam trigger. Mention it in action log.
-                await _logger.Log("No silence, user has role(s) in Config.SpamBypassRoles", context, level: LogLevel.Debug);
+                _logger.Log("No silence, user has role(s) in Config.SpamBypassRoles", context, level: LogLevel.Debug);
 
                 if (alreadyAlerted) return;
 
@@ -297,7 +297,7 @@ public class SpamService
             else
             {
                 // User is not immune to spam punishments, process trip.
-                await _logger.Log("Silence, executing trip method.", context, level: LogLevel.Debug);
+                _logger.Log("Silence, executing trip method.", context, level: LogLevel.Debug);
                 await ProcessTrip(id, oldPressureAfterDecay, newPressure, pressureBreakdown, message, user, context, alreadyAlerted);
             }
         }
@@ -341,12 +341,12 @@ public class SpamService
             catch (Exception ex)
             {
                 // Something funky is going on here
-                await _logger.Log($"Exception occured while trying to delete message, assuming deleted.", level: LogLevel.Warning);
-                await _logger.Log($"Message ID: {previousMessageItem.Id}", level: LogLevel.Warning);
-                await _logger.Log($"Message: {ex.Message}", level: LogLevel.Warning);
-                await _logger.Log($"Source: {ex.Source}", level: LogLevel.Warning);
-                await _logger.Log($"Method: {ex.TargetSite}", level: LogLevel.Warning);
-                await _logger.Log($"Stack Trace: {ex.StackTrace}", level: LogLevel.Warning);
+                _logger.Log($"Exception occured while trying to delete message, assuming deleted.", level: LogLevel.Warning);
+                _logger.Log($"Message ID: {previousMessageItem.Id}", level: LogLevel.Warning);
+                _logger.Log($"Message: {ex.Message}", level: LogLevel.Warning);
+                _logger.Log($"Source: {ex.Source}", level: LogLevel.Warning);
+                _logger.Log($"Method: {ex.TargetSite}", level: LogLevel.Warning);
+                _logger.Log($"Stack Trace: {ex.StackTrace}", level: LogLevel.Warning);
 
                 alreadyDeletedMessages++;
             }
@@ -357,13 +357,13 @@ public class SpamService
         {
             var logChannelId = _config.LogChannel;
             if (logChannelId == 0)
-                await _logger.Log("I couldn't post a bulk deletion log, because .config LogChannel hasn't been set.");
+                _logger.Log("I couldn't post a bulk deletion log, because .config LogChannel hasn't been set.");
             else
             {
                 var logChannel = context.Guild.GetTextChannel(logChannelId);
                 if (logChannel is not null)
                 {
-                    await _logger.Log($"Assembling a bulk deletion log from the content of {bulkDeletionLog.Count} deleted messages");
+                    _logger.Log($"Assembling a bulk deletion log from the content of {bulkDeletionLog.Count} deleted messages");
                     bulkDeletionLog.Sort((x, y) => x.Item1.CompareTo(y.Item1));
                     var bulkDeletionLogString = string.Join("\n\n", bulkDeletionLog.Select(logElement => logElement.Item2));
                     var s = new MemoryStream(Encoding.UTF8.GetBytes(bulkDeletionLogString));
@@ -374,7 +374,7 @@ public class SpamService
                     bulkLogJumpUrl = spamBulkDeletionMessage.GetJumpUrl();
                 }
                 else
-                    await _logger.Log("Something went wrong trying to access LogChannel.");
+                    _logger.Log("Something went wrong trying to access LogChannel.");
             }
         }
 

@@ -161,13 +161,13 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                 return;
             }
 
-            await _logger.Log($"Adding scheduled job to remind user to \"{content}\" at {timeHelperResponse.Time:F}",
+            _logger.Log($"Adding scheduled job to remind user to \"{content}\" at {timeHelperResponse.Time:F}",
                 context: context, level: LogLevel.Debug);
             var action = new ScheduledEchoJob(context.User, content);
             var task = new ScheduledJob(DateTimeOffset.UtcNow,
                 timeHelperResponse.Time, action);
             await _schedule.CreateScheduledJob(task);
-            await _logger.Log($"Added scheduled job for user", context: context, level: LogLevel.Debug);
+            _logger.Log($"Added scheduled job for user", context: context, level: LogLevel.Debug);
 
             await context.Channel.SendMessageAsync($"Okay! I'll DM you a reminder <t:{timeHelperResponse.Time.ToUnixTimeSeconds()}:R>.");
         }

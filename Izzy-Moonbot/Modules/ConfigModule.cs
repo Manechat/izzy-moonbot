@@ -1209,7 +1209,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
             }
             else
             {
-                context.Message.ReplyAsync($"I couldn't determine what type {configItem.Type} is.");
+                await context.Message.ReplyAsync($"I couldn't determine what type {configItem.Type} is.");
             }
         }
     }
