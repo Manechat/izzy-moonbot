@@ -54,9 +54,21 @@ public class MiscModuleTests
 
         // The prod code uses GetEntryAssembly() to get Izzy-Moonbot, but since Izzy-Moonbot-Tests is a different assembly,
         // we have to pick a random type from Izzy-Moonbot to get this to look over there for modules.
-        await commands.AddModulesAsync(Assembly.GetAssembly(typeof(InfoModule)), services.BuildServiceProvider());
+        await commands.AddModulesAsync(Assembly.GetAssembly(typeof(MiscModule)), services.BuildServiceProvider());
 
         return commands;
+    }
+
+    public async Task<(ScheduleService, MiscModule)> SetupMiscModule(Config cfg)
+    {
+        var generalStorage = new GeneralStorage();
+        var scheduledJobs = new List<ScheduledJob>();
+        var mod = new ModService(cfg, new Dictionary<ulong, User>());
+        var modLog = new ModLoggingService(cfg);
+        var logger = new LoggingService(new TestLogger<Worker>());
+        var ss = new ScheduleService(cfg, mod, modLog, logger, generalStorage, scheduledJobs);
+
+        return (ss, new MiscModule(cfg, ss, logger, await SetupCommandService()));
     }
 
     [TestMethod()]
@@ -65,15 +77,7 @@ public class MiscModuleTests
         var (cfg, _, (_, sunny), _, (generalChannel, modChat, _), guild, client) = TestUtils.DefaultStubs();
         DiscordHelper.DefaultGuildId = guild.Id;
         cfg.ModChannel = modChat.Id;
-
-        var generalStorage = new GeneralStorage();
-        var scheduledJobs = new List<ScheduledJob>();
-        var mod = new ModService(cfg, new Dictionary<ulong, User>());
-        var modLog = new ModLoggingService(cfg);
-        var logger = new LoggingService(new TestLogger<Worker>());
-        var ss = new ScheduleService(cfg, mod, modLog, logger, generalStorage, scheduledJobs);
-
-        var mm = new MiscModule(cfg, ss, logger, await SetupCommandService());
+        var (ss, mm) = await SetupMiscModule(cfg);
 
         DateTimeHelper.FakeUtcNow = TestUtils.FiMEpoch;
 
@@ -110,14 +114,7 @@ public class MiscModuleTests
         var (cfg, _, (_, sunny), _, (generalChannel, modChat, _), guild, client) = TestUtils.DefaultStubs();
         DiscordHelper.DefaultGuildId = guild.Id;
         cfg.ModChannel = modChat.Id;
-
-        var generalStorage = new GeneralStorage();
-        var scheduledJobs = new List<ScheduledJob>();
-        var mod = new ModService(cfg, new Dictionary<ulong, User>());
-        var modLog = new ModLoggingService(cfg);
-        var logger = new LoggingService(new TestLogger<Worker>());
-        var ss = new ScheduleService(cfg, mod, modLog, logger, generalStorage, scheduledJobs);
-        var mm = new MiscModule(cfg, ss, logger, await SetupCommandService());
+        var (ss, mm) = await SetupMiscModule(cfg);
 
         guild.RulesChannel = new StubChannel(9999, "rules", new List<StubMessage>
         {
@@ -159,11 +156,11 @@ public class MiscModuleTests
     public async Task HelpCommand_BreathingTestsAsync()
     {
         var (cfg, _, (_, sunny), roles, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
-        var im = new InfoModule(cfg, await SetupCommandService());
+        var (_, mm) = await SetupMiscModule(cfg);
         cfg.ModRole = roles[0].Id;
 
         var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".help");
-        await im.TestableHelpCommandAsync(context, "");
+        await mm.TestableHelpCommandAsync(context, "");
 
         var description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "Run `.help <category>` to");
@@ -174,7 +171,7 @@ public class MiscModuleTests
         StringAssert.Contains(description, "ℹ  **See also: `.config`");
 
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".help admin");
-        await im.TestableHelpCommandAsync(context, "admin");
+        await mm.TestableHelpCommandAsync(context, "admin");
 
         description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "list of all the commands");
@@ -182,7 +179,7 @@ public class MiscModuleTests
         StringAssert.Contains(description, "ban - ");
 
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".help ban");
-        await im.TestableHelpCommandAsync(context, "ban");
+        await mm.TestableHelpCommandAsync(context, "ban");
 
         description = generalChannel.Messages.Last().Content;
         // StringAssert.Contains is broken for strings with {}s, but explicitly passing some nulls works around that
@@ -199,18 +196,18 @@ public class MiscModuleTests
     public async Task HelpCommand_Aliases_TestsAsync()
     {
         var (cfg, _, (_, sunny), roles, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
-        var im = new InfoModule(cfg, await SetupCommandService());
+        var (_, mm) = await SetupMiscModule(cfg);
         cfg.ModRole = roles[0].Id;
 
         // Check .help's regular behavior before adding aliases
         var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".help addquote");
-        await im.TestableHelpCommandAsync(context, "addquote");
+        await mm.TestableHelpCommandAsync(context, "addquote");
 
         var baseAddQuoteDescription = generalChannel.Messages.Last().Content;
         Assert.IsFalse(baseAddQuoteDescription.Contains("Relevant aliases:"));
 
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".help moonlaser");
-        await im.TestableHelpCommandAsync(context, "moonlaser");
+        await mm.TestableHelpCommandAsync(context, "moonlaser");
 
         var description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "Sorry, I was unable to", null, null);
@@ -222,7 +219,7 @@ public class MiscModuleTests
 
         // .help should now append a Relevant Aliases line for commands with an alias
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".help addquote");
-        await im.TestableHelpCommandAsync(context, "addquote");
+        await mm.TestableHelpCommandAsync(context, "addquote");
 
         description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, baseAddQuoteDescription, null, null);
@@ -230,7 +227,7 @@ public class MiscModuleTests
 
         // .help <alias> should now prepend the alias definition to the help for the underlying command
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".help moonlaser");
-        await im.TestableHelpCommandAsync(context, "moonlaser");
+        await mm.TestableHelpCommandAsync(context, "moonlaser");
 
         description = generalChannel.Messages.Last().Content;
         StringAssert.StartsWith(description, "**.moonlaser** is an alias for **.addquote moon** (see .config Aliases)", null, null);
@@ -238,7 +235,7 @@ public class MiscModuleTests
 
         // regression test: .help ass was mistakenly printing .assignrole's aliases because ass is a prefix of assignrole
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".help ass");
-        await im.TestableHelpCommandAsync(context, "ass");
+        await mm.TestableHelpCommandAsync(context, "ass");
 
         Assert.IsFalse(generalChannel.Messages.Last().Content.Contains("Relevant aliases:"));
     }
@@ -247,14 +244,14 @@ public class MiscModuleTests
     public async Task HelpCommand_AliasesAreLowPriority_Async()
     {
         var (cfg, _, (_, sunny), roles, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
-        var im = new InfoModule(cfg, await SetupCommandService());
+        var (_, mm) = await SetupMiscModule(cfg);
 
         cfg.ModRole = roles[0].Id;
         // Adding a ".ban" alias has no effect on the output of ".help ban", because ".ban" is already a command
         cfg.Aliases.Add("ban", "echo bye-bye");
 
         var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".help ban");
-        await im.TestableHelpCommandAsync(context, "ban");
+        await mm.TestableHelpCommandAsync(context, "ban");
 
         var description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "**.ban** - Admin category", null, null);
@@ -270,7 +267,7 @@ public class MiscModuleTests
     public async Task HelpCommand_RegularUsers_ModOnlyCommands_Async()
     {
         var (cfg, _, (_, sunny), roles, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
-        var im = new InfoModule(cfg, await SetupCommandService());
+        var (_, mm) = await SetupMiscModule(cfg);
 
         cfg.ModRole = roles[0].Id; // Sunny is a moderator
         var pippId = guild.Users[3].Id; // Pipp is NOT a moderator
@@ -278,7 +275,7 @@ public class MiscModuleTests
         // Mod-only command
 
         var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".help ban");
-        await im.TestableHelpCommandAsync(context, "ban");
+        await mm.TestableHelpCommandAsync(context, "ban");
 
         var description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "**.ban** - Admin category", null, null);
@@ -290,14 +287,14 @@ public class MiscModuleTests
         StringAssert.Contains(description, "Example: ", null, null);
 
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, pippId, ".help ban");
-        await im.TestableHelpCommandAsync(context, "ban");
+        await mm.TestableHelpCommandAsync(context, "ban");
 
         Assert.AreEqual("Sorry, you don't have permission to use the .ban command.", generalChannel.Messages.Last().Content);
 
         // Alternate name for a mod-only command
 
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".help uinfo");
-        await im.TestableHelpCommandAsync(context, "uinfo");
+        await mm.TestableHelpCommandAsync(context, "uinfo");
 
         description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "**.uinfo** (alternate name of **.userinfo**) - Admin category", null, null);
@@ -307,7 +304,7 @@ public class MiscModuleTests
         StringAssert.Contains(description, "user [User]", null, null);
 
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, pippId, ".help uinfo");
-        await im.TestableHelpCommandAsync(context, "uinfo");
+        await mm.TestableHelpCommandAsync(context, "uinfo");
 
         Assert.AreEqual("Sorry, you don't have permission to use the .uinfo command.", generalChannel.Messages.Last().Content);
 
@@ -316,14 +313,14 @@ public class MiscModuleTests
         cfg.Aliases.Add("b", "ban");
 
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".help b");
-        await im.TestableHelpCommandAsync(context, "b");
+        await mm.TestableHelpCommandAsync(context, "b");
 
         description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "**.b** is an alias for **.ban** (see .config Aliases)", null, null);
         StringAssert.Contains(description, "**.ban** - Admin category", null, null);
 
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, pippId, ".help b");
-        await im.TestableHelpCommandAsync(context, "b");
+        await mm.TestableHelpCommandAsync(context, "b");
 
         Assert.AreEqual("Sorry, you don't have permission to use the .b command.", generalChannel.Messages.Last().Content);
     }
@@ -332,7 +329,7 @@ public class MiscModuleTests
     public async Task HelpCommand_RegularUsers_ListingCommands_Async()
     {
         var (cfg, _, (_, sunny), roles, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
-        var im = new InfoModule(cfg, await SetupCommandService());
+        var (_, mm) = await SetupMiscModule(cfg);
 
         cfg.ModRole = roles[0].Id; // Sunny is a moderator
         var pippId = guild.Users[3].Id; // Pipp is NOT a moderator
@@ -340,14 +337,14 @@ public class MiscModuleTests
         // For regular users, command categories don't exist, because they have so few commands it's not worth it
 
         var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, pippId, ".help admin");
-        await im.TestableHelpCommandAsync(context, "admin");
+        await mm.TestableHelpCommandAsync(context, "admin");
 
         Assert.AreEqual("Sorry, I was unable to find any command, category, or alias named \"admin\" that you have access to.", generalChannel.Messages.Last().Content);
 
         // So just `.help` with no args lists not categories, but the commands regular users can run
 
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, pippId, ".help");
-        await im.TestableHelpCommandAsync(context, "");
+        await mm.TestableHelpCommandAsync(context, "");
 
         var description = generalChannel.Messages.Last().Content;
         StringAssert.StartsWith(description, "Hii! Here's a list of all the commands you can run!");
