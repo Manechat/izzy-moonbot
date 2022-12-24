@@ -145,7 +145,7 @@ public class UserListener
             if (!member.Guild.Roles.Select(role => role.Id).Contains(roleId))
             {
                 _logger.Log(
-                    $"{member.Username}#{member.Discriminator} ({member.Id}) had role which would of reapplied on join but no longer exists, role id {roleId}");
+                    $"{member.Username}#{member.Discriminator} ({member.Id}) had role which I would have reapplied on join but no longer exists: role id {roleId}");
                 _users[member.Id].RolesToReapplyOnRejoin.Remove(roleId);
                 _config.RolesToReapplyOnRejoin.Remove(roleId);
                 await FileHelper.SaveConfigAsync(_config);
@@ -365,7 +365,7 @@ public class UserListener
             if (!newUser.Guild.Roles.Select(role => role.Id).Contains(roleId))
             {
                 _logger.Log(
-                    $"{newUser.Username}#{newUser.Discriminator} ({newUser.Id}) had role which would of reapplied on join but no longer exists, role id {roleId}");
+                    $"{newUser.Username}#{newUser.Discriminator} ({newUser.Id}) had role which I would have reapplied on join but no longer exists: role id {roleId}");
                 _users[newUser.Id].RolesToReapplyOnRejoin.Remove(roleId);
                 _config.RolesToReapplyOnRejoin.Remove(roleId);
                 await FileHelper.SaveConfigAsync(_config);

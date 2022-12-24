@@ -172,11 +172,11 @@ public class RaidService
         if (!_generalStorage.ManualRaidSilence) _config.AutoSilenceNewJoins = false;
 
         var manualRaidActive =
-            "`.ass` was ran manually, not disabling `AutoSilenceNewJoins`. Run `.assoff` to end the raid.";
+            " `.ass` was run manually, so I'm not automatically disabling `AutoSilenceNewJoins`. Run `.assoff` to manually end the raid.";
         if (!_generalStorage.ManualRaidSilence) manualRaidActive = "";
         await _modLog.CreateModLog(guild)
-            .SetContent($"The raid has deescalated. I'm lowering the raid level down to Small. {manualRaidActive}")
-            .SetFileLogContent($"The raid has deescalated. I'm lowering the raid level down to Small. {manualRaidActive}")
+            .SetContent($"The raid has deescalated. I'm lowering the raid level down to Small.{manualRaidActive}")
+            .SetFileLogContent($"The raid has deescalated. I'm lowering the raid level down to Small.{manualRaidActive}")
             .Send();
 
         await FileHelper.SaveConfigAsync(_config);
@@ -274,7 +274,7 @@ public class RaidService
                 await _modLog.CreateModLog(guild)
                     .SetContent(
                         $"<@&{_config.ModRole}> Bing-bong! Raid detected! ({_config.LargeRaidSize} (`LargeRaidSize`) users joined within {_config.LargeRaidTime} (`LargeRaidTime`) seconds.){Environment.NewLine}" +
-                        $"I have automatically silenced all the members below members and enabled autosilencing users on join.{Environment.NewLine}{Environment.NewLine}" +
+                        $"I have automatically silenced all the members below and enabled autosilencing users on join.{Environment.NewLine}{Environment.NewLine}" +
                         $"{string.Join($"{Environment.NewLine}", potentialRaiders)}{Environment.NewLine}{Environment.NewLine}" +
                         $"Possible commands for this scenario are:{Environment.NewLine}" +
                         $"`{_config.Prefix}assoff` - Disable automatically silencing new joins and resets the raid level back to 'no raid'.. This will **not** unsilence those considered part of the raid.{Environment.NewLine}" +
@@ -326,7 +326,7 @@ public class RaidService
             _state.RecentJoins.Add(member.Id);
 
             _log.Log(
-                $"Recent join: {member.DisplayName} ({member.Id}), No longer considered recent join in {_config.RecentJoinDecay} seconds.");
+                $"{member.DisplayName} ({member.Id}) will be considered a recent join for the next {_config.RecentJoinDecay} seconds.");
 
             await CheckForTrip(member.Guild);
 
@@ -335,7 +335,7 @@ public class RaidService
                 await Task.Delay(Convert.ToInt32(_config.SmallRaidTime * 1000));
                 _state.CurrentSmallJoinCount--;
                 _log.Log(
-                    $"Small raid join count dropped for {member.DisplayName} ({member.Id}). Now at {_state.CurrentSmallJoinCount}./{_config.SmallRaidSize} after {_config.SmallRaidTime} seconds.",
+                    $"Small raid join count dropped for {member.DisplayName} ({member.Id}). Now at {_state.CurrentSmallJoinCount}/{_config.SmallRaidSize} after {_config.SmallRaidTime} seconds.",
                     level: LogLevel.Debug);
             });
 

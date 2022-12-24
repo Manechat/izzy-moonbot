@@ -258,7 +258,8 @@ public class SpamService
 
         var newPressure = await IncreasePressure(id, pressure);
 
-        _logger.Log($"Pressure increase from {oldPressureAfterDecay} by {pressure} to {newPressure}/{_config.SpamMaxPressure}. Pressure breakdown: {string.Join('\n', pressureBreakdown)}", context, level: LogLevel.Debug);
+        // This is by far the most common log line under normal circumstances, but also a fairly verbose one, so it's worth being extra concise and having lots of line breaks
+        _logger.Log($"\nPressure channge: {oldPressureAfterDecay} + {pressure} = {newPressure} out of {_config.SpamMaxPressure}\n{string.Join('\n', pressureBreakdown)}", context, level: LogLevel.Debug);
 
         // If this user already tripped spam pressure, but was either immune to silencing or managed to
         // send another message before Izzy could respond, we don't want duplicate notifications

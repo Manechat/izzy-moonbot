@@ -42,7 +42,7 @@ public class RaidModule : ModuleBase<SocketCommandContext>
     {
         if (_generalStorage.CurrentRaidMode == RaidMode.None)
         {
-            await ReplyAsync("There doesn't seem to be any raids going on...");
+            await ReplyAsync("There don't seem to be any raids going on...");
             return;
         }
 
@@ -78,7 +78,7 @@ public class RaidModule : ModuleBase<SocketCommandContext>
     {
         if (_generalStorage.CurrentRaidMode == RaidMode.None)
         {
-            await ReplyAsync("There doesn't seem to be any raids going on...");
+            await ReplyAsync("There don't seem to be any raids going on...");
             return;
         }
 
