@@ -186,11 +186,14 @@ public static class DiscordHelper
                 }
                 arguments.Add(string.Join("", content[new Range(start, end)]));
 
-                var previous = 0;
-                
-                if (indices.Count >= 1) previous = indices[^1];
-                
-                indices.Add(previous + (end - start) + 1);
+                var previousIndex = 0;
+                if (indices.Count >= 1) previousIndex = indices[^1];
+
+                var nextIndex = previousIndex + (end - start);
+                while (nextIndex < characters.Length && IsSpace(characters[nextIndex]))
+                    nextIndex++;
+
+                indices.Add(nextIndex);
             }
         }
 
