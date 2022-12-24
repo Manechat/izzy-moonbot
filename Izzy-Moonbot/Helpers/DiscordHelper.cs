@@ -149,7 +149,6 @@ public static class DiscordHelper
             var argument = characters[i];
             if (!IsSpace(argument))
             {
-                int rawLength;
                 var safePrevious = (char?)GetSafely(characters, i - 1);
                 
                 if (argument == '"' && (i < 1 || safePrevious != '\\'))
@@ -161,7 +160,6 @@ public static class DiscordHelper
                     {
                         i++;
                     }
-                    rawLength = i - start + 2;
 
                     int end;
                     if (i-1 >= 0 && characters[i-1] == '\\')
@@ -171,6 +169,7 @@ public static class DiscordHelper
                     else
                     {
                         end = i;
+                        i++;
                     }
                     arguments.Add(string.Join("", content[new Range(start, end)]));
                 }
@@ -184,14 +183,10 @@ public static class DiscordHelper
                     {
                         i++;
                     }
-                    rawLength = i - start;
                     arguments.Add(string.Join("", content[new Range(start, i)]));
                 }
 
-                var previousIndex = 0;
-                if (indices.Count >= 1) previousIndex = indices[^1];
-
-                var nextIndex = previousIndex + rawLength;
+                var nextIndex = i;
                 while (nextIndex < characters.Length && IsSpace(characters[nextIndex]))
                     nextIndex++;
 

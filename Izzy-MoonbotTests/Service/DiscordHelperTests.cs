@@ -87,6 +87,10 @@ public class DiscordHelperTests
         AssertArgumentResultsAreEqual(new ArgumentResult{ Arguments = new[] { "foo" }, Indices = new[] { 4 } }, DiscordHelper.GetArguments(argsString));
         Assert.AreEqual("", SkippedArgsString(argsString, 0));
 
+        argsString = " foo";
+        AssertArgumentResultsAreEqual(new ArgumentResult { Arguments = new[] { "foo" }, Indices = new[] { 4 } }, DiscordHelper.GetArguments(argsString));
+        Assert.AreEqual("", SkippedArgsString(argsString, 0));
+
         argsString = "foo bar";
         AssertArgumentResultsAreEqual(new ArgumentResult{ Arguments = new[] { "foo", "bar" }, Indices = new[] { 4, 7 } }, DiscordHelper.GetArguments(argsString));
         Assert.AreEqual("bar", SkippedArgsString(argsString, 0));
@@ -100,6 +104,11 @@ public class DiscordHelperTests
         argsString = "foo bar   ";
         AssertArgumentResultsAreEqual(new ArgumentResult{ Arguments = new[] { "foo", "bar" }, Indices = new[] { 4, 10 } }, DiscordHelper.GetArguments(argsString));
         Assert.AreEqual("bar   ", SkippedArgsString(argsString, 0));
+        Assert.AreEqual("", SkippedArgsString(argsString, 1));
+
+        argsString = "   foo bar";
+        AssertArgumentResultsAreEqual(new ArgumentResult { Arguments = new[] { "foo", "bar" }, Indices = new[] { 7, 10 } }, DiscordHelper.GetArguments(argsString));
+        Assert.AreEqual("bar", SkippedArgsString(argsString, 0));
         Assert.AreEqual("", SkippedArgsString(argsString, 1));
 
         argsString = "foo baaaar";
@@ -117,6 +126,12 @@ public class DiscordHelperTests
         AssertArgumentResultsAreEqual(new ArgumentResult{ Arguments = new[] { "foo", "bar", "baz" }, Indices = new[] { 6, 12, 15 } }, DiscordHelper.GetArguments(argsString));
         Assert.AreEqual("bar   baz", SkippedArgsString(argsString, 0));
         Assert.AreEqual("baz", SkippedArgsString(argsString, 1));
+        Assert.AreEqual("", SkippedArgsString(argsString, 2));
+
+        argsString = "   foo   bar   baz   ";
+        AssertArgumentResultsAreEqual(new ArgumentResult { Arguments = new[] { "foo", "bar", "baz" }, Indices = new[] { 9, 15, 21 } }, DiscordHelper.GetArguments(argsString));
+        Assert.AreEqual("bar   baz   ", SkippedArgsString(argsString, 0));
+        Assert.AreEqual("baz   ", SkippedArgsString(argsString, 1));
         Assert.AreEqual("", SkippedArgsString(argsString, 2));
     }
 
