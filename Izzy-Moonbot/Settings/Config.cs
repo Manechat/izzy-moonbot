@@ -9,7 +9,7 @@ namespace Izzy_Moonbot.Settings;
 
 public class Config
 {
-    public event EventHandler<ConfigValueChangeEvent> Changed;
+    public event EventHandler<ConfigValueChangeEvent>? Changed;
     
     public Config()
     {
