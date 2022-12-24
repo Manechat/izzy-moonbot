@@ -163,7 +163,7 @@ public class ConfigHelperTests
 
         // FilterResponseMessages is the only Dict<string, string?> in Config
 
-        TestUtils.AssertDictionariesAreEqual(new Dictionary<string, string?>(), cfg.Aliases);
+        TestUtils.AssertDictionariesAreEqual(new Dictionary<string, string?>(), cfg.FilterResponseMessages);
         TestUtils.AssertDictionariesAreEqual(new Dictionary<string, string?>(), ConfigHelper.GetDictionary<string?>(cfg, "FilterResponseMessages"));
         Assert.IsFalse(ConfigHelper.DoesDictionaryKeyExist<string>(cfg, "FilterResponseMessages", "spam"));
 

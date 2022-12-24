@@ -10,6 +10,7 @@ using Izzy_Moonbot.Attributes;
 using Izzy_Moonbot.Describers;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Settings;
+using Microsoft.AspNetCore.Authorization.Infrastructure;
 
 namespace Izzy_Moonbot.Modules;
 
@@ -76,70 +77,73 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
 
         var configCategory = configDescriber.StringToCategory(configItemKey);
 
-        if (configItem == null && configCategory == null)
+        if (configItem == null)
         {
-            // Invalid .config arguments
-            var userInput = configItemKey;
-            Func<string, bool> isSuggestable = item =>
-                DiscordHelper.WithinLevenshteinDistanceOf(userInput, item, Convert.ToUInt32(item.Length / 2));
-
-            var itemsToSuggest = configDescriber.GetSettableConfigItems().Where(isSuggestable);
-            var categoriesToSuggest = Enum.GetNames<ConfigItemCategory>().Select(c => c.ToLower()).Where(isSuggestable);
-
-            var errorMessage = $"Sorry, I couldn't find a config value or category called `{configItemKey}`!";
-            if (itemsToSuggest.Any() || categoriesToSuggest.Any()) {
-                errorMessage += $"\nDid you mean {string.Join(" or ", itemsToSuggest.Concat(categoriesToSuggest).Select(s => $"`{s}`"))}?";
-            }
-            await context.Channel.SendMessageAsync(errorMessage);
-            return;
-        }
-
-        if (configItem == null && configCategory != null)
-        {
-            // .config <category>
-            var category = configCategory.Value;
-
-            var itemList = configDescriber.GetSettableConfigItemsByCategory(category);
-
-            if (itemList.Count > 10)
+            if (configCategory == null)
             {
-                // Use pagination
-                var pages = new List<string>();
-                var pageNumber = -1;
-                for (var i = 0; i < itemList.Count; i++)
-                {
-                    if (i % 10 == 0)
-                    {
-                        pageNumber += 1;
-                        pages.Add("");
-                    }
+                // Invalid .config arguments
+                var userInput = configItemKey;
+                Func<string, bool> isSuggestable = item =>
+                    DiscordHelper.WithinLevenshteinDistanceOf(userInput, item, Convert.ToUInt32(item.Length / 2));
 
-                    pages[pageNumber] += itemList[i] + Environment.NewLine;
+                var itemsToSuggest = configDescriber.GetSettableConfigItems().Where(isSuggestable);
+                var categoriesToSuggest = Enum.GetNames<ConfigItemCategory>().Select(c => c.ToLower()).Where(isSuggestable);
+
+                var errorMessage = $"Sorry, I couldn't find a config value or category called `{configItemKey}`!";
+                if (itemsToSuggest.Any() || categoriesToSuggest.Any())
+                {
+                    errorMessage += $"\nDid you mean {string.Join(" or ", itemsToSuggest.Concat(categoriesToSuggest).Select(s => $"`{s}`"))}?";
                 }
-
-
-                string[] staticParts =
-                {
-                    $"Hii!! Here's a list of all the config items I could find in the {configDescriber.CategoryToString(category)} category!",
-                    $"Run `{config.Prefix}config <item>` to view information about an item! Please note that config items are *case sensitive*."
-                };
-
-                var paginationMessage = new PaginationHelper(context, pages.ToArray(), staticParts);
+                await context.Channel.SendMessageAsync(errorMessage);
+                return;
             }
             else
             {
-                await context.Channel.SendMessageAsync(
-                    $"Hii!! Here's a list of all the config items I could find in the {configDescriber.CategoryToString(category)} category!" +
-                    $"{Environment.NewLine}```{Environment.NewLine}{string.Join(Environment.NewLine, itemList)}{Environment.NewLine}```{Environment.NewLine}" +
-                    $"Run `{config.Prefix}config <item>` to view information about an item! Please note that config items are *case sensitive*.");
-            }
+                // .config <category>
+                var category = configCategory.Value;
 
-            return;
+                var itemList = configDescriber.GetSettableConfigItemsByCategory(category);
+
+                if (itemList.Count > 10)
+                {
+                    // Use pagination
+                    var pages = new List<string>();
+                    var pageNumber = -1;
+                    for (var i = 0; i < itemList.Count; i++)
+                    {
+                        if (i % 10 == 0)
+                        {
+                            pageNumber += 1;
+                            pages.Add("");
+                        }
+
+                        pages[pageNumber] += itemList[i] + Environment.NewLine;
+                    }
+
+
+                    string[] staticParts =
+                    {
+                        $"Hii!! Here's a list of all the config items I could find in the {configDescriber.CategoryToString(category)} category!",
+                        $"Run `{config.Prefix}config <item>` to view information about an item! Please note that config items are *case sensitive*."
+                    };
+
+                    var paginationMessage = new PaginationHelper(context, pages.ToArray(), staticParts);
+                }
+                else
+                {
+                    await context.Channel.SendMessageAsync(
+                        $"Hii!! Here's a list of all the config items I could find in the {configDescriber.CategoryToString(category)} category!" +
+                        $"{Environment.NewLine}```{Environment.NewLine}{string.Join(Environment.NewLine, itemList)}{Environment.NewLine}```{Environment.NewLine}" +
+                        $"Run `{config.Prefix}config <item>` to view information about an item! Please note that config items are *case sensitive*.");
+                }
+
+                return;
+            }
         }
     
         // .config <itemKey>
 
-        if (value == "")
+        if (value == null || value == "")
         {
             // Only the configItemKey was given, we give the user what their data was
             var nullableString = "(Pass `<nothing>` as the value when setting to set to nothing/null)";
@@ -162,7 +166,10 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                     break;
                 case ConfigItemType.Enum:
                     // Figure out what its values are.
-                    var enumValue = ConfigHelper.GetValue(config, configItemKey) as Enum;
+                    var rawValue = ConfigHelper.GetValue(config, configItemKey);
+                    var enumValue = rawValue as Enum;
+                    if (enumValue == null) throw new InvalidCastException($"Config item {configItem} is supposed to be an enum, but its value {rawValue} failed the `as Enum` cast");
+
                     var enumType = enumValue.GetType();
                     var possibleEnumNames = enumType.GetEnumNames().Select(s => $"`{s}`").ToArray();
                     
@@ -367,7 +374,10 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                     case ConfigItemType.Enum:
                         if (configItem.Nullable && value == "<nothing>") value = null;
 
-                        var enumValue = ConfigHelper.GetValue(config, configItemKey) as Enum;
+                        var rawValue = ConfigHelper.GetValue(config, configItemKey);
+                        var enumValue = rawValue as Enum;
+                        if (enumValue == null) throw new InvalidCastException($"Config item {configItem} is supposed to be an enum, but its value {rawValue} failed the `as Enum` cast");
+
                         var enumType = enumValue.GetType();
 
                         try
@@ -841,7 +851,7 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                         configItemKey, value);
 
                                 await context.Channel.SendMessageAsync(
-                                    $"**{value}** contains the following value: `{contents.Replace("`", "\\`")}`");
+                                    $"**{value}** contains the following value: `{contents?.Replace("`", "\\`")}`");
                             }
                             catch (ArgumentOutOfRangeException ex)
                             {
@@ -905,12 +915,12 @@ public class ConfigModule : ModuleBase<SocketCommandContext>
                                 if (result.Item2 == null)
                                 {
                                     await context.Channel.SendMessageAsync(
-                                        $"I added the following string to the `{result.Item1}` map key in the `{configItemKey}` map: `{result.Item3.Replace("`", "\\`")}`");
+                                        $"I added the following string to the `{result.Item1}` map key in the `{configItemKey}` map: `{result.Item3?.Replace("`", "\\`")}`");
                                 }
                                 else
                                 {
                                     await context.Channel.SendMessageAsync(
-                                        $"I changed the string in the `{result.Item1}` map key in the `{configItemKey}` map from `{result.Item2.Replace("`", "\\`")}` to `{result.Item3.Replace("`", "\\`")}`");
+                                        $"I changed the string in the `{result.Item1}` map key in the `{configItemKey}` map from `{result.Item2.Replace("`", "\\`")}` to `{result.Item3?.Replace("`", "\\`")}`");
                                 }
                             }
                             catch (ArgumentOutOfRangeException)
