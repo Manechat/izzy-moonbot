@@ -277,14 +277,14 @@ public class ScheduleService
 
         var embed = new EmbedBuilder()
             .WithTitle(
-                $"Unbanned {(user != null ? $"{user.Username}#{user.Discriminator} " : "")} ({job.User})")
+                $"Unbanned {(user != null ? $"{user.Username}#{user.Discriminator}" : "")} ({job.User})")
             .WithColor(16737792)
             .WithDescription($"Gasp! Does this mean I can invite <@{job.User}> to our next traditional unicorn sleepover?")
             .Build();
         
         await _modLogging.CreateModLog(guild)
             .SetEmbed(embed)
-            .SetFileLogContent($"Unbanned {(user != null ? $"{user.Username}#{user.Discriminator} " : "")} ({job.User})")
+            .SetFileLogContent($"Unbanned {(user != null ? $"{user.Username}#{user.Discriminator}" : "")} ({job.User})")
             .Send();
     }
 
