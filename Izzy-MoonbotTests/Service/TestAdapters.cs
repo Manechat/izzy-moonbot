@@ -439,18 +439,6 @@ public class TestIzzyContext : IIzzyContext
     }
 }
 
-public class IdHaver : IIzzyHasId
-{
-    public ulong Id { get; }
-    public IdHaver(ulong id) => Id = id;
-}
-
-public class CustomIdHaver : IIzzyHasCustomId
-{
-    public string CustomId { get; }
-    public CustomIdHaver(string id) => CustomId = id;
-}
-
 public class StubClient : IIzzyClient
 {
     public IIzzyUser CurrentUser { get => _currentUser; }

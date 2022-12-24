@@ -118,6 +118,20 @@ public interface IIzzyGuild
     IIzzySocketTextChannel? GetTextChannel(ulong channelId);
 }
 
+public interface IIzzyHasId { ulong Id { get; } }
+public class IdHaver : IIzzyHasId
+{
+    public ulong Id { get; }
+    public IdHaver(ulong id) => Id = id;
+}
+
+public interface IIzzyHasCustomId { string CustomId { get; } }
+public class CustomIdHaver : IIzzyHasCustomId
+{
+    public string CustomId { get; }
+    public CustomIdHaver(string id) => CustomId = id;
+}
+
 public interface IIzzyClient
 {
     IIzzyUser CurrentUser { get; }
@@ -127,7 +141,6 @@ public interface IIzzyClient
 
     event Func<IIzzyMessage, IIzzyMessageChannel, Task> MessageUpdated;
 
-    public interface IIzzyHasCustomId { string CustomId { get; } }
     public interface IIzzySocketMessageComponent {
         IIzzyHasId User { get; }
         IIzzyHasId Message { get; }
@@ -136,7 +149,6 @@ public interface IIzzyClient
     }
     event Func<IIzzySocketMessageComponent, Task> ButtonExecuted;
 
-    public interface IIzzyHasId { ulong Id { get; } }
     event Func<IIzzyHasId, IIzzyHasId, Task> MessageDeleted;
 
     IIzzyContext MakeContext(IIzzyUserMessage message);
