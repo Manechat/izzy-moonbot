@@ -463,4 +463,30 @@ public class MiscModuleTests
         Assert.AreEqual("Sorry, I was unable to find any command, category, or alias named \"telescop\" that you have access to." +
             "\nDid you mean `.telescope`?", generalChannel.Messages.Last().Content);
     }
+
+    [TestMethod()]
+    public async Task HelpCommand_CategorySuggestions_Async()
+    {
+        var (cfg, _, (_, sunny), roles, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
+        var (_, mm) = await SetupMiscModule(cfg);
+
+        cfg.ModRole = roles[0].Id; // Sunny is a moderator
+        var pippId = guild.Users[3].Id; // Pipp is NOT a moderator
+
+        // moderator gets category suggestions
+
+        var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".help core");
+        await mm.TestableHelpCommandAsync(context, "core");
+
+        Assert.AreEqual("Sorry, I was unable to find any command, category, or alias named \"core\" that you have access to." +
+            "\nDid you mean `.modcore`?", generalChannel.Messages.Last().Content);
+
+        // regular user does not
+
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, pippId, ".help core");
+        await mm.TestableHelpCommandAsync(context, "core");
+
+        Assert.AreEqual("Sorry, I was unable to find any command, category, or alias named \"core\" that you have access to.", generalChannel.Messages.Last().Content);
+    }
+
 }

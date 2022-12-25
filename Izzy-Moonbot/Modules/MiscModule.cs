@@ -456,11 +456,13 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                 .SelectMany(c => c.Aliases).Where(isSuggestable);
             var aliasesToSuggest = _config.Aliases.Where(pair => canRunCommandName(pair.Value.TrimStart().Split(" ")[0]))
                 .Select(pair => pair.Key).Where(isSuggestable);
+            var categoriesToSuggest = !(isDev || isMod) ? new List<string>() :
+                _commands.Modules.Select(m => m.Name.Replace("Module", "").ToLower()).Where(isSuggestable);
 
             var message = $"Sorry, I was unable to find any command, category, or alias named \"{item}\" that you have access to.";
-            if (alternateNamesToSuggest.Any() || aliasesToSuggest.Any())
+            if (alternateNamesToSuggest.Any() || aliasesToSuggest.Any() || categoriesToSuggest.Any())
             {
-                var suggestibles = alternateNamesToSuggest.Concat(aliasesToSuggest).Select(s => $"`.{s}`");
+                var suggestibles = alternateNamesToSuggest.Concat(aliasesToSuggest).Concat(categoriesToSuggest).Select(s => $"`.{s}`");
                 message += $"\nDid you mean {string.Join(" or ", suggestibles)}?";
             }
             await context.Channel.SendMessageAsync(message);
