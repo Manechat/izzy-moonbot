@@ -362,10 +362,10 @@ public class MiscModuleTests
 
         // For regular users, command categories don't exist, because they have so few commands it's not worth it
 
-        var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, pippId, ".help admin");
-        await mm.TestableHelpCommandAsync(context, "admin");
+        var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, pippId, ".help modcore");
+        await mm.TestableHelpCommandAsync(context, "modcore");
 
-        Assert.AreEqual("Sorry, I was unable to find any command, category, or alias named \"admin\" that you have access to.", generalChannel.Messages.Last().Content);
+        Assert.AreEqual("Sorry, I was unable to find any command, category, or alias named \"modcore\" that you have access to.", generalChannel.Messages.Last().Content);
 
         // So just `.help` with no args lists not categories, but the commands regular users can run
 
@@ -380,5 +380,87 @@ public class MiscModuleTests
         StringAssert.Contains(description, "remindme -");
         StringAssert.Contains(description, "quote -");
         StringAssert.Contains(description, "Run `.help <command>` for help regarding a specific command!");
+    }
+
+    [TestMethod()]
+    public async Task HelpCommand_CommandSuggestions_Async()
+    {
+        var (cfg, _, (_, sunny), roles, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
+        var (_, mm) = await SetupMiscModule(cfg);
+
+        cfg.ModRole = roles[0].Id; // Sunny is a moderator
+        var pippId = guild.Users[3].Id; // Pipp is NOT a moderator
+
+        // moderator gets suggestions for mod-only commands
+
+        var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".help assign");
+        await mm.TestableHelpCommandAsync(context, "assign");
+
+        Assert.AreEqual("Sorry, I was unable to find any command, category, or alias named \"assign\" that you have access to." +
+            "\nDid you mean `.assignrole` or `.assoff`?", generalChannel.Messages.Last().Content);
+
+        // regular user does not get suggested mod-only commands
+
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, pippId, ".help assign");
+        await mm.TestableHelpCommandAsync(context, "assign");
+
+        Assert.AreEqual("Sorry, I was unable to find any command, category, or alias named \"assign\" that you have access to.", generalChannel.Messages.Last().Content);
+
+        // everyone gets suggested public commands
+
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".help reminder");
+        await mm.TestableHelpCommandAsync(context, "reminder");
+
+        Assert.AreEqual("Sorry, I was unable to find any command, category, or alias named \"reminder\" that you have access to." +
+            "\nDid you mean `.remindme` or `.remind`?", generalChannel.Messages.Last().Content);
+
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, pippId, ".help reminder");
+        await mm.TestableHelpCommandAsync(context, "reminder");
+
+        Assert.AreEqual("Sorry, I was unable to find any command, category, or alias named \"reminder\" that you have access to." +
+            "\nDid you mean `.remindme` or `.remind`?", generalChannel.Messages.Last().Content);
+    }
+
+    [TestMethod()]
+    public async Task HelpCommand_AliasSuggestions_Async()
+    {
+        var (cfg, _, (_, sunny), roles, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
+        var (_, mm) = await SetupMiscModule(cfg);
+
+        cfg.ModRole = roles[0].Id; // Sunny is a moderator
+        var pippId = guild.Users[3].Id; // Pipp is NOT a moderator
+
+        cfg.Aliases.Add("moonlaser", "addquote moon");
+        cfg.Aliases.Add("telescope", "quote moon");
+
+        // moderator gets suggestions for mod-only aliases
+
+        var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".help laser");
+        await mm.TestableHelpCommandAsync(context, "laser");
+
+        Assert.AreEqual("Sorry, I was unable to find any command, category, or alias named \"laser\" that you have access to." +
+            "\nDid you mean `.banner` or `.moonlaser`?", generalChannel.Messages.Last().Content);
+
+        // regular user does not get suggested mod-only aliases
+
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, pippId, ".help laser");
+        await mm.TestableHelpCommandAsync(context, "laser");
+
+        Assert.AreEqual("Sorry, I was unable to find any command, category, or alias named \"laser\" that you have access to." +
+            "\nDid you mean `.banner`?", generalChannel.Messages.Last().Content);
+
+        // everyone gets suggested public aliases
+
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".help telescop");
+        await mm.TestableHelpCommandAsync(context, "telescop");
+
+        Assert.AreEqual("Sorry, I was unable to find any command, category, or alias named \"telescop\" that you have access to." +
+            "\nDid you mean `.telescope`?", generalChannel.Messages.Last().Content);
+
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, pippId, ".help telescop");
+        await mm.TestableHelpCommandAsync(context, "telescop");
+
+        Assert.AreEqual("Sorry, I was unable to find any command, category, or alias named \"telescop\" that you have access to." +
+            "\nDid you mean `.telescope`?", generalChannel.Messages.Last().Content);
     }
 }
