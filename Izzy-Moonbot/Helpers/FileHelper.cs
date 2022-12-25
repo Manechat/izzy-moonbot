@@ -144,11 +144,11 @@ public static class FileHelper
                 
                 scheduledJobs[jobIndex].Action = type switch
                 {
-                    0 => new ScheduledRoleRemovalJob(fileJson[i]["Action"]!["User"]!.Value<ulong>(),
-                        fileJson[i]["Action"]!["Role"]!.Value<ulong>(),
+                    0 => new ScheduledRoleRemovalJob(fileJson[i]["Action"]!["Role"]!.Value<ulong>(),
+                        fileJson[i]["Action"]!["User"]!.Value<ulong>(),
                         fileJson[i]["Action"]!["Reason"]!.Value<string>()),
-                    1 => new ScheduledRoleAdditionJob(fileJson[i]["Action"]!["User"]!.Value<ulong>(),
-                        fileJson[i]["Action"]!["Role"]!.Value<ulong>(),
+                    1 => new ScheduledRoleAdditionJob(fileJson[i]["Action"]!["Role"]!.Value<ulong>(),
+                        fileJson[i]["Action"]!["User"]!.Value<ulong>(),
                         fileJson[i]["Action"]!["Reason"]!.Value<string>()),
                     2 => new ScheduledUnbanJob(fileJson[i]["Action"]!["User"]!.Value<ulong>()),
                     3 => new ScheduledEchoJob(fileJson[i]["Action"]!["Channel"]!.Value<ulong>(),
