@@ -33,10 +33,11 @@ public class DevModule : ModuleBase<SocketCommandContext>
     private readonly State _state;
     private readonly Dictionary<ulong, User> _users;
     private readonly DatabaseHelper _database;
+    private readonly UserService _userService;
 
     public DevModule(Config config, Dictionary<ulong, User> users, FilterService filterService,
         LoggingService loggingService, ModLoggingService modLoggingService, ModService modService,
-        SpamService pressureService, RaidService raidService, ScheduleService scheduleService, State state, DatabaseHelper database)
+        SpamService pressureService, RaidService raidService, ScheduleService scheduleService, State state, DatabaseHelper database, UserService userService)
     {
         _config = config;
         _users = users;
@@ -49,6 +50,7 @@ public class DevModule : ModuleBase<SocketCommandContext>
         _scheduleService = scheduleService;
         _state = state;
         _database = database;
+        _userService = userService;
     }
 
     [NamedArgumentType]
@@ -440,6 +442,52 @@ public class DevModule : ModuleBase<SocketCommandContext>
                     _loggingService.Log(ex.InnerException?.Message ?? "None", level: LogLevel.Critical);
                 }
 
+                break;
+            case "try-migrate-users":
+
+                var migratedUsers = _users.Select(pair =>
+                {
+                    var user = pair.Value;
+                    user.Id = pair.Key;
+
+                    return user;
+                });
+                
+                try
+                {
+                    await _userService.CreateUsers(migratedUsers);
+                    await ReplyAsync("Successfully migrated all users.");
+                }
+                catch (Exception ex)
+                {
+                    _loggingService.Log($"Exception on attempt to migrate:\n" +
+                                        $"Message: {ex.Message}\n" +
+                                        $"Stack: {ex.StackTrace}", level: LogLevel.Error);
+                    await ReplyAsync($"Failed to migrate. See logs for details.");
+                }
+                break;
+            case "try-get-user":
+                if (!ulong.TryParse(args[0], out var userId))
+                {
+                    await ReplyAsync("not id");
+                    return;
+                }
+
+                var userFromFile = _users[userId];
+                var userFromDB = await _userService.GetUser(userId);
+
+                await ReplyAsync($"Done. Here's what I found:\n" +
+                                 $"File:\n```\n" +
+                                 $"Username: {userFromFile.Username}\n" +
+                                 $"Aliases: {string.Join(",", userFromFile.Aliases)}\n" +
+                                 $"Last talk time: <t:{userFromFile.Timestamp.ToUnixTimeSeconds()}:F>\n" +
+                                 $"Last pressure: {userFromFile.Pressure}\n```\n\n" +
+                                 $"Database:\n```\n" +
+                                 $"Username: {userFromDB.Username}\n" +
+                                 $"Aliases: {string.Join(",", userFromDB.Aliases)}\n" +
+                                 $"Last talk time: <t:{userFromDB.Timestamp.ToUnixTimeSeconds()}:F>\n" +
+                                 $"Last pressure: {userFromDB.Pressure}\n```\n\n");
+                
                 break;
             default:
                 await Context.Message.ReplyAsync("Unknown test.");
