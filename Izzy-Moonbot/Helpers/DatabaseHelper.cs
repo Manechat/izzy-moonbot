@@ -25,15 +25,15 @@ public class DatabaseHelper
         if (settings.Options.Count != 0)
             optionString = $"?{string.Join("&", settings.Options.Select(pair => $"{pair.Key}={pair.Value}"))}";
         
-        var connectionUrl = $"{settings.Protocol}://{_makeStringSafe(settings.User.ToUpper())}:{_makeStringSafe(settings.Password)}@{settings.Host}/{_makeStringSafe(settings.User.ToLower())}{optionString}";
-
+        var connectionUrl = $"{settings.Protocol}://{_makeStringSafe(settings.User)}:{_makeStringSafe(settings.Password)}@{settings.Host}/{optionString}";
+        
         var client = new MongoClient(connectionUrl);
 
         client.StartSession();
         
         Console.WriteLine(connectionUrl);
 
-        _database = client.GetDatabase(settings.Database.ToLower());
+        _database = client.GetDatabase(settings.Database);
         
         Console.WriteLine(_database.DatabaseNamespace.DatabaseName);
     }
