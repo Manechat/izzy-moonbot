@@ -56,9 +56,9 @@ public class Program
             }).ConfigureServices((hostContext, services) =>
         {
             // Configuration
-            var discordSettings = hostContext.Configuration;
-            services.Configure<DiscordSettings>(discordSettings.GetSection(nameof(DiscordSettings)));
-            services.Configure<BooruSettings>(discordSettings.GetSection(nameof(BooruSettings)));
+            var botSettings = hostContext.Configuration;
+            services.Configure<DiscordSettings>(botSettings.GetSection(nameof(DiscordSettings)));
+            services.Configure<BooruSettings>(botSettings.GetSection(nameof(BooruSettings)));
             var config = FileHelper.LoadConfigAsync().GetAwaiter().GetResult();
             services.AddSingleton(config);
             var users = FileHelper.LoadUsersAsync().GetAwaiter().GetResult();
@@ -72,6 +72,10 @@ public class Program
             var quoteStorage = FileHelper.LoadQuoteStorageAsync().GetAwaiter().GetResult();
             services.AddSingleton(quoteStorage);
 
+            // Database
+            var database = new DatabaseHelper(botSettings);
+            services.AddSingleton(database);
+            
             // Describers
             services.AddSingleton<ConfigDescriber>();
 
