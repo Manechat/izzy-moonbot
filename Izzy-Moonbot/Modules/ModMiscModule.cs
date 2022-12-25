@@ -340,9 +340,9 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
         if (argsString == "")
         {
             await ReplyAsync($"Heya! Here's a list of commands possible for schedule!{Environment.NewLine}" +
-                             $"`{_config.Prefix}schedule list [category]` - List the current scheduled job that exist, optionally specifying the category to list.{Environment.NewLine}" +
-                             $"`{_config.Prefix}schedule list-full [category]` - Get the **full** list of scheduled jobs that exist, optionally specifying the category to list.{Environment.NewLine}" +
-                             $"`{_config.Prefix}schedule about <category>` - Get information about a schedule job category, including the arguments for `.schedule add`.{Environment.NewLine}" +
+                             $"`{_config.Prefix}schedule list [category]` - Show all scheduled jobs (or all jobs of the specified type) in a Discord message.{Environment.NewLine}" +
+                             $"`{_config.Prefix}schedule list-full [category]` - Post a text file attachment listing all scheduled jobs (or all jobs of the specified type).{Environment.NewLine}" +
+                             $"`{_config.Prefix}schedule about <category>` - Get information about a schedule job category, including the `.schedule add` syntax to create one.{Environment.NewLine}" +
                              $"`{_config.Prefix}schedule about <id>` - Get information about a specific scheduled job by its ID.{Environment.NewLine}" +
                              $"`{_config.Prefix}schedule add <category> <time> [...]` - Add a scheduled job to the specified category to execute at the specified time, run `{_config.Prefix}schedule about <category>` to figure out the arguments.{Environment.NewLine}" +
                              $"`{_config.Prefix}schedule remove <id>` - Remove a scheduled job by its ID.");
