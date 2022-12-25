@@ -611,6 +611,12 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
             content = content[new Range(1, ^1)];
         }
 
+        if (context.Guild == null)
+        {
+            await context.Channel.SendMessageAsync("You need to be in a server to add quotes.");
+            return;
+        }
+
         // Check for aliases
         if (_quoteService.AliasExists(user))
         {
@@ -709,6 +715,12 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
         if (number == null)
         {
             await context.Channel.SendMessageAsync("You need to tell me the quote number to remove.");
+            return;
+        }
+
+        if (context.Guild == null)
+        {
+            await context.Channel.SendMessageAsync("You need to be in a server to remove quotes.");
             return;
         }
 
@@ -860,7 +872,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
             else
             {
                 var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(target, context);
-                var member = context.Guild.GetUser(userId);
+                var member = context.Guild?.GetUser(userId);
 
                 if (member == null)
                 {

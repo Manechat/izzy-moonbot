@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Discord;
 using Discord.Commands;
 using Izzy_Moonbot.Settings;
 using Newtonsoft.Json;
@@ -13,7 +14,7 @@ namespace Izzy_Moonbot.Helpers;
 public static class FileHelper
 {
     public static string SetUpFilepath(FilePathType type, string filename, string extension,
-        SocketCommandContext context = null, string logChannel = "", string date = "")
+        SocketCommandContext? context = null, string logChannel = "", string date = "")
     {
         //Root
         var filepath = DevSettings.RootPath;
@@ -75,6 +76,8 @@ public static class FileHelper
         {
             var fileContents = await File.ReadAllTextAsync(filepath);
             settings = JsonConvert.DeserializeObject<Config>(fileContents);
+            if (settings == null)
+                throw new InvalidDataException($"Failed to deserialize settings at {filepath}");
         }
 
         return settings;
@@ -100,6 +103,8 @@ public static class FileHelper
         {
             var fileContents = await File.ReadAllTextAsync(filepath);
             users = JsonConvert.DeserializeObject<Dictionary<ulong, User>>(fileContents);
+            if (users == null)
+                throw new InvalidDataException($"Failed to deserialize users at {filepath}");
         }
 
         return users;
@@ -125,7 +130,9 @@ public static class FileHelper
         {
             var fileContents = await File.ReadAllTextAsync(filepath);
             scheduledJobs = JsonConvert.DeserializeObject<List<ScheduledJob>>(fileContents);
-            
+            if (scheduledJobs == null)
+                throw new InvalidDataException($"Failed to deserialize scheduled jobs at {filepath}");
+
             if (scheduledJobs.Count == 0) return scheduledJobs;
             
             var fileJson = JArray.Parse(fileContents);
@@ -182,6 +189,8 @@ public static class FileHelper
         {
             var fileContents = await File.ReadAllTextAsync(filepath);
             generalStorage = JsonConvert.DeserializeObject<GeneralStorage>(fileContents);
+            if (generalStorage == null)
+                throw new InvalidDataException($"Failed to deserialize general storage at {filepath}");
         }
 
         return generalStorage;
@@ -207,6 +216,8 @@ public static class FileHelper
         {
             var fileContents = await File.ReadAllTextAsync(filepath);
             quoteStorage = JsonConvert.DeserializeObject<QuoteStorage>(fileContents);
+            if (quoteStorage == null)
+                throw new InvalidDataException($"Failed to deserialize quote storage at {filepath}");
         }
 
         return quoteStorage;

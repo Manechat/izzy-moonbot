@@ -74,7 +74,7 @@ public class UserListener
             User newUser = new User();
             newUser.Username = $"{member.Username}#{member.Discriminator}";
             newUser.Aliases.Add(member.Username);
-            newUser.Joins.Add(member.JoinedAt.Value); // I really fucking hope it isn't null the user literally just joined
+            if (member.JoinedAt is DateTimeOffset join) newUser.Joins.Add(join);
             _users.Add(member.Id, newUser);
             await FileHelper.SaveUsersAsync(_users);
             _logger.Log($"New user data entry generated.", level: LogLevel.Debug);
@@ -82,7 +82,7 @@ public class UserListener
         else if (!catchingUp)
         {
             _logger.Log($"Found user data entry for new user, add new join date", level: LogLevel.Debug);
-            _users[member.Id].Joins.Add(member.JoinedAt.Value); // I still really fucking hope it isn't null because the user did just join
+            if (member.JoinedAt is DateTimeOffset join) _users[member.Id].Joins.Add(join);
             await FileHelper.SaveUsersAsync(_users);
             _logger.Log($"Added new join date for new user", level: LogLevel.Debug);
         }
@@ -200,31 +200,31 @@ public class UserListener
             lastNickname = "<UNKNOWN>";
         }
         _logger.Log($"Last nickname was {lastNickname}, checking whether user was kicked or banned", level: LogLevel.Debug);
-        var wasKicked = guild.GetAuditLogsAsync(2, actionType: ActionType.Kick).FirstAsync()
+        var kickAuditLog = guild.GetAuditLogsAsync(2, actionType: ActionType.Kick).FirstAsync()
             .GetAwaiter().GetResult()
             .Select(audit =>
             {
                 var data = audit.Data as KickAuditLogData;
-                if (data.Target.Id == user.Id)
+                if (data?.Target.Id == user.Id)
                 {
                     if ((audit.CreatedAt.ToUnixTimeSeconds() - DateTimeOffset.UtcNow.ToUnixTimeSeconds()) <= 2)
                         return audit;
                 }
                 return null;
-            });
+            }).Where(audit => audit != null).SingleOrDefault();
 
-        var wasBanned = guild.GetAuditLogsAsync(2, actionType: ActionType.Ban).FirstAsync()
+        var banAuditLog = guild.GetAuditLogsAsync(2, actionType: ActionType.Ban).FirstAsync()
             .GetAwaiter().GetResult()
             .Select(audit =>
             {
                 var data = audit.Data as BanAuditLogData;
-                if (data.Target.Id == user.Id)
+                if (data?.Target.Id == user.Id)
                 {
                     if ((audit.CreatedAt.ToUnixTimeSeconds() - DateTimeOffset.UtcNow.ToUnixTimeSeconds()) <= 2)
                         return audit;
                 }
                 return null;
-            });
+            }).Where(audit => audit != null).SingleOrDefault();
 
         _logger.Log($"Constructing moderation log content", level: LogLevel.Debug);
         var output = 
@@ -232,28 +232,24 @@ public class UserListener
         var fileOutput = 
             $"Leave: {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined {_users[user.Id].Joins.Last():O}";
 
-        var banAuditLogEntries = wasBanned as RestAuditLogEntry[] ?? wasBanned.ToArray();
-        if (banAuditLogEntries.Any(audit => audit != null))
+        if (banAuditLog != null)
         {
             _logger.Log($"User was banned, fetching the reason and moderator", level: LogLevel.Debug);
-            var audit = banAuditLogEntries.First();
-            _logger.Log($"Fetched, user was banned by {audit.User.Username}#{audit.User.Discriminator} ({audit.User.Id}) for \"{audit.Reason}\"", level: LogLevel.Debug);
+            _logger.Log($"Fetched, user was banned by {banAuditLog.User.Username}#{banAuditLog.User.Discriminator} ({banAuditLog.User.Id}) for \"{banAuditLog.Reason}\"", level: LogLevel.Debug);
             output =
-                $"Leave (Ban): {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined <t:{_users[user.Id].Joins.Last().ToUnixTimeSeconds()}:R>, \"{audit.Reason}\" by {audit.User.Username}#{audit.User.Discriminator} ({guild.GetUser(audit.User.Id).DisplayName})";
+                $"Leave (Ban): {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined <t:{_users[user.Id].Joins.Last().ToUnixTimeSeconds()}:R>, \"{banAuditLog.Reason}\" by {banAuditLog.User.Username}#{banAuditLog.User.Discriminator} ({guild.GetUser((ulong)banAuditLog.User.Id).DisplayName})";
             fileOutput =
-                $"Leave (Ban): {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined {_users[user.Id].Joins.Last():O}, \"{audit.Reason}\" by {audit.User.Username}#{audit.User.Discriminator} ({guild.GetUser(audit.User.Id).DisplayName})";
+                $"Leave (Ban): {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined {_users[user.Id].Joins.Last():O}, \"{banAuditLog.Reason}\" by {banAuditLog.User.Username}#{banAuditLog.User.Discriminator} ({guild.GetUser((ulong)banAuditLog.User.Id).DisplayName})";
         }
 
-        var kickAuditLogEntries = wasKicked as RestAuditLogEntry[] ?? wasKicked.ToArray();
-        if (kickAuditLogEntries.Any(audit => audit != null))
+        if (kickAuditLog != null)
         {
             _logger.Log($"User was kicked, fetching the reason and moderator", level: LogLevel.Debug);
-            var audit = kickAuditLogEntries.First();
-            _logger.Log($"Fetched, user was kicked by {audit.User.Username}#{audit.User.Discriminator} ({audit.User.Id}) for \"{audit.Reason}\"", level: LogLevel.Debug);
+            _logger.Log($"Fetched, user was kicked by {kickAuditLog.User.Username}#{kickAuditLog.User.Discriminator} ({kickAuditLog.User.Id}) for \"{kickAuditLog.Reason}\"", level: LogLevel.Debug);
             output =
-                $"Leave (Kick): {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined <t:{_users[user.Id].Joins.Last().ToUnixTimeSeconds()}:R>, \"{audit.Reason}\" by {audit.User.Username}#{audit.User.Discriminator} ({guild.GetUser(audit.User.Id).DisplayName})";
+                $"Leave (Kick): {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined <t:{_users[user.Id].Joins.Last().ToUnixTimeSeconds()}:R>, \"{kickAuditLog.Reason}\" by {kickAuditLog.User.Username}#{kickAuditLog.User.Discriminator} ({guild.GetUser((ulong)kickAuditLog.User.Id).DisplayName})";
             fileOutput =
-                $"Leave (Kick): {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined {_users[user.Id].Joins.Last():O}, \"{audit.Reason}\" by {audit.User.Username}#{audit.User.Discriminator} ({guild.GetUser(audit.User.Id).DisplayName})";
+                $"Leave (Kick): {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined {_users[user.Id].Joins.Last():O}, \"{kickAuditLog.Reason}\" by {kickAuditLog.User.Username}#{kickAuditLog.User.Discriminator} ({guild.GetUser((ulong)kickAuditLog.User.Id).DisplayName})";
         }
         _logger.Log($"Finished constructing moderation log content", level: LogLevel.Debug);
 

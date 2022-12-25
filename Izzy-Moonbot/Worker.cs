@@ -65,14 +65,15 @@ namespace Izzy_Moonbot
             _userListener = userListener;
             _spamService = spamService;
             _configListener = configListener;
+
+            var discordConfig = new DiscordSocketConfig { GatewayIntents = GatewayIntents.All, MessageCacheSize = 50 };
+            _client = new DiscordSocketClient(discordConfig);
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             try
             {
-                var discordConfig = new DiscordSocketConfig { GatewayIntents = GatewayIntents.All, MessageCacheSize = 50 };
-                _client = new DiscordSocketClient(discordConfig);
                 _client.Log += Log;
                 await _client.LoginAsync(TokenType.Bot,
                     _discordSettings.Token);
@@ -321,7 +322,7 @@ namespace Izzy_Moonbot
                     if (socketGuildUser.IsBot) continue; // Bots aren't stowaways
                     if (socketGuildUser.Roles.Select(role => role.Id).Contains(_config.ModRole)) continue; // Mods aren't stowaways
 
-                    if (!socketGuildUser.Roles.Select(role => role.Id).Contains((ulong)_config.MemberRole))
+                    if (_config.MemberRole is ulong roleId && !socketGuildUser.Roles.Select(role => role.Id).Contains(roleId))
                     {
                         // Doesn't have member role, add to stowaway list.
                         stowawaySet.Add(socketGuildUser);
@@ -347,7 +348,7 @@ namespace Izzy_Moonbot
         {
             if (messageParam.Type != MessageType.Default && messageParam.Type != MessageType.Reply &&
                 messageParam.Type != MessageType.ThreadStarterMessage) return;
-            SocketUserMessage message = messageParam as SocketUserMessage;
+            if (messageParam is not SocketUserMessage message) return;
             int argPos = 0;
             SocketCommandContext context = new SocketCommandContext(_client, message);
 

@@ -68,7 +68,7 @@ public class RaidService
             var member = context.Guild.GetUser(recentJoin);
 
             return member ?? null;
-        }).Where(member => member != null).ToList();
+        }).Where(member => member != null) as IEnumerable<SocketGuildUser>; // cast away nullability
 
         await _modService.SilenceUsers(recentJoins, "Suspected raider");
 
@@ -241,7 +241,7 @@ public class RaidService
 
                 if (member == null) return null;
                 return member;
-            }).Where(member => member != null).ToList();
+            }).Where(member => member != null) as IEnumerable<SocketGuildUser>; // cast away nullability
 
             await _modService.SilenceUsers(recentJoins, "Suspected raider");
 

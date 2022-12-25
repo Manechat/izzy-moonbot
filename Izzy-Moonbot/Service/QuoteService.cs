@@ -40,7 +40,7 @@ public class QuoteService
     /// <param name="guild">The guild to check for the user in.</param>
     /// <returns>"user" if the alias refers to a user, "category" if not.</returns>
     /// <exception cref="NullReferenceException">If the alias doesn't exist.</exception>
-    public string AliasRefersTo(string alias, IIzzyGuild guild)
+    public string AliasRefersTo(string alias, IIzzyGuild? guild)
     {
         if (_quoteStorage.Aliases.Keys.Any(key => key.ToLower() == alias.ToLower()))
         {
@@ -48,7 +48,7 @@ public class QuoteService
 
             if (ulong.TryParse(value, out var id))
             {
-                var potentialUser = guild.GetUser(id);
+                var potentialUser = guild?.GetUser(id);
                 if (potentialUser == null) return "category";
 
                 return "user";
@@ -69,7 +69,7 @@ public class QuoteService
     /// <exception cref="TargetException">If the user couldn't be found (left the server).</exception>
     /// <exception cref="ArgumentException">If the alias doesn't refer to a user.</exception>
     /// <exception cref="NullReferenceException">If the alias doesn't exist.</exception>
-    public IIzzyUser ProcessAlias(string alias, IIzzyGuild guild)
+    public IIzzyUser ProcessAlias(string alias, IIzzyGuild? guild)
     {
         if (_quoteStorage.Aliases.ContainsKey(alias))
         {
@@ -77,7 +77,7 @@ public class QuoteService
 
             if (ulong.TryParse(value, out var id))
             {
-                var potentialUser = guild.GetUser(id);
+                var potentialUser = guild?.GetUser(id);
                 if (potentialUser == null)
                     throw new TargetException("The user this alias referenced to cannot be found.");
 

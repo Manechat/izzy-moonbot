@@ -88,29 +88,26 @@ public class ScheduleService
 
             try
             {
+                if (client.GetGuild(DiscordHelper.DefaultGuild()) is not IIzzyGuild defaultGuild)
+                    throw new InvalidOperationException("Failed to get default guild");
+
                 // Do processing here I guess!
-                
                 switch (job.Action)
                 {
                     case ScheduledRoleRemovalJob roleRemovalJob:
-                        await Unicycle_RemoveRole(roleRemovalJob,
-                            client.GetGuild(DiscordHelper.DefaultGuild()));
+                        await Unicycle_RemoveRole(roleRemovalJob, defaultGuild);
                         break;
                     case ScheduledRoleAdditionJob roleAdditionJob:
-                        await Unicycle_AddRole(roleAdditionJob,
-                            client.GetGuild(DiscordHelper.DefaultGuild()));
+                        await Unicycle_AddRole(roleAdditionJob, defaultGuild);
                         break;
                     case ScheduledUnbanJob unbanJob:
-                        await Unicycle_Unban(unbanJob,
-                            client.GetGuild(DiscordHelper.DefaultGuild()), client);
+                        await Unicycle_Unban(unbanJob, defaultGuild, client);
                         break;
                     case ScheduledEchoJob echoJob:
-                        await Unicycle_Echo(echoJob,
-                            client.GetGuild(DiscordHelper.DefaultGuild()), client);
+                        await Unicycle_Echo(echoJob, defaultGuild, client);
                         break;
                     case ScheduledBannerRotationJob bannerRotationJob:
-                        await Unicycle_BannerRotation(bannerRotationJob,
-                            client.GetGuild(DiscordHelper.DefaultGuild()), client);
+                        await Unicycle_BannerRotation(bannerRotationJob, defaultGuild, client);
                         break;
                     default:
                         throw new NotSupportedException($"{job.Action.GetType().Name} is currently not supported.");
