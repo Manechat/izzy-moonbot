@@ -341,7 +341,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
         {
             await ReplyAsync($"Heya! Here's a list of commands possible for schedule!{Environment.NewLine}" +
                              $"`{_config.Prefix}schedule list [category]` - Show all scheduled jobs (or all jobs of the specified type) in a Discord message.{Environment.NewLine}" +
-                             $"`{_config.Prefix}schedule list-full [category]` - Post a text file attachment listing all scheduled jobs (or all jobs of the specified type).{Environment.NewLine}" +
+                             $"`{_config.Prefix}schedule list-file [category]` - Post a text file attachment listing all scheduled jobs (or all jobs of the specified type).{Environment.NewLine}" +
                              $"`{_config.Prefix}schedule about <category>` - Get information about a schedule job category, including the `.schedule add` syntax to create one.{Environment.NewLine}" +
                              $"`{_config.Prefix}schedule about <id>` - Get information about a specific scheduled job by its ID.{Environment.NewLine}" +
                              $"`{_config.Prefix}schedule add <category> <time> [...]` - Add a scheduled job to the specified category to execute at the specified time, run `{_config.Prefix}schedule about <category>` to figure out the arguments.{Environment.NewLine}" +
@@ -376,7 +376,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                     string[] staticParts =
                     {
                         "Heya! Here's a list of all the scheduled jobs!",
-                        "If you need a raw text list, run `.schedule list-full`."
+                        "If you need a raw text list, run `.schedule list-file`."
                     };
 
                     var paginationMessage =
@@ -386,7 +386,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                 {
                     await ReplyAsync($"Heya! Here's a list of all the scheduled jobs!{Environment.NewLine}{Environment.NewLine}" +
                                      string.Join(Environment.NewLine, jobs) +
-                                     $"{Environment.NewLine}{Environment.NewLine}If you need a raw text file, run `.schedule list-full`.");
+                                     $"{Environment.NewLine}{Environment.NewLine}If you need a raw text file, run `.schedule list-file`.");
                 }
             }
             else
@@ -438,7 +438,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                     string[] staticParts =
                     {
                         $"Heya! Here's a list of all the scheduled jobs in the {category} category!",
-                        $"If you need a raw text list, run `.schedule list-full {category}`."
+                        $"If you need a raw text list, run `.schedule list-file {category}`."
                     };
 
                     var paginationMessage =
@@ -448,11 +448,11 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                 {
                     await ReplyAsync($"Heya! Here's a list of all the scheduled jobs in the {category} category!{Environment.NewLine}{Environment.NewLine}" +
                                      string.Join(Environment.NewLine, jobs) +
-                                     $"{Environment.NewLine}{Environment.NewLine}If you need a raw text list, run `.schedule list-full {category}`.");
+                                     $"{Environment.NewLine}{Environment.NewLine}If you need a raw text list, run `.schedule list-file {category}`.");
                 }
             }
         }
-        else if (args.Arguments[0].ToLower() == "list-full")
+        else if (args.Arguments[0].ToLower() == "list-file")
         {
             if (args.Arguments.Length == 1)
             {
