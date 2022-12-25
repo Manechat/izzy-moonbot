@@ -14,30 +14,26 @@ public class DatabaseHelper
 {
     private readonly IMongoDatabase _database;
 
-    private readonly DatabaseSettings _settings;
-    private readonly string _connectionURL;
-    
     public DatabaseHelper(IConfiguration botSettings)
     {
         // Get the database config.
         // It has to be done like this because attributes don't get the services and settings.
         var section = botSettings.GetSection(nameof(DatabaseSettings));
-        _settings = section.Get<DatabaseSettings>();
+        var settings = section.Get<DatabaseSettings>() ?? throw new InvalidOperationException("Database settings is null. Cannot continue.");
         
         var optionString = "";
-        if (_settings.Options.Count != 0)
-            optionString = $"?{string.Join("&", _settings.Options.Select(pair => $"{pair.Key}={pair.Value}"))}";
+        if (settings.Options.Count != 0)
+            optionString = $"?{string.Join("&", settings.Options.Select(pair => $"{pair.Key}={pair.Value}"))}";
         
-        _connectionURL =
-            $"{_settings.Protocol}://{_makeStringSafe(_settings.User.ToUpper())}:{_makeStringSafe(_settings.Password)}@{_settings.Host}/{_makeStringSafe(_settings.User.ToLower())}{optionString}";
+        var connectionUrl = $"{settings.Protocol}://{_makeStringSafe(settings.User.ToUpper())}:{_makeStringSafe(settings.Password)}@{settings.Host}/{_makeStringSafe(settings.User.ToLower())}{optionString}";
 
-        var client = new MongoClient(_connectionURL);
+        var client = new MongoClient(connectionUrl);
 
         client.StartSession();
         
-        Console.WriteLine(_connectionURL);
+        Console.WriteLine(connectionUrl);
 
-        _database = client.GetDatabase(_settings.Database.ToLower());
+        _database = client.GetDatabase(settings.Database.ToLower());
         
         Console.WriteLine(_database.DatabaseNamespace.DatabaseName);
     }
