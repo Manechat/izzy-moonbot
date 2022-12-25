@@ -394,13 +394,13 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                     };
 
                     var paginationMessage =
-                        new PaginationHelper(Context, pages.ToArray(), staticParts, codeblock: false);
+                        new PaginationHelper(Context, pages.ToArray(), staticParts, codeblock: false, allowedMentions: AllowedMentions.None);
                 }
                 else
                 {
                     await ReplyAsync($"Heya! Here's a list of all the scheduled jobs!{Environment.NewLine}{Environment.NewLine}" +
                                      string.Join(Environment.NewLine, jobs) +
-                                     $"{Environment.NewLine}{Environment.NewLine}If you need a raw text file, run `.schedule list-file`.");
+                                     $"{Environment.NewLine}{Environment.NewLine}If you need a raw text file, run `.schedule list-file`.", allowedMentions: AllowedMentions.None);
                 }
             }
             else
@@ -439,13 +439,13 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                     };
 
                     var paginationMessage =
-                        new PaginationHelper(Context, pages.ToArray(), staticParts, codeblock: false);
+                        new PaginationHelper(Context, pages.ToArray(), staticParts, codeblock: false, allowedMentions: AllowedMentions.None);
                 }
                 else
                 {
                     await ReplyAsync($"Heya! Here's a list of all the scheduled {jobType} jobs!{Environment.NewLine}{Environment.NewLine}" +
                                      string.Join(Environment.NewLine, jobs) +
-                                     $"{Environment.NewLine}{Environment.NewLine}If you need a raw text list, run `.schedule list-file {jobType}`.");
+                                     $"{Environment.NewLine}{Environment.NewLine}If you need a raw text list, run `.schedule list-file {jobType}`.", allowedMentions: AllowedMentions.None);
                 }
             }
         }
@@ -526,7 +526,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                                  $"Created <t:{potentialJob.CreatedAt.ToUnixTimeSeconds()}:F>\n" +
                                  $"Executes <t:{potentialJob.ExecuteAt.ToUnixTimeSeconds()}:R>\n" +
                                  $"{expandedRepeatInfo}" +
-                                 $"{expandedJobInfo}");
+                                 $"{expandedJobInfo}", allowedMentions: AllowedMentions.None);
             }
             else
             {
