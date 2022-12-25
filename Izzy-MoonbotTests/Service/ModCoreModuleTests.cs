@@ -159,4 +159,33 @@ public class ModCoreModuleTests
         TestUtils.AssertListsAreEqual(new List<ulong>(), guild.UserRoles[hitchId]);
         Assert.AreEqual(0, ss.GetScheduledJobs().Count);
     }
+
+    [TestMethod()]
+    public async Task AssignRole_ExtraSpaces_Tests()
+    {
+        var (cfg, _, (_, sunny), roles, (generalChannel, modChat, _), guild, client) = TestUtils.DefaultStubs();
+        DiscordHelper.DefaultGuildId = guild.Id;
+        cfg.ModChannel = modChat.Id;
+        var (ss, am) = SetupModCoreModule(cfg);
+
+        var alicornId = roles[0].Id;
+        var pippId = guild.Users[3].Id;
+
+        DateTimeHelper.FakeUtcNow = TestUtils.FiMEpoch;
+        Assert.IsFalse(guild.UserRoles.ContainsKey(pippId));
+
+        var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, $".assignrole <@&{alicornId}>   <@{pippId}>   5 minutes");
+        await am.TestableAssignRoleCommandAsync(context, $"<@&{alicornId}>   <@{pippId}>   5 minutes");
+
+        Assert.AreEqual(generalChannel.Messages.Last().Content, $"I've given <@&{alicornId}> to <@{pippId}>. I've scheduled a removal <t:1286669100:R>.");
+        TestUtils.AssertListsAreEqual(new List<ulong> { alicornId }, guild.UserRoles[pippId]);
+        Assert.AreEqual(1, ss.GetScheduledJobs().Count);
+
+        DateTimeHelper.FakeUtcNow = DateTimeHelper.FakeUtcNow?.AddMinutes(5);
+        await ss.Unicycle(client);
+
+        Assert.AreEqual($"Removed <@&{alicornId}> from <@{pippId}> (`{pippId}`)", modChat.Messages.Last().Content);
+        TestUtils.AssertListsAreEqual(new List<ulong>(), guild.UserRoles[pippId]);
+        Assert.AreEqual(0, ss.GetScheduledJobs().Count);
+    }
 }

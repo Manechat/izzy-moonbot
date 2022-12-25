@@ -149,20 +149,19 @@ public static class DiscordHelper
             var argument = characters[i];
             if (!IsSpace(argument))
             {
-                var start = 0;
-                var end = 0;
-
                 var safePrevious = (char?)GetSafely(characters, i - 1);
                 
                 if (argument == '"' && (i < 1 || safePrevious != '\\'))
                 {
                     i++;
-                    start = i;
-                    
+                    var start = i;
+
                     while (i < content.Length && (characters[i] != '"' || characters[i-1] == '\\'))
                     {
                         i++;
                     }
+
+                    int end;
                     if (i-1 >= 0 && characters[i-1] == '\\')
                     {
                         end = i - 1;
@@ -170,11 +169,13 @@ public static class DiscordHelper
                     else
                     {
                         end = i;
+                        i++;
                     }
+                    arguments.Add(string.Join("", content[new Range(start, end)]));
                 }
                 else
                 {
-                    start = i;
+                    var start = i;
                     i++;
                     
                     while (i < content.Length && !IsSpace(characters[i]) &&
@@ -182,15 +183,14 @@ public static class DiscordHelper
                     {
                         i++;
                     }
-                    end = i;
+                    arguments.Add(string.Join("", content[new Range(start, i)]));
                 }
-                arguments.Add(string.Join("", content[new Range(start, end)]));
 
-                var previous = 0;
-                
-                if (indices.Count >= 1) previous = indices[^1];
-                
-                indices.Add(previous + (end - start) + 1);
+                var nextIndex = i;
+                while (nextIndex < characters.Length && IsSpace(characters[nextIndex]))
+                    nextIndex++;
+
+                indices.Add(nextIndex);
             }
         }
 

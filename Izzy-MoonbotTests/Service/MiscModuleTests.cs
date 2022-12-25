@@ -109,6 +109,32 @@ public class MiscModuleTests
     }
 
     [TestMethod()]
+    public async Task RemindMe_ExtraSpaces_Tests()
+    {
+        var (cfg, _, (_, sunny), _, (generalChannel, modChat, _), guild, client) = TestUtils.DefaultStubs();
+        DiscordHelper.DefaultGuildId = guild.Id;
+        cfg.ModChannel = modChat.Id;
+        var (ss, mm) = await SetupMiscModule(cfg);
+
+        DateTimeHelper.FakeUtcNow = TestUtils.FiMEpoch;
+        await ss.Unicycle(client);
+
+        var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".remindme 1     minute test");
+        await mm.TestableRemindMeCommandAsync(context, "1     minute test");
+        Assert.AreEqual("Okay! I'll DM you a reminder <t:1286668860:R>.", generalChannel.Messages.Last().Content);
+        Assert.IsFalse(client.DirectMessages.ContainsKey(sunny.Id));
+        Assert.AreEqual(1, ss.GetScheduledJobs().Count);
+
+        DateTimeHelper.FakeUtcNow = DateTimeHelper.FakeUtcNow?.AddMinutes(1);
+        await ss.Unicycle(client);
+
+        // regression test: the DM would end up saying "ute test" because the extra spaces confused argument parsing
+        Assert.AreEqual(1, client.DirectMessages[sunny.Id].Count);
+        Assert.AreEqual("test", client.DirectMessages[sunny.Id].Last().Content);
+        Assert.AreEqual(0, ss.GetScheduledJobs().Count);
+    }
+
+    [TestMethod()]
     public async Task Rule_Command_Tests()
     {
         var (cfg, _, (_, sunny), _, (generalChannel, modChat, _), guild, client) = TestUtils.DefaultStubs();
