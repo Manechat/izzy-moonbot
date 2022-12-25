@@ -296,13 +296,8 @@ public class MiscModule : ModuleBase<SocketCommandContext>
 
                 foreach (var module in _commands.Modules)
                 {
-                    if (module.IsSubmodule) continue;
                     if (module.Name == "DevModule") continue; // Hide dev module
-                    var moduleInfo = $"{module.Name.Replace("Module", "").ToLower()} - {module.Summary}";
-                    foreach (var submodule in module.Submodules)
-                        moduleInfo += $"{Environment.NewLine}    {submodule.Name.Replace("Submodule", "").ToLower()} - {submodule.Summary}";
-
-                    moduleList.Add(moduleInfo);
+                    moduleList.Add($"{module.Name.Replace("Module", "").ToLower()} - {module.Summary}");
                 }
 
                 await context.Channel.SendMessageAsync(
@@ -347,14 +342,12 @@ public class MiscModule : ModuleBase<SocketCommandContext>
         // Module.
         else if ((isDev || isMod) &&
             _commands.Modules.Any(module => module.Name.ToLower() == item.ToLower() ||
-                                            module.Name.ToLower() == item.ToLower() + "module" ||
-                                            module.Name.ToLower() == item.ToLower() + "submodule"))
+                                            module.Name.ToLower() == item.ToLower() + "module"))
         {
             // It's a module!
             var moduleInfo = _commands.Modules.Single<ModuleInfo>(module =>
                 module.Name.ToLower() == item.ToLower() ||
-                module.Name.ToLower() == item.ToLower() + "module" ||
-                module.Name.ToLower() == item.ToLower() + "submodule");
+                module.Name.ToLower() == item.ToLower() + "module");
 
             var commands = moduleInfo.Commands.Select<CommandInfo, string>(command =>
                 $"{prefix}{command.Name} - {command.Summary}"
@@ -381,7 +374,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
 
                 string[] staticParts =
                 {
-                            $"Hii! Here's a list of all the commands I could find in the {moduleInfo.Name.Replace("Module", "").Replace("Submodule", "")} category!",
+                            $"Hii! Here's a list of all the commands I could find in the {moduleInfo.Name.Replace("Module", "")} category!",
                             $"Run `{prefix}help <command>` for help regarding a specific command!" +
                             $"{(potentialAliases.Length != 0 ? $"{Environment.NewLine}ℹ  This category shares a name with an alias. For information regarding this alias, run `{prefix}help {potentialAliases.First().Name.ToLower()}`.": "")}"
                         };
@@ -394,7 +387,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                     command.Aliases.Select(alias => alias.ToLower()).Contains(item.ToLower())).ToArray();
 
                 await context.Channel.SendMessageAsync(
-                    $"Hii! Here's a list of all the commands I could find in the {moduleInfo.Name.Replace("Module", "").Replace("Submodule", "")} category!{Environment.NewLine}" +
+                    $"Hii! Here's a list of all the commands I could find in the {moduleInfo.Name.Replace("Module", "")} category!{Environment.NewLine}" +
                     $"```{Environment.NewLine}{string.Join(Environment.NewLine, commands)}{Environment.NewLine}```{Environment.NewLine}" +
                     $"Run `{prefix}help <command>` for help regarding a specific command!" +
                     $"{(potentialAliases.Length != 0 ? $"{Environment.NewLine}ℹ  This category shares a name with an alias. For information regarding this alias, run `{prefix}help {potentialAliases.First().Name.ToLower()}`." : "")}");
@@ -472,7 +465,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
     private string PonyReadableCommandHelp(char prefix, string command, CommandInfo commandInfo, string? alternateName = null)
     {
         var ponyReadable = (alternateName == null ? $"**{prefix}{commandInfo.Name}**" : $"**{prefix}{alternateName}** (alternate name of **{prefix}{commandInfo.Name}**)") +
-            $" - {commandInfo.Module.Name.Replace("Module", "").Replace("Submodule", "")} category{Environment.NewLine}";
+            $" - {commandInfo.Module.Name.Replace("Module", "")} category{Environment.NewLine}";
 
         if (commandInfo.Preconditions.Any(attribute => attribute is ModCommandAttribute) &&
             commandInfo.Preconditions.Any(attribute => attribute is DevCommandAttribute))
