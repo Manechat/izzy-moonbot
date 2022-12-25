@@ -88,6 +88,7 @@ public class Program
             services.AddSingleton<FilterService>();
             services.AddSingleton<ScheduleService>();
             services.AddSingleton<QuoteService>();
+            services.AddSingleton<UserService>();
             services.AddSingleton(services);
             
             // EventListeners
