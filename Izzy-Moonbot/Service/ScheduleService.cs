@@ -84,7 +84,7 @@ public class ScheduleService
 
         foreach (var job in scheduledJobsToExecute)
         {
-            _logger.Log($"Executing scheduled job queued for execution at {job.ExecuteAt:F}", level: LogLevel.Debug);
+            _logger.Log($"Executing {job.Action.Type} job {job.Id} since it was scheduled to execute at {job.ExecuteAt:F}", level: LogLevel.Debug);
 
             try
             {
