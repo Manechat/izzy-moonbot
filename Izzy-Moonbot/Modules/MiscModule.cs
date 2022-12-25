@@ -6,6 +6,7 @@ using Discord;
 using Discord.Commands;
 using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Attributes;
+using Izzy_Moonbot.Describers;
 using Izzy_Moonbot.EventListeners;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Service;
@@ -441,7 +442,28 @@ public class MiscModule : ModuleBase<SocketCommandContext>
         }
         else
         {
-            await context.Channel.SendMessageAsync($"Sorry, I was unable to find any command, category, or alias named \"{item}\" that you have access to.");
+            Func<string, bool> isSuggestable = candidate =>
+                DiscordHelper.WithinLevenshteinDistanceOf(item, candidate, Convert.ToUInt32(candidate.Length / 2));
+
+            Func<string, bool> canRunCommandName = name =>
+            {
+                var cinfo = _commands.Commands.Where(c => c.Name == name).SingleOrDefault((CommandInfo?)null);
+                return cinfo is null ? false : canRunCommand(cinfo);
+            };
+
+            // don't bother searching command.Name because command.Aliases always includes the main name
+            var alternateNamesToSuggest = _commands.Commands.Where(canRunCommand)
+                .SelectMany(c => c.Aliases).Where(isSuggestable);
+            var aliasesToSuggest = _config.Aliases.Where(pair => canRunCommandName(pair.Value.TrimStart().Split(" ")[0]))
+                .Select(pair => pair.Key).Where(isSuggestable);
+
+            var message = $"Sorry, I was unable to find any command, category, or alias named \"{item}\" that you have access to.";
+            if (alternateNamesToSuggest.Any() || aliasesToSuggest.Any())
+            {
+                var suggestibles = alternateNamesToSuggest.Concat(aliasesToSuggest).Select(s => $"`.{s}`");
+                message += $"\nDid you mean {string.Join(" or ", suggestibles)}?";
+            }
+            await context.Channel.SendMessageAsync(message);
         }
     }
 
