@@ -8,6 +8,7 @@ public class User
 {
     public User()
     {
+        Id = 0;
         Username = "";
         Aliases = new List<string>();
         Joins = new List<DateTimeOffset>();
@@ -20,6 +21,7 @@ public class User
         RolesToReapplyOnRejoin = new HashSet<ulong>();
     }
 
+    public ulong Id { get; set; }
     public string Username { get; set; }
     public List<string> Aliases { get; set; }
     public List<DateTimeOffset> Joins { get; set; }
