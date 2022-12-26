@@ -211,7 +211,7 @@ public class UserListener
                         return audit;
                 }
                 return null;
-            }).Where(audit => audit != null).SingleOrDefault();
+            }).Where(audit => audit != null).FirstOrDefault();
 
         var banAuditLog = guild.GetAuditLogsAsync(2, actionType: ActionType.Ban).FirstAsync()
             .GetAwaiter().GetResult()
@@ -224,7 +224,7 @@ public class UserListener
                         return audit;
                 }
                 return null;
-            }).Where(audit => audit != null).SingleOrDefault();
+            }).Where(audit => audit != null).FirstOrDefault();
 
         _logger.Log($"Constructing moderation log content", level: LogLevel.Debug);
         var output = 
