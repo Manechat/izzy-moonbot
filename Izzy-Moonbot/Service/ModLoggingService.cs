@@ -57,7 +57,10 @@ public class ModLogBuilder
         _guild = guild;
         _batchLogger = batchLogger;
 
-        _log = new ModLog(_guild.GetTextChannel(_config.ModChannel));
+        var modChannel = _guild.GetTextChannel(_config.ModChannel);
+        if (modChannel == null)
+            throw new InvalidOperationException($"Failed to get mod channel from config value {_config.ModChannel}");
+        _log = new ModLog(modChannel);
     }
 
     public ModLogBuilder SetContent(string content)
@@ -99,7 +102,7 @@ public class ModLogBuilder
         if (_config.AutoSilenceNewJoins)
             _batchLogger.AddModLog(_log);
         else
-            await _log.Channel.SendMessageAsync(_log.Content, embeds: _log.Embed != null ? new []{ _log.Embed } : null);
+            await _log.Channel.SendMessageAsync(_log.Content ?? "", embeds: _log.Embed != null ? new []{ _log.Embed } : null);
     }
 }
 

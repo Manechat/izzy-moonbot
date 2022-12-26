@@ -11,7 +11,7 @@ namespace Izzy_Moonbot.Helpers;
 
 public class PaginationHelper
 {
-    private readonly AllowedMentions _allowedMentions;
+    private readonly AllowedMentions? _allowedMentions;
 
     private readonly IIzzyClient _client;
     private readonly string[] _staticParts;
@@ -19,20 +19,20 @@ public class PaginationHelper
     private readonly bool _useCodeBlock;
     private ulong _authorId;
     private bool _easterEgg;
-    private IIzzyUserMessage _message;
+    private IIzzyUserMessage? _message;
     public DateTime ExpiresAt;
     private int _pageNumber = 0;
     public string[] Pages;
 
     public PaginationHelper(SocketCommandContext context, string[] pages, string[] staticParts,
         bool codeblock = true,
-        AllowedMentions allowedMentions = null)
+        AllowedMentions? allowedMentions = null)
         : this(new SocketCommandContextAdapter(context), pages, staticParts, codeblock, allowedMentions)
     { }
 
     public PaginationHelper(IIzzyContext context, string[] pages, string[] staticParts,
         bool codeblock = true,
-        AllowedMentions allowedMentions = null)
+        AllowedMentions? allowedMentions = null)
     {
         _client = context.Client;
         _authorId = context.Message.Author.Id;
@@ -138,7 +138,7 @@ public class PaginationHelper
     private async Task ButtonEvent(IIzzySocketMessageComponent component)
     {
         if (component.User.Id != _authorId) return;
-        if (component.Message.Id != _message.Id) return;
+        if (component.Message.Id != _message?.Id) return;
 
         switch (component.Data.CustomId)
         {
@@ -169,7 +169,7 @@ public class PaginationHelper
 
     private async Task MessageDeletedEvent(IIzzyHasId message, IIzzyHasId channel)
     {
-        if (_message.Id == message.Id)
+        if (_message?.Id == message.Id)
         {
             _client.ButtonExecuted -= ButtonEvent;
             _client.MessageDeleted -= MessageDeletedEvent;

@@ -165,7 +165,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
         duration = DiscordHelper.StripQuotes(duration);
 
         var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(user, Context);
-        var member = Context.Guild.GetUser(userId);
+        var member = Context.Guild?.GetUser(userId);
 
         if (userId == Context.Client.CurrentUser.Id)
         {
@@ -192,7 +192,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
             return;
         }
 
-        if (member != null && member.Hierarchy >= Context.Guild.GetUser(Context.Client.CurrentUser.Id).Hierarchy)
+        if (member != null && member.Hierarchy >= Context.Guild?.GetUser(Context.Client.CurrentUser.Id)?.Hierarchy)
         {
             await Context.Channel.SendMessageAsync(
                 "That user is either at the same level or higher than me in the role hierarchy, I cannot ban them. <:izzynothoughtsheadempty:910198222255972382>");
@@ -219,7 +219,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
         }
 
         // Okay, enough joking around, serious Izzy time
-        var hasExistingBan = await Context.Guild.GetIsBannedAsync(userId);
+        var hasExistingBan = await Context.Guild!.GetIsBannedAsync(userId);
 
         if (!hasExistingBan)
         {
@@ -369,7 +369,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
             await context.Channel.SendMessageAsync("I couldn't find that role, sorry!");
             return;
         }
-        var role = context.Guild.GetRole(roleId);
+        var role = context.Guild?.GetRole(roleId);
 
         var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(userResolvable, context);
         if (userId == 0)
@@ -377,7 +377,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
             await context.Channel.SendMessageAsync("I couldn't find that user, sorry!");
             return;
         }
-        var maybeMember = context.Guild.GetUser(userId);
+        var maybeMember = context.Guild?.GetUser(userId);
 
         // Comprehend time
         TimeHelperResponse? time = null;
@@ -400,7 +400,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
 
         if (maybeMember is IIzzyGuildUser member)
         {
-            if (role.Position >= context.Guild.GetUser(context.Client.CurrentUser.Id).Hierarchy)
+            if (role?.Position >= context.Guild?.GetUser(context.Client.CurrentUser.Id)?.Hierarchy)
             {
                 await context.Channel.SendMessageAsync(
                     "That role is either at the same level or higher than me in the role hierarchy, I cannot assign it. <:izzynothoughtsheadempty:910198222255972382>");

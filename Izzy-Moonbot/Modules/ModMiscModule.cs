@@ -75,11 +75,9 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
             removalJob.User == member.Id &&
             removalJob.Role == _config.NewMemberRole);
 
-        if (_schedule.GetScheduledJobs(getSingleNewPonyRemoval).Any(getSingleNewPonyRemoval))
+        var job = _schedule.GetScheduledJob(getSingleNewPonyRemoval);
+        if (job != null)
         {
-            // Exists
-            var job = _schedule.GetScheduledJob(getSingleNewPonyRemoval);
-
             await _schedule.DeleteScheduledJob(job);
 
             await ReplyAsync($"Removed the scheduled new pony role removal from <@{member.Id}>.");
@@ -264,7 +262,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
 
         if (channelId > 0)
         {
-            var channel = context.Guild.GetTextChannel(channelId);
+            var channel = context.Guild?.GetTextChannel(channelId);
             if (message == "")
             {
                 await context.Channel.SendMessageAsync("There's no message to send there.");

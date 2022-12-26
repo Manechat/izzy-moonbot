@@ -220,12 +220,17 @@ public class MiscModule : ModuleBase<SocketCommandContext>
 
         if (int.TryParse(argString, out var ruleNumber))
         {
-            var rulesChannel = context.Guild.RulesChannel;
+            var rulesChannel = context.Guild?.RulesChannel;
+            if (rulesChannel == null)
+            {
+                await context.Channel.SendMessageAsync("Sorry, this server doesn't have a rules channel.");
+                return;
+            }
 
             string ruleMessage;
             if (ruleNumber == 1)
             {
-                ruleMessage = (await rulesChannel.GetMessageAsync(firstMessageId)).Content;
+                ruleMessage = (await rulesChannel.GetMessageAsync(firstMessageId))?.Content ?? "";
             }
             else
             {

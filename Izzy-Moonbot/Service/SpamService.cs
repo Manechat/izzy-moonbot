@@ -245,6 +245,9 @@ public class SpamService
 
         _users[id].PreviousMessage = context.Message.CleanContent;
 
+        if (context.Guild == null)
+            throw new InvalidOperationException("ProcessPressure was somehow called with a non-guild context");
+
         var messageItem =
             new PreviousMessageItem(message.Id, context.Channel.Id, context.Guild.Id, DateTimeHelper.UtcNow);
         
@@ -307,6 +310,9 @@ public class SpamService
     private async Task ProcessTrip(ulong id, double oldPressureAfterDecay, double pressure, List<(double, string)> pressureBreakdown,
         IIzzyMessage message, IIzzyGuildUser user, IIzzyContext context, bool alreadyAlerted = false)
     {
+        if (context.Guild == null)
+            throw new InvalidOperationException("ProcessTrip was somehow called with a non-guild context");
+
         // Silence user, this also logs the action.
         await _mod.SilenceUser(user, $"Exceeded pressure max ({pressure}/{_config.SpamMaxPressure}) in <#{message.Channel.Id}>");
 
@@ -320,12 +326,15 @@ public class SpamService
             try
             {
                 var channel = context.Guild.GetTextChannel(previousMessageItem.ChannelId);
-                var previousMessage = await channel.GetMessageAsync(previousMessageItem.Id);
+                if (channel == null)
+                    throw new InvalidOperationException($"{id}'s PreviousMessages are somehow from a non-existent channel");
+
+                var previousMessage = channel is null ? null : await channel.GetMessageAsync(previousMessageItem.Id);
                 if (previousMessage is not null)
                 {
                     if (previousMessage.Content != "")
                         bulkDeletionLog.Add((previousMessageItem.Timestamp,
-                            $"[{previousMessageItem.Timestamp}] in #{channel.Name}: {previousMessage.Content}"));
+                            $"[{previousMessageItem.Timestamp}] in #{channel?.Name}: {previousMessage.Content}"));
                     await previousMessage.DeleteAsync();
                 }
                 else
@@ -426,7 +435,7 @@ public class SpamService
         if (!DiscordHelper.IsDefaultGuild(context)) return;
         
         var guildUser = context.User as IIzzyGuildUser;
-
+        if (guildUser == null) return; // Not processable
         if (guildUser.Id == client.CurrentUser.Id) return; // Don't process the bot
         if (_config.SpamIgnoredChannels.Contains(context.Channel.Id)) return; // Don't process ignored channels
 

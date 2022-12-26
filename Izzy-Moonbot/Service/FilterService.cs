@@ -69,7 +69,7 @@ public class FilterService
             actions.Add(":exclamation: - **I've pinged all moderators.**");
         }
 
-        var roleIds = context.Guild.GetUser(context.User.Id).Roles.Select(role => role.Id).ToList();
+        var roleIds = context.Guild?.GetUser(context.User.Id)?.Roles.Select(role => role.Id).ToList() ?? new List<ulong>();
         if (_config.FilterBypassRoles.Overlaps(roleIds))
         {
             actions.Clear();
@@ -92,10 +92,13 @@ public class FilterService
         if (_config.FilterBypassRoles.Overlaps(roleIds) ||
             (DiscordHelper.IsDev(context.User.Id) && _config.FilterDevBypass)) fileLogResponse = "Nothing";
 
+        if (context.Guild == null)
+            throw new InvalidOperationException("LogFilterTrip was somehow called with a non-guild context");
+
         await _modLog.CreateModLog(context.Guild)
             .SetContent($"{(actionsTaken.Contains("silence") ? $"<@&{_config.ModRole}>" : "")} Filter Violation for <@{context.User.Id}>")
             .SetEmbed(embedBuilder.Build())
-            .SetFileLogContent($"Filter violation by {context.User.Username}#{context.User.Discriminator} ({context.Guild.GetUser(context.User.Id).DisplayName}) (`{context.User.Id}`) in #{context.Channel.Name} (`{context.Channel.Id}`){Environment.NewLine}" +
+            .SetFileLogContent($"Filter violation by {context.User.Username}#{context.User.Discriminator} ({context.Guild.GetUser(context.User.Id)?.DisplayName}) (`{context.User.Id}`) in #{context.Channel.Name} (`{context.Channel.Id}`){Environment.NewLine}" +
                                $"Category: {category}{Environment.NewLine}" +
                                $"Trigger: {context.Message.CleanContent.Replace(word, $"[[{word}]]")}{Environment.NewLine}" +
                                $"Response: {fileLogResponse}")
@@ -104,7 +107,7 @@ public class FilterService
 
     private async Task ProcessFilterTrip(IIzzyContext context, string word, string category, bool onEdit)
     {
-        var roleIds = context.Guild.GetUser(context.User.Id).Roles.Select(role => role.Id).ToList();
+        var roleIds = context.Guild?.GetUser(context.User.Id)?.Roles.Select(role => role.Id).ToList() ?? new List<ulong>();
 
         if (!_config.FilterBypassRoles.Overlaps(roleIds) &&
             !(DiscordHelper.IsDev(context.User.Id) && _config.FilterDevBypass))
@@ -133,20 +136,20 @@ public class FilterService
                 actions.Add("message");
             }
 
-            if (shouldSilence)
+            if (shouldSilence && context.Guild?.GetUser(context.User.Id) is IIzzyGuildUser user)
             {
-                await _mod.SilenceUser(context.Guild.GetUser(context.User.Id), $"Filter violation ({category} category)");
+                await _mod.SilenceUser(user, $"Filter violation ({category} category)");
                 actions.Add("silence");
             }
 
             await LogFilterTrip(context, word, category, actions, onEdit);
         }
-        catch (KeyNotFoundException ex)
+        catch (KeyNotFoundException)
         {
             var actions = new List<string>();
             await LogFilterTrip(context, word, category, actions, onEdit);
-            await context.Guild.GetTextChannel(_config.ModChannel).SendMessageAsync(
-                ":warning: **I encountered a `KeyNotFoundException` while processing the above filter violation.**");
+            if (context.Guild?.GetTextChannel(_config.ModChannel) is IIzzySocketTextChannel modChannel)
+                await modChannel.SendMessageAsync(":warning: **I encountered a `KeyNotFoundException` while processing the above filter violation.**");
         }
     }
 

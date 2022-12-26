@@ -199,11 +199,7 @@ public class DevModule : ModuleBase<SocketCommandContext>
                     {
                         if (ulong.TryParse(user, out var id)) return Context.Guild.GetUser(id);
                         return null;
-                    }).Where(user =>
-                    {
-                        if (user == null) return false;
-                        return true;
-                    });
+                    }).Where(user => user != null) as IEnumerable<SocketGuildUser>; // cast away nullability
 
                     var raidMsg = await ReplyAsync(
                         $"Confirm: Simulate {users.Count()} users joining {timePeriod} milliseconds apart? Checking reactions in 10 seconds.");
