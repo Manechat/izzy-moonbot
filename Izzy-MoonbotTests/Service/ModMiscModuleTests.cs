@@ -7,6 +7,7 @@ using Izzy_Moonbot.Modules;
 using Izzy_Moonbot;
 using Izzy_Moonbot_Tests.Services;
 using Discord.Commands;
+using Izzy_Moonbot.Describers;
 
 namespace Izzy_Moonbot_Tests.Modules;
 
@@ -51,5 +52,50 @@ public class ModMiscModuleTests
         Assert.AreEqual(3, generalChannel.Messages.Count);
         Assert.AreEqual("hello from mod chat", generalChannel.Messages.Last().Content);
         Assert.AreEqual(1, modChat.Messages.Count);
+    }
+
+    [TestMethod()]
+    public async Task Schedule_Command_Tests()
+    {
+        var (cfg, _, (_, sunny), _, (generalChannel, modChat, _), guild, client) = TestUtils.DefaultStubs();
+        DiscordHelper.DefaultGuildId = guild.Id;
+        cfg.ModChannel = modChat.Id;
+        var (ss, am) = SetupModMiscModule(cfg);
+
+        var logger = new LoggingService(new TestLogger<Worker>());
+        var cfgDescriber = new ConfigDescriber();
+        var mm = new MiscModule(cfg, cfgDescriber, ss, logger, await MiscModuleTests.SetupCommandService());
+
+        var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".schedule");
+        await am.TestableScheduleCommandAsync(context, "");
+
+        var description = generalChannel.Messages.Last().Content;
+        StringAssert.Contains(description, "Here's a list of subcommands");
+        StringAssert.Contains(description, "`.schedule list [jobtype]` -");
+        StringAssert.Contains(description, "`.schedule about <id>` -");
+        StringAssert.Contains(description, "`.schedule add");
+
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".schedule list");
+        await am.TestableScheduleCommandAsync(context, "list");
+
+        description = generalChannel.Messages.Last().Content;
+        StringAssert.Contains(description, "Here's a list of all the scheduled jobs!");
+        StringAssert.Contains(description, "\n\n\n"); // a blank list because nothing is scheduled
+        StringAssert.Contains(description, "If you need a raw text file");
+        Assert.AreEqual(0, ss.GetScheduledJobs().Count());
+
+        DateTimeHelper.FakeUtcNow = TestUtils.FiMEpoch;
+
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".remindme 10 minutes this is a test");
+        await mm.TestableRemindMeCommandAsync(context, "10 minutes this is a test");
+
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".schedule list");
+        await am.TestableScheduleCommandAsync(context, "list");
+
+        description = generalChannel.Messages.Last().Content;
+        StringAssert.Contains(description, "Here's a list of all the scheduled jobs!");
+        StringAssert.Contains(description, $": Send \"this is a test\" to <#{sunny.Id}> (`{sunny.Id}`) <t:1286669400:R>.");
+        StringAssert.Contains(description, "If you need a raw text file");
+        Assert.AreEqual(1, ss.GetScheduledJobs().Count());
     }
 }

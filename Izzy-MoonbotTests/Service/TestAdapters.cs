@@ -377,6 +377,25 @@ public class TestMessageChannel : IIzzyMessageChannel
             else
                 throw new KeyNotFoundException($"This channel is somehow not in its own guild");
     }
+
+    public async Task<IIzzyUserMessage> SendFileAsync(FileAttachment fa, string message)
+    {
+        var maybeUser = _guildBackref.Users.Find(u => u.Id == _clientBackref.CurrentUser.Id);
+        var maybeChannel = _guildBackref.Channels.Find(c => c.Id == Id);
+        if (maybeUser is TestUser user && maybeChannel is StubChannel channel)
+        {
+            var lastId = channel.Messages.LastOrDefault()?.Id ?? 0;
+            var stubMessage = new StubMessage(lastId + 1, message, user.Id, attachments: new List<IAttachment> { new TestAttachment(fa) });
+            channel.Messages.Add(stubMessage);
+            return new TestMessage(stubMessage, user, channel, _guildBackref, _clientBackref);
+        }
+        else
+            if (maybeUser is null)
+                throw new KeyNotFoundException($"CurrentUser is somehow not in this channel");
+            else
+                throw new KeyNotFoundException($"This channel is somehow not in its own guild");
+    }
+
 }
 
 public class StubGuild

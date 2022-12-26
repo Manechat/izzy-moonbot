@@ -251,6 +251,11 @@ public class DiscordNetMessageChannelAdapter : IIzzyMessageChannel
         var sentMesssage = await _channel.SendMessageAsync(message, allowedMentions: allowedMentions, components: components, options: options, stickers: stickers);
         return new DiscordNetUserMessageAdapter(sentMesssage);
     }
+    public async Task<IIzzyUserMessage> SendFileAsync(FileAttachment fa, string message)
+    {
+        var sentMesssage = await _channel.SendFileAsync(fa, message);
+        return new DiscordNetUserMessageAdapter(sentMesssage);
+    }
 
     public override string? ToString()
     {

@@ -338,6 +338,16 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
     [Parameter("[...]", ParameterType.Complex, "")]
     public async Task ScheduleCommandAsync([Remainder]string argsString = "")
     {
+        await TestableScheduleCommandAsync(
+            new SocketCommandContextAdapter(Context),
+            argsString
+        );
+    }
+
+    public async Task TestableScheduleCommandAsync(
+        IIzzyContext context,
+        string argsString = "")
+    {
         var jobTypes = new Dictionary<string, Type>
         {
             { "remove-role", typeof(ScheduledRoleRemovalJob) },
@@ -350,16 +360,17 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
 
         if (argsString == "")
         {
-            await ReplyAsync($"Heya! Here's a list of subcommands for {_config.Prefix}schedule!{Environment.NewLine}" +
-                             $"{Environment.NewLine}" +
-                             $"`{_config.Prefix}schedule list [jobtype]` - Show all scheduled jobs (or all jobs of the specified type) in a Discord message.{Environment.NewLine}" +
-                             $"`{_config.Prefix}schedule list-file [jobtype]` - Post a text file attachment listing all scheduled jobs (or all jobs of the specified type).{Environment.NewLine}" +
-                             $"`{_config.Prefix}schedule about <jobtype>` - Get information about a job type, including the `.schedule add` syntax to create one.{Environment.NewLine}" +
-                             $"`{_config.Prefix}schedule about <id>` - Get information about a specific scheduled job by its ID.{Environment.NewLine}" +
-                             $"`{_config.Prefix}schedule add <jobtype> <date/time> [...]` - Create and schedule a job. Run `{_config.Prefix}schedule about <jobtype>` to figure out the arguments.{Environment.NewLine}" +
-                             $"`{_config.Prefix}schedule remove <id>` - Remove a scheduled job by its ID.{Environment.NewLine}" +
-                             $"{Environment.NewLine}" +
-                             supportedJobTypesMessage);
+            await context.Channel.SendMessageAsync(
+                $"Heya! Here's a list of subcommands for {_config.Prefix}schedule!\n" +
+                $"\n" +
+                $"`{_config.Prefix}schedule list [jobtype]` - Show all scheduled jobs (or all jobs of the specified type) in a Discord message.\n" +
+                $"`{_config.Prefix}schedule list-file [jobtype]` - Post a text file attachment listing all scheduled jobs (or all jobs of the specified type).\n" +
+                $"`{_config.Prefix}schedule about <jobtype>` - Get information about a job type, including the `.schedule add` syntax to create one.\n" +
+                $"`{_config.Prefix}schedule about <id>` - Get information about a specific scheduled job by its ID.\n" +
+                $"`{_config.Prefix}schedule add <jobtype> <date/time> [...]` - Create and schedule a job. Run `{_config.Prefix}schedule about <jobtype>` to figure out the arguments.\n" +
+                $"`{_config.Prefix}schedule remove <id>` - Remove a scheduled job by its ID.\n" +
+                $"\n" +
+                supportedJobTypesMessage);
             return;
         }
 
@@ -384,7 +395,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                             pages.Add("");
                         }
 
-                        pages[pageNumber] += $"{jobs[i]}{Environment.NewLine}";
+                        pages[pageNumber] += $"{jobs[i]}\n";
                     }
 
                     string[] staticParts =
@@ -394,13 +405,14 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                     };
 
                     var paginationMessage =
-                        new PaginationHelper(Context, pages.ToArray(), staticParts, codeblock: false, allowedMentions: AllowedMentions.None);
+                        new PaginationHelper(context, pages.ToArray(), staticParts, codeblock: false, allowedMentions: AllowedMentions.None);
                 }
                 else
                 {
-                    await ReplyAsync($"Heya! Here's a list of all the scheduled jobs!{Environment.NewLine}{Environment.NewLine}" +
-                                     string.Join(Environment.NewLine, jobs) +
-                                     $"{Environment.NewLine}{Environment.NewLine}If you need a raw text file, run `.schedule list-file`.", allowedMentions: AllowedMentions.None);
+                    await context.Channel.SendMessageAsync(
+                        $"Heya! Here's a list of all the scheduled jobs!\n\n" +
+                        string.Join(Environment.NewLine, jobs) +
+                        $"\n\nIf you need a raw text file, run `.schedule list-file`.", allowedMentions: AllowedMentions.None);
                 }
             }
             else
@@ -410,8 +422,8 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
 
                 if (jobTypes[jobType] is not Type type)
                 {
-                    await ReplyAsync($"There is no \"{jobType}\" job type.{Environment.NewLine}" +
-                                     supportedJobTypesMessage);
+                    await context.Channel.SendMessageAsync(
+                        $"There is no \"{jobType}\" job type.\n{supportedJobTypesMessage}");
                     return;
                 }
 
@@ -429,7 +441,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                             pages.Add("");
                         }
 
-                        pages[pageNumber] += $"{jobs[i]}{Environment.NewLine}";
+                        pages[pageNumber] += $"{jobs[i]}\n";
                     }
 
                     string[] staticParts =
@@ -439,13 +451,14 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                     };
 
                     var paginationMessage =
-                        new PaginationHelper(Context, pages.ToArray(), staticParts, codeblock: false, allowedMentions: AllowedMentions.None);
+                        new PaginationHelper(context, pages.ToArray(), staticParts, codeblock: false, allowedMentions: AllowedMentions.None);
                 }
                 else
                 {
-                    await ReplyAsync($"Heya! Here's a list of all the scheduled {jobType} jobs!{Environment.NewLine}{Environment.NewLine}" +
-                                     string.Join(Environment.NewLine, jobs) +
-                                     $"{Environment.NewLine}{Environment.NewLine}If you need a raw text list, run `.schedule list-file {jobType}`.", allowedMentions: AllowedMentions.None);
+                    await context.Channel.SendMessageAsync(
+                        $"Heya! Here's a list of all the scheduled {jobType} jobs!\n\n" +
+                        string.Join(Environment.NewLine, jobs) +
+                        $"\n\nIf you need a raw text list, run `.schedule list-file {jobType}`.", allowedMentions: AllowedMentions.None);
                 }
             }
         }
@@ -459,7 +472,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                 var s = new MemoryStream(Encoding.UTF8.GetBytes(string.Join(Environment.NewLine, jobs)));
                 var fa = new FileAttachment(s, $"all_scheduled_jobs_{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}.txt");
 
-                await Context.Channel.SendFileAsync(fa, $"Here's the file list of all scheduled jobs!");
+                await context.Channel.SendFileAsync(fa, $"Here's the file list of all scheduled jobs!");
             }
             else
             {
@@ -468,8 +481,8 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
 
                 if (jobTypes[jobType] is not Type type)
                 {
-                    await ReplyAsync($"There is no \"{jobType}\" job type.{Environment.NewLine}" +
-                                     supportedJobTypesMessage);
+                    await context.Channel.SendMessageAsync(
+                        $"There is no \"{jobType}\" job type.\n{supportedJobTypesMessage}");
                     return;
                 }
                 
@@ -478,7 +491,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                 var s = new MemoryStream(Encoding.UTF8.GetBytes(string.Join(Environment.NewLine, jobs)));
                 var fa = new FileAttachment(s, $"{jobType}_scheduled_jobs_{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}.txt");
 
-                await Context.Channel.SendFileAsync(fa, $"Here's the file list of all scheduled {jobType} jobs!");
+                await context.Channel.SendFileAsync(fa, $"Here's the file list of all scheduled {jobType} jobs!");
             }
         }
         else if (args.Arguments[0].ToLower() == "about")
@@ -487,7 +500,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
 
             if (searchString == "")
             {
-                await ReplyAsync("You need to provide either a job type, or an ID for a specific job.");
+                await context.Channel.SendMessageAsync("You need to provide either a job type, or an ID for a specific job.");
                 return;
             }
             
@@ -521,20 +534,21 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                     _ => throw new NotImplementedException("Unknown repeat type.")
                 };
                 
-                await ReplyAsync($"Here's information regarding the scheduled job with ID of `{potentialJob.Id}`:\n" +
-                                 $"Job type: {jobType}\n" +
-                                 $"Created <t:{potentialJob.CreatedAt.ToUnixTimeSeconds()}:F>\n" +
-                                 $"Executes <t:{potentialJob.ExecuteAt.ToUnixTimeSeconds()}:R>\n" +
-                                 $"{expandedRepeatInfo}" +
-                                 $"{expandedJobInfo}", allowedMentions: AllowedMentions.None);
+                await context.Channel.SendMessageAsync(
+                    $"Here's information regarding the scheduled job with ID of `{potentialJob.Id}`:\n" +
+                    $"Job type: {jobType}\n" +
+                    $"Created <t:{potentialJob.CreatedAt.ToUnixTimeSeconds()}:F>\n" +
+                    $"Executes <t:{potentialJob.ExecuteAt.ToUnixTimeSeconds()}:R>\n" +
+                    $"{expandedRepeatInfo}" +
+                    $"{expandedJobInfo}", allowedMentions: AllowedMentions.None);
             }
             else
             {
                 // Not an id, so must be a job type
                 if (jobTypes[searchString] is not Type type)
                 {
-                    await ReplyAsync($"There is no \"{searchString}\" job ID or job type.{Environment.NewLine}" +
-                                     supportedJobTypesMessage);
+                    await context.Channel.SendMessageAsync(
+                        $"There is no \"{searchString}\" job ID or job type.\n{supportedJobTypesMessage}");
                     return;
                 }
                 
@@ -597,12 +611,12 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                         break;
                 }
 
-                await ReplyAsync(content);
+                await context.Channel.SendMessageAsync(content);
             }
         } 
         else if (args.Arguments[0].ToLower() == "add")
         {
-            await ReplyAsync($":warning: This subcommand isn't written yet, as other features have higher priority than it. Please ask Cloudburst (Leah) to add the job you wish to add.");
+            await context.Channel.SendMessageAsync($":warning: This subcommand isn't written yet, as other features have higher priority than it. Please ask Cloudburst (Leah) to add the job you wish to add.");
         }
         else if (args.Arguments[0].ToLower() == "remove")
         {
@@ -610,7 +624,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
 
             if (searchString == "")
             {
-                await ReplyAsync("You need to provide an ID for a specific scheduled job.");
+                await context.Channel.SendMessageAsync("You need to provide an ID for a specific scheduled job.");
                 return;
             }
             
@@ -618,7 +632,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
             var potentialJob = _schedule.GetScheduledJob(searchString);
             if (potentialJob == null)
             {
-                await ReplyAsync("Sorry, I couldn't find that job.");
+                await context.Channel.SendMessageAsync("Sorry, I couldn't find that job.");
                 return;
             }
 
@@ -626,11 +640,11 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
             {
                 await _schedule.DeleteScheduledJob(potentialJob);
 
-                await ReplyAsync("Successfully deleted scheduled job.");
+                await context.Channel.SendMessageAsync("Successfully deleted scheduled job.");
             }
             catch (NullReferenceException)
             {
-                await ReplyAsync("Sorry, I couldn't find that job.");
+                await context.Channel.SendMessageAsync("Sorry, I couldn't find that job.");
             }
         }
     } 
