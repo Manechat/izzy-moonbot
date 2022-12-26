@@ -66,6 +66,7 @@ public class ModMiscModuleTests
         var cfgDescriber = new ConfigDescriber();
         var mm = new MiscModule(cfg, cfgDescriber, ss, logger, await MiscModuleTests.SetupCommandService());
 
+
         var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".schedule");
         await am.TestableScheduleCommandAsync(context, "");
 
@@ -75,6 +76,7 @@ public class ModMiscModuleTests
         StringAssert.Contains(description, "`.schedule about <id>` -");
         StringAssert.Contains(description, "`.schedule add");
 
+
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".schedule list");
         await am.TestableScheduleCommandAsync(context, "list");
 
@@ -83,6 +85,7 @@ public class ModMiscModuleTests
         StringAssert.Contains(description, "\n\n\n"); // a blank list because nothing is scheduled
         StringAssert.Contains(description, "If you need a raw text file");
         Assert.AreEqual(0, ss.GetScheduledJobs().Count());
+
 
         DateTimeHelper.FakeUtcNow = TestUtils.FiMEpoch;
 
@@ -97,5 +100,14 @@ public class ModMiscModuleTests
         StringAssert.Contains(description, $": Send \"this is a test\" to <#{sunny.Id}> (`{sunny.Id}`) <t:1286669400:R>.");
         StringAssert.Contains(description, "If you need a raw text file");
         Assert.AreEqual(1, ss.GetScheduledJobs().Count());
+
+
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, $".schedule add echo 1 hour {generalChannel.Id} this is another test");
+        await am.TestableScheduleCommandAsync(context, $"add echo 1 hour {generalChannel.Id} this is another test");
+
+        description = generalChannel.Messages.Last().Content;
+        StringAssert.Contains(description, "Created scheduled job:");
+        StringAssert.Contains(description, $"Send \"this is another test\" to <#{generalChannel.Id}> (`{generalChannel.Id}`) <t:1286672400:R>");
+        Assert.AreEqual(2, ss.GetScheduledJobs().Count());
     }
 }

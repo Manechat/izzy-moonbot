@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Text;
 using System.Threading.Channels;
 using System.Threading.Tasks;
@@ -616,7 +617,34 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
         } 
         else if (args.Arguments[0].ToLower() == "add")
         {
-            await context.Channel.SendMessageAsync($":warning: This subcommand isn't written yet, as other features have higher priority than it. Please ask Cloudburst (Leah) to add the job you wish to add.");
+            var typeArg = args.Arguments[1];
+            if (jobTypes[typeArg] is not Type type)
+            {
+                await context.Channel.SendMessageAsync($"There is no \"{typeArg}\" job ID or job type.\n{supportedJobTypesMessage}");
+                return;
+            }
+
+            // every job type needs an execution time, so that's always the next argument
+            var timeType = TimeHelper.GetTimeType(args.Arguments[2]);
+            var timeArgCount = (timeType == "unknown") ? 2 : 3;
+            var timeArgs = args.Arguments.Skip(2).Take(timeArgCount);
+            var timeHelperResponse = TimeHelper.Convert(string.Join(' ', timeArgs));
+
+            var actionArgsIndex = 2 + timeArgCount;
+            var actionArgs = args.Arguments.Skip(actionArgsIndex);
+            var action = typeArg switch
+            {
+                "remove-role" => new ScheduledEchoJob(0, ""),//typeof(ScheduledRoleRemovalJob),
+                "add-role" => new ScheduledEchoJob(0, ""),//typeof(ScheduledRoleAdditionJob),
+                "unban" => new ScheduledEchoJob(0, ""),//typeof(ScheduledUnbanJob),
+                "echo" => new ScheduledEchoJob(ulong.Parse(actionArgs.ElementAt(0)), string.Join("", argsString.Skip(args.Indices[actionArgsIndex]))),
+                "banner" => new ScheduledEchoJob(0, ""),//typeof(ScheduledBannerRotationJob),
+                _ => throw new InvalidCastException($"{typeArg} is not a valid job type")
+            };
+
+            var job = new ScheduledJob(DateTimeOffset.UtcNow, timeHelperResponse.Time, action);
+            await _schedule.CreateScheduledJob(job);
+            await context.Channel.SendMessageAsync($"Created scheduled job: {job.ToDiscordString()}");
         }
         else if (args.Arguments[0].ToLower() == "remove")
         {
