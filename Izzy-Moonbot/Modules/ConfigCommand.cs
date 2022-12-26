@@ -110,93 +110,9 @@ public class ConfigCommand
         if (value == null || value == "")
         {
             // Only the configItemKey was given, we give the user what their data was
-            var nullableString = "(Pass `<nothing>` as the value when setting to set to nothing/null)";
-            if (!configItem.Nullable) nullableString = "";
-
-            switch (configItem.Type)
-            {
-                case ConfigItemType.String:
-                case ConfigItemType.Char:
-                case ConfigItemType.Boolean:
-                case ConfigItemType.Integer:
-                case ConfigItemType.UnsignedInteger:
-                case ConfigItemType.Double:
-                    await context.Channel.SendMessageAsync(
-                        $"**{configItemKey}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
-                        $"*{configItem.Description}*{Environment.NewLine}" +
-                        $"Current value: `{ConfigHelper.GetValue(config, configItemKey)}`{Environment.NewLine}" +
-                        $"Run `{config.Prefix}config {configItemKey} <value>` to set this value. {nullableString}",
-                        allowedMentions: AllowedMentions.None);
-                    break;
-                case ConfigItemType.Enum:
-                    // Figure out what its values are.
-                    var rawValue = ConfigHelper.GetValue(config, configItemKey);
-                    var enumValue = rawValue as Enum;
-                    if (enumValue == null) throw new InvalidCastException($"Config item {configItem} is supposed to be an enum, but its value {rawValue} failed the `as Enum` cast");
-
-                    var enumType = enumValue.GetType();
-                    var possibleEnumNames = enumType.GetEnumNames().Select(s => $"`{s}`").ToArray();
-                    
-                    await context.Channel.SendMessageAsync(
-                        $"**{configItemKey}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
-                        $"*{configItem.Description}*{Environment.NewLine}" +
-                        $"Possible values are: {string.Join(", ", possibleEnumNames)}{Environment.NewLine}" +
-                        $"Current value: `{enumType.GetEnumName(enumValue)}`{Environment.NewLine}" +
-                        $"Run `{config.Prefix}config {configItemKey} <value>` to set this value. {nullableString}",
-                        allowedMentions: AllowedMentions.None);
-                    break;
-                case ConfigItemType.Role:
-                    await context.Channel.SendMessageAsync(
-                        $"**{configItemKey}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
-                        $"*{configItem.Description}*{Environment.NewLine}" +
-                        $"Current value: <@&{ConfigHelper.GetValue(config, configItemKey)}>{Environment.NewLine}" +
-                        $"Run `{config.Prefix}config {configItemKey} <value>` to set this value. {nullableString}",
-                        allowedMentions: AllowedMentions.None);
-                    break;
-                case ConfigItemType.Channel:
-                    await context.Channel.SendMessageAsync(
-                        $"**{configItemKey}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
-                        $"*{configItem.Description}*{Environment.NewLine}" +
-                        $"Current value: <#{ConfigHelper.GetValue(config, configItemKey)}>{Environment.NewLine}" +
-                        $"Run `{config.Prefix}config {configItemKey} <value>` to set this value. {nullableString}",
-                        allowedMentions: AllowedMentions.None);
-                    break;
-                case ConfigItemType.StringSet:
-                case ConfigItemType.RoleSet:
-                case ConfigItemType.ChannelSet:
-                    await context.Channel.SendMessageAsync(
-                        $"**{configItemKey}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
-                        $"*{configItem.Description}*{Environment.NewLine}" +
-                        $"Run `{config.Prefix}config {configItemKey} list` to view the contents of this list.{Environment.NewLine}" +
-                        $"Run `{config.Prefix}config {configItemKey} add <value>` to add a value to this list. {nullableString}{Environment.NewLine}" +
-                        $"Run `{config.Prefix}config {configItemKey} remove <value>` to remove a value from this list. {nullableString}",
-                        allowedMentions: AllowedMentions.None);
-                    break;
-                case ConfigItemType.StringDictionary:
-                    await context.Channel.SendMessageAsync(
-                        $"**{configItemKey}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
-                        $"*{configItem.Description}*{Environment.NewLine}" +
-                        $"Run `{config.Prefix}config {configItemKey} list` to view a list of keys in this map.{Environment.NewLine}" +
-                        $"Run `{config.Prefix}config {configItemKey} get <key>` to get the current value of a key in this map.{Environment.NewLine}" +
-                        $"Run `{config.Prefix}config {configItemKey} set <key> <value>` to set a key to a value in this map, creating the key if need be.{Environment.NewLine}" +
-                        $"Run `{config.Prefix}config {configItemKey} delete <key>` to delete a key from this map.",
-                        allowedMentions: AllowedMentions.None);
-                    break;
-                case ConfigItemType.StringSetDictionary:
-                    await context.Channel.SendMessageAsync(
-                        $"**{configItemKey}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
-                        $"*{configItem.Description}*{Environment.NewLine}" +
-                        $"Run `{config.Prefix}config {configItemKey} list` to view a list of keys in this map.{Environment.NewLine}" +
-                        $"Run `{config.Prefix}config {configItemKey} get <key>` to get the values of a key in this map.{Environment.NewLine}" +
-                        $"Run `{config.Prefix}config {configItemKey} add <key> <value>` to add a value to a key in this map, creating the key if need be.{Environment.NewLine}" +
-                        $"Run `{config.Prefix}config {configItemKey} deleteitem <key> <value>` to remove a value from a key from this map.{Environment.NewLine}" +
-                        $"Run `{config.Prefix}config {configItemKey} deletelist <key>` to delete a key from this map.",
-                        allowedMentions: AllowedMentions.None);
-                    break;
-                default:
-                    await context.Channel.SendMessageAsync("I seem to have encountered a setting type that I do not know about.");
-                    break;
-            }
+            await context.Channel.SendMessageAsync(
+                ConfigItemDescription(config, configDescriber, configItemKey),
+                allowedMentions: AllowedMentions.None);
         }
         else
         {
@@ -1185,6 +1101,80 @@ public class ConfigCommand
             {
                 await context.Message.ReplyAsync($"I couldn't determine what type {configItem.Type} is.");
             }
+        }
+    }
+
+    public static string ConfigItemDescription(Config config, ConfigDescriber configDescriber, string configItemKey)
+    {
+        var configItem = configDescriber.GetItem(configItemKey);
+        if (configItem == null)
+            throw new InvalidOperationException($"Failed to get configItem for key {configItemKey}");
+
+        var nullableString = "(Pass `<nothing>` as the value when setting to set to nothing/null)";
+        if (!configItem.Nullable) nullableString = "";
+
+        switch (configItem.Type)
+        {
+            case ConfigItemType.String:
+            case ConfigItemType.Char:
+            case ConfigItemType.Boolean:
+            case ConfigItemType.Integer:
+            case ConfigItemType.UnsignedInteger:
+            case ConfigItemType.Double:
+                return $"**{configItemKey}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
+                       $"*{configItem.Description}*{Environment.NewLine}" +
+                       $"Current value: `{ConfigHelper.GetValue(config, configItemKey)}`{Environment.NewLine}" +
+                       $"Run `{config.Prefix}config {configItemKey} <value>` to set this value. {nullableString}";
+            case ConfigItemType.Enum:
+                // Figure out what its values are.
+                var rawValue = ConfigHelper.GetValue(config, configItemKey);
+                var enumValue = rawValue as Enum;
+                if (enumValue == null) throw new InvalidCastException($"Config item {configItem} is supposed to be an enum, but its value {rawValue} failed the `as Enum` cast");
+
+                var enumType = enumValue.GetType();
+                var possibleEnumNames = enumType.GetEnumNames().Select(s => $"`{s}`").ToArray();
+
+                return $"**{configItemKey}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
+                       $"*{configItem.Description}*{Environment.NewLine}" +
+                       $"Possible values are: {string.Join(", ", possibleEnumNames)}{Environment.NewLine}" +
+                       $"Current value: `{enumType.GetEnumName(enumValue)}`{Environment.NewLine}" +
+                       $"Run `{config.Prefix}config {configItemKey} <value>` to set this value. {nullableString}";
+            case ConfigItemType.Role:
+                return
+                    $"**{configItemKey}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
+                    $"*{configItem.Description}*{Environment.NewLine}" +
+                    $"Current value: <@&{ConfigHelper.GetValue(config, configItemKey)}>{Environment.NewLine}" +
+                    $"Run `{config.Prefix}config {configItemKey} <value>` to set this value. {nullableString}";
+            case ConfigItemType.Channel:
+                return $"**{configItemKey}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
+                       $"*{configItem.Description}*{Environment.NewLine}" +
+                       $"Current value: <#{ConfigHelper.GetValue(config, configItemKey)}>{Environment.NewLine}" +
+                       $"Run `{config.Prefix}config {configItemKey} <value>` to set this value. {nullableString}";
+            case ConfigItemType.StringSet:
+            case ConfigItemType.RoleSet:
+            case ConfigItemType.ChannelSet:
+                return $"**{configItemKey}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
+                       $"*{configItem.Description}*{Environment.NewLine}" +
+                       $"Run `{config.Prefix}config {configItemKey} list` to view the contents of this list.{Environment.NewLine}" +
+                       $"Run `{config.Prefix}config {configItemKey} add <value>` to add a value to this list. {nullableString}{Environment.NewLine}" +
+                       $"Run `{config.Prefix}config {configItemKey} remove <value>` to remove a value from this list. {nullableString}";
+            case ConfigItemType.StringDictionary:
+                return $"**{configItemKey}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
+                       $"*{configItem.Description}*{Environment.NewLine}" +
+                       $"Run `{config.Prefix}config {configItemKey} list` to view a list of keys in this map.{Environment.NewLine}" +
+                       $"Run `{config.Prefix}config {configItemKey} get <key>` to get the current value of a key in this map.{Environment.NewLine}" +
+                       $"Run `{config.Prefix}config {configItemKey} set <key> <value>` to set a key to a value in this map, creating the key if need be.{Environment.NewLine}" +
+                       $"Run `{config.Prefix}config {configItemKey} delete <key>` to delete a key from this map.";
+            case ConfigItemType.StringSetDictionary:
+                return $"**{configItemKey}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
+                       $"*{configItem.Description}*{Environment.NewLine}" +
+                       $"Run `{config.Prefix}config {configItemKey} list` to view a list of keys in this map.{Environment.NewLine}" +
+                       $"Run `{config.Prefix}config {configItemKey} get <key>` to get the values of a key in this map.{Environment.NewLine}" +
+                       $"Run `{config.Prefix}config {configItemKey} add <key> <value>` to add a value to a key in this map, creating the key if need be.{Environment.NewLine}" +
+                       $"Run `{config.Prefix}config {configItemKey} deleteitem <key> <value>` to remove a value from a key from this map.{Environment.NewLine}" +
+                       $"Run `{config.Prefix}config {configItemKey} deletelist <key>` to delete a key from this map.";
+            default:
+                return "I seem to have encountered a setting type that I do not know about.";
         }
     }
 }
