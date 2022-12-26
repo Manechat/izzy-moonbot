@@ -220,7 +220,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
     }
 
     [Command("echo")]
-    [Summary("Posts a message to a specified channel")]
+    [Summary("Posts a message (and/or sticker) to a specified channel")]
     [ModCommand(Group = "Permission")]
     [DevCommand(Group = "Permission")]
     [Parameter("channel", ParameterType.Channel, "The channel to send the message to.", true)]
@@ -230,23 +230,21 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
     {
         await TestableEchoCommandAsync(
             new SocketCommandContextAdapter(Context),
-            argsString
+            argsString,
+            // retrieving the stickers requires knowing that Context.Message is a SocketUserMessage instead of any other
+            // IUserMessage, which is not worth the hassle of trying to simulate in tests when we're only going to echo them
+            Context.Message.Stickers.Where(s => s.IsAvailable ?? false).ToArray()
         );
     }
 
     public async Task TestableEchoCommandAsync(
         IIzzyContext context,
-        string argsString = "")
+        string argsString = "",
+        ISticker[]? stickers = null)
     {
-        if (argsString == "")
-        {
-            await context.Channel.SendMessageAsync("You must provide a channel and a message, or just a message.");
-            return;
-        }
-
         var args = DiscordHelper.GetArguments(argsString);
 
-        var channelName = args.Arguments[0];
+        var channelName = args.Arguments.FirstOrDefault("");
         var message = "";
         try
         {
@@ -259,19 +257,23 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
         }
 
         var channelId = await DiscordHelper.GetChannelIdIfAccessAsync(channelName, context);
+        if (channelId == 0)
+        {
+            message = DiscordHelper.StripQuotes(argsString);
+        }
+
+        if (message == "" && (stickers is null || !stickers.Any()))
+        {
+            await context.Channel.SendMessageAsync("You must provide either a non-empty message or an available sticker for me to echo.");
+            return;
+        }
 
         if (channelId > 0)
         {
             var channel = context.Guild?.GetTextChannel(channelId);
-            if (message == "")
-            {
-                await context.Channel.SendMessageAsync("There's no message to send there.");
-                return;
-            }
-
             if (channel != null)
             {
-                await channel.SendMessageAsync(message);
+                await channel.SendMessageAsync(message, stickers: stickers);
                 return;
             }
 
@@ -279,7 +281,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
             return;
         }
 
-        await context.Channel.SendMessageAsync(DiscordHelper.StripQuotes(argsString));
+        await context.Channel.SendMessageAsync(message, stickers: stickers);
     }
 
     [Command("stowaways")]

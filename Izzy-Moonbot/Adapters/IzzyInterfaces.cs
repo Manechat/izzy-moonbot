@@ -77,7 +77,8 @@ public interface IIzzyMessageChannel
         string message,
         AllowedMentions? allowedMentions = null,
         MessageComponent? components = null,
-        RequestOptions? options = null
+        RequestOptions? options = null,
+        ISticker[]? stickers = null
     );
 
     // Izzy only checks the channel type to avoid processing unusual ones
@@ -94,6 +95,7 @@ public interface IIzzySocketTextChannel
         AllowedMentions? allowedMentions = null,
         MessageComponent? components = null,
         RequestOptions? options = null,
+        ISticker[]? stickers = null,
         Embed[]? embeds = null
     );
     Task<IIzzyMessage?> GetMessageAsync(ulong messageId);

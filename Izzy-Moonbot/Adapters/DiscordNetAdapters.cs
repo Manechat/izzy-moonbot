@@ -191,10 +191,11 @@ public class SocketTextChannelAdapter : IIzzySocketTextChannel
         AllowedMentions? allowedMentions = null,
         MessageComponent? components = null,
         RequestOptions? options = null,
+        ISticker[]? stickers = null,
         Embed[]? embeds = null
     )
     {
-        var sentMesssage = await _channel.SendMessageAsync(message, allowedMentions: allowedMentions, components: components, options: options, embeds: embeds);
+        var sentMesssage = await _channel.SendMessageAsync(message, allowedMentions: allowedMentions, components: components, options: options, stickers: stickers, embeds: embeds);
         return new DiscordNetUserMessageAdapter(sentMesssage);
     }
     public async Task<IIzzyMessage?> GetMessageAsync(ulong messageId)
@@ -243,10 +244,11 @@ public class DiscordNetMessageChannelAdapter : IIzzyMessageChannel
         string message,
         AllowedMentions? allowedMentions = null,
         MessageComponent? components = null,
-        RequestOptions? options = null
+        RequestOptions? options = null,
+        ISticker[]? stickers = null
     )
     {
-        var sentMesssage = await _channel.SendMessageAsync(message, allowedMentions: allowedMentions, components: components, options: options);
+        var sentMesssage = await _channel.SendMessageAsync(message, allowedMentions: allowedMentions, components: components, options: options, stickers: stickers);
         return new DiscordNetUserMessageAdapter(sentMesssage);
     }
 
