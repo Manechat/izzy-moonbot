@@ -253,29 +253,18 @@ public class ConfigDescriber
             case "core":
                 return ConfigItemCategory.Core;
             case "server":
-            case "guild":
                 return ConfigItemCategory.Server;
             case "moderation":
-            case "mod":
                 return ConfigItemCategory.Moderation;
             case "debug":
-            case "dev":
-            case "development":
                 return ConfigItemCategory.Debug;
             case "user":
                 return ConfigItemCategory.User;
             case "filter":
-            case "wordfilter":
-            case "word-filter":
                 return ConfigItemCategory.Filter;
             case "spam":
-            case "antispam":
-            case "anti-spam":
-            case "pressure":
                 return ConfigItemCategory.Spam;
             case "raid":
-            case "antiraid":
-            case "anti-raid":
                 return ConfigItemCategory.Raid;
             default:
                 return null;
