@@ -301,8 +301,15 @@ public class ScheduleService
     public async Task Unicycle_BannerRotation(ScheduledBannerRotationJob job, IIzzyGuild guild,
         IIzzyClient client)
     {
-        if (_config.BannerMode == ConfigListener.BannerMode.None) return;
-        if (_config.BannerMode == ConfigListener.BannerMode.CustomRotation && _config.BannerImages.Count == 0) return;
+        if (_config.BannerMode == ConfigListener.BannerMode.None) {
+            _logger.Log("Unicycle_BannerRotation early returning because BannerMode is None.");
+            return;
+        }
+        if (_config.BannerMode == ConfigListener.BannerMode.CustomRotation && _config.BannerImages.Count == 0)
+        {
+            _logger.Log("Unicycle_BannerRotation early returning because BannerMode is CustomRotation but BannerImages is empty.");
+            return;
+        }
 
         if (_config.BannerMode == ConfigListener.BannerMode.CustomRotation)
         {
@@ -382,9 +389,8 @@ public class ScheduleService
                 {
                     if (image.Id == _generalStorage.CurrentBooruFeaturedImage.Id)
                     {
-                        // Update the cache in case of change, but return
-                        _generalStorage.CurrentBooruFeaturedImage =
-                            image;
+                        _logger.Log($"Manebooru featured image is still {image.Id}. Nothing to do but update non-ID properties in the cache.", level: LogLevel.Debug);
+                        _generalStorage.CurrentBooruFeaturedImage = image;
                         await FileHelper.SaveGeneralStorageAsync(_generalStorage);
                         return;
                     }
