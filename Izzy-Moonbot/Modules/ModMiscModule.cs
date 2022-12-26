@@ -220,7 +220,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
     }
 
     [Command("echo")]
-    [Summary("Posts a message to a specified channel")]
+    [Summary("Posts a message (and/or sticker) to a specified channel")]
     [ModCommand(Group = "Permission")]
     [DevCommand(Group = "Permission")]
     [Parameter("channel", ParameterType.Channel, "The channel to send the message to.", true)]
