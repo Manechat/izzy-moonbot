@@ -266,13 +266,14 @@ public class TestTextChannel : IIzzySocketTextChannel
         AllowedMentions? allowedMentions = null,
         MessageComponent? components = null,
         RequestOptions? options = null,
+        ISticker[]? stickers = null,
         Embed[]? embeds = null)
     {
         var maybeUser = _guildBackref.Users.Find(u => u.Id == _clientBackref.CurrentUser.Id);
         if (maybeUser is TestUser user)
         {
             var lastId = _channel.Messages.LastOrDefault()?.Id ?? 0;
-            var stubMessage = new StubMessage(lastId + 1, message, user.Id, components: components, embeds: embeds);
+            var stubMessage = new StubMessage(lastId + 1, message, user.Id, components: components, stickers: stickers, embeds: embeds);
             _channel.Messages.Add(stubMessage);
             return new TestMessage(stubMessage, user, _channel, _guildBackref, _clientBackref);
         }
@@ -358,14 +359,15 @@ public class TestMessageChannel : IIzzyMessageChannel
         string message,
         AllowedMentions? allowedMentions = null,
         MessageComponent? components = null,
-        RequestOptions? options = null)
+        RequestOptions? options = null,
+        ISticker[]? stickers = null)
     {
         var maybeUser = _guildBackref.Users.Find(u => u.Id == _clientBackref.CurrentUser.Id);
         var maybeChannel = _guildBackref.Channels.Find(c => c.Id == Id);
         if (maybeUser is TestUser user && maybeChannel is StubChannel channel)
         {
             var lastId = channel.Messages.LastOrDefault()?.Id ?? 0;
-            var stubMessage = new StubMessage(lastId + 1, message, user.Id);
+            var stubMessage = new StubMessage(lastId + 1, message, user.Id, components: components, stickers: stickers);
             channel.Messages.Add(stubMessage);
             return new TestMessage(stubMessage, user, channel, _guildBackref, _clientBackref);
         }
