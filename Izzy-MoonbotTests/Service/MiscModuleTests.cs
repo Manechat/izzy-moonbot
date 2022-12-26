@@ -68,7 +68,8 @@ public class MiscModuleTests
         var logger = new LoggingService(new TestLogger<Worker>());
         var ss = new ScheduleService(cfg, mod, modLog, logger, generalStorage, scheduledJobs);
 
-        return (ss, new MiscModule(cfg, ss, logger, await SetupCommandService()));
+        var cfgDescriber = new ConfigDescriber();
+        return (ss, new MiscModule(cfg, cfgDescriber, ss, logger, await SetupCommandService()));
     }
 
     [TestMethod()]
@@ -489,4 +490,44 @@ public class MiscModuleTests
         Assert.AreEqual("Sorry, I was unable to find any command, category, or alias named \"core\" that you have access to.", generalChannel.Messages.Last().Content);
     }
 
+    [TestMethod()]
+    public async Task HelpCommand_SearchDocsAndConfig_Async()
+    {
+        var (cfg, _, (_, sunny), roles, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
+        var (_, mm) = await SetupMiscModule(cfg);
+
+        cfg.ModRole = roles[0].Id; // Sunny is a moderator
+        var pippId = guild.Users[3].Id; // Pipp is NOT a moderator
+
+        // regular users don't get this extra searching
+
+        var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, pippId, ".help new pony");
+        await mm.TestableHelpCommandAsync(context, "new pony");
+
+        Assert.AreEqual("Sorry, I was unable to find any command, category, or alias named \"new pony\" that you have access to.", generalChannel.Messages.Last().Content);
+
+        // command documentation is searched
+
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".help new pony");
+        await mm.TestableHelpCommandAsync(context, "new pony");
+
+        Assert.AreEqual("Sorry, I was unable to find any command, category, or alias named \"new pony\" that you have access to." +
+            "\nI do see \"new pony\" in the output of: `.help permanp`", generalChannel.Messages.Last().Content);
+
+        // config documentation is searched
+
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".help rotation");
+        await mm.TestableHelpCommandAsync(context, "rotation");
+
+        Assert.AreEqual("Sorry, I was unable to find any command, category, or alias named \"rotation\" that you have access to." +
+            "\nI do see \"rotation\" in the output of: `.config BannerMode` and `.config BannerInterval` and `.config BannerImages`", generalChannel.Messages.Last().Content);
+
+        // for simple values, the searched config documentation includes the current value
+
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".help 100");
+        await mm.TestableHelpCommandAsync(context, "100");
+
+        Assert.AreEqual("Sorry, I was unable to find any command, category, or alias named \"100\" that you have access to." +
+            "\nI do see \"100\" in the output of: `.config UnicycleInterval`", generalChannel.Messages.Last().Content);
+    }
 }

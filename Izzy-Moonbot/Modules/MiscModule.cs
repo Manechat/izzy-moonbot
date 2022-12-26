@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows.Input;
 using Discord;
 using Discord.Commands;
 using Izzy_Moonbot.Adapters;
@@ -19,13 +20,15 @@ namespace Izzy_Moonbot.Modules;
 public class MiscModule : ModuleBase<SocketCommandContext>
 {
     private readonly Config _config;
+    private readonly ConfigDescriber _configDescriber;
     private readonly ScheduleService _schedule;
     private readonly LoggingService _logger;
     private readonly CommandService _commands;
 
-    public MiscModule(Config config, ScheduleService schedule, LoggingService logger, CommandService commands)
+    public MiscModule(Config config, ConfigDescriber configDescriber, ScheduleService schedule, LoggingService logger, CommandService commands)
     {
         _config = config;
+        _configDescriber = configDescriber;
         _schedule = schedule;
         _logger = logger;
         _commands = commands;
@@ -453,11 +456,33 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                 _commands.Modules.Select(m => m.Name.Replace("Module", "").ToLower()).Where(isSuggestable);
 
             var message = $"Sorry, I was unable to find any command, category, or alias named \"{item}\" that you have access to.";
-            if (alternateNamesToSuggest.Any() || aliasesToSuggest.Any() || categoriesToSuggest.Any())
+            var suggestibles = alternateNamesToSuggest.Concat(aliasesToSuggest).Concat(categoriesToSuggest);
+            if (suggestibles.Any())
             {
-                var suggestibles = alternateNamesToSuggest.Concat(aliasesToSuggest).Concat(categoriesToSuggest).Select(s => $"`.{s}`");
-                message += $"\nDid you mean {string.Join(" or ", suggestibles)}?";
+                message += $"\nDid you mean {string.Join(" or ", suggestibles.Select(s => $"`.{s}`"))}?";
             }
+
+            if (isDev || isMod)
+            {
+                var commandDocHits = _commands.Commands
+                    .Where(c => {
+                        if (c.Aliases.Any(name => suggestibles.Contains(name)))
+                            return false; // this command's already being suggested, so don't repeat it here
+                        return PonyReadableCommandHelp(prefix, c.Name, c).ToLower().Contains(item.ToLower());
+                    })
+                    .Select(c => $"`.help {c.Name}`");
+
+                var configDocHits = _configDescriber.GetSettableConfigItems()
+                    .Where(configItemKey => ConfigCommand.ConfigItemDescription(_config, _configDescriber, configItemKey).ToLower().Contains(item.ToLower()))
+                    .Select(configItemKey => $"`.config {configItemKey}`");
+
+                // if we get more than 10 hits, then it was probably something like " " or "the" or "category" that's part of how we format
+                // the docs rather than useful information we want to dump an exhaustive list of search hits for
+                var documentationSearchHits = commandDocHits.Concat(configDocHits);
+                if (documentationSearchHits.Any() && documentationSearchHits.Count() < 10)
+                    message += $"\nI do see \"{item}\" in the output of: {string.Join(" and ", commandDocHits.Concat(configDocHits))}";
+            }
+
             await context.Channel.SendMessageAsync(message);
         }
     }
