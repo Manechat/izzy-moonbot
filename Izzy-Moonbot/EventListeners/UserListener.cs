@@ -258,7 +258,7 @@ public class UserListener
             job.Action switch
             {
                 ScheduledRoleJob roleJob => roleJob.User == user.Id,
-                ScheduledEchoJob echoJob => echoJob.Channel == user.Id,
+                ScheduledEchoJob echoJob => echoJob.ChannelOrUser == user.Id,
                 _ => false
             }
         );

@@ -288,10 +288,10 @@ public class ScheduleService
     private async Task Unicycle_Echo(ScheduledEchoJob job, IIzzyGuild guild, IIzzyClient client)
     {
         if (job.Content == "") return;
-        var channel = guild.GetTextChannel(job.Channel);
+        var channel = guild.GetTextChannel(job.ChannelOrUser);
         if (channel == null)
         {
-            await client.SendDirectMessageAsync(job.Channel, job.Content);
+            await client.SendDirectMessageAsync(job.ChannelOrUser, job.Content);
             return;
         }
 

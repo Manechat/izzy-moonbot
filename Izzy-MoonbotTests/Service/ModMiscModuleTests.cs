@@ -97,7 +97,7 @@ public class ModMiscModuleTests
 
         description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "Here's a list of all the scheduled jobs!");
-        StringAssert.Contains(description, $": Send \"this is a test\" to <#{sunny.Id}> (`{sunny.Id}`) <t:1286669400:R>.");
+        StringAssert.Contains(description, $": Send \"this is a test\" to (<#{sunny.Id}>/<@{sunny.Id}>) (`{sunny.Id}`) <t:1286669400:R>.");
         StringAssert.Contains(description, "If you need a raw text file");
         Assert.AreEqual(1, ss.GetScheduledJobs().Count());
         var job = ss.GetScheduledJobs().Last();
@@ -105,7 +105,7 @@ public class ModMiscModuleTests
         Assert.AreEqual(TestUtils.FiMEpoch.AddMinutes(10), job.ExecuteAt);
         Assert.AreEqual(ScheduledJobRepeatType.None, job.RepeatType);
         Assert.AreEqual(ScheduledJobActionType.Echo, job.Action.Type);
-        Assert.AreEqual(sunny.Id, (job.Action as ScheduledEchoJob)?.Channel);
+        Assert.AreEqual(sunny.Id, (job.Action as ScheduledEchoJob)?.ChannelOrUser);
         Assert.AreEqual("this is a test", (job.Action as ScheduledEchoJob)?.Content);
 
 
@@ -114,14 +114,14 @@ public class ModMiscModuleTests
 
         description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "Created scheduled job:");
-        StringAssert.Contains(description, $"Send \"this is another test\" to <#{generalChannel.Id}> (`{generalChannel.Id}`) <t:1286672400:R>");
+        StringAssert.Contains(description, $"Send \"this is another test\" to (<#{generalChannel.Id}>/<@{generalChannel.Id}>) (`{generalChannel.Id}`) <t:1286672400:R>");
         Assert.AreEqual(2, ss.GetScheduledJobs().Count());
         job = ss.GetScheduledJobs().Last();
         Assert.AreEqual(TestUtils.FiMEpoch, job.CreatedAt);
         Assert.AreEqual(TestUtils.FiMEpoch.AddHours(1), job.ExecuteAt);
         Assert.AreEqual(ScheduledJobRepeatType.None, job.RepeatType);
         Assert.AreEqual(ScheduledJobActionType.Echo, job.Action.Type);
-        Assert.AreEqual(generalChannel.Id, (job.Action as ScheduledEchoJob)?.Channel);
+        Assert.AreEqual(generalChannel.Id, (job.Action as ScheduledEchoJob)?.ChannelOrUser);
         Assert.AreEqual("this is another test", (job.Action as ScheduledEchoJob)?.Content);
     }
 
@@ -186,11 +186,11 @@ public class ModMiscModuleTests
 
         description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "Created scheduled job:");
-        StringAssert.Contains(description, $"Send \"hello there\" to <#{generalChannel.Id}> (`{generalChannel.Id}`) <t:1286672400:R>");
+        StringAssert.Contains(description, $"Send \"hello there\" to (<#{generalChannel.Id}>/<@{generalChannel.Id}>) (`{generalChannel.Id}`) <t:1286672400:R>");
         job = ss.GetScheduledJobs().Last();
         Assert.AreEqual(TestUtils.FiMEpoch.AddHours(1), job.ExecuteAt);
         Assert.AreEqual(ScheduledJobActionType.Echo, job.Action.Type);
-        Assert.AreEqual(generalChannel.Id, (job.Action as ScheduledEchoJob)?.Channel);
+        Assert.AreEqual(generalChannel.Id, (job.Action as ScheduledEchoJob)?.ChannelOrUser);
         Assert.AreEqual("hello there", (job.Action as ScheduledEchoJob)?.Content);
     }
 
@@ -210,7 +210,7 @@ public class ModMiscModuleTests
 
         var description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "Created scheduled job:");
-        StringAssert.Contains(description, $"Send \"do the pony ony ony\" to <#{generalChannel.Id}> (`{generalChannel.Id}`) <t:1286668810:R>, repeating Relative.");
+        StringAssert.Contains(description, $"Send \"do the pony ony ony\" to (<#{generalChannel.Id}>/<@{generalChannel.Id}>) (`{generalChannel.Id}`) <t:1286668810:R>, repeating Relative.");
         Assert.AreEqual(1, ss.GetScheduledJobs().Count());
         Assert.AreEqual(2, generalChannel.Messages.Count);
 

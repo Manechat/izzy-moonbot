@@ -518,7 +518,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                                                 $"Target role: <@&{roleJob.Role}>\n" +
                                                 $"{(roleJob.Reason != null ? $"Reason: {roleJob.Reason}\n" : "")}",
                     ScheduledUnbanJob unbanJob => $"Target user: <@{unbanJob.User}>\n",
-                    ScheduledEchoJob echoJob => $"Target channel/user: <#{echoJob.Channel}> / <@{echoJob.Channel}>\n" +
+                    ScheduledEchoJob echoJob => $"Target channel/user: <#{echoJob.ChannelOrUser}> / <@{echoJob.ChannelOrUser}>\n" +
                                                 $"Content:\n```\n{echoJob.Content}\n```\n",
                     ScheduledBannerRotationJob => $"Current banner mode: {_config.BannerMode}\n" +
                                                   $"Configure this job via `.config`.\n",
