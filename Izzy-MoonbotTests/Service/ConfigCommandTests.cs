@@ -160,7 +160,7 @@ public class ConfigCommandTests
         description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "MentionResponses");
         StringAssert.Contains(description, "the following values:");
-        StringAssert.Contains(description, $"```{Environment.NewLine}hello new friend!{Environment.NewLine}```");
+        StringAssert.Contains(description, $"```\nhello new friend!\n```");
 
         // StringDictionary
 
@@ -187,9 +187,9 @@ public class ConfigCommandTests
         description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "Aliases");
         StringAssert.Contains(description, "the following keys:");
-        StringAssert.Contains(description, $"```{Environment.NewLine}" +
-            $"moonlaser = addquote moon{Environment.NewLine}" +
-            $"echogeneral = echo <#1>{Environment.NewLine}" +
+        StringAssert.Contains(description, $"```\n" +
+            $"moonlaser = addquote moon\n" +
+            $"echogeneral = echo <#1>\n" +
             $"```");
 
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config Aliases get moonlaser");
@@ -232,11 +232,11 @@ public class ConfigCommandTests
         description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "FilteredWords");
         StringAssert.Contains(description, "the following keys:");
-        StringAssert.Contains(description, $"```{Environment.NewLine}" +
-            $"slurs (2 entries){Environment.NewLine}" +
-            $"{Environment.NewLine}" +
-            $"links (1 entries){Environment.NewLine}" +
-            $"{Environment.NewLine}" +
+        StringAssert.Contains(description, $"```\n" +
+            $"slurs (2 entries)\n" +
+            $"\n" +
+            $"links (1 entries)\n" +
+            $"\n" +
             $"```");
 
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config FilteredWords get slurs");
@@ -248,8 +248,9 @@ public class ConfigCommandTests
 
         description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "**slurs** contains");
-        StringAssert.Contains(description, $"```{Environment.NewLine}" +
-            $"mudpony, screwhead{Environment.NewLine}" +
+        StringAssert.Contains(description, $"```\n" +
+            $"mudpony\n" +
+            $"screwhead\n" +
             $"```");
     }
 

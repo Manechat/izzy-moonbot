@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Discord;
@@ -23,6 +24,30 @@ public class PaginationHelper
     public DateTime ExpiresAt;
     private int _pageNumber = 0;
     public string[] Pages;
+
+    public static void PaginateIfNeededAndSendMessage(IIzzyContext context, string header, IList<string> lineItems, string footer, uint pageSize = 10, AllowedMentions? allowedMentions = null)
+    {
+        if (lineItems.Count <= pageSize)
+        {
+            context.Channel.SendMessageAsync($"{header}\n{string.Join('\n', lineItems)}\n{footer}", allowedMentions: allowedMentions);
+            return;
+        }
+
+        var pages = new List<string>();
+        var pageNumber = -1;
+        for (var i = 0; i < lineItems.Count; i++)
+        {
+            if (i % pageSize == 0)
+            {
+                pageNumber += 1;
+                pages.Add("");
+            }
+
+            pages[pageNumber] += lineItems[i] + '\n';
+        }
+
+        new PaginationHelper(context, pages.ToArray(), new string[] { header, footer }, codeblock: false, allowedMentions: allowedMentions);
+    }
 
     public PaginationHelper(SocketCommandContext context, string[] pages, string[] staticParts,
         bool codeblock = true,

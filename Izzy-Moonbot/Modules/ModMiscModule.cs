@@ -383,38 +383,14 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
             {
                 // All
                 var jobs = _schedule.GetScheduledJobs().Select(job => job.ToDiscordString()).ToList();
-                if (jobs.Count > 10)
-                {
-                    // Use pagination
-                    var pages = new List<string>();
-                    var pageNumber = -1;
-                    for (var i = 0; i < jobs.Count; i++)
-                    {
-                        if (i % 10 == 0)
-                        {
-                            pageNumber += 1;
-                            pages.Add("");
-                        }
 
-                        pages[pageNumber] += $"{jobs[i]}\n";
-                    }
-
-                    string[] staticParts =
-                    {
-                        "Heya! Here's a list of all the scheduled jobs!",
-                        "If you need a raw text list, run `.schedule list-file`."
-                    };
-
-                    var paginationMessage =
-                        new PaginationHelper(context, pages.ToArray(), staticParts, codeblock: false, allowedMentions: AllowedMentions.None);
-                }
-                else
-                {
-                    await context.Channel.SendMessageAsync(
-                        $"Heya! Here's a list of all the scheduled jobs!\n\n" +
-                        string.Join(Environment.NewLine, jobs) +
-                        $"\n\nIf you need a raw text file, run `.schedule list-file`.", allowedMentions: AllowedMentions.None);
-                }
+                PaginationHelper.PaginateIfNeededAndSendMessage(
+                    context,
+                    "Heya! Here's a list of all the scheduled jobs!\n",
+                    jobs.Select(j => j.ToString()).ToList(),
+                    "\nIf you need a raw text file, run `.schedule list-file`.",
+                    allowedMentions: AllowedMentions.None
+                );
             }
             else
             {
@@ -429,38 +405,14 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                 }
 
                 var jobs = _schedule.GetScheduledJobs().Where(job => job.Action.GetType().FullName == type.FullName).Select(job => job.ToDiscordString()).ToList();
-                if (jobs.Count > 10)
-                {
-                    // Use pagination
-                    var pages = new List<string>();
-                    var pageNumber = -1;
-                    for (var i = 0; i < jobs.Count; i++)
-                    {
-                        if (i % 10 == 0)
-                        {
-                            pageNumber += 1;
-                            pages.Add("");
-                        }
 
-                        pages[pageNumber] += $"{jobs[i]}\n";
-                    }
-
-                    string[] staticParts =
-                    {
-                        $"Heya! Here's a list of all the scheduled {jobType} jobs!",
-                        $"If you need a raw text list, run `.schedule list-file {jobType}`."
-                    };
-
-                    var paginationMessage =
-                        new PaginationHelper(context, pages.ToArray(), staticParts, codeblock: false, allowedMentions: AllowedMentions.None);
-                }
-                else
-                {
-                    await context.Channel.SendMessageAsync(
-                        $"Heya! Here's a list of all the scheduled {jobType} jobs!\n\n" +
-                        string.Join(Environment.NewLine, jobs) +
-                        $"\n\nIf you need a raw text list, run `.schedule list-file {jobType}`.", allowedMentions: AllowedMentions.None);
-                }
+                PaginationHelper.PaginateIfNeededAndSendMessage(
+                    context,
+                    $"Heya! Here's a list of all the scheduled {jobType} jobs!\n",
+                    jobs.Select(j => j.ToString()).ToList(),
+                    $"\nIf you need a raw text file, run `.schedule list-file {jobType}`.",
+                    allowedMentions: AllowedMentions.None
+                );
             }
         }
         else if (args.Arguments[0].ToLower() == "list-file")
