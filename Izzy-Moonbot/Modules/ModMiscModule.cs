@@ -471,7 +471,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                 var jobs = _schedule.GetScheduledJobs().Select(job => job.ToFileString()).ToList();
                 
                 var s = new MemoryStream(Encoding.UTF8.GetBytes(string.Join(Environment.NewLine, jobs)));
-                var fa = new FileAttachment(s, $"all_scheduled_jobs_{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}.txt");
+                var fa = new FileAttachment(s, $"all_scheduled_jobs_{DateTimeHelper.UtcNow.ToUnixTimeSeconds()}.txt");
 
                 await context.Channel.SendFileAsync(fa, $"Here's the file list of all scheduled jobs!");
             }
@@ -490,7 +490,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                 var jobs = _schedule.GetScheduledJobs().Where(job => job.Action.GetType().FullName == type.FullName).Select(job => job.ToFileString()).ToList();
                 
                 var s = new MemoryStream(Encoding.UTF8.GetBytes(string.Join(Environment.NewLine, jobs)));
-                var fa = new FileAttachment(s, $"{jobType}_scheduled_jobs_{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}.txt");
+                var fa = new FileAttachment(s, $"{jobType}_scheduled_jobs_{DateTimeHelper.UtcNow.ToUnixTimeSeconds()}.txt");
 
                 await context.Channel.SendFileAsync(fa, $"Here's the file list of all scheduled {jobType} jobs!");
             }
@@ -642,7 +642,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                 _ => throw new InvalidCastException($"{typeArg} is not a valid job type")
             };
 
-            var job = new ScheduledJob(DateTimeOffset.UtcNow, timeHelperResponse.Time, action);
+            var job = new ScheduledJob(DateTimeHelper.UtcNow, timeHelperResponse.Time, action);
             await _schedule.CreateScheduledJob(job);
             await context.Channel.SendMessageAsync($"Created scheduled job: {job.ToDiscordString()}");
         }

@@ -170,7 +170,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
             _logger.Log($"Adding scheduled job to remind user to \"{content}\" at {timeHelperResponse.Time:F}",
                 context: context, level: LogLevel.Debug);
             var action = new ScheduledEchoJob(context.User, content);
-            var task = new ScheduledJob(DateTimeOffset.UtcNow,
+            var task = new ScheduledJob(DateTimeHelper.UtcNow,
                 timeHelperResponse.Time, action);
             await _schedule.CreateScheduledJob(task);
             _logger.Log($"Added scheduled job for user", context: context, level: LogLevel.Debug);

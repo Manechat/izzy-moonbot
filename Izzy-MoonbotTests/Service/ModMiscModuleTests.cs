@@ -100,6 +100,13 @@ public class ModMiscModuleTests
         StringAssert.Contains(description, $": Send \"this is a test\" to <#{sunny.Id}> (`{sunny.Id}`) <t:1286669400:R>.");
         StringAssert.Contains(description, "If you need a raw text file");
         Assert.AreEqual(1, ss.GetScheduledJobs().Count());
+        var job = ss.GetScheduledJobs().Last();
+        Assert.AreEqual(TestUtils.FiMEpoch, job.CreatedAt);
+        Assert.AreEqual(TestUtils.FiMEpoch.AddMinutes(10), job.ExecuteAt);
+        Assert.AreEqual(ScheduledJobRepeatType.None, job.RepeatType);
+        Assert.AreEqual(ScheduledJobActionType.Echo, job.Action.Type);
+        Assert.AreEqual(sunny.Id, (job.Action as ScheduledEchoJob)?.Channel);
+        Assert.AreEqual("this is a test", (job.Action as ScheduledEchoJob)?.Content);
 
 
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, $".schedule add echo 1 hour {generalChannel.Id} this is another test");
@@ -109,5 +116,12 @@ public class ModMiscModuleTests
         StringAssert.Contains(description, "Created scheduled job:");
         StringAssert.Contains(description, $"Send \"this is another test\" to <#{generalChannel.Id}> (`{generalChannel.Id}`) <t:1286672400:R>");
         Assert.AreEqual(2, ss.GetScheduledJobs().Count());
+        job = ss.GetScheduledJobs().Last();
+        Assert.AreEqual(TestUtils.FiMEpoch, job.CreatedAt);
+        Assert.AreEqual(TestUtils.FiMEpoch.AddHours(1), job.ExecuteAt);
+        Assert.AreEqual(ScheduledJobRepeatType.None, job.RepeatType);
+        Assert.AreEqual(ScheduledJobActionType.Echo, job.Action.Type);
+        Assert.AreEqual(generalChannel.Id, (job.Action as ScheduledEchoJob)?.Channel);
+        Assert.AreEqual("this is another test", (job.Action as ScheduledEchoJob)?.Content);
     }
 }
