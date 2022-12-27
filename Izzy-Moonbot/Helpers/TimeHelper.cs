@@ -256,7 +256,7 @@ public static class TimeHelper
                 throw new FormatException("UNKNOWN_RELATIVE_MONTH: Unable to convert a relative month string into a DateTimeOffset.");
         }
 
-        return new TimeHelperResponse(dateTime, false, null);
+        return new TimeHelperResponse(dateTime, null);
     }
 
     private static TimeHelperResponse ConvertWeekRelative(string weekday, string time)
@@ -294,7 +294,7 @@ public static class TimeHelper
         var outputDateTime = new DateTimeOffset(dateTime.Year, dateTime.Month,
             dateTime.Day, hourInt, minuteInt, 0, TimeSpan.Zero);
         
-        return new TimeHelperResponse(outputDateTime, false, null);
+        return new TimeHelperResponse(outputDateTime, null);
     }
 
     private static TimeHelperResponse ConvertTimeRelative(string time)
@@ -306,7 +306,7 @@ public static class TimeHelper
         var outputDateTime = new DateTimeOffset(DateTimeHelper.UtcNow.Year, DateTimeHelper.UtcNow.Month,
             DateTimeHelper.UtcNow.Day, hourInt, minuteInt, 0, TimeSpan.Zero);
         
-        return new TimeHelperResponse(outputDateTime, false, null);
+        return new TimeHelperResponse(outputDateTime, null);
     }
 
     private static TimeHelperResponse ConvertAbsolute(string date, string month, string year, string time)
@@ -371,7 +371,7 @@ public static class TimeHelper
 
         var dateTime = new DateTimeOffset(yearInt, monthInt, dateInt, hourInt, minuteInt, 0, TimeSpan.Zero);
         
-        return new TimeHelperResponse(dateTime, false, null);
+        return new TimeHelperResponse(dateTime, null);
     }
 
     private static int[] ConvertTime(string time)
@@ -467,7 +467,7 @@ public static class TimeHelper
                 throw new FormatException("UNKNOWN_RELATIVE_MONTH: Unable to convert a relative month string into a DateTimeOffset.");
         }
 
-        return new TimeHelperResponse(dateTime, true, "relative");
+        return new TimeHelperResponse(dateTime, "relative");
     }
 
     private static TimeHelperResponse ConvertRepeatingWeekRelative(string weekday, string time)
@@ -505,7 +505,7 @@ public static class TimeHelper
         var outputDateTime = new DateTimeOffset(dateTime.Year, dateTime.Month,
             dateTime.Day, hourInt, minuteInt, 0, TimeSpan.Zero);
 
-        return new TimeHelperResponse(outputDateTime, true, "weekly");
+        return new TimeHelperResponse(outputDateTime, "weekly");
     }
     
     private static TimeHelperResponse ConvertRepeatingTimeRelative(string time)
@@ -517,7 +517,7 @@ public static class TimeHelper
         var outputDateTime = new DateTimeOffset(DateTimeHelper.UtcNow.Year, DateTimeHelper.UtcNow.Month,
             DateTimeHelper.UtcNow.Day, hourInt, minuteInt, 0, TimeSpan.Zero);
         
-        return new TimeHelperResponse(outputDateTime, true, "daily");
+        return new TimeHelperResponse(outputDateTime, "daily");
     }
 
     private static TimeHelperResponse ConvertRepeatingAbsolute(string date, string month, string time)
@@ -569,20 +569,18 @@ public static class TimeHelper
         if (DateTimeHelper.UtcNow.ToUnixTimeMilliseconds() > dateTime.ToUnixTimeMilliseconds()) 
             dateTime = dateTime.AddYears(1);
 
-        return new TimeHelperResponse(dateTime, true, "yearly");
+        return new TimeHelperResponse(dateTime, "yearly");
     }
 }
 
 public class TimeHelperResponse
 {
-    public bool Repeats;
     public string? RepeatType;
     public DateTimeOffset Time;
 
-    public TimeHelperResponse(DateTimeOffset time, bool repeats, string? repeatType)
+    public TimeHelperResponse(DateTimeOffset time, string? repeatType)
     {
         Time = time;
-        Repeats = repeats;
         RepeatType = repeatType;
     }
 }

@@ -212,7 +212,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
             return;
         }
 
-        if (time is { Repeats: true })
+        if (time?.RepeatType is not null)
         {
             await Context.Channel.SendMessageAsync("I can't ban a user repeatedly! Please give me a time that isn't repeating.");
             return;
@@ -392,7 +392,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
             return;
         }
 
-        if (time is { Repeats: true })
+        if (time?.RepeatType is not null)
         {
             await context.Channel.SendMessageAsync("I can't assign a role repeatedly! Please give me a time that isn't repeating.");
             return;
@@ -523,7 +523,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
             return;
         }
 
-        if (time is { Repeats: true })
+        if (time?.RepeatType is not null)
         {
             await ReplyAsync("I can't wipe a channel repeatedly! Please give me a time that isn't repeating.");
             return;

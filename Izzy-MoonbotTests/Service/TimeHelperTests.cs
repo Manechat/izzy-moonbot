@@ -24,7 +24,6 @@ public class TimeHelperTests
 
     void AssertTimeHelperResponsesAreEqual(TimeHelperResponse expected, TimeHelperResponse actual)
     {
-        Assert.AreEqual(expected.Repeats, actual.Repeats, "\nRepeats");
         Assert.AreEqual(expected.RepeatType, actual.RepeatType, "\nRepeatType");
         Assert.AreEqual(expected.Time, actual.Time, "\nTime");
     }
@@ -35,27 +34,27 @@ public class TimeHelperTests
         DateTimeHelper.FakeUtcNow = TestUtils.FiMEpoch;
 
         AssertTimeHelperResponsesAreEqual(
-            new TimeHelperResponse(DateTimeHelper.UtcNow.AddMinutes(10), false, null),
+            new TimeHelperResponse(DateTimeHelper.UtcNow.AddMinutes(10), null),
             TimeHelper.Convert("in 10 minutes")
         );
 
         AssertTimeHelperResponsesAreEqual(
-            new TimeHelperResponse(DateTimeHelper.UtcNow.AddHours(1), false, null),
+            new TimeHelperResponse(DateTimeHelper.UtcNow.AddHours(1), null),
             TimeHelper.Convert("in 1 hour")
         );
 
         AssertTimeHelperResponsesAreEqual(
-            new TimeHelperResponse(DateTimeHelper.UtcNow.AddSeconds(37), false, null),
+            new TimeHelperResponse(DateTimeHelper.UtcNow.AddSeconds(37), null),
             TimeHelper.Convert("in 37 seconds")
         );
 
         AssertTimeHelperResponsesAreEqual(
-            new TimeHelperResponse(DateTimeHelper.UtcNow.AddDays(7), false, null),
+            new TimeHelperResponse(DateTimeHelper.UtcNow.AddDays(7), null),
             TimeHelper.Convert("in 7 days")
         );
 
         AssertTimeHelperResponsesAreEqual(
-            new TimeHelperResponse(DateTimeHelper.UtcNow.AddMonths(6), false, null),
+            new TimeHelperResponse(DateTimeHelper.UtcNow.AddMonths(6), null),
             TimeHelper.Convert("in 6 months")
         );
     }
@@ -68,22 +67,22 @@ public class TimeHelperTests
         Assert.ThrowsException<FormatException>(() => TimeHelper.Convert(""));
 
         AssertTimeHelperResponsesAreEqual(
-            new TimeHelperResponse(new DateTimeOffset(2010, 10, 10, 3, 15, 0, TimeSpan.Zero), false, null),
+            new TimeHelperResponse(new DateTimeOffset(2010, 10, 10, 3, 15, 0, TimeSpan.Zero), null),
             TimeHelper.Convert("at 03:15")
         );
 
         AssertTimeHelperResponsesAreEqual(
-            new TimeHelperResponse(new DateTimeOffset(2010, 1, 1, 12, 0, 0, 0, TimeSpan.Zero), false, null),
+            new TimeHelperResponse(new DateTimeOffset(2010, 1, 1, 12, 0, 0, 0, TimeSpan.Zero), null),
             TimeHelper.Convert("on 1st jan at 12:00")
         );
 
         AssertTimeHelperResponsesAreEqual(
-            new TimeHelperResponse(DateTimeHelper.UtcNow.AddHours(1), true, "relative"),
+            new TimeHelperResponse(DateTimeHelper.UtcNow.AddHours(1), "relative"),
             TimeHelper.Convert("every hour")
         );
 
         AssertTimeHelperResponsesAreEqual(
-            new TimeHelperResponse(new DateTimeOffset(2010, 10, 10, 12, 30, 0, TimeSpan.Zero), true, "daily"),
+            new TimeHelperResponse(new DateTimeOffset(2010, 10, 10, 12, 30, 0, TimeSpan.Zero), "daily"),
             TimeHelper.Convert("every day at 12:30")
         );
     }
@@ -95,12 +94,12 @@ public class TimeHelperTests
         DateTimeHelper.FakeUtcNow = TestUtils.FiMEpoch;
 
         AssertTimeHelperResponsesAreEqual(
-            new TimeHelperResponse(DateTimeHelper.UtcNow.AddSeconds(123), false, null),
+            new TimeHelperResponse(DateTimeHelper.UtcNow.AddSeconds(123), null),
             TimeHelper.Convert("in 123 seconds")
         );
 
         AssertTimeHelperResponsesAreEqual(
-            new TimeHelperResponse(DateTimeHelper.UtcNow.AddSeconds(1234), false, null),
+            new TimeHelperResponse(DateTimeHelper.UtcNow.AddSeconds(1234), null),
             TimeHelper.Convert("in 1234 seconds")
         );
 
