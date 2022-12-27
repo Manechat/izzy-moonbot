@@ -561,10 +561,10 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                                   "*Removes a role from a user after a specified amount of time.*\n" +
                                   "Creation syntax:\n" +
                                   "```\n" +
-                                  $"{_config.Prefix}schedule add {searchString} <date/time> <user> <role> [reason]\n" +
+                                  $"{_config.Prefix}schedule add {searchString} <date/time> <user id> <role id> [reason]\n" +
                                   "```\n" +
-                                  "`user` - The user to remove the role from.\n" +
-                                  "`role` - The role to remove.\n" +
+                                  "`user id` - The id of the user to remove the role from.\n" +
+                                  "`role id` - The id of the role to remove.\n" +
                                   "`reason` - Optional reason.";
                         break;
                     case "ScheduledRoleAdditionJob":
@@ -572,10 +572,10 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                                   "*Adds a role to a user in a specified amount of time.*\n" +
                                   "Creation syntax:\n" +
                                   "```\n" +
-                                  $"{_config.Prefix}schedule add {searchString} <date/time> <user> <role> [reason]\n" +
+                                  $"{_config.Prefix}schedule add {searchString} <date/time> <user id> <role id> [reason]\n" +
                                   "```\n" +
-                                  "`user` - The user to add the role to.\n" +
-                                  "`role` - The role to add.\n" +
+                                  "`user id` - The id of the user to add the role to.\n" +
+                                  "`role id` - The id of the role to add.\n" +
                                   "`reason` - Optional reason.";
                         break;
                     case "ScheduledUnbanJob":
@@ -583,18 +583,18 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                                   "*Unbans a user after a specified amount of time.*\n" +
                                   "Creation syntax:\n" +
                                   "```\n" +
-                                  $"{_config.Prefix}schedule add {searchString} <date/time> <user>\n" +
+                                  $"{_config.Prefix}schedule add {searchString} <date/time> <user id>\n" +
                                   "```\n" +
-                                  "`user` - The user to unban.";
+                                  "`user id` - The id of the user to unban.";
                         break;
                     case "ScheduledEchoJob":
                         content = "**Echo**\n" +
                                   "*Sends a message in a channel, or to a users DMs.*\n" +
                                   "Creation syntax:\n" +
                                   "```\n" +
-                                  $"{_config.Prefix}schedule add {searchString} <date/time> <channel/user> <content>\n" +
+                                  $"{_config.Prefix}schedule add {searchString} <date/time> <channel/user id> <content>\n" +
                                   "```\n" +
-                                  "`channel/user` - Either the channel or user to send the message to.\n" +
+                                  "`channel/user id` - The id of either the channel or user to send the message to.\n" +
                                   "`content` - The message to send.";
                         break;
                     case "ScheduledBannerRotationJob":
