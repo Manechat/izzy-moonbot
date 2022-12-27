@@ -642,7 +642,15 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                 _ => throw new InvalidCastException($"{typeArg} is not a valid job type")
             };
 
-            var job = new ScheduledJob(DateTimeHelper.UtcNow, timeHelperResponse.Time, action);
+            var repeatType = timeHelperResponse.RepeatType switch
+            {
+                "relative" => ScheduledJobRepeatType.Relative,
+                "daily" => ScheduledJobRepeatType.Daily,
+                "weekly" => ScheduledJobRepeatType.Weekly,
+                "yearly" => ScheduledJobRepeatType.Yearly,
+                _ => ScheduledJobRepeatType.None
+            };
+            var job = new ScheduledJob(DateTimeHelper.UtcNow, timeHelperResponse.Time, action, repeatType);
             await _schedule.CreateScheduledJob(job);
             await context.Channel.SendMessageAsync($"Created scheduled job: {job.ToDiscordString()}", allowedMentions: AllowedMentions.None);
         }

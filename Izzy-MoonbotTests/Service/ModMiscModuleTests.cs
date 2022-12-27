@@ -62,8 +62,6 @@ public class ModMiscModuleTests
         cfg.ModChannel = modChat.Id;
         var (ss, am) = SetupModMiscModule(cfg);
 
-        var alicornId = roles[0].Id;
-
         var logger = new LoggingService(new TestLogger<Worker>());
         var cfgDescriber = new ConfigDescriber();
         var mm = new MiscModule(cfg, cfgDescriber, ss, logger, await MiscModuleTests.SetupCommandService());
@@ -195,4 +193,58 @@ public class ModMiscModuleTests
         Assert.AreEqual(generalChannel.Id, (job.Action as ScheduledEchoJob)?.Channel);
         Assert.AreEqual("hello there", (job.Action as ScheduledEchoJob)?.Content);
     }
+
+    [TestMethod()]
+    public async Task Schedule_RepeatingJob_Tests()
+    {
+        var (cfg, _, (_, sunny), roles, (generalChannel, modChat, _), guild, client) = TestUtils.DefaultStubs();
+        DiscordHelper.DefaultGuildId = guild.Id;
+        cfg.ModChannel = modChat.Id;
+        var (ss, am) = SetupModMiscModule(cfg);
+
+        DateTimeHelper.FakeUtcNow = TestUtils.FiMEpoch;
+        await ss.Unicycle(client);
+
+        var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, $".schedule add echo every 10 seconds {generalChannel.Id} do the pony ony ony");
+        await am.TestableScheduleCommandAsync(context, $"add echo every 10 seconds {generalChannel.Id} do the pony ony ony");
+
+        var description = generalChannel.Messages.Last().Content;
+        StringAssert.Contains(description, "Created scheduled job:");
+        StringAssert.Contains(description, $"Send \"do the pony ony ony\" to <#{generalChannel.Id}> (`{generalChannel.Id}`) <t:1286668810:R>, repeating Relative.");
+        Assert.AreEqual(1, ss.GetScheduledJobs().Count());
+        Assert.AreEqual(2, generalChannel.Messages.Count);
+
+        await ss.Unicycle(client);
+        DateTimeHelper.FakeUtcNow = DateTimeHelper.FakeUtcNow?.AddSeconds(10);
+        await ss.Unicycle(client);
+        DateTimeHelper.FakeUtcNow = DateTimeHelper.FakeUtcNow?.AddSeconds(10);
+        await ss.Unicycle(client);
+        DateTimeHelper.FakeUtcNow = DateTimeHelper.FakeUtcNow?.AddSeconds(10);
+        await ss.Unicycle(client);
+
+        Assert.AreEqual(5, generalChannel.Messages.Count);
+        Assert.AreEqual("do the pony ony ony", generalChannel.Messages[2].Content);
+        Assert.AreEqual("do the pony ony ony", generalChannel.Messages[3].Content);
+        Assert.AreEqual("do the pony ony ony", generalChannel.Messages[4].Content);
+
+        Assert.AreEqual(1, ss.GetScheduledJobs().Count());
+        var jobId = ss.GetScheduledJobs().Single().Id;
+
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, $".schedule remove {jobId}");
+        await am.TestableScheduleCommandAsync(context, $"remove {jobId}");
+
+        Assert.AreEqual("Successfully deleted scheduled job.", generalChannel.Messages.Last().Content);
+        Assert.AreEqual(0, ss.GetScheduledJobs().Count());
+        Assert.AreEqual(7, generalChannel.Messages.Count);
+
+        await ss.Unicycle(client);
+        DateTimeHelper.FakeUtcNow = DateTimeHelper.FakeUtcNow?.AddSeconds(10);
+        await ss.Unicycle(client);
+        DateTimeHelper.FakeUtcNow = DateTimeHelper.FakeUtcNow?.AddSeconds(10);
+        await ss.Unicycle(client);
+        DateTimeHelper.FakeUtcNow = DateTimeHelper.FakeUtcNow?.AddSeconds(10);
+        await ss.Unicycle(client);
+        Assert.AreEqual(7, generalChannel.Messages.Count);
+    }
+
 }
