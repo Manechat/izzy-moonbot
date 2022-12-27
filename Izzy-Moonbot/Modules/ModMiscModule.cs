@@ -632,13 +632,13 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
 
             var actionArgsIndex = 2 + timeArgCount;
             var actionArgs = args.Arguments.Skip(actionArgsIndex);
-            var action = typeArg switch
+            ScheduledJobAction action = typeArg switch
             {
-                "remove-role" => new ScheduledEchoJob(0, ""),//typeof(ScheduledRoleRemovalJob),
-                "add-role" => new ScheduledEchoJob(0, ""),//typeof(ScheduledRoleAdditionJob),
-                "unban" => new ScheduledEchoJob(0, ""),//typeof(ScheduledUnbanJob),
+                "remove-role" => new ScheduledRoleRemovalJob(ulong.Parse(actionArgs.ElementAt(0)), ulong.Parse(actionArgs.ElementAt(1)), actionArgs.ElementAtOrDefault(2)),
+                "add-role" => new ScheduledRoleAdditionJob(ulong.Parse(actionArgs.ElementAt(0)), ulong.Parse(actionArgs.ElementAt(1)), actionArgs.ElementAtOrDefault(2)),
+                "unban" => new ScheduledUnbanJob(ulong.Parse(actionArgs.ElementAt(0))),
                 "echo" => new ScheduledEchoJob(ulong.Parse(actionArgs.ElementAt(0)), string.Join("", argsString.Skip(args.Indices[actionArgsIndex]))),
-                "banner" => new ScheduledEchoJob(0, ""),//typeof(ScheduledBannerRotationJob),
+                "banner" => new ScheduledBannerRotationJob(),
                 _ => throw new InvalidCastException($"{typeArg} is not a valid job type")
             };
 
