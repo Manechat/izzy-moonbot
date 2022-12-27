@@ -234,7 +234,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
                     { "userId", userId.ToString() }
                 };
                 var action = new ScheduledUnbanJob(userId);
-                var job = new ScheduledJob(DateTimeOffset.UtcNow, time.Time, action);
+                var job = new ScheduledJob(DateTimeHelper.UtcNow, time.Time, action);
                 await _schedule.CreateScheduledJob(job);
             }
 
@@ -311,7 +311,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
                 // Doesn't exist, it needs to exist.
                 // Create scheduled task!
                 var action = new ScheduledUnbanJob(userId);
-                var job = new ScheduledJob(DateTimeOffset.UtcNow, time.Time, action);
+                var job = new ScheduledJob(DateTimeHelper.UtcNow, time.Time, action);
                 await _schedule.CreateScheduledJob(job);
 
                 await Context.Channel.SendMessageAsync(
@@ -438,7 +438,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
                 _logger.Log($"Adding scheduled job to remove role {roleId} from user {userId} at {time.Time}", level: LogLevel.Debug);
                 var action = new ScheduledRoleRemovalJob(roleId, member.Id,
                     $".assignrole command for user {member.Id} and role {roleId} with duration {duration}.");
-                var task = new ScheduledJob(DateTimeOffset.UtcNow, time.Time, action);
+                var task = new ScheduledJob(DateTimeHelper.UtcNow, time.Time, action);
                 await _schedule.CreateScheduledJob(task);
                 _logger.Log($"Added scheduled job for new user", level: LogLevel.Debug);
 
@@ -531,12 +531,12 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
 
         var wipeThreshold = (time == null) ?
             // default to wiping the last 24 hours
-            DateTimeOffset.UtcNow.AddHours(-24) :
+            DateTimeHelper.UtcNow.AddHours(-24) :
             // unfortunately TimeHelper assumes user input is always talking about a future time, but we want a past time
             // TODO: rethink the TimeHelper API to avoid hacks like this
-            (DateTimeOffset.UtcNow - (time.Time - DateTimeOffset.UtcNow));
+            (DateTimeHelper.UtcNow - (time.Time - DateTimeHelper.UtcNow));
 
-        if ((DateTimeOffset.UtcNow - wipeThreshold).TotalDays > 14)
+        if ((DateTimeHelper.UtcNow - wipeThreshold).TotalDays > 14)
         {
             await ReplyAsync("I can't delete messages older than 14 days, sorry!");
             return;
@@ -608,7 +608,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
             var involvedUserDescriptions = string.Join(", ", bulkDeletionLog.Select(logElement => logElement.Item2).ToHashSet());
 
             var s = new MemoryStream(Encoding.UTF8.GetBytes(bulkDeletionLogString));
-            var fa = new FileAttachment(s, $"{channel.Name}_bulk_deletion_log_{DateTimeOffset.UtcNow.ToString()}.txt");
+            var fa = new FileAttachment(s, $"{channel.Name}_bulk_deletion_log_{DateTimeHelper.UtcNow.ToString()}.txt");
             var bulkDeletionMessage = await logChannel.SendFileAsync(fa, $"Finished wiping {channelName}, here's the bulk deletion log involving {involvedUserDescriptions}:");
 
             await ReplyAsync($"Finished wiping {channelName}. {messagesToDeleteCount} messages were deleted: {bulkDeletionMessage.GetJumpUrl()}");

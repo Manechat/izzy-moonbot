@@ -80,6 +80,7 @@ public interface IIzzyMessageChannel
         RequestOptions? options = null,
         ISticker[]? stickers = null
     );
+    Task<IIzzyUserMessage> SendFileAsync(FileAttachment fa, string message);
 
     // Izzy only checks the channel type to avoid processing unusual ones
     ChannelType GetChannelType() => ChannelType.Text;

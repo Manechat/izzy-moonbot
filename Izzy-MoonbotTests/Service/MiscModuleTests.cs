@@ -19,7 +19,7 @@ namespace Izzy_Moonbot_Tests.Modules;
 [TestClass()]
 public class MiscModuleTests
 {
-    public async Task<CommandService> SetupCommandService()
+    public static async Task<CommandService> SetupCommandService()
     {
         // Hack to avoid trying to load appsettings in tests
         DevCommandAttribute.TestMode = true;
