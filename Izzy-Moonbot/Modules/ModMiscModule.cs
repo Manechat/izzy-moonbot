@@ -561,7 +561,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                                   "*Removes a role from a user after a specified amount of time.*\n" +
                                   "Creation syntax:\n" +
                                   "```\n" +
-                                  $"{_config.Prefix}schedule add {searchString} <date/time> <user id> <role id> [reason]\n" +
+                                  $"{_config.Prefix}schedule add {searchString} <date/time> <role id> <user id> [reason]\n" +
                                   "```\n" +
                                   "`user id` - The id of the user to remove the role from.\n" +
                                   "`role id` - The id of the role to remove.\n" +
@@ -572,7 +572,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                                   "*Adds a role to a user in a specified amount of time.*\n" +
                                   "Creation syntax:\n" +
                                   "```\n" +
-                                  $"{_config.Prefix}schedule add {searchString} <date/time> <user id> <role id> [reason]\n" +
+                                  $"{_config.Prefix}schedule add {searchString} <date/time> <role id> <user id> [reason]\n" +
                                   "```\n" +
                                   "`user id` - The id of the user to add the role to.\n" +
                                   "`role id` - The id of the role to add.\n" +
