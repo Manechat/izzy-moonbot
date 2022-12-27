@@ -612,7 +612,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                         break;
                 }
 
-                await context.Channel.SendMessageAsync(content);
+                await context.Channel.SendMessageAsync(content, allowedMentions: AllowedMentions.None);
             }
         } 
         else if (args.Arguments[0].ToLower() == "add")
@@ -644,7 +644,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
 
             var job = new ScheduledJob(DateTimeHelper.UtcNow, timeHelperResponse.Time, action);
             await _schedule.CreateScheduledJob(job);
-            await context.Channel.SendMessageAsync($"Created scheduled job: {job.ToDiscordString()}");
+            await context.Channel.SendMessageAsync($"Created scheduled job: {job.ToDiscordString()}", allowedMentions: AllowedMentions.None);
         }
         else if (args.Arguments[0].ToLower() == "remove")
         {
