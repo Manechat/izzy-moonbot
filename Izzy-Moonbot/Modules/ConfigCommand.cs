@@ -68,39 +68,12 @@ public class ConfigCommand
 
                 var itemList = configDescriber.GetSettableConfigItemsByCategory(category);
 
-                if (itemList.Count > 10)
-                {
-                    // Use pagination
-                    var pages = new List<string>();
-                    var pageNumber = -1;
-                    for (var i = 0; i < itemList.Count; i++)
-                    {
-                        if (i % 10 == 0)
-                        {
-                            pageNumber += 1;
-                            pages.Add("");
-                        }
-
-                        pages[pageNumber] += itemList[i] + Environment.NewLine;
-                    }
-
-
-                    string[] staticParts =
-                    {
-                        $"Hii!! Here's a list of all the config items I could find in the {configDescriber.CategoryToString(category)} category!",
-                        $"Run `{config.Prefix}config <item>` to view information about an item! Please note that config items are *case sensitive*."
-                    };
-
-                    var paginationMessage = new PaginationHelper(context, pages.ToArray(), staticParts);
-                }
-                else
-                {
-                    await context.Channel.SendMessageAsync(
-                        $"Hii!! Here's a list of all the config items I could find in the {configDescriber.CategoryToString(category)} category!" +
-                        $"{Environment.NewLine}```{Environment.NewLine}{string.Join(Environment.NewLine, itemList)}{Environment.NewLine}```{Environment.NewLine}" +
-                        $"Run `{config.Prefix}config <item>` to view information about an item! Please note that config items are *case sensitive*.");
-                }
-
+                PaginationHelper.PaginateIfNeededAndSendMessage(
+                    context,
+                    $"Hii!! Here's a list of all the config items I could find in the {configDescriber.CategoryToString(category)} category!\n```",
+                    itemList,
+                    $"```\nRun `{config.Prefix}config <item>` to view information about an item! Please note that config items are *case sensitive*."
+                );
                 return;
             }
         }
@@ -344,39 +317,13 @@ public class ConfigCommand
                                 return;
                             }
 
-                            if (stringSet.Count > 10)
-                            {
-                                // Use pagination
-                                var pages = new List<string>();
-                                var pageNumber = -1;
-                                var stringList = stringSet.OrderBy(x => x).ToList();
-                                for (var i = 0; i < stringList.Count; i++)
-                                {
-                                    if (i % 10 == 0)
-                                    {
-                                        pageNumber += 1;
-                                        pages.Add("");
-                                    }
-
-                                    pages[pageNumber] += stringList[i] + Environment.NewLine;
-                                }
-
-
-                                string[] staticParts =
-                                {
-                                    $"**{configItemKey}** contains the following values:",
-                                    ""
-                                };
-
-                                var paginationMessage = new PaginationHelper(context, pages.ToArray(), staticParts);
-                            }
-                            else
-                            {
-                                await context.Channel.SendMessageAsync(
-                                    $"**{configItemKey}** contains the following values:{Environment.NewLine}```{Environment.NewLine}{string.Join(", ", stringSet)}{Environment.NewLine}```",
-                                    allowedMentions: AllowedMentions.None);
-                            }
-
+                            PaginationHelper.PaginateIfNeededAndSendMessage(
+                                context,
+                                $"**{configItemKey}** contains the following values:\n```",
+                                stringSet.OrderBy(x => x).ToList(),
+                                "```",
+                                allowedMentions: AllowedMentions.None
+                            );
                             break;
                         case ConfigItemType.RoleSet:
                             var roleSet = ConfigHelper.GetRoleSet(config, configItemKey, context);
@@ -384,39 +331,13 @@ public class ConfigCommand
                             var roleMentionList = new List<string>();
                             foreach (var role in roleSet) roleMentionList.Add(role.Mention);
 
-                            if (roleMentionList.Count > 10)
-                            {
-                                // Use pagination
-                                var pages = new List<string>();
-                                var pageNumber = -1;
-                                for (var i = 0; i < roleMentionList.Count; i++)
-                                {
-                                    if (i % 10 == 0)
-                                    {
-                                        pageNumber += 1;
-                                        pages.Add("");
-                                    }
-
-                                    pages[pageNumber] += roleMentionList[i] + Environment.NewLine;
-                                }
-
-
-                                string[] staticParts =
-                                {
-                                    $"**{configItemKey}** contains the following values:",
-                                    ""
-                                };
-
-                                var paginationMessage = new PaginationHelper(context, pages.ToArray(),
-                                    staticParts, false, AllowedMentions.None);
-                            }
-                            else
-                            {
-                                await context.Channel.SendMessageAsync(
-                                    $"**{configItemKey}** contains the following values:{Environment.NewLine}{string.Join(", ", roleMentionList)}",
-                                    allowedMentions: AllowedMentions.None);
-                            }
-
+                            PaginationHelper.PaginateIfNeededAndSendMessage(
+                                context,
+                                $"**{configItemKey}** contains the following values:",
+                                roleMentionList,
+                                "",
+                                allowedMentions: AllowedMentions.None
+                            );
                             break;
                         case ConfigItemType.ChannelSet:
                             var channelSet =
@@ -425,39 +346,13 @@ public class ConfigCommand
                             var channelMentionList = new List<string>();
                             foreach (var channel in channelSet) channelMentionList.Add($"<#{channel.Id}>");
 
-                            if (channelMentionList.Count > 10)
-                            {
-                                // Use pagination
-                                var pages = new List<string>();
-                                var pageNumber = -1;
-                                for (var i = 0; i < channelMentionList.Count; i++)
-                                {
-                                    if (i % 10 == 0)
-                                    {
-                                        pageNumber += 1;
-                                        pages.Add("");
-                                    }
-
-                                    pages[pageNumber] += channelMentionList[i] + Environment.NewLine;
-                                }
-
-
-                                string[] staticParts =
-                                {
-                                    $"**{configItemKey}** contains the following values:",
-                                    ""
-                                };
-
-                                var paginationMessage =
-                                    new PaginationHelper(context, pages.ToArray(), staticParts, false);
-                            }
-                            else
-                            {
-                                await context.Channel.SendMessageAsync(
-                                    $"**{configItemKey}** contains the following values:{Environment.NewLine}{string.Join(", ", channelMentionList)}",
-                                    allowedMentions: AllowedMentions.None);
-                            }
-
+                            PaginationHelper.PaginateIfNeededAndSendMessage(
+                                context,
+                                $"**{configItemKey}** contains the following values:",
+                                channelMentionList,
+                                "",
+                                allowedMentions: AllowedMentions.None
+                            );
                             break;
                         default:
                             await context.Channel.SendMessageAsync("I seem to have encountered a setting type that I do not know about.");
@@ -642,58 +537,16 @@ public class ConfigCommand
                         case ConfigItemType.StringDictionary:
                             try
                             {
-                                var keys = new List<string>();
-                                var values = new List<string?>();
-                                if (configItem.Nullable)
-                                {
-                                    keys = ConfigHelper
-                                        .GetDictionary<string?>(config, configItemKey)
-                                        .Keys.ToList();
-                                    values = ConfigHelper
-                                        .GetDictionary<string?>(config, configItemKey)
-                                        .Values.ToList();
-                                }
-                                else
-                                {
-                                    keys = ConfigHelper
-                                        .GetDictionary<string>(config, configItemKey)
-                                        .Keys.ToList();
-                                    values = ConfigHelper
-                                        .GetDictionary<string>(config, configItemKey)
-                                        .Values.Select(t => (string?)t).ToList();
-                                }
+                                IEnumerable<string> items = (configItem.Nullable) ?
+                                    ConfigHelper.GetDictionary<string?>(config, configItemKey).Select(kv => $"{kv.Key} = {kv.Value}") :
+                                    ConfigHelper.GetDictionary<string>(config, configItemKey).Select(kv => $"{kv.Key} = {kv.Value}");
 
-                                if (keys.Count > 10)
-                                {
-                                    // Use pagination
-                                    var pages = new List<string>();
-                                    var pageNumber = -1;
-                                    for (var i = 0; i < keys.Count; i++)
-                                    {
-                                        if (i % 10 == 0)
-                                        {
-                                            pageNumber += 1;
-                                            pages.Add("");
-                                        }
-
-                                        pages[pageNumber] += $"{keys[i]} = {values[i]}{Environment.NewLine}";
-                                    }
-
-                                    string[] staticParts =
-                                    {
-                                        $"**{configItemKey}** contains the following keys:",
-                                        ""
-                                    };
-
-                                    var paginationMessage = new PaginationHelper(context, pages.ToArray(), staticParts);
-                                }
-                                else
-                                {
-                                    var listString = keys.Select((t, i) => $"{t} = {values[i]}").ToList();
-                                    
-                                    await context.Channel.SendMessageAsync(
-                                        $"**{configItemKey}** contains the following keys:{Environment.NewLine}```{Environment.NewLine}{string.Join($"{Environment.NewLine}", listString)}{Environment.NewLine}```");
-                                }
+                                PaginationHelper.PaginateIfNeededAndSendMessage(
+                                    context,
+                                    $"**{configItemKey}** contains the following keys:\n```",
+                                    items.ToList(),
+                                    $"```"
+                                );
                             }
                             catch (ArgumentOutOfRangeException ex)
                             {
@@ -873,49 +726,14 @@ public class ConfigCommand
                         case ConfigItemType.StringSetDictionary:
                             try
                             {
-                                var keys = ConfigHelper
-                                    .GetDictionary<HashSet<string>>(config, configItemKey).Keys
-                                    .ToList();
+                                var dict = ConfigHelper.GetDictionary<HashSet<string>>(config, configItemKey);
 
-                                var values = ConfigHelper
-                                    .GetDictionary<HashSet<string>>(config, configItemKey).Values
-                                    .ToList();
-
-                                if (keys.Count > 10)
-                                {
-                                    // Use pagination
-                                    var pages = new List<string>();
-                                    var pageNumber = -1;
-                                    for (var i = 0; i < keys.Count; i++)
-                                    {
-                                        if (i % 10 == 0)
-                                        {
-                                            pageNumber += 1;
-                                            pages.Add("");
-                                        }
-
-                                        pages[pageNumber] +=
-                                            $"{keys[i]} ({values[i].Count} entries){Environment.NewLine}";
-                                    }
-
-
-                                    string[] staticParts =
-                                    {
-                                        $"**{configItemKey}** contains the following keys:",
-                                        ""
-                                    };
-
-                                    var paginationMessage =
-                                        new PaginationHelper(context, pages.ToArray(), staticParts);
-                                }
-                                else
-                                {
-                                    var listString = keys.Select((t, i) =>
-                                        $"{t} ({values[i].Count} entries){Environment.NewLine}").ToList();
-
-                                    await context.Channel.SendMessageAsync(
-                                        $"**{configItemKey}** contains the following keys:{Environment.NewLine}```{Environment.NewLine}{string.Join($"{Environment.NewLine}", listString)}{Environment.NewLine}```");
-                                }
+                                PaginationHelper.PaginateIfNeededAndSendMessage(
+                                    context,
+                                    $"**{configItemKey}** contains the following keys:\n```",
+                                    dict.Select(kv => $"{kv.Key} ({kv.Value.Count} entries)\n").ToList(),
+                                    $"```"
+                                );
                             }
                             catch (ArgumentOutOfRangeException ex)
                             {
@@ -951,37 +769,13 @@ public class ConfigCommand
                                     ConfigHelper.GetDictionaryValue<HashSet<string>>(config, configItemKey,
                                         value);
 
-                                if (stringSet.Count > 10)
-                                {
-                                    // Use pagination
-                                    var pages = new List<string>();
-                                    var pageNumber = -1;
-                                    var stringList = stringSet.OrderBy(x => x).ToList();
-                                    for (var i = 0; i < stringList.Count; i++)
-                                    {
-                                        if (i % 10 == 0)
-                                        {
-                                            pageNumber += 1;
-                                            pages.Add("");
-                                        }
-
-                                        pages[pageNumber] += stringList[i] + Environment.NewLine;
-                                    }
-
-                                    string[] staticParts =
-                                    {
-                                        $"**{value}** contains the following values:",
-                                        ""
-                                    };
-
-                                    var paginationMessage = new PaginationHelper(context, pages.ToArray(), staticParts);
-                                }
-                                else
-                                {
-                                    await context.Channel.SendMessageAsync(
-                                        $"**{value}** contains the following values:{Environment.NewLine}```{Environment.NewLine}{string.Join(", ", stringSet)}{Environment.NewLine}```",
-                                        allowedMentions: AllowedMentions.None);
-                                }
+                                PaginationHelper.PaginateIfNeededAndSendMessage(
+                                    context,
+                                    $"**{value}** contains the following values:\n```",
+                                    stringSet.OrderBy(x => x).ToList(),
+                                    $"```",
+                                    allowedMentions: AllowedMentions.None
+                                );
                             }
                             catch (KeyNotFoundException ex)
                             {

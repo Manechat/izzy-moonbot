@@ -361,45 +361,16 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                 $"{prefix}{command.Name} - {command.Summary}"
             ).ToList();
 
-            if (commands.Count > 10)
-            {
-                // Use pagination
-                var pages = new List<string>();
-                var pageNumber = -1;
-                for (var i = 0; i < commands.Count; i++)
-                {
-                    if (i % 10 == 0)
-                    {
-                        pageNumber += 1;
-                        pages.Add("");
-                    }
+            var potentialAliases = _commands.Commands.Where(command =>
+                command.Aliases.Select(alias => alias.ToLower()).Contains(item.ToLower())).ToArray();
 
-                    pages[pageNumber] += commands[i] + Environment.NewLine;
-                }
-
-                var potentialAliases = _commands.Commands.Where(command =>
-                    command.Aliases.Select(alias => alias.ToLower()).Contains(item.ToLower())).ToArray();
-
-                string[] staticParts =
-                {
-                            $"Hii! Here's a list of all the commands I could find in the {moduleInfo.Name.Replace("Module", "")} category!",
-                            $"Run `{prefix}help <command>` for help regarding a specific command!" +
-                            $"{(potentialAliases.Length != 0 ? $"{Environment.NewLine}ℹ  This category shares a name with an alias. For information regarding this alias, run `{prefix}help {potentialAliases.First().Name.ToLower()}`.": "")}"
-                        };
-
-                var paginationMessage = new PaginationHelper(context, pages.ToArray(), staticParts);
-            }
-            else
-            {
-                var potentialAliases = _commands.Commands.Where(command =>
-                    command.Aliases.Select(alias => alias.ToLower()).Contains(item.ToLower())).ToArray();
-
-                await context.Channel.SendMessageAsync(
-                    $"Hii! Here's a list of all the commands I could find in the {moduleInfo.Name.Replace("Module", "")} category!{Environment.NewLine}" +
-                    $"```{Environment.NewLine}{string.Join(Environment.NewLine, commands)}{Environment.NewLine}```{Environment.NewLine}" +
-                    $"Run `{prefix}help <command>` for help regarding a specific command!" +
-                    $"{(potentialAliases.Length != 0 ? $"{Environment.NewLine}ℹ  This category shares a name with an alias. For information regarding this alias, run `{prefix}help {potentialAliases.First().Name.ToLower()}`." : "")}");
-            }
+            PaginationHelper.PaginateIfNeededAndSendMessage(
+                context,
+                $"Hii! Here's a list of all the commands I could find in the {moduleInfo.Name.Replace("Module", "")} category!\n```",
+                commands,
+                $"Run `{prefix}help <command>` for help regarding a specific command!" +
+                $"{(potentialAliases.Length != 0 ? $"{Environment.NewLine}ℹ  This category shares a name with an alias. For information regarding this alias, run `{prefix}help {potentialAliases.First().Name.ToLower()}`." : "")}"
+            );
         }
         // Try alternate command names
         else if (_commands.Commands.Any(command =>
