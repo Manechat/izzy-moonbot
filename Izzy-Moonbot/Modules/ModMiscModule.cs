@@ -584,14 +584,61 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
 
             var actionArgsIndex = 2 + timeArgCount;
             var actionArgs = args.Arguments.Skip(actionArgsIndex);
-            ScheduledJobAction action = typeArg switch
+            ScheduledJobAction action;
+            switch (typeArg)
             {
-                "remove-role" => new ScheduledRoleRemovalJob(ulong.Parse(actionArgs.ElementAt(0)), ulong.Parse(actionArgs.ElementAt(1)), actionArgs.ElementAtOrDefault(2)),
-                "add-role" => new ScheduledRoleAdditionJob(ulong.Parse(actionArgs.ElementAt(0)), ulong.Parse(actionArgs.ElementAt(1)), actionArgs.ElementAtOrDefault(2)),
-                "unban" => new ScheduledUnbanJob(ulong.Parse(actionArgs.ElementAt(0))),
-                "echo" => new ScheduledEchoJob(ulong.Parse(actionArgs.ElementAt(0)), string.Join("", argsString.Skip(args.Indices[actionArgsIndex]))),
-                "banner" => new ScheduledBannerRotationJob(),
-                _ => throw new InvalidCastException($"{typeArg} is not a valid job type")
+                case "remove-role":
+                    {
+                        if (!ulong.TryParse(actionArgs.ElementAt(0), out ulong roleId))
+                        {
+                            await context.Channel.SendMessageAsync($"Failed to parse arguments: \"{actionArgs.ElementAt(0)}\" is not a role id");
+                            return;
+                        }
+                        if (!ulong.TryParse(actionArgs.ElementAt(1), out ulong userId))
+                        {
+                            await context.Channel.SendMessageAsync($"Failed to parse arguments: \"{actionArgs.ElementAt(1)}\" is not a user id");
+                            return;
+                        }
+                        action = new ScheduledRoleRemovalJob(roleId, userId, actionArgs.ElementAtOrDefault(2));
+                        break;
+                    }
+                case "add-role":
+                    {
+                        if (!ulong.TryParse(actionArgs.ElementAt(0), out ulong roleId))
+                        {
+                            await context.Channel.SendMessageAsync($"Failed to parse arguments: \"{actionArgs.ElementAt(0)}\" is not a role id");
+                            return;
+                        }
+                        if (!ulong.TryParse(actionArgs.ElementAt(1), out ulong userId))
+                        {
+                            await context.Channel.SendMessageAsync($"Failed to parse arguments: \"{actionArgs.ElementAt(1)}\" is not a user id");
+                            return;
+                        }
+                        action = new ScheduledRoleAdditionJob(roleId, userId, actionArgs.ElementAtOrDefault(2));
+                        break;
+                    }
+                case "unban":
+                    {
+                        if (!ulong.TryParse(actionArgs.ElementAt(0), out ulong userId))
+                        {
+                            await context.Channel.SendMessageAsync($"Failed to parse arguments: \"{actionArgs.ElementAt(0)}\" is not a user id");
+                            return;
+                        }
+                        action = new ScheduledUnbanJob(userId);
+                        break;
+                    }
+                case "echo":
+                    if (!ulong.TryParse(actionArgs.ElementAt(0), out ulong channelId))
+                    {
+                        await context.Channel.SendMessageAsync($"Failed to parse arguments: \"{actionArgs.ElementAt(0)}\" is not a channel/user id");
+                        return;
+                    }
+                    action = new ScheduledEchoJob(channelId, string.Join("", argsString.Skip(args.Indices[actionArgsIndex])));
+                    break;
+                case "banner":
+                    action = new ScheduledBannerRotationJob();
+                    break;
+                default: throw new InvalidCastException($"{typeArg} is not a valid job type");
             };
 
             var repeatType = timeHelperResponse.RepeatType switch
