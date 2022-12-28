@@ -22,7 +22,7 @@ public class TimeHelperTests
         Assert.AreEqual("repeat", TimeHelper.GetTimeType("every january"));
     }
 
-    void AssertTimeHelperResponsesAreEqual(TimeHelperResponse expected, TimeHelperResponse actual)
+    public static void AssertTimeHelperResponsesAreEqual(TimeHelperResponse expected, TimeHelperResponse actual)
     {
         Assert.AreEqual(expected.RepeatType, actual.RepeatType, "\nRepeatType");
         Assert.AreEqual(expected.Time, actual.Time, "\nTime");
@@ -104,5 +104,58 @@ public class TimeHelperTests
         );
 
         Assert.ThrowsException<FormatException>(() => TimeHelper.Convert("12345"));
+    }
+
+    public static void AssertTryParseDateTime(
+        (TimeHelperResponse, string)? actualResponse,
+        DateTimeOffset expectedTime,
+        string? expectedRepeatType,
+        string expectedRemainingArgsString)
+    {
+        Assert.IsNotNull(actualResponse);
+        if (actualResponse is var (thr, remainingArgsString))
+        {
+            AssertTimeHelperResponsesAreEqual(
+                new TimeHelperResponse(expectedTime, expectedRepeatType),
+                thr
+            );
+            Assert.AreEqual(expectedRemainingArgsString, remainingArgsString);
+        }
+    }
+
+    [TestMethod()]
+    public void TryParseDateTime_RelativeTests()
+    {
+        DateTimeHelper.FakeUtcNow = TestUtils.FiMEpoch;
+        string? err;
+
+        AssertTryParseDateTime(
+            TimeHelper.TryParseDateTime("in 10 minutes", out err),
+            DateTimeHelper.UtcNow.AddMinutes(10), null, ""
+        );
+        Assert.AreEqual(err, null);
+
+        AssertTryParseDateTime(
+            TimeHelper.TryParseDateTime("in 1 hour", out err),
+            DateTimeHelper.UtcNow.AddHours(1), null, ""
+        );
+        Assert.AreEqual(err, null);
+
+        AssertTryParseDateTime(
+            TimeHelper.TryParseDateTime("in 1 hour here's some text", out err),
+            DateTimeHelper.UtcNow.AddHours(1), null, "here's some text"
+        );
+        Assert.AreEqual(err, null);
+
+        AssertTryParseDateTime(
+            TimeHelper.TryParseDateTime("1 hour here's some text", out err),
+            DateTimeHelper.UtcNow.AddHours(1), null, "here's some text"
+        );
+        Assert.AreEqual(err, null);
+
+        Assert.IsNull(TimeHelper.TryParseDateTime("one hour", out err));
+        Assert.IsNotNull(err);
+        StringAssert.Contains(err, "Failed to");
+
     }
 }

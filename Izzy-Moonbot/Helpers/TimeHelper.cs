@@ -7,6 +7,96 @@ namespace Izzy_Moonbot.Helpers;
 
 public static class TimeHelper
 {
+    public static (TimeHelperResponse, string)? TryParseDateTime(string argsString, out string? errorString)
+    {
+        var args = DiscordHelper.GetArguments(argsString);
+        if (args.Arguments.Length < 2)
+        {
+            errorString = $"\"{argsString}\" can't be a datetime; all supported datetime formats have at least 2 tokens";
+            return null;
+        }
+
+        TimeHelperResponse time;
+        uint argsConsumed = 0;
+
+        string twoArgs = "";
+        string threeArgs = "";
+        string fourArgs = "";
+        string fiveArgs = "";
+        try
+        {
+            twoArgs = string.Join(' ', args.Arguments.Take(2));
+            time = Convert(twoArgs);
+            argsConsumed = 2;
+            if (args.Arguments.Length > 2 && args.Arguments.ElementAt(2) == "at")
+                throw new FormatException("there's an 'at' next, so not just 2 args");
+        }
+        catch (FormatException fe2)
+        {
+            if (args.Arguments.Length <= 2)
+            {
+                errorString = $"Failed to extract a date/time from \"{argsString}\"\n" +
+                    $"\"{twoArgs}\" failed with {fe2.Message}";
+                return null;
+            }
+
+            try
+            {
+                threeArgs = string.Join(' ', args.Arguments.Take(3));
+                time = Convert(threeArgs);
+                argsConsumed = 3;
+            }
+            catch (FormatException fe3)
+            {
+                if (args.Arguments.Length == 3)
+                {
+                    errorString = $"Failed to extract a date/time from \"{argsString}\"\n" +
+                        $"\"{twoArgs}\" failed with {fe2.Message}\n" +
+                        $"\"{threeArgs}\" failed with {fe3.Message}";
+                    return null;
+                }
+
+                try
+                {
+                    fourArgs = string.Join(' ', args.Arguments.Take(4));
+                    time = Convert(fourArgs);
+                    argsConsumed = 4;
+                }
+                catch (FormatException fe4)
+                {
+                    if (args.Arguments.Length == 4)
+                    {
+                        errorString = $"Failed to extract a date/time from \"{argsString}\"\n" +
+                            $"\"{twoArgs}\" failed with {fe2.Message}\n" +
+                            $"\"{threeArgs}\" failed with {fe3.Message}\n" +
+                            $"\"{fourArgs}\" failed with {fe4.Message}";
+                        return null;
+                    }
+
+                    try
+                    {
+                        fiveArgs = string.Join(' ', args.Arguments.Take(5));
+                        time = Convert(fiveArgs);
+                        argsConsumed = 5;
+                    }
+                    catch (FormatException fe5)
+                    {
+                        errorString = $"Failed to extract a date/time from \"{argsString}\"\n" +
+                            $"\"{twoArgs}\" failed with {fe2.Message}\n" +
+                            $"\"{threeArgs}\" failed with {fe3.Message}\n" +
+                            $"\"{fourArgs}\" failed with {fe4.Message}\n" +
+                            $"\"{fiveArgs}\" failed with {fe5.Message}";
+                        return null;
+                    }
+                }
+            }
+        }
+
+        errorString = null;
+        var remainingArgsString = string.Join("", argsString.Skip(args.Indices[argsConsumed - 1]));
+        return (time, remainingArgsString);
+    }
+
     public static string GetTimeType(string input)
     {
         var timeFormatRegex = new Regex(
