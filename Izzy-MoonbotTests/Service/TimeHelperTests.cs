@@ -108,7 +108,6 @@ public class TimeHelperTests
         Assert.IsNull(TimeHelper.TryParseDateTime("", out err));
         Assert.IsNotNull(err);
         StringAssert.Contains(err, "\"\" can't be a datetime");
-        StringAssert.Contains(err, "at least 2 tokens");
 
         AssertTryParseDateTime(
             TimeHelper.TryParseDateTime("at 03:15", out err),
@@ -157,5 +156,33 @@ public class TimeHelperTests
         Assert.IsNull(TimeHelper.TryParseDateTime("in 12345 seconds", out err));
         Assert.IsNotNull(err);
         StringAssert.Contains(err, "Failed to");
+    }
+
+    [TestMethod()]
+    public void TryParseDateTime_DiscordTimestamp_Tests()
+    {
+        DateTimeHelper.FakeUtcNow = TestUtils.FiMEpoch;
+        string? err;
+
+        AssertTryParseDateTime(
+            TimeHelper.TryParseDateTime("<t:123456789>", out err),
+            DateTimeOffset.FromUnixTimeSeconds(123456789), null, ""
+        );
+        Assert.AreEqual(err, null);
+
+        AssertTryParseDateTime(
+            TimeHelper.TryParseDateTime("<t:123456789:R>", out err),
+            DateTimeOffset.FromUnixTimeSeconds(123456789), null, ""
+        );
+        Assert.AreEqual(err, null);
+
+        AssertTryParseDateTime(
+            TimeHelper.TryParseDateTime("<t:0:x>", out err),
+            DateTimeOffset.FromUnixTimeSeconds(0), null, ""
+        );
+        Assert.AreEqual(err, null);
+
+        Assert.IsNull(TimeHelper.TryParseDateTime("123456789", out err));
+        Assert.IsNotNull(err);
     }
 }

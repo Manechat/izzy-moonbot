@@ -10,6 +10,42 @@ public static class TimeHelper
     public static (TimeHelperResponse, string)? TryParseDateTime(string argsString, out string? errorString)
     {
         var args = DiscordHelper.GetArguments(argsString);
+        if (!args.Arguments.Any())
+        {
+            errorString = $"empty or all-whitespace string \"{argsString}\" can't be a datetime";
+            return null;
+        }
+
+        var firstToken = args.Arguments[0];
+
+        // start with Discord timestamp format, since it's the only one-token format we support and not a subset of anything else
+        var match = Regex.Match(firstToken, "^<t:(?<epoch>[0-9]+)(:[a-zA-Z])?>$");
+        if (match.Success)
+        {
+            var epochString = match.Groups["epoch"]!.Value;
+            var epochSeconds = long.Parse(epochString);
+            var dateTimeOffset = DateTimeOffset.FromUnixTimeSeconds(epochSeconds);
+
+            errorString = null;
+            return (new TimeHelperResponse(dateTimeOffset, null), string.Join("", argsString.Skip(args.Indices[0])));
+        }
+
+        /*
+        ^(?<query1>every |in |on |on the |at |)
+        (?<weekday>monday|tuesday|wednesday|thursday|friday|saturday|sunday|mon|tue|wed|thu|fri|sat|sun|)
+        (?<query2>
+            (?<date>a |\\d\\d\\d\\d |\\d\\d\\d |\\d\\d |\\d |\\d\\dst |\\dst |\\d\\dnd |\\dnd |\\d\\drd |\\drd |\\d\\dth |\\dth |)
+            | at )
+        (of )?
+        (?<month>
+            years|year|months|month|days|day|weeks|week|days|day|hours|hour|minutes|minute|seconds|second|
+            january|february|march|april|june|july|august|september|october|november|december|
+            jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|)
+        (?<year> \\d\\d| \\d\\d\\d\\d|)
+        (?<query3> at |)
+        (?<time>\\d\\d:\\d\\d|\\d:\\d\\d|\\d\\d|\\d|\\dpm|\\d:\\d\\dpm|\\d\\d:\\d\\dpm|\\d\\dpm|\\dam|\\d:\\d\\dam|\\d\\dam|\\d\\d:\\d\\dam|)
+         */
+
         if (args.Arguments.Length < 2)
         {
             errorString = $"\"{argsString}\" can't be a datetime; all supported datetime formats have at least 2 tokens";
