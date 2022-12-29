@@ -12,16 +12,6 @@ namespace Izzy_Moonbot_Tests.Helpers;
 [TestClass()]
 public class TimeHelperTests
 {
-    [TestMethod()]
-    public void GetTimeTypeTests()
-    {
-        Assert.AreEqual("unknown", TimeHelper.GetTimeType(""));
-        Assert.AreEqual("absolute date", TimeHelper.GetTimeType("on friday at 03:00"));
-        Assert.AreEqual("absolute time", TimeHelper.GetTimeType("at 10 am"));
-        Assert.AreEqual("relative", TimeHelper.GetTimeType("in 10 minutes"));
-        Assert.AreEqual("repeat", TimeHelper.GetTimeType("every january"));
-    }
-
     public static void AssertTimeHelperResponsesAreEqual(TimeHelperResponse expected, TimeHelperResponse actual)
     {
         Assert.AreEqual(expected.RepeatType, actual.RepeatType, "\nRepeatType");
@@ -46,7 +36,7 @@ public class TimeHelperTests
     }
 
     [TestMethod()]
-    public void TryParseDateTime_RelativeTests()
+    public void TryParseDateTime_IntervalTests()
     {
         DateTimeHelper.FakeUtcNow = TestUtils.FiMEpoch;
         string? err;
@@ -94,13 +84,30 @@ public class TimeHelperTests
         );
         Assert.AreEqual(err, null);
 
+
+        Assert.IsNull(TimeHelper.TryParseDateTime("in one hour", out err));
+        Assert.IsNotNull(err);
+        StringAssert.Contains(err, "\"one\"");
+        StringAssert.Contains(err, "not a positive integer");
+
         Assert.IsNull(TimeHelper.TryParseDateTime("one hour", out err));
         Assert.IsNotNull(err);
-        StringAssert.Contains(err, "Failed to");
+        StringAssert.Contains(err, "\"one\"");
+        StringAssert.Contains(err, "not a positive integer");
+
+        Assert.IsNull(TimeHelper.TryParseDateTime("in 1 xyz", out err));
+        Assert.IsNotNull(err);
+        StringAssert.Contains(err, "\"xyz\"");
+        StringAssert.Contains(err, "interval units:");
+
+        Assert.IsNull(TimeHelper.TryParseDateTime("1 xyz", out err));
+        Assert.IsNotNull(err);
+        StringAssert.Contains(err, "\"xyz\"");
+        StringAssert.Contains(err, "interval units:");
     }
 
     [TestMethod()]
-    public void TryParseDateTime_MiscTests()
+    public void TryParseDateTime_MiscError_Tests()
     {
         DateTimeHelper.FakeUtcNow = TestUtils.FiMEpoch;
         string? err;
@@ -108,33 +115,8 @@ public class TimeHelperTests
         Assert.IsNull(TimeHelper.TryParseDateTime("", out err));
         Assert.IsNotNull(err);
         StringAssert.Contains(err, "\"\" can't be a datetime");
-
-        AssertTryParseDateTime(
-            TimeHelper.TryParseDateTime("at 03:15", out err),
-            new DateTimeOffset(2010, 10, 10, 3, 15, 0, TimeSpan.Zero), null, ""
-        );
-        Assert.AreEqual(err, null);
-
-        AssertTryParseDateTime(
-            TimeHelper.TryParseDateTime("on 1st jan at 12:00", out err),
-            new DateTimeOffset(2010, 1, 1, 12, 0, 0, 0, TimeSpan.Zero), null, ""
-        );
-        Assert.AreEqual(err, null);
-
-        AssertTryParseDateTime(
-            TimeHelper.TryParseDateTime("every hour", out err),
-            DateTimeHelper.UtcNow.AddHours(1), "relative", ""
-        );
-        Assert.AreEqual(err, null);
-
-        AssertTryParseDateTime(
-            TimeHelper.TryParseDateTime("every day at 12:30", out err),
-            new DateTimeOffset(2010, 10, 10, 12, 30, 0, TimeSpan.Zero), "daily", ""
-        );
-        Assert.AreEqual(err, null);
     }
 
-    // TODO: refactor the impl regex so we can just accept arbitrarily long numbers without hacks
     [TestMethod()]
     public void TryParseDateTime_MultipleDigitsTests()
     {
@@ -153,9 +135,11 @@ public class TimeHelperTests
         );
         Assert.AreEqual(err, null);
 
-        Assert.IsNull(TimeHelper.TryParseDateTime("in 12345 seconds", out err));
-        Assert.IsNotNull(err);
-        StringAssert.Contains(err, "Failed to");
+        AssertTryParseDateTime(
+            TimeHelper.TryParseDateTime("in 12345 seconds", out err),
+            DateTimeHelper.UtcNow.AddSeconds(12345), null, ""
+        );
+        Assert.AreEqual(err, null);
     }
 
     [TestMethod()]
@@ -184,5 +168,158 @@ public class TimeHelperTests
 
         Assert.IsNull(TimeHelper.TryParseDateTime("123456789", out err));
         Assert.IsNotNull(err);
+        StringAssert.Contains(err, "\"123456789\"");
+        StringAssert.Contains(err, "not a Discord timestamp");
+    }
+
+    [TestMethod()]
+    public void TryParseDateTime_Time_Tests()
+    {
+        DateTimeHelper.FakeUtcNow = TestUtils.FiMEpoch;
+        string? err;
+
+        AssertTryParseDateTime(
+            TimeHelper.TryParseDateTime("at 03:15 UTC+0", out err),
+            new DateTimeOffset(2010, 10, 10, 3, 15, 0, TimeSpan.Zero), null, ""
+        );
+        Assert.AreEqual(err, null);
+
+        AssertTryParseDateTime(
+            TimeHelper.TryParseDateTime("03:15 UTC+0", out err),
+            new DateTimeOffset(2010, 10, 10, 3, 15, 0, TimeSpan.Zero), null, ""
+        );
+        Assert.AreEqual(err, null);
+
+        Assert.IsNull(TimeHelper.TryParseDateTime("at 03:15", out err));
+        Assert.IsNotNull(err);
+        StringAssert.Contains(err, "\"03:15\"");
+        StringAssert.Contains(err, "missing a UTC offset");
+
+        Assert.IsNull(TimeHelper.TryParseDateTime("03:15", out err));
+        Assert.IsNotNull(err);
+        StringAssert.Contains(err, "\"03:15\"");
+        StringAssert.Contains(err, "missing a UTC offset");
+    }
+
+    [TestMethod()]
+    public void TryParseDateTime_WeekdayTime_Tests()
+    {
+        DateTimeHelper.FakeUtcNow = TestUtils.FiMEpoch;
+        string? err;
+
+        // Oct 10th 2010 was a Sunday, so "next Monday" is the 11th
+        AssertTryParseDateTime(
+            TimeHelper.TryParseDateTime("on monday 03:15 UTC+0", out err),
+            new DateTimeOffset(2010, 10, 11, 3, 15, 0, TimeSpan.Zero), null, ""
+        );
+        Assert.AreEqual(err, null);
+
+        AssertTryParseDateTime(
+            TimeHelper.TryParseDateTime("monday 03:15 UTC+0", out err),
+            new DateTimeOffset(2010, 10, 11, 3, 15, 0, TimeSpan.Zero), null, ""
+        );
+        Assert.AreEqual(err, null);
+
+        Assert.IsNull(TimeHelper.TryParseDateTime("on monday 03:15", out err));
+        Assert.IsNotNull(err);
+        StringAssert.Contains(err, "\"monday 03:15\"");
+        StringAssert.Contains(err, "missing a UTC offset");
+
+        Assert.IsNull(TimeHelper.TryParseDateTime("monday 03:15", out err));
+        Assert.IsNotNull(err);
+        StringAssert.Contains(err, "\"monday 03:15\"");
+        StringAssert.Contains(err, "missing a UTC offset");
+
+        Assert.IsNull(TimeHelper.TryParseDateTime("on monday", out err));
+        Assert.IsNotNull(err);
+        StringAssert.Contains(err, "\"monday\"");
+        StringAssert.Contains(err, "missing a time");
+
+        Assert.IsNull(TimeHelper.TryParseDateTime("monday", out err));
+        Assert.IsNotNull(err);
+        StringAssert.Contains(err, "\"monday\"");
+        StringAssert.Contains(err, "missing a time");
+    }
+
+    [TestMethod()]
+    public void TryParseDateTime_DateTime_Tests()
+    {
+        DateTimeHelper.FakeUtcNow = TestUtils.FiMEpoch;
+        string? err;
+
+        AssertTryParseDateTime(
+            TimeHelper.TryParseDateTime("on 1 jan 2020 12:00 UTC+0", out err),
+            new DateTimeOffset(2020, 1, 1, 12, 0, 0, 0, TimeSpan.Zero), null, ""
+        );
+        Assert.AreEqual(err, null);
+
+        AssertTryParseDateTime(
+            TimeHelper.TryParseDateTime("1 jan 2020 12:00 UTC+0", out err),
+            new DateTimeOffset(2020, 1, 1, 12, 0, 0, 0, TimeSpan.Zero), null, ""
+        );
+        Assert.AreEqual(err, null);
+
+        Assert.IsNull(TimeHelper.TryParseDateTime("on 1 jan 2020 12:00", out err));
+        Assert.IsNotNull(err);
+        StringAssert.Contains(err, "\"1 jan 2020 12:00\"");
+        StringAssert.Contains(err, "missing a UTC offset");
+
+        Assert.IsNull(TimeHelper.TryParseDateTime("1 jan 2020 12:00", out err));
+        Assert.IsNotNull(err);
+        StringAssert.Contains(err, "\"1 jan 2020 12:00\"");
+        StringAssert.Contains(err, "missing a UTC offset");
+    }
+
+    [TestMethod()]
+    public void TryParseDateTime_RepeatingInterval_Tests()
+    {
+        DateTimeHelper.FakeUtcNow = TestUtils.FiMEpoch;
+        string? err;
+
+        AssertTryParseDateTime(
+            TimeHelper.TryParseDateTime("every 1 hour", out err),
+            DateTimeHelper.UtcNow.AddHours(1), "relative", ""
+        );
+        Assert.AreEqual(err, null);
+    }
+
+    [TestMethod()]
+    public void TryParseDateTime_RepeatingTime_Tests()
+    {
+        DateTimeHelper.FakeUtcNow = TestUtils.FiMEpoch;
+        string? err;
+
+        AssertTryParseDateTime(
+            TimeHelper.TryParseDateTime("every 12:30 UTC+0", out err),
+            new DateTimeOffset(2010, 10, 10, 12, 30, 0, TimeSpan.Zero), "daily", ""
+        );
+        Assert.AreEqual(err, null);
+    }
+
+    [TestMethod()]
+    public void TryParseDateTime_RepeatingWeekdayTime_Tests()
+    {
+        DateTimeHelper.FakeUtcNow = TestUtils.FiMEpoch;
+        string? err;
+
+        // Oct 10th 2010 was a Sunday, so "next Monday" is the 11th
+        AssertTryParseDateTime(
+            TimeHelper.TryParseDateTime("every monday 12:30 UTC+0", out err),
+            new DateTimeOffset(2010, 10, 11, 12, 30, 0, TimeSpan.Zero), "weekly", ""
+        );
+        Assert.AreEqual(err, null);
+    }
+
+    [TestMethod()]
+    public void TryParseDateTime_RepeatingDateTime_Tests()
+    {
+        DateTimeHelper.FakeUtcNow = TestUtils.FiMEpoch;
+        string? err;
+
+        AssertTryParseDateTime(
+            TimeHelper.TryParseDateTime("every 1 jan 12:00 UTC+0", out err),
+            new DateTimeOffset(2011, 1, 1, 12, 0, 0, TimeSpan.Zero), "yearly", ""
+        );
+        Assert.AreEqual(err, null);
     }
 }
