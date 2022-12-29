@@ -28,12 +28,12 @@ public class ScheduledJob
     
     public string ToDiscordString()
     {
-        return $"`{Id}`: {Action.ToDiscordString()} <t:{ExecuteAt.ToUnixTimeSeconds()}:R>{(RepeatType != ScheduledJobRepeatType.None ? $", repeating {RepeatType.ToString()}{(LastExecutedAt != null ? $", last executed <t:{LastExecutedAt.Value.ToUnixTimeSeconds()}:R>": "")}" : "")}. Created <t:{CreatedAt.ToUnixTimeSeconds()}:F>";
+        return $"`{Id}`: {Action.ToDiscordString()} <t:{ExecuteAt.ToUnixTimeSeconds()}:R>{(RepeatType != ScheduledJobRepeatType.None ? $", repeating {RepeatType.ToString()}{(LastExecutedAt != null ? $", last executed <t:{LastExecutedAt.Value.ToUnixTimeSeconds()}:R>": "")}" : "")}.";
     }
 
     public string ToFileString()
     {
-        return $"{Id}: {Action.ToFileString()} at {ExecuteAt:F}{(RepeatType != ScheduledJobRepeatType.None ? $", repeating {RepeatType.ToString()}{(LastExecutedAt != null ? $", last executed at {LastExecutedAt.Value:F}": "")}" : "")}. Created at {CreatedAt:F}";
+        return $"{Id}: {Action.ToFileString()} at {ExecuteAt:F}{(RepeatType != ScheduledJobRepeatType.None ? $", repeating {RepeatType.ToString()}{(LastExecutedAt != null ? $", last executed at {LastExecutedAt.Value:F}": "")}" : "")}.";
     }
 }
 
@@ -154,41 +154,41 @@ public class ScheduledUnbanJob : ScheduledJobAction
 
 public class ScheduledEchoJob : ScheduledJobAction
 {
-    public ScheduledEchoJob(ulong channel, string content)
+    public ScheduledEchoJob(ulong channelOrUser, string content)
     {
         Type = ScheduledJobActionType.Echo;
-        
-        Channel = channel;
+
+        ChannelOrUser = channelOrUser;
         Content = content;
     }
 
     public ScheduledEchoJob(IIzzyMessageChannel channel, string content)
     {
         Type = ScheduledJobActionType.Echo;
-        
-        Channel = channel.Id;
+
+        ChannelOrUser = channel.Id;
         Content = content;
     }
 
     public ScheduledEchoJob(IIzzyUser user, string content)
     {
         Type = ScheduledJobActionType.Echo;
-        
-        Channel = user.Id;
+
+        ChannelOrUser = user.Id;
         Content = content;
     }
     
-    public ulong Channel { get; }
+    public ulong ChannelOrUser { get; }
     public string Content { get; }
     
     public override string ToDiscordString()
     {
-        return $"Send \"{Content}\" to <#{Channel}> (`{Channel}`)";
+        return $"Send \"{Content}\" to (<#{ChannelOrUser}>/<@{ChannelOrUser}>) (`{ChannelOrUser}`)";
     }
     
     public override string ToFileString()
     {
-        return $"Send \"{Content}\" to channel/user {Channel}";
+        return $"Send \"{Content}\" to channel/user {ChannelOrUser}";
     }
 }
 

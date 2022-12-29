@@ -84,33 +84,30 @@ public class ScheduleService
 
         foreach (var job in scheduledJobsToExecute)
         {
-            _logger.Log($"Executing scheduled job queued for execution at {job.ExecuteAt:F}", level: LogLevel.Debug);
+            _logger.Log($"Executing {job.Action.Type} job {job.Id} since it was scheduled to execute at {job.ExecuteAt:F}", level: LogLevel.Debug);
 
             try
             {
+                if (client.GetGuild(DiscordHelper.DefaultGuild()) is not IIzzyGuild defaultGuild)
+                    throw new InvalidOperationException("Failed to get default guild");
+
                 // Do processing here I guess!
-                
                 switch (job.Action)
                 {
                     case ScheduledRoleRemovalJob roleRemovalJob:
-                        await Unicycle_RemoveRole(roleRemovalJob,
-                            client.GetGuild(DiscordHelper.DefaultGuild()));
+                        await Unicycle_RemoveRole(roleRemovalJob, defaultGuild);
                         break;
                     case ScheduledRoleAdditionJob roleAdditionJob:
-                        await Unicycle_AddRole(roleAdditionJob,
-                            client.GetGuild(DiscordHelper.DefaultGuild()));
+                        await Unicycle_AddRole(roleAdditionJob, defaultGuild);
                         break;
                     case ScheduledUnbanJob unbanJob:
-                        await Unicycle_Unban(unbanJob,
-                            client.GetGuild(DiscordHelper.DefaultGuild()), client);
+                        await Unicycle_Unban(unbanJob, defaultGuild, client);
                         break;
                     case ScheduledEchoJob echoJob:
-                        await Unicycle_Echo(echoJob,
-                            client.GetGuild(DiscordHelper.DefaultGuild()), client);
+                        await Unicycle_Echo(echoJob, defaultGuild, client);
                         break;
                     case ScheduledBannerRotationJob bannerRotationJob:
-                        await Unicycle_BannerRotation(bannerRotationJob,
-                            client.GetGuild(DiscordHelper.DefaultGuild()), client);
+                        await Unicycle_BannerRotation(bannerRotationJob, defaultGuild, client);
                         break;
                     default:
                         throw new NotSupportedException($"{job.Action.GetType().Name} is currently not supported.");
@@ -291,10 +288,10 @@ public class ScheduleService
     private async Task Unicycle_Echo(ScheduledEchoJob job, IIzzyGuild guild, IIzzyClient client)
     {
         if (job.Content == "") return;
-        var channel = guild.GetTextChannel(job.Channel);
+        var channel = guild.GetTextChannel(job.ChannelOrUser);
         if (channel == null)
         {
-            await client.SendDirectMessageAsync(job.Channel, job.Content);
+            await client.SendDirectMessageAsync(job.ChannelOrUser, job.Content);
             return;
         }
 
@@ -304,8 +301,15 @@ public class ScheduleService
     public async Task Unicycle_BannerRotation(ScheduledBannerRotationJob job, IIzzyGuild guild,
         IIzzyClient client)
     {
-        if (_config.BannerMode == ConfigListener.BannerMode.None) return;
-        if (_config.BannerMode == ConfigListener.BannerMode.CustomRotation && _config.BannerImages.Count == 0) return;
+        if (_config.BannerMode == ConfigListener.BannerMode.None) {
+            _logger.Log("Unicycle_BannerRotation early returning because BannerMode is None.");
+            return;
+        }
+        if (_config.BannerMode == ConfigListener.BannerMode.CustomRotation && _config.BannerImages.Count == 0)
+        {
+            _logger.Log("Unicycle_BannerRotation early returning because BannerMode is CustomRotation but BannerImages is empty.");
+            return;
+        }
 
         if (_config.BannerMode == ConfigListener.BannerMode.CustomRotation)
         {
@@ -385,9 +389,8 @@ public class ScheduleService
                 {
                     if (image.Id == _generalStorage.CurrentBooruFeaturedImage.Id)
                     {
-                        // Update the cache in case of change, but return
-                        _generalStorage.CurrentBooruFeaturedImage =
-                            image;
+                        _logger.Log($"Manebooru featured image is still {image.Id}. Nothing to do but update non-ID properties in the cache.", level: LogLevel.Debug);
+                        _generalStorage.CurrentBooruFeaturedImage = image;
                         await FileHelper.SaveGeneralStorageAsync(_generalStorage);
                         return;
                     }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Discord;
@@ -11,7 +12,7 @@ namespace Izzy_Moonbot.Helpers;
 
 public class PaginationHelper
 {
-    private readonly AllowedMentions _allowedMentions;
+    private readonly AllowedMentions? _allowedMentions;
 
     private readonly IIzzyClient _client;
     private readonly string[] _staticParts;
@@ -19,20 +20,44 @@ public class PaginationHelper
     private readonly bool _useCodeBlock;
     private ulong _authorId;
     private bool _easterEgg;
-    private IIzzyUserMessage _message;
+    private IIzzyUserMessage? _message;
     public DateTime ExpiresAt;
     private int _pageNumber = 0;
     public string[] Pages;
 
+    public static void PaginateIfNeededAndSendMessage(IIzzyContext context, string header, IList<string> lineItems, string footer, uint pageSize = 10, AllowedMentions? allowedMentions = null)
+    {
+        if (lineItems.Count <= pageSize)
+        {
+            context.Channel.SendMessageAsync($"{header}\n{string.Join('\n', lineItems)}\n{footer}", allowedMentions: allowedMentions);
+            return;
+        }
+
+        var pages = new List<string>();
+        var pageNumber = -1;
+        for (var i = 0; i < lineItems.Count; i++)
+        {
+            if (i % pageSize == 0)
+            {
+                pageNumber += 1;
+                pages.Add("");
+            }
+
+            pages[pageNumber] += lineItems[i] + '\n';
+        }
+
+        new PaginationHelper(context, pages.ToArray(), new string[] { header, footer }, codeblock: false, allowedMentions: allowedMentions);
+    }
+
     public PaginationHelper(SocketCommandContext context, string[] pages, string[] staticParts,
         bool codeblock = true,
-        AllowedMentions allowedMentions = null)
+        AllowedMentions? allowedMentions = null)
         : this(new SocketCommandContextAdapter(context), pages, staticParts, codeblock, allowedMentions)
     { }
 
     public PaginationHelper(IIzzyContext context, string[] pages, string[] staticParts,
         bool codeblock = true,
-        AllowedMentions allowedMentions = null)
+        AllowedMentions? allowedMentions = null)
     {
         _client = context.Client;
         _authorId = context.Message.Author.Id;
@@ -138,7 +163,7 @@ public class PaginationHelper
     private async Task ButtonEvent(IIzzySocketMessageComponent component)
     {
         if (component.User.Id != _authorId) return;
-        if (component.Message.Id != _message.Id) return;
+        if (component.Message.Id != _message?.Id) return;
 
         switch (component.Data.CustomId)
         {
@@ -169,7 +194,7 @@ public class PaginationHelper
 
     private async Task MessageDeletedEvent(IIzzyHasId message, IIzzyHasId channel)
     {
-        if (_message.Id == message.Id)
+        if (_message?.Id == message.Id)
         {
             _client.ButtonExecuted -= ButtonEvent;
             _client.MessageDeleted -= MessageDeletedEvent;

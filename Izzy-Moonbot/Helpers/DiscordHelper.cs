@@ -38,7 +38,7 @@ public static class DiscordHelper
     }
     public static bool ShouldExecuteInPrivate(bool externalUsageAllowedFlag, IIzzyContext context)
     {
-        if (context.IsPrivate || context.Guild.Id != DefaultGuild())
+        if (context.IsPrivate || context.Guild?.Id != DefaultGuild())
         {
             return externalUsageAllowedFlag;
         }
@@ -54,7 +54,7 @@ public static class DiscordHelper
     {
         if (context.IsPrivate) return false;
         
-        return context.Guild.Id == DefaultGuild();
+        return context.Guild?.Id == DefaultGuild();
     }
     
     public static ulong DefaultGuild()
@@ -129,7 +129,7 @@ public static class DiscordHelper
         return character is ' ' or '\t' or '\r';
     }
 
-    public static object GetSafely<T>(IEnumerable<T> array, int index)
+    public static object? GetSafely<T>(IEnumerable<T> array, int index)
     {
         if (array.Count() <= index) return null;
         if (index < 0) return null;
@@ -149,20 +149,19 @@ public static class DiscordHelper
             var argument = characters[i];
             if (!IsSpace(argument))
             {
-                var start = 0;
-                var end = 0;
-
                 var safePrevious = (char?)GetSafely(characters, i - 1);
                 
                 if (argument == '"' && (i < 1 || safePrevious != '\\'))
                 {
                     i++;
-                    start = i;
-                    
+                    var start = i;
+
                     while (i < content.Length && (characters[i] != '"' || characters[i-1] == '\\'))
                     {
                         i++;
                     }
+
+                    int end;
                     if (i-1 >= 0 && characters[i-1] == '\\')
                     {
                         end = i - 1;
@@ -170,11 +169,13 @@ public static class DiscordHelper
                     else
                     {
                         end = i;
+                        i++;
                     }
+                    arguments.Add(string.Join("", content[new Range(start, end)]));
                 }
                 else
                 {
-                    start = i;
+                    var start = i;
                     i++;
                     
                     while (i < content.Length && !IsSpace(characters[i]) &&
@@ -182,15 +183,14 @@ public static class DiscordHelper
                     {
                         i++;
                     }
-                    end = i;
+                    arguments.Add(string.Join("", content[new Range(start, i)]));
                 }
-                arguments.Add(string.Join("", content[new Range(start, end)]));
 
-                var previous = 0;
-                
-                if (indices.Count >= 1) previous = indices[^1];
-                
-                indices.Add(previous + (end - start) + 1);
+                var nextIndex = i;
+                while (nextIndex < characters.Length && IsSpace(characters[nextIndex]))
+                    nextIndex++;
+
+                indices.Add(nextIndex);
             }
         }
 
@@ -249,7 +249,7 @@ public static class DiscordHelper
 
         var userList = searchDefaultGuild 
             ? await context.Client.Guilds.Single(guild => guild.Id == DefaultGuild()).SearchUsersAsync(userName)
-            : await context.Guild.SearchUsersAsync(userName);
+            : await context.Guild!.SearchUsersAsync(userName);
         return userList.Count < 1 ? 0 : userList.First().Id;
     }
 
@@ -260,7 +260,7 @@ public static class DiscordHelper
     private static async Task<ulong> CheckIfChannelExistsAsync(string channelName, IIzzyContext context)
     {
         var izzyMoonbot = await context.Channel.GetUserAsync(context.Client.CurrentUser.Id);
-        if (context.IsPrivate) return 0;
+        if (context.IsPrivate || context.Guild == null || izzyMoonbot == null) return 0;
 
         foreach (var channel in context.Guild.TextChannels)
             if (channel.Name == channelName && channel.Users.Any(u => u.Id == izzyMoonbot.Id))
@@ -276,7 +276,7 @@ public static class DiscordHelper
     private static async Task<ulong> CheckIfChannelExistsAsync(ulong channelId, IIzzyContext context)
     {
         var izzyMoonbot = await context.Channel.GetUserAsync(context.Client.CurrentUser.Id);
-        if (context.IsPrivate) return 0;
+        if (context.IsPrivate || context.Guild == null || izzyMoonbot == null) return 0;
 
         foreach (var channel in context.Guild.TextChannels)
             if (channel.Id == channelId && channel.Users.Any(u => u.Id == izzyMoonbot.Id))
@@ -321,7 +321,7 @@ public static class DiscordHelper
     }
     private static ulong CheckIfRoleExistsAsync(string roleName, IIzzyContext context)
     {
-        if (context.IsPrivate) return 0;
+        if (context.IsPrivate || context.Guild == null) return 0;
 
         foreach (var role in context.Guild.Roles)
             if (role.Name == roleName)
@@ -336,7 +336,7 @@ public static class DiscordHelper
     }
     private static ulong CheckIfRoleExistsAsync(ulong roleId, IIzzyContext context)
     {
-        if (context.IsPrivate) return 0;
+        if (context.IsPrivate || context.Guild == null) return 0;
 
         foreach (var role in context.Guild.Roles)
             if (role.Id == roleId)

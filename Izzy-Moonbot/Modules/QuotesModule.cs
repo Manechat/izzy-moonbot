@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord;
@@ -303,39 +304,15 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
             // Show a list of list keys, paginating them if possible.
             var quoteKeys = _quoteService.GetKeyList(defaultGuild);
 
-            if (quoteKeys.Length > 15)
-            {
-                // Pagination
-                // Use pagination
-                var pages = new List<string>();
-                var pageNumber = -1;
-                for (var i = 0; i < quoteKeys.Length; i++)
-                {
-                    if (i % 15 == 0)
-                    {
-                        pageNumber += 1;
-                        pages.Add("");
-                    }
-
-                    pages[pageNumber] += quoteKeys[i] + Environment.NewLine;
-                }
-
-
-                string[] staticParts =
-                {
-                        $"Here's a list of users/categories of quotes I've found.",
-                        $"Run `{_config.Prefix}quote <user/category>` to get a random quote from that user/category if specified.{Environment.NewLine}" +
-                        $"Run `{_config.Prefix}quote` for a random quote from a random user/category."
-                    };
-
-                var paginationMessage = new PaginationHelper(context, pages.ToArray(), staticParts, allowedMentions: AllowedMentions.None);
-                return;
-            }
-            // No pagination, just output
-            await context.Channel.SendMessageAsync($"Here's a list of users/categories of quotes I've found.{Environment.NewLine}```{Environment.NewLine}" +
-                             $"{string.Join(Environment.NewLine, quoteKeys)}{Environment.NewLine}```{Environment.NewLine}" +
-                             $"Run `{_config.Prefix}quote <user/category>` to get a random quote from that user/category if specified.{Environment.NewLine}" +
-                             $"Run `{_config.Prefix}quote` for a random quote from a random user/category.", allowedMentions: AllowedMentions.None);
+            PaginationHelper.PaginateIfNeededAndSendMessage(
+                context,
+                "Here's a list of users/categories of quotes I've found.\n```",
+                quoteKeys,
+                $"```\nRun `{_config.Prefix}quote <user/category>` to get a random quote from that user/category if specified.\n" +
+                $"Run `{_config.Prefix}quote` for a random quote from a random user/category.",
+                pageSize: 15,
+                allowedMentions: AllowedMentions.None
+            );
             return;
         }
 
@@ -348,46 +325,20 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
                 // The alias refers to an existing user. 
                 var user = _quoteService.ProcessAlias(search, defaultGuild);
 
-                // Choose a random quote from this user.
                 try
                 {
                     var quotes = _quoteService.GetQuotes(user).Select(quote => $"{quote.Id + 1}: {quote.Content}").ToArray();
 
-                    if (quotes.Length > 15)
-                    {
-                        // Pagination
-                        // Use pagination
-                        var pages = new List<string>();
-                        var pageNumber = -1;
-                        for (var i = 0; i < quotes.Length; i++)
-                        {
-                            if (i % 15 == 0)
-                            {
-                                pageNumber += 1;
-                                pages.Add("");
-                            }
-
-                            pages[pageNumber] += quotes[i] + Environment.NewLine;
-                        }
-
-
-                        string[] staticParts =
-                        {
-                                $"Here's all the quotes I could find for **{user.Username}#{user.Discriminator}**.",
-                                $"Run `{_config.Prefix}quote <user/category> <number>` to get a specific quote.{Environment.NewLine}" +
-                                $"Run `{_config.Prefix}quote <user/category>` to get a random quote from that user/category.{Environment.NewLine}" +
-                                $"Run `{_config.Prefix}quote` for a random quote from a random user/category."
-                            };
-
-                        var paginationMessage = new PaginationHelper(context, pages.ToArray(), staticParts, allowedMentions: AllowedMentions.None);
-                        return;
-                    }
-                    // No pagination, just output
-                    await context.Channel.SendMessageAsync($"Here's all the quotes I could find for **{user.Username}#{user.Discriminator}**.{Environment.NewLine}```{Environment.NewLine}" +
-                                     $"{string.Join(Environment.NewLine, quotes)}{Environment.NewLine}```{Environment.NewLine}" +
-                                     $"Run `{_config.Prefix}quote <user/category> <number>` to get a specific quote.{Environment.NewLine}" +
-                                     $"Run `{_config.Prefix}quote <user/category>` to get a random quote from that user/category.{Environment.NewLine}" +
-                                     $"Run `{_config.Prefix}quote` for a random quote from a random user/category.", allowedMentions: AllowedMentions.None);
+                    PaginationHelper.PaginateIfNeededAndSendMessage(
+                        context,
+                        $"Here's all the quotes I could find for **{user.Username}#{user.Discriminator}**.",
+                        quotes,
+                        $"Run `{_config.Prefix}quote <user/category> <number>` to get a specific quote.\n" +
+                        $"Run `{_config.Prefix}quote <user/category>` to get a random quote from that user/category.\n" +
+                        $"Run `{_config.Prefix}quote` for a random quote from a random user/category.",
+                        pageSize: 15,
+                        allowedMentions: AllowedMentions.None
+                    );
                     return;
                 }
                 catch (NullReferenceException)
@@ -404,41 +355,16 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
             {
                 var quotes = _quoteService.GetQuotes(category).Select(quote => $"{quote.Id + 1}: {quote.Content}").ToArray();
 
-                if (quotes.Length > 15)
-                {
-                    // Pagination
-                    // Use pagination
-                    var pages = new List<string>();
-                    var pageNumber = -1;
-                    for (var i = 0; i < quotes.Length; i++)
-                    {
-                        if (i % 15 == 0)
-                        {
-                            pageNumber += 1;
-                            pages.Add("");
-                        }
-
-                        pages[pageNumber] += quotes[i] + Environment.NewLine;
-                    }
-
-
-                    string[] staticParts =
-                    {
-                                $"Here's all the quotes I could find in **{category}**.",
-                                $"Run `{_config.Prefix}quote <user/category> <number>` to get a specific quote.{Environment.NewLine}" +
-                                $"Run `{_config.Prefix}quote <user/category>` to get a random quote from that user/category.{Environment.NewLine}" +
-                                $"Run `{_config.Prefix}quote` for a random quote from a random user/category."
-                            };
-
-                    var paginationMessage = new PaginationHelper(context, pages.ToArray(), staticParts, allowedMentions: AllowedMentions.None);
-                    return;
-                }
-                // No pagination, just output
-                await context.Channel.SendMessageAsync($"Here's all the quotes I could find in **{category}**.{Environment.NewLine}```{Environment.NewLine}" +
-                                 $"{string.Join(Environment.NewLine, quotes)}{Environment.NewLine}```{Environment.NewLine}" +
-                                 $"Run `{_config.Prefix}quote <user/category> <number>` to get a specific quote.{Environment.NewLine}" +
-                                 $"Run `{_config.Prefix}quote <user/category>` to get a random quote from that user/category.{Environment.NewLine}" +
-                                 $"Run `{_config.Prefix}quote` for a random quote from a random user/category.", allowedMentions: AllowedMentions.None);
+                PaginationHelper.PaginateIfNeededAndSendMessage(
+                    context,
+                    $"Here's all the quotes I could find in **{category}**.",
+                    quotes,
+                    $"Run `{_config.Prefix}quote <user/category> <number>` to get a specific quote.\n" +
+                    $"Run `{_config.Prefix}quote <user/category>` to get a random quote from that user/category.\n" +
+                    $"Run `{_config.Prefix}quote` for a random quote from a random user/category.",
+                    pageSize: 15,
+                    allowedMentions: AllowedMentions.None
+                );
                 return;
             }
             catch (NullReferenceException)
@@ -456,41 +382,16 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
             {
                 var quotes = _quoteService.GetQuotes(search).Select(quote => $"{quote.Id + 1}: {quote.Content}").ToArray();
 
-                if (quotes.Length > 15)
-                {
-                    // Pagination
-                    // Use pagination
-                    var pages = new List<string>();
-                    var pageNumber = -1;
-                    for (var i = 0; i < quotes.Length; i++)
-                    {
-                        if (i % 15 == 0)
-                        {
-                            pageNumber += 1;
-                            pages.Add("");
-                        }
-
-                        pages[pageNumber] += quotes[i] + Environment.NewLine;
-                    }
-
-
-                    string[] staticParts =
-                    {
-                                $"Here's all the quotes I could find in **{search}**.",
-                                $"Run `{_config.Prefix}quote <user/category> <number>` to get a specific quote.{Environment.NewLine}" +
-                                $"Run `{_config.Prefix}quote <user/category>` to get a random quote from that user/category.{Environment.NewLine}" +
-                                $"Run `{_config.Prefix}quote` for a random quote from a random user/category."
-                            };
-
-                    var paginationMessage = new PaginationHelper(context, pages.ToArray(), staticParts, allowedMentions: AllowedMentions.None);
-                    return;
-                }
-                // No pagination, just output
-                await context.Channel.SendMessageAsync($"Here's all the quotes I could find in **{search}**.{Environment.NewLine}```{Environment.NewLine}" +
-                                 $"{string.Join(Environment.NewLine, quotes)}{Environment.NewLine}```{Environment.NewLine}" +
-                                 $"Run `{_config.Prefix}quote <user/category> <number>` to get a specific quote.{Environment.NewLine}" +
-                                 $"Run `{_config.Prefix}quote <user/category>` to get a random quote from that user/category.{Environment.NewLine}" +
-                                 $"Run `{_config.Prefix}quote` for a random quote from a random user/category.", allowedMentions: AllowedMentions.None);
+                PaginationHelper.PaginateIfNeededAndSendMessage(
+                    context,
+                    $"Here's all the quotes I could find in **{search}**.",
+                    quotes,
+                    $"Run `{_config.Prefix}quote <user/category> <number>` to get a specific quote.\n" +
+                    $"Run `{_config.Prefix}quote <user/category>` to get a random quote from that user/category.\n" +
+                    $"Run `{_config.Prefix}quote` for a random quote from a random user/category.",
+                    pageSize: 15,
+                    allowedMentions: AllowedMentions.None
+                );
                 return;
             }
             catch (NullReferenceException)
@@ -511,46 +412,20 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
             return;
         }
 
-        // User exists, choose a random quote from this user.
         try
         {
             var quotes = _quoteService.GetQuotes(member).Select(quote => $"{quote.Id + 1}: {quote.Content}").ToArray();
 
-            if (quotes.Length > 15)
-            {
-                // Pagination
-                // Use pagination
-                var pages = new List<string>();
-                var pageNumber = -1;
-                for (var i = 0; i < quotes.Length; i++)
-                {
-                    if (i % 15 == 0)
-                    {
-                        pageNumber += 1;
-                        pages.Add("");
-                    }
-
-                    pages[pageNumber] += quotes[i] + Environment.NewLine;
-                }
-
-
-                string[] staticParts =
-                {
-                                $"Here's all the quotes I could find for **{member.DisplayName}**.",
-                                $"Run `{_config.Prefix}quote <user/category> <number>` to get a specific quote.{Environment.NewLine}" +
-                                $"Run `{_config.Prefix}quote <user/category>` to get a random quote from that user/category.{Environment.NewLine}" +
-                                $"Run `{_config.Prefix}quote` for a random quote from a random user/category."
-                            };
-
-                var paginationMessage = new PaginationHelper(context, pages.ToArray(), staticParts, allowedMentions: AllowedMentions.None);
-                return;
-            }
-            // No pagination, just output
-            await context.Channel.SendMessageAsync($"Here's all the quotes I could find for **{member.DisplayName}**.{Environment.NewLine}```{Environment.NewLine}" +
-                             $"{string.Join(Environment.NewLine, quotes)}{Environment.NewLine}```{Environment.NewLine}" +
-                             $"Run `{_config.Prefix}quote <user/category> <number>` to get a specific quote.{Environment.NewLine}" +
-                             $"Run `{_config.Prefix}quote <user/category>` to get a random quote from that user/category.{Environment.NewLine}" +
-                             $"Run `{_config.Prefix}quote` for a random quote from a random user/category.", allowedMentions: AllowedMentions.None);
+            PaginationHelper.PaginateIfNeededAndSendMessage(
+                context,
+                $"Here's all the quotes I could find for **{member.DisplayName}**.\n```",
+                quotes,
+                $"```\nRun `{_config.Prefix}quote <user/category> <number>` to get a specific quote.\n" +
+                $"Run `{_config.Prefix}quote <user/category>` to get a random quote from that user/category.\n" +
+                $"Run `{_config.Prefix}quote` for a random quote from a random user/category.",
+                pageSize: 15,
+                allowedMentions: AllowedMentions.None
+            );
             return;
         }
         catch (NullReferenceException)
@@ -609,6 +484,12 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
         if (content.StartsWith("\"") && content.EndsWith("\""))
         {
             content = content[new Range(1, ^1)];
+        }
+
+        if (context.Guild == null)
+        {
+            await context.Channel.SendMessageAsync("You need to be in a server to add quotes.");
+            return;
         }
 
         // Check for aliases
@@ -709,6 +590,12 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
         if (number == null)
         {
             await context.Channel.SendMessageAsync("You need to tell me the quote number to remove.");
+            return;
+        }
+
+        if (context.Guild == null)
+        {
+            await context.Channel.SendMessageAsync("You need to be in a server to remove quotes.");
             return;
         }
 
@@ -860,7 +747,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
             else
             {
                 var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(target, context);
-                var member = context.Guild.GetUser(userId);
+                var member = context.Guild?.GetUser(userId);
 
                 if (member == null)
                 {

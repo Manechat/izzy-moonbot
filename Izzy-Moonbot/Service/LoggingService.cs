@@ -68,7 +68,7 @@ public class LoggingService
             }
             else
             {
-                logMessage += $"server: {context.Guild.Name} ({context.Guild.Id}) #{context.Channel.Name} ({context.Channel.Id})";
+                logMessage += $"server: {context.Guild?.Name} ({context.Guild?.Id}) #{context.Channel.Name} ({context.Channel.Id})";
 
                 logMessage += " ";
 

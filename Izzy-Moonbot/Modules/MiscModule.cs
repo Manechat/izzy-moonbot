@@ -2,10 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows.Input;
 using Discord;
 using Discord.Commands;
 using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Attributes;
+using Izzy_Moonbot.Describers;
 using Izzy_Moonbot.EventListeners;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Service;
@@ -18,13 +20,15 @@ namespace Izzy_Moonbot.Modules;
 public class MiscModule : ModuleBase<SocketCommandContext>
 {
     private readonly Config _config;
+    private readonly ConfigDescriber _configDescriber;
     private readonly ScheduleService _schedule;
     private readonly LoggingService _logger;
     private readonly CommandService _commands;
 
-    public MiscModule(Config config, ScheduleService schedule, LoggingService logger, CommandService commands)
+    public MiscModule(Config config, ConfigDescriber configDescriber, ScheduleService schedule, LoggingService logger, CommandService commands)
     {
         _config = config;
+        _configDescriber = configDescriber;
         _schedule = schedule;
         _logger = logger;
         _commands = commands;
@@ -166,7 +170,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
             _logger.Log($"Adding scheduled job to remind user to \"{content}\" at {timeHelperResponse.Time:F}",
                 context: context, level: LogLevel.Debug);
             var action = new ScheduledEchoJob(context.User, content);
-            var task = new ScheduledJob(DateTimeOffset.UtcNow,
+            var task = new ScheduledJob(DateTimeHelper.UtcNow,
                 timeHelperResponse.Time, action);
             await _schedule.CreateScheduledJob(task);
             _logger.Log($"Added scheduled job for user", context: context, level: LogLevel.Debug);
@@ -220,12 +224,17 @@ public class MiscModule : ModuleBase<SocketCommandContext>
 
         if (int.TryParse(argString, out var ruleNumber))
         {
-            var rulesChannel = context.Guild.RulesChannel;
+            var rulesChannel = context.Guild?.RulesChannel;
+            if (rulesChannel == null)
+            {
+                await context.Channel.SendMessageAsync("Sorry, this server doesn't have a rules channel.");
+                return;
+            }
 
             string ruleMessage;
             if (ruleNumber == 1)
             {
-                ruleMessage = (await rulesChannel.GetMessageAsync(firstMessageId)).Content;
+                ruleMessage = (await rulesChannel.GetMessageAsync(firstMessageId))?.Content ?? "";
             }
             else
             {
@@ -295,13 +304,8 @@ public class MiscModule : ModuleBase<SocketCommandContext>
 
                 foreach (var module in _commands.Modules)
                 {
-                    if (module.IsSubmodule) continue;
                     if (module.Name == "DevModule") continue; // Hide dev module
-                    var moduleInfo = $"{module.Name.Replace("Module", "").ToLower()} - {module.Summary}";
-                    foreach (var submodule in module.Submodules)
-                        moduleInfo += $"{Environment.NewLine}    {submodule.Name.Replace("Submodule", "").ToLower()} - {submodule.Summary}";
-
-                    moduleList.Add(moduleInfo);
+                    moduleList.Add($"{module.Name.Replace("Module", "").ToLower()} - {module.Summary}");
                 }
 
                 await context.Channel.SendMessageAsync(
@@ -346,58 +350,27 @@ public class MiscModule : ModuleBase<SocketCommandContext>
         // Module.
         else if ((isDev || isMod) &&
             _commands.Modules.Any(module => module.Name.ToLower() == item.ToLower() ||
-                                            module.Name.ToLower() == item.ToLower() + "module" ||
-                                            module.Name.ToLower() == item.ToLower() + "submodule"))
+                                            module.Name.ToLower() == item.ToLower() + "module"))
         {
             // It's a module!
             var moduleInfo = _commands.Modules.Single<ModuleInfo>(module =>
                 module.Name.ToLower() == item.ToLower() ||
-                module.Name.ToLower() == item.ToLower() + "module" ||
-                module.Name.ToLower() == item.ToLower() + "submodule");
+                module.Name.ToLower() == item.ToLower() + "module");
 
             var commands = moduleInfo.Commands.Select<CommandInfo, string>(command =>
                 $"{prefix}{command.Name} - {command.Summary}"
             ).ToList();
 
-            if (commands.Count > 10)
-            {
-                // Use pagination
-                var pages = new List<string>();
-                var pageNumber = -1;
-                for (var i = 0; i < commands.Count; i++)
-                {
-                    if (i % 10 == 0)
-                    {
-                        pageNumber += 1;
-                        pages.Add("");
-                    }
+            var potentialAliases = _commands.Commands.Where(command =>
+                command.Aliases.Select(alias => alias.ToLower()).Contains(item.ToLower())).ToArray();
 
-                    pages[pageNumber] += commands[i] + Environment.NewLine;
-                }
-
-                var potentialAliases = _commands.Commands.Where(command =>
-                    command.Aliases.Select(alias => alias.ToLower()).Contains(item.ToLower())).ToArray();
-
-                string[] staticParts =
-                {
-                            $"Hii! Here's a list of all the commands I could find in the {moduleInfo.Name.Replace("Module", "").Replace("Submodule", "")} category!",
-                            $"Run `{prefix}help <command>` for help regarding a specific command!" +
-                            $"{(potentialAliases.Length != 0 ? $"{Environment.NewLine}ℹ  This category shares a name with an alias. For information regarding this alias, run `{prefix}help {potentialAliases.First().Name.ToLower()}`.": "")}"
-                        };
-
-                var paginationMessage = new PaginationHelper(context, pages.ToArray(), staticParts);
-            }
-            else
-            {
-                var potentialAliases = _commands.Commands.Where(command =>
-                    command.Aliases.Select(alias => alias.ToLower()).Contains(item.ToLower())).ToArray();
-
-                await context.Channel.SendMessageAsync(
-                    $"Hii! Here's a list of all the commands I could find in the {moduleInfo.Name.Replace("Module", "").Replace("Submodule", "")} category!{Environment.NewLine}" +
-                    $"```{Environment.NewLine}{string.Join(Environment.NewLine, commands)}{Environment.NewLine}```{Environment.NewLine}" +
-                    $"Run `{prefix}help <command>` for help regarding a specific command!" +
-                    $"{(potentialAliases.Length != 0 ? $"{Environment.NewLine}ℹ  This category shares a name with an alias. For information regarding this alias, run `{prefix}help {potentialAliases.First().Name.ToLower()}`." : "")}");
-            }
+            PaginationHelper.PaginateIfNeededAndSendMessage(
+                context,
+                $"Hii! Here's a list of all the commands I could find in the {moduleInfo.Name.Replace("Module", "")} category!\n```",
+                commands,
+                $"Run `{prefix}help <command>` for help regarding a specific command!" +
+                $"{(potentialAliases.Length != 0 ? $"{Environment.NewLine}ℹ  This category shares a name with an alias. For information regarding this alias, run `{prefix}help {potentialAliases.First().Name.ToLower()}`." : "")}"
+            );
         }
         // Try alternate command names
         else if (_commands.Commands.Any(command =>
@@ -441,14 +414,59 @@ public class MiscModule : ModuleBase<SocketCommandContext>
         }
         else
         {
-            await context.Channel.SendMessageAsync($"Sorry, I was unable to find any command, category, or alias named \"{item}\" that you have access to.");
+            Func<string, bool> isSuggestable = candidate =>
+                DiscordHelper.WithinLevenshteinDistanceOf(item, candidate, Convert.ToUInt32(candidate.Length / 2));
+
+            Func<string, bool> canRunCommandName = name =>
+            {
+                var cinfo = _commands.Commands.Where(c => c.Name == name).SingleOrDefault((CommandInfo?)null);
+                return cinfo is null ? false : canRunCommand(cinfo);
+            };
+
+            // don't bother searching command.Name because command.Aliases always includes the main name
+            var alternateNamesToSuggest = _commands.Commands.Where(canRunCommand)
+                .SelectMany(c => c.Aliases).Where(isSuggestable);
+            var aliasesToSuggest = _config.Aliases.Where(pair => canRunCommandName(pair.Value.TrimStart().Split(" ")[0]))
+                .Select(pair => pair.Key).Where(isSuggestable);
+            var categoriesToSuggest = !(isDev || isMod) ? new List<string>() :
+                _commands.Modules.Select(m => m.Name.Replace("Module", "").ToLower()).Where(isSuggestable);
+
+            var message = $"Sorry, I was unable to find any command, category, or alias named \"{item}\" that you have access to.";
+            var suggestibles = alternateNamesToSuggest.Concat(aliasesToSuggest).Concat(categoriesToSuggest);
+            if (suggestibles.Any())
+            {
+                message += $"\nDid you mean {string.Join(" or ", suggestibles.Select(s => $"`.{s}`"))}?";
+            }
+
+            if (isDev || isMod)
+            {
+                var commandDocHits = _commands.Commands
+                    .Where(c => {
+                        if (c.Aliases.Any(name => suggestibles.Contains(name)))
+                            return false; // this command's already being suggested, so don't repeat it here
+                        return PonyReadableCommandHelp(prefix, c.Name, c).ToLower().Contains(item.ToLower());
+                    })
+                    .Select(c => $"`.help {c.Name}`");
+
+                var configDocHits = _configDescriber.GetSettableConfigItems()
+                    .Where(configItemKey => ConfigCommand.ConfigItemDescription(_config, _configDescriber, configItemKey).ToLower().Contains(item.ToLower()))
+                    .Select(configItemKey => $"`.config {configItemKey}`");
+
+                // if we get more than 10 hits, then it was probably something like " " or "the" or "category" that's part of how we format
+                // the docs rather than useful information we want to dump an exhaustive list of search hits for
+                var documentationSearchHits = commandDocHits.Concat(configDocHits);
+                if (documentationSearchHits.Any() && documentationSearchHits.Count() < 10)
+                    message += $"\nI do see \"{item}\" in the output of: {string.Join(" and ", commandDocHits.Concat(configDocHits))}";
+            }
+
+            await context.Channel.SendMessageAsync(message);
         }
     }
 
     private string PonyReadableCommandHelp(char prefix, string command, CommandInfo commandInfo, string? alternateName = null)
     {
         var ponyReadable = (alternateName == null ? $"**{prefix}{commandInfo.Name}**" : $"**{prefix}{alternateName}** (alternate name of **{prefix}{commandInfo.Name}**)") +
-            $" - {commandInfo.Module.Name.Replace("Module", "").Replace("Submodule", "")} category{Environment.NewLine}";
+            $" - {commandInfo.Module.Name.Replace("Module", "")} category{Environment.NewLine}";
 
         if (commandInfo.Preconditions.Any(attribute => attribute is ModCommandAttribute) &&
             commandInfo.Preconditions.Any(attribute => attribute is DevCommandAttribute))

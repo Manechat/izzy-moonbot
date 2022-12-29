@@ -165,7 +165,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
         duration = DiscordHelper.StripQuotes(duration);
 
         var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(user, Context);
-        var member = Context.Guild.GetUser(userId);
+        var member = Context.Guild?.GetUser(userId);
 
         if (userId == Context.Client.CurrentUser.Id)
         {
@@ -192,7 +192,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
             return;
         }
 
-        if (member != null && member.Hierarchy >= Context.Guild.GetUser(Context.Client.CurrentUser.Id).Hierarchy)
+        if (member != null && member.Hierarchy >= Context.Guild?.GetUser(Context.Client.CurrentUser.Id)?.Hierarchy)
         {
             await Context.Channel.SendMessageAsync(
                 "That user is either at the same level or higher than me in the role hierarchy, I cannot ban them. <:izzynothoughtsheadempty:910198222255972382>");
@@ -219,7 +219,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
         }
 
         // Okay, enough joking around, serious Izzy time
-        var hasExistingBan = await Context.Guild.GetIsBannedAsync(userId);
+        var hasExistingBan = await Context.Guild!.GetIsBannedAsync(userId);
 
         if (!hasExistingBan)
         {
@@ -234,7 +234,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
                     { "userId", userId.ToString() }
                 };
                 var action = new ScheduledUnbanJob(userId);
-                var job = new ScheduledJob(DateTimeOffset.UtcNow, time.Time, action);
+                var job = new ScheduledJob(DateTimeHelper.UtcNow, time.Time, action);
                 await _schedule.CreateScheduledJob(job);
             }
 
@@ -311,7 +311,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
                 // Doesn't exist, it needs to exist.
                 // Create scheduled task!
                 var action = new ScheduledUnbanJob(userId);
-                var job = new ScheduledJob(DateTimeOffset.UtcNow, time.Time, action);
+                var job = new ScheduledJob(DateTimeHelper.UtcNow, time.Time, action);
                 await _schedule.CreateScheduledJob(job);
 
                 await Context.Channel.SendMessageAsync(
@@ -369,7 +369,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
             await context.Channel.SendMessageAsync("I couldn't find that role, sorry!");
             return;
         }
-        var role = context.Guild.GetRole(roleId);
+        var role = context.Guild?.GetRole(roleId);
 
         var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(userResolvable, context);
         if (userId == 0)
@@ -377,7 +377,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
             await context.Channel.SendMessageAsync("I couldn't find that user, sorry!");
             return;
         }
-        var maybeMember = context.Guild.GetUser(userId);
+        var maybeMember = context.Guild?.GetUser(userId);
 
         // Comprehend time
         TimeHelperResponse? time = null;
@@ -400,7 +400,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
 
         if (maybeMember is IIzzyGuildUser member)
         {
-            if (role.Position >= context.Guild.GetUser(context.Client.CurrentUser.Id).Hierarchy)
+            if (role?.Position >= context.Guild?.GetUser(context.Client.CurrentUser.Id)?.Hierarchy)
             {
                 await context.Channel.SendMessageAsync(
                     "That role is either at the same level or higher than me in the role hierarchy, I cannot assign it. <:izzynothoughtsheadempty:910198222255972382>");
@@ -438,7 +438,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
                 _logger.Log($"Adding scheduled job to remove role {roleId} from user {userId} at {time.Time}", level: LogLevel.Debug);
                 var action = new ScheduledRoleRemovalJob(roleId, member.Id,
                     $".assignrole command for user {member.Id} and role {roleId} with duration {duration}.");
-                var task = new ScheduledJob(DateTimeOffset.UtcNow, time.Time, action);
+                var task = new ScheduledJob(DateTimeHelper.UtcNow, time.Time, action);
                 await _schedule.CreateScheduledJob(task);
                 _logger.Log($"Added scheduled job for new user", level: LogLevel.Debug);
 
@@ -531,12 +531,12 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
 
         var wipeThreshold = (time == null) ?
             // default to wiping the last 24 hours
-            DateTimeOffset.UtcNow.AddHours(-24) :
+            DateTimeHelper.UtcNow.AddHours(-24) :
             // unfortunately TimeHelper assumes user input is always talking about a future time, but we want a past time
             // TODO: rethink the TimeHelper API to avoid hacks like this
-            (DateTimeOffset.UtcNow - (time.Time - DateTimeOffset.UtcNow));
+            (DateTimeHelper.UtcNow - (time.Time - DateTimeHelper.UtcNow));
 
-        if ((DateTimeOffset.UtcNow - wipeThreshold).TotalDays > 14)
+        if ((DateTimeHelper.UtcNow - wipeThreshold).TotalDays > 14)
         {
             await ReplyAsync("I can't delete messages older than 14 days, sorry!");
             return;
@@ -608,7 +608,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
             var involvedUserDescriptions = string.Join(", ", bulkDeletionLog.Select(logElement => logElement.Item2).ToHashSet());
 
             var s = new MemoryStream(Encoding.UTF8.GetBytes(bulkDeletionLogString));
-            var fa = new FileAttachment(s, $"{channel.Name}_bulk_deletion_log_{DateTimeOffset.UtcNow.ToString()}.txt");
+            var fa = new FileAttachment(s, $"{channel.Name}_bulk_deletion_log_{DateTimeHelper.UtcNow.ToString()}.txt");
             var bulkDeletionMessage = await logChannel.SendFileAsync(fa, $"Finished wiping {channelName}, here's the bulk deletion log involving {involvedUserDescriptions}:");
 
             await ReplyAsync($"Finished wiping {channelName}. {messagesToDeleteCount} messages were deleted: {bulkDeletionMessage.GetJumpUrl()}");

@@ -73,10 +73,10 @@ public class QuoteModuleTests
 
         var description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "Here's a list of");
-        StringAssert.Contains(description, $"```{Environment.NewLine}" +
-            $"Sunny (Sunny#1234) {Environment.NewLine}" +
-            $"Izzy Moonbot (Izzy Moonbot#1234) {Environment.NewLine}" +
-            $"```{Environment.NewLine}");
+        StringAssert.Contains(description, $"```\n" +
+            $"Sunny (Sunny#1234) \n" +
+            $"Izzy Moonbot (Izzy Moonbot#1234) \n" +
+            $"```\n");
         StringAssert.Contains(description, "Run `.quote <user/category>`");
         StringAssert.Contains(description, "Run `.quote`");
 
@@ -86,9 +86,9 @@ public class QuoteModuleTests
         description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "all the quotes");
         StringAssert.Contains(description, "for **Izzy Moonbot**");
-        StringAssert.Contains(description, $"```{Environment.NewLine}" +
-            $"1: let's unicycle it{Environment.NewLine}" +
-            $"```{Environment.NewLine}");
+        StringAssert.Contains(description, $"```\n" +
+            $"1: let's unicycle it\n" +
+            $"```\n");
         StringAssert.Contains(description, "Run `.quote <user/category> <number>` to");
         StringAssert.Contains(description, "Run `.quote <user/category>` to");
         StringAssert.Contains(description, "Run `.quote` for");
@@ -99,10 +99,10 @@ public class QuoteModuleTests
         description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "all the quotes");
         StringAssert.Contains(description, "for **Sunny**");
-        StringAssert.Contains(description, $"```{Environment.NewLine}" +
-            $"1: gonna be my day{Environment.NewLine}" +
-            $"2: eat more vegetables{Environment.NewLine}" +
-            $"```{Environment.NewLine}");
+        StringAssert.Contains(description, $"```\n" +
+            $"1: gonna be my day\n" +
+            $"2: eat more vegetables\n" +
+            $"```\n");
         StringAssert.Contains(description, "Run `.quote <user/category> <number>` to");
         StringAssert.Contains(description, "Run `.quote <user/category>` to");
         StringAssert.Contains(description, "Run `.quote` for");
@@ -137,9 +137,9 @@ public class QuoteModuleTests
 
         var description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "Here's a list of");
-        StringAssert.Contains(description, $"```{Environment.NewLine}" +
-            $"1234 {Environment.NewLine}" +
-            $"```{Environment.NewLine}");
+        StringAssert.Contains(description, $"```\n" +
+            $"1234 \n" +
+            $"```\n");
         StringAssert.Contains(description, "Run `.quote <user/category>`");
         StringAssert.Contains(description, "Run `.quote`");
     }
@@ -164,10 +164,10 @@ public class QuoteModuleTests
         var description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "all the quotes");
         StringAssert.Contains(description, "for **Sunny**");
-        StringAssert.Contains(description, $"```{Environment.NewLine}" +
-            $"1: gonna be my day{Environment.NewLine}" +
-            $"2: gonna be my day{Environment.NewLine}" +
-            $"```{Environment.NewLine}");
+        StringAssert.Contains(description, $"```\n" +
+            $"1: gonna be my day\n" +
+            $"2: gonna be my day\n" +
+            $"```\n");
         StringAssert.Contains(description, "Run `.quote <user/category> <number>` to");
         StringAssert.Contains(description, "Run `.quote <user/category>` to");
         StringAssert.Contains(description, "Run `.quote` for");

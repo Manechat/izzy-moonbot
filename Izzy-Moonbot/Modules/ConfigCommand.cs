@@ -68,39 +68,12 @@ public class ConfigCommand
 
                 var itemList = configDescriber.GetSettableConfigItemsByCategory(category);
 
-                if (itemList.Count > 10)
-                {
-                    // Use pagination
-                    var pages = new List<string>();
-                    var pageNumber = -1;
-                    for (var i = 0; i < itemList.Count; i++)
-                    {
-                        if (i % 10 == 0)
-                        {
-                            pageNumber += 1;
-                            pages.Add("");
-                        }
-
-                        pages[pageNumber] += itemList[i] + Environment.NewLine;
-                    }
-
-
-                    string[] staticParts =
-                    {
-                        $"Hii!! Here's a list of all the config items I could find in the {configDescriber.CategoryToString(category)} category!",
-                        $"Run `{config.Prefix}config <item>` to view information about an item! Please note that config items are *case sensitive*."
-                    };
-
-                    var paginationMessage = new PaginationHelper(context, pages.ToArray(), staticParts);
-                }
-                else
-                {
-                    await context.Channel.SendMessageAsync(
-                        $"Hii!! Here's a list of all the config items I could find in the {configDescriber.CategoryToString(category)} category!" +
-                        $"{Environment.NewLine}```{Environment.NewLine}{string.Join(Environment.NewLine, itemList)}{Environment.NewLine}```{Environment.NewLine}" +
-                        $"Run `{config.Prefix}config <item>` to view information about an item! Please note that config items are *case sensitive*.");
-                }
-
+                PaginationHelper.PaginateIfNeededAndSendMessage(
+                    context,
+                    $"Hii!! Here's a list of all the config items I could find in the {configDescriber.CategoryToString(category)} category!\n```",
+                    itemList,
+                    $"```\nRun `{config.Prefix}config <item>` to view information about an item! Please note that config items are *case sensitive*."
+                );
                 return;
             }
         }
@@ -110,93 +83,9 @@ public class ConfigCommand
         if (value == null || value == "")
         {
             // Only the configItemKey was given, we give the user what their data was
-            var nullableString = "(Pass `<nothing>` as the value when setting to set to nothing/null)";
-            if (!configItem.Nullable) nullableString = "";
-
-            switch (configItem.Type)
-            {
-                case ConfigItemType.String:
-                case ConfigItemType.Char:
-                case ConfigItemType.Boolean:
-                case ConfigItemType.Integer:
-                case ConfigItemType.UnsignedInteger:
-                case ConfigItemType.Double:
-                    await context.Channel.SendMessageAsync(
-                        $"**{configItemKey}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
-                        $"*{configItem.Description}*{Environment.NewLine}" +
-                        $"Current value: `{ConfigHelper.GetValue(config, configItemKey)}`{Environment.NewLine}" +
-                        $"Run `{config.Prefix}config {configItemKey} <value>` to set this value. {nullableString}",
-                        allowedMentions: AllowedMentions.None);
-                    break;
-                case ConfigItemType.Enum:
-                    // Figure out what its values are.
-                    var rawValue = ConfigHelper.GetValue(config, configItemKey);
-                    var enumValue = rawValue as Enum;
-                    if (enumValue == null) throw new InvalidCastException($"Config item {configItem} is supposed to be an enum, but its value {rawValue} failed the `as Enum` cast");
-
-                    var enumType = enumValue.GetType();
-                    var possibleEnumNames = enumType.GetEnumNames().Select(s => $"`{s}`").ToArray();
-                    
-                    await context.Channel.SendMessageAsync(
-                        $"**{configItemKey}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
-                        $"*{configItem.Description}*{Environment.NewLine}" +
-                        $"Possible values are: {string.Join(", ", possibleEnumNames)}{Environment.NewLine}" +
-                        $"Current value: `{enumType.GetEnumName(enumValue)}`{Environment.NewLine}" +
-                        $"Run `{config.Prefix}config {configItemKey} <value>` to set this value. {nullableString}",
-                        allowedMentions: AllowedMentions.None);
-                    break;
-                case ConfigItemType.Role:
-                    await context.Channel.SendMessageAsync(
-                        $"**{configItemKey}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
-                        $"*{configItem.Description}*{Environment.NewLine}" +
-                        $"Current value: <@&{ConfigHelper.GetValue(config, configItemKey)}>{Environment.NewLine}" +
-                        $"Run `{config.Prefix}config {configItemKey} <value>` to set this value. {nullableString}",
-                        allowedMentions: AllowedMentions.None);
-                    break;
-                case ConfigItemType.Channel:
-                    await context.Channel.SendMessageAsync(
-                        $"**{configItemKey}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
-                        $"*{configItem.Description}*{Environment.NewLine}" +
-                        $"Current value: <#{ConfigHelper.GetValue(config, configItemKey)}>{Environment.NewLine}" +
-                        $"Run `{config.Prefix}config {configItemKey} <value>` to set this value. {nullableString}",
-                        allowedMentions: AllowedMentions.None);
-                    break;
-                case ConfigItemType.StringSet:
-                case ConfigItemType.RoleSet:
-                case ConfigItemType.ChannelSet:
-                    await context.Channel.SendMessageAsync(
-                        $"**{configItemKey}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
-                        $"*{configItem.Description}*{Environment.NewLine}" +
-                        $"Run `{config.Prefix}config {configItemKey} list` to view the contents of this list.{Environment.NewLine}" +
-                        $"Run `{config.Prefix}config {configItemKey} add <value>` to add a value to this list. {nullableString}{Environment.NewLine}" +
-                        $"Run `{config.Prefix}config {configItemKey} remove <value>` to remove a value from this list. {nullableString}",
-                        allowedMentions: AllowedMentions.None);
-                    break;
-                case ConfigItemType.StringDictionary:
-                    await context.Channel.SendMessageAsync(
-                        $"**{configItemKey}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
-                        $"*{configItem.Description}*{Environment.NewLine}" +
-                        $"Run `{config.Prefix}config {configItemKey} list` to view a list of keys in this map.{Environment.NewLine}" +
-                        $"Run `{config.Prefix}config {configItemKey} get <key>` to get the current value of a key in this map.{Environment.NewLine}" +
-                        $"Run `{config.Prefix}config {configItemKey} set <key> <value>` to set a key to a value in this map, creating the key if need be.{Environment.NewLine}" +
-                        $"Run `{config.Prefix}config {configItemKey} delete <key>` to delete a key from this map.",
-                        allowedMentions: AllowedMentions.None);
-                    break;
-                case ConfigItemType.StringSetDictionary:
-                    await context.Channel.SendMessageAsync(
-                        $"**{configItemKey}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
-                        $"*{configItem.Description}*{Environment.NewLine}" +
-                        $"Run `{config.Prefix}config {configItemKey} list` to view a list of keys in this map.{Environment.NewLine}" +
-                        $"Run `{config.Prefix}config {configItemKey} get <key>` to get the values of a key in this map.{Environment.NewLine}" +
-                        $"Run `{config.Prefix}config {configItemKey} add <key> <value>` to add a value to a key in this map, creating the key if need be.{Environment.NewLine}" +
-                        $"Run `{config.Prefix}config {configItemKey} deleteitem <key> <value>` to remove a value from a key from this map.{Environment.NewLine}" +
-                        $"Run `{config.Prefix}config {configItemKey} deletelist <key>` to delete a key from this map.",
-                        allowedMentions: AllowedMentions.None);
-                    break;
-                default:
-                    await context.Channel.SendMessageAsync("I seem to have encountered a setting type that I do not know about.");
-                    break;
-            }
+            await context.Channel.SendMessageAsync(
+                ConfigItemDescription(config, configDescriber, configItemKey),
+                allowedMentions: AllowedMentions.None);
         }
         else
         {
@@ -428,39 +317,13 @@ public class ConfigCommand
                                 return;
                             }
 
-                            if (stringSet.Count > 10)
-                            {
-                                // Use pagination
-                                var pages = new List<string>();
-                                var pageNumber = -1;
-                                var stringList = stringSet.OrderBy(x => x).ToList();
-                                for (var i = 0; i < stringList.Count; i++)
-                                {
-                                    if (i % 10 == 0)
-                                    {
-                                        pageNumber += 1;
-                                        pages.Add("");
-                                    }
-
-                                    pages[pageNumber] += stringList[i] + Environment.NewLine;
-                                }
-
-
-                                string[] staticParts =
-                                {
-                                    $"**{configItemKey}** contains the following values:",
-                                    ""
-                                };
-
-                                var paginationMessage = new PaginationHelper(context, pages.ToArray(), staticParts);
-                            }
-                            else
-                            {
-                                await context.Channel.SendMessageAsync(
-                                    $"**{configItemKey}** contains the following values:{Environment.NewLine}```{Environment.NewLine}{string.Join(", ", stringSet)}{Environment.NewLine}```",
-                                    allowedMentions: AllowedMentions.None);
-                            }
-
+                            PaginationHelper.PaginateIfNeededAndSendMessage(
+                                context,
+                                $"**{configItemKey}** contains the following values:\n```",
+                                stringSet.OrderBy(x => x).ToList(),
+                                "```",
+                                allowedMentions: AllowedMentions.None
+                            );
                             break;
                         case ConfigItemType.RoleSet:
                             var roleSet = ConfigHelper.GetRoleSet(config, configItemKey, context);
@@ -468,39 +331,13 @@ public class ConfigCommand
                             var roleMentionList = new List<string>();
                             foreach (var role in roleSet) roleMentionList.Add(role.Mention);
 
-                            if (roleMentionList.Count > 10)
-                            {
-                                // Use pagination
-                                var pages = new List<string>();
-                                var pageNumber = -1;
-                                for (var i = 0; i < roleMentionList.Count; i++)
-                                {
-                                    if (i % 10 == 0)
-                                    {
-                                        pageNumber += 1;
-                                        pages.Add("");
-                                    }
-
-                                    pages[pageNumber] += roleMentionList[i] + Environment.NewLine;
-                                }
-
-
-                                string[] staticParts =
-                                {
-                                    $"**{configItemKey}** contains the following values:",
-                                    ""
-                                };
-
-                                var paginationMessage = new PaginationHelper(context, pages.ToArray(),
-                                    staticParts, false, AllowedMentions.None);
-                            }
-                            else
-                            {
-                                await context.Channel.SendMessageAsync(
-                                    $"**{configItemKey}** contains the following values:{Environment.NewLine}{string.Join(", ", roleMentionList)}",
-                                    allowedMentions: AllowedMentions.None);
-                            }
-
+                            PaginationHelper.PaginateIfNeededAndSendMessage(
+                                context,
+                                $"**{configItemKey}** contains the following values:",
+                                roleMentionList,
+                                "",
+                                allowedMentions: AllowedMentions.None
+                            );
                             break;
                         case ConfigItemType.ChannelSet:
                             var channelSet =
@@ -509,39 +346,13 @@ public class ConfigCommand
                             var channelMentionList = new List<string>();
                             foreach (var channel in channelSet) channelMentionList.Add($"<#{channel.Id}>");
 
-                            if (channelMentionList.Count > 10)
-                            {
-                                // Use pagination
-                                var pages = new List<string>();
-                                var pageNumber = -1;
-                                for (var i = 0; i < channelMentionList.Count; i++)
-                                {
-                                    if (i % 10 == 0)
-                                    {
-                                        pageNumber += 1;
-                                        pages.Add("");
-                                    }
-
-                                    pages[pageNumber] += channelMentionList[i] + Environment.NewLine;
-                                }
-
-
-                                string[] staticParts =
-                                {
-                                    $"**{configItemKey}** contains the following values:",
-                                    ""
-                                };
-
-                                var paginationMessage =
-                                    new PaginationHelper(context, pages.ToArray(), staticParts, false);
-                            }
-                            else
-                            {
-                                await context.Channel.SendMessageAsync(
-                                    $"**{configItemKey}** contains the following values:{Environment.NewLine}{string.Join(", ", channelMentionList)}",
-                                    allowedMentions: AllowedMentions.None);
-                            }
-
+                            PaginationHelper.PaginateIfNeededAndSendMessage(
+                                context,
+                                $"**{configItemKey}** contains the following values:",
+                                channelMentionList,
+                                "",
+                                allowedMentions: AllowedMentions.None
+                            );
                             break;
                         default:
                             await context.Channel.SendMessageAsync("I seem to have encountered a setting type that I do not know about.");
@@ -726,58 +537,16 @@ public class ConfigCommand
                         case ConfigItemType.StringDictionary:
                             try
                             {
-                                var keys = new List<string>();
-                                var values = new List<string?>();
-                                if (configItem.Nullable)
-                                {
-                                    keys = ConfigHelper
-                                        .GetDictionary<string?>(config, configItemKey)
-                                        .Keys.ToList();
-                                    values = ConfigHelper
-                                        .GetDictionary<string?>(config, configItemKey)
-                                        .Values.ToList();
-                                }
-                                else
-                                {
-                                    keys = ConfigHelper
-                                        .GetDictionary<string>(config, configItemKey)
-                                        .Keys.ToList();
-                                    values = ConfigHelper
-                                        .GetDictionary<string>(config, configItemKey)
-                                        .Values.Select(t => (string?)t).ToList();
-                                }
+                                IEnumerable<string> items = (configItem.Nullable) ?
+                                    ConfigHelper.GetDictionary<string?>(config, configItemKey).Select(kv => $"{kv.Key} = {kv.Value}") :
+                                    ConfigHelper.GetDictionary<string>(config, configItemKey).Select(kv => $"{kv.Key} = {kv.Value}");
 
-                                if (keys.Count > 10)
-                                {
-                                    // Use pagination
-                                    var pages = new List<string>();
-                                    var pageNumber = -1;
-                                    for (var i = 0; i < keys.Count; i++)
-                                    {
-                                        if (i % 10 == 0)
-                                        {
-                                            pageNumber += 1;
-                                            pages.Add("");
-                                        }
-
-                                        pages[pageNumber] += $"{keys[i]} = {values[i]}{Environment.NewLine}";
-                                    }
-
-                                    string[] staticParts =
-                                    {
-                                        $"**{configItemKey}** contains the following keys:",
-                                        ""
-                                    };
-
-                                    var paginationMessage = new PaginationHelper(context, pages.ToArray(), staticParts);
-                                }
-                                else
-                                {
-                                    var listString = keys.Select((t, i) => $"{t} = {values[i]}").ToList();
-                                    
-                                    await context.Channel.SendMessageAsync(
-                                        $"**{configItemKey}** contains the following keys:{Environment.NewLine}```{Environment.NewLine}{string.Join($"{Environment.NewLine}", listString)}{Environment.NewLine}```");
-                                }
+                                PaginationHelper.PaginateIfNeededAndSendMessage(
+                                    context,
+                                    $"**{configItemKey}** contains the following keys:\n```",
+                                    items.ToList(),
+                                    $"```"
+                                );
                             }
                             catch (ArgumentOutOfRangeException ex)
                             {
@@ -957,49 +726,14 @@ public class ConfigCommand
                         case ConfigItemType.StringSetDictionary:
                             try
                             {
-                                var keys = ConfigHelper
-                                    .GetDictionary<HashSet<string>>(config, configItemKey).Keys
-                                    .ToList();
+                                var dict = ConfigHelper.GetDictionary<HashSet<string>>(config, configItemKey);
 
-                                var values = ConfigHelper
-                                    .GetDictionary<HashSet<string>>(config, configItemKey).Values
-                                    .ToList();
-
-                                if (keys.Count > 10)
-                                {
-                                    // Use pagination
-                                    var pages = new List<string>();
-                                    var pageNumber = -1;
-                                    for (var i = 0; i < keys.Count; i++)
-                                    {
-                                        if (i % 10 == 0)
-                                        {
-                                            pageNumber += 1;
-                                            pages.Add("");
-                                        }
-
-                                        pages[pageNumber] +=
-                                            $"{keys[i]} ({values[i].Count} entries){Environment.NewLine}";
-                                    }
-
-
-                                    string[] staticParts =
-                                    {
-                                        $"**{configItemKey}** contains the following keys:",
-                                        ""
-                                    };
-
-                                    var paginationMessage =
-                                        new PaginationHelper(context, pages.ToArray(), staticParts);
-                                }
-                                else
-                                {
-                                    var listString = keys.Select((t, i) =>
-                                        $"{t} ({values[i].Count} entries){Environment.NewLine}").ToList();
-
-                                    await context.Channel.SendMessageAsync(
-                                        $"**{configItemKey}** contains the following keys:{Environment.NewLine}```{Environment.NewLine}{string.Join($"{Environment.NewLine}", listString)}{Environment.NewLine}```");
-                                }
+                                PaginationHelper.PaginateIfNeededAndSendMessage(
+                                    context,
+                                    $"**{configItemKey}** contains the following keys:\n```",
+                                    dict.Select(kv => $"{kv.Key} ({kv.Value.Count} entries)\n").ToList(),
+                                    $"```"
+                                );
                             }
                             catch (ArgumentOutOfRangeException ex)
                             {
@@ -1035,37 +769,13 @@ public class ConfigCommand
                                     ConfigHelper.GetDictionaryValue<HashSet<string>>(config, configItemKey,
                                         value);
 
-                                if (stringSet.Count > 10)
-                                {
-                                    // Use pagination
-                                    var pages = new List<string>();
-                                    var pageNumber = -1;
-                                    var stringList = stringSet.OrderBy(x => x).ToList();
-                                    for (var i = 0; i < stringList.Count; i++)
-                                    {
-                                        if (i % 10 == 0)
-                                        {
-                                            pageNumber += 1;
-                                            pages.Add("");
-                                        }
-
-                                        pages[pageNumber] += stringList[i] + Environment.NewLine;
-                                    }
-
-                                    string[] staticParts =
-                                    {
-                                        $"**{value}** contains the following values:",
-                                        ""
-                                    };
-
-                                    var paginationMessage = new PaginationHelper(context, pages.ToArray(), staticParts);
-                                }
-                                else
-                                {
-                                    await context.Channel.SendMessageAsync(
-                                        $"**{value}** contains the following values:{Environment.NewLine}```{Environment.NewLine}{string.Join(", ", stringSet)}{Environment.NewLine}```",
-                                        allowedMentions: AllowedMentions.None);
-                                }
+                                PaginationHelper.PaginateIfNeededAndSendMessage(
+                                    context,
+                                    $"**{value}** contains the following values:\n```",
+                                    stringSet.OrderBy(x => x).ToList(),
+                                    $"```",
+                                    allowedMentions: AllowedMentions.None
+                                );
                             }
                             catch (KeyNotFoundException ex)
                             {
@@ -1185,6 +895,80 @@ public class ConfigCommand
             {
                 await context.Message.ReplyAsync($"I couldn't determine what type {configItem.Type} is.");
             }
+        }
+    }
+
+    public static string ConfigItemDescription(Config config, ConfigDescriber configDescriber, string configItemKey)
+    {
+        var configItem = configDescriber.GetItem(configItemKey);
+        if (configItem == null)
+            throw new InvalidOperationException($"Failed to get configItem for key {configItemKey}");
+
+        var nullableString = "(Pass `<nothing>` as the value when setting to set to nothing/null)";
+        if (!configItem.Nullable) nullableString = "";
+
+        switch (configItem.Type)
+        {
+            case ConfigItemType.String:
+            case ConfigItemType.Char:
+            case ConfigItemType.Boolean:
+            case ConfigItemType.Integer:
+            case ConfigItemType.UnsignedInteger:
+            case ConfigItemType.Double:
+                return $"**{configItemKey}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
+                       $"*{configItem.Description}*{Environment.NewLine}" +
+                       $"Current value: `{ConfigHelper.GetValue(config, configItemKey)}`{Environment.NewLine}" +
+                       $"Run `{config.Prefix}config {configItemKey} <value>` to set this value. {nullableString}";
+            case ConfigItemType.Enum:
+                // Figure out what its values are.
+                var rawValue = ConfigHelper.GetValue(config, configItemKey);
+                var enumValue = rawValue as Enum;
+                if (enumValue == null) throw new InvalidCastException($"Config item {configItem} is supposed to be an enum, but its value {rawValue} failed the `as Enum` cast");
+
+                var enumType = enumValue.GetType();
+                var possibleEnumNames = enumType.GetEnumNames().Select(s => $"`{s}`").ToArray();
+
+                return $"**{configItemKey}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
+                       $"*{configItem.Description}*{Environment.NewLine}" +
+                       $"Possible values are: {string.Join(", ", possibleEnumNames)}{Environment.NewLine}" +
+                       $"Current value: `{enumType.GetEnumName(enumValue)}`{Environment.NewLine}" +
+                       $"Run `{config.Prefix}config {configItemKey} <value>` to set this value. {nullableString}";
+            case ConfigItemType.Role:
+                return
+                    $"**{configItemKey}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
+                    $"*{configItem.Description}*{Environment.NewLine}" +
+                    $"Current value: <@&{ConfigHelper.GetValue(config, configItemKey)}>{Environment.NewLine}" +
+                    $"Run `{config.Prefix}config {configItemKey} <value>` to set this value. {nullableString}";
+            case ConfigItemType.Channel:
+                return $"**{configItemKey}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
+                       $"*{configItem.Description}*{Environment.NewLine}" +
+                       $"Current value: <#{ConfigHelper.GetValue(config, configItemKey)}>{Environment.NewLine}" +
+                       $"Run `{config.Prefix}config {configItemKey} <value>` to set this value. {nullableString}";
+            case ConfigItemType.StringSet:
+            case ConfigItemType.RoleSet:
+            case ConfigItemType.ChannelSet:
+                return $"**{configItemKey}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
+                       $"*{configItem.Description}*{Environment.NewLine}" +
+                       $"Run `{config.Prefix}config {configItemKey} list` to view the contents of this list.{Environment.NewLine}" +
+                       $"Run `{config.Prefix}config {configItemKey} add <value>` to add a value to this list. {nullableString}{Environment.NewLine}" +
+                       $"Run `{config.Prefix}config {configItemKey} remove <value>` to remove a value from this list. {nullableString}";
+            case ConfigItemType.StringDictionary:
+                return $"**{configItemKey}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
+                       $"*{configItem.Description}*{Environment.NewLine}" +
+                       $"Run `{config.Prefix}config {configItemKey} list` to view a list of keys in this map.{Environment.NewLine}" +
+                       $"Run `{config.Prefix}config {configItemKey} get <key>` to get the current value of a key in this map.{Environment.NewLine}" +
+                       $"Run `{config.Prefix}config {configItemKey} set <key> <value>` to set a key to a value in this map, creating the key if need be.{Environment.NewLine}" +
+                       $"Run `{config.Prefix}config {configItemKey} delete <key>` to delete a key from this map.";
+            case ConfigItemType.StringSetDictionary:
+                return $"**{configItemKey}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
+                       $"*{configItem.Description}*{Environment.NewLine}" +
+                       $"Run `{config.Prefix}config {configItemKey} list` to view a list of keys in this map.{Environment.NewLine}" +
+                       $"Run `{config.Prefix}config {configItemKey} get <key>` to get the values of a key in this map.{Environment.NewLine}" +
+                       $"Run `{config.Prefix}config {configItemKey} add <key> <value>` to add a value to a key in this map, creating the key if need be.{Environment.NewLine}" +
+                       $"Run `{config.Prefix}config {configItemKey} deleteitem <key> <value>` to remove a value from a key from this map.{Environment.NewLine}" +
+                       $"Run `{config.Prefix}config {configItemKey} deletelist <key>` to delete a key from this map.";
+            default:
+                return "I seem to have encountered a setting type that I do not know about.";
         }
     }
 }

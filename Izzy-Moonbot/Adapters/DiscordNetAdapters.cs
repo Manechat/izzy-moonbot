@@ -114,8 +114,8 @@ public class DiscordNetMessageAdapter : IIzzyMessage
     public string CleanContent => _message.CleanContent;
     public IIzzyUser Author
     {
-        get => _message.Author is SocketGuildUser ?
-            new SocketGuildUserAdapter(_message.Author as SocketGuildUser) :
+        get => _message.Author is SocketGuildUser author ?
+            new SocketGuildUserAdapter(author) :
             new DiscordNetUserAdapter(_message.Author);
     }
     public IIzzyMessageChannel Channel => new DiscordNetMessageChannelAdapter(_message.Channel);
@@ -142,8 +142,8 @@ public class DiscordNetUserMessageAdapter : IIzzyUserMessage
     public string CleanContent => _message.CleanContent;
     public IIzzyUser Author
     {
-        get => _message.Author is SocketGuildUser ?
-            new SocketGuildUserAdapter(_message.Author as SocketGuildUser) :
+        get => _message.Author is SocketGuildUser author ?
+            new SocketGuildUserAdapter(author) :
             new DiscordNetUserAdapter(_message.Author);
     }
     public IIzzyMessageChannel Channel => new DiscordNetMessageChannelAdapter(_message.Channel);
@@ -191,10 +191,11 @@ public class SocketTextChannelAdapter : IIzzySocketTextChannel
         AllowedMentions? allowedMentions = null,
         MessageComponent? components = null,
         RequestOptions? options = null,
+        ISticker[]? stickers = null,
         Embed[]? embeds = null
     )
     {
-        var sentMesssage = await _channel.SendMessageAsync(message, allowedMentions: allowedMentions, components: components, options: options, embeds: embeds);
+        var sentMesssage = await _channel.SendMessageAsync(message, allowedMentions: allowedMentions, components: components, options: options, stickers: stickers, embeds: embeds);
         return new DiscordNetUserMessageAdapter(sentMesssage);
     }
     public async Task<IIzzyMessage?> GetMessageAsync(ulong messageId)
@@ -243,10 +244,16 @@ public class DiscordNetMessageChannelAdapter : IIzzyMessageChannel
         string message,
         AllowedMentions? allowedMentions = null,
         MessageComponent? components = null,
-        RequestOptions? options = null
+        RequestOptions? options = null,
+        ISticker[]? stickers = null
     )
     {
-        var sentMesssage = await _channel.SendMessageAsync(message, allowedMentions: allowedMentions, components: components, options: options);
+        var sentMesssage = await _channel.SendMessageAsync(message, allowedMentions: allowedMentions, components: components, options: options, stickers: stickers);
+        return new DiscordNetUserMessageAdapter(sentMesssage);
+    }
+    public async Task<IIzzyUserMessage> SendFileAsync(FileAttachment fa, string message)
+    {
+        var sentMesssage = await _channel.SendFileAsync(fa, message);
         return new DiscordNetUserMessageAdapter(sentMesssage);
     }
 
@@ -357,11 +364,11 @@ public class DiscordSocketClientAdapter : IIzzyClient
 
         _client.MessageReceived += async (msg) =>
             MessageReceived?.Invoke(
-                msg is SocketUserMessage ? new DiscordNetUserMessageAdapter(msg as SocketUserMessage) : new DiscordNetMessageAdapter(msg)
+                msg is SocketUserMessage sumsg ? new DiscordNetUserMessageAdapter(sumsg) : new DiscordNetMessageAdapter(msg)
             );
         _client.MessageUpdated += async (_oldMessage, newMessage, channel) =>
             MessageUpdated?.Invoke(
-                newMessage is SocketUserMessage ? new DiscordNetUserMessageAdapter(newMessage as SocketUserMessage) : new DiscordNetMessageAdapter(newMessage),
+                newMessage is SocketUserMessage sumsg ? new DiscordNetUserMessageAdapter(sumsg) : new DiscordNetMessageAdapter(newMessage),
                 new DiscordNetMessageChannelAdapter(channel)
             );
         _client.ButtonExecuted += async (arg) =>
@@ -456,8 +463,8 @@ public class SocketCommandContextAdapter : IIzzyContext
     public IIzzyUserMessage Message { get => new DiscordNetUserMessageAdapter(_context.Message); }
 
     public IIzzyUser User {
-        get => _context.User is SocketGuildUser ?
-            new SocketGuildUserAdapter(_context.User as SocketGuildUser) :
+        get => _context.User is SocketGuildUser user ?
+            new SocketGuildUserAdapter(user) :
             new DiscordNetUserAdapter(_context.User);
     }
 }

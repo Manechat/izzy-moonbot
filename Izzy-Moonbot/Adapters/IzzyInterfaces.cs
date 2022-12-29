@@ -77,8 +77,10 @@ public interface IIzzyMessageChannel
         string message,
         AllowedMentions? allowedMentions = null,
         MessageComponent? components = null,
-        RequestOptions? options = null
+        RequestOptions? options = null,
+        ISticker[]? stickers = null
     );
+    Task<IIzzyUserMessage> SendFileAsync(FileAttachment fa, string message);
 
     // Izzy only checks the channel type to avoid processing unusual ones
     ChannelType GetChannelType() => ChannelType.Text;
@@ -94,6 +96,7 @@ public interface IIzzySocketTextChannel
         AllowedMentions? allowedMentions = null,
         MessageComponent? components = null,
         RequestOptions? options = null,
+        ISticker[]? stickers = null,
         Embed[]? embeds = null
     );
     Task<IIzzyMessage?> GetMessageAsync(ulong messageId);
