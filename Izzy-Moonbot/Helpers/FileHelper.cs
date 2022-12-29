@@ -158,7 +158,7 @@ public static class FileHelper
                         fileJson[i]["Action"]!["User"]!.Value<ulong>(),
                         fileJson[i]["Action"]!["Reason"]!.Value<string>()),
                     2 => new ScheduledUnbanJob(fileJson[i]["Action"]!["User"]!.Value<ulong>()),
-                    3 => new ScheduledEchoJob(fileJson[i]["Action"]!["Channel"]!.Value<ulong>(),
+                    3 => new ScheduledEchoJob(fileJson[i]["Action"]!["ChannelOrUser"]!.Value<ulong>(),
                         fileJson[i]["Action"]!["Content"]!.Value<string>()!),
                     4 => new ScheduledBannerRotationJob(),
                     _ => throw new NotImplementedException("This scheduled job type is not implemented.")
