@@ -331,9 +331,9 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
 
                     PaginationHelper.PaginateIfNeededAndSendMessage(
                         context,
-                        $"Here's all the quotes I could find for **{user.Username}#{user.Discriminator}**.",
+                        $"Here's all the quotes I could find for **{user.Username}#{user.Discriminator}**.\n```",
                         quotes,
-                        $"Run `{_config.Prefix}quote <user/category> <number>` to get a specific quote.\n" +
+                        $"```\nRun `{_config.Prefix}quote <user/category> <number>` to get a specific quote.\n" +
                         $"Run `{_config.Prefix}quote <user/category>` to get a random quote from that user/category.\n" +
                         $"Run `{_config.Prefix}quote` for a random quote from a random user/category.",
                         pageSize: 15,
@@ -357,9 +357,9 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
 
                 PaginationHelper.PaginateIfNeededAndSendMessage(
                     context,
-                    $"Here's all the quotes I could find in **{category}**.",
+                    $"Here's all the quotes I could find in **{category}**.\n```",
                     quotes,
-                    $"Run `{_config.Prefix}quote <user/category> <number>` to get a specific quote.\n" +
+                    $"```\nRun `{_config.Prefix}quote <user/category> <number>` to get a specific quote.\n" +
                     $"Run `{_config.Prefix}quote <user/category>` to get a random quote from that user/category.\n" +
                     $"Run `{_config.Prefix}quote` for a random quote from a random user/category.",
                     pageSize: 15,
@@ -384,9 +384,9 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
 
                 PaginationHelper.PaginateIfNeededAndSendMessage(
                     context,
-                    $"Here's all the quotes I could find in **{search}**.",
+                    $"Here's all the quotes I could find in **{search}**.\n```",
                     quotes,
-                    $"Run `{_config.Prefix}quote <user/category> <number>` to get a specific quote.\n" +
+                    $"```\nRun `{_config.Prefix}quote <user/category> <number>` to get a specific quote.\n" +
                     $"Run `{_config.Prefix}quote <user/category>` to get a random quote from that user/category.\n" +
                     $"Run `{_config.Prefix}quote` for a random quote from a random user/category.",
                     pageSize: 15,
