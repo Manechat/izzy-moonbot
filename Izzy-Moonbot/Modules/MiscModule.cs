@@ -91,11 +91,17 @@ public class MiscModule : ModuleBase<SocketCommandContext>
     [Summary("Ask Izzy to DM you a message in the future.")]
     [Alias("remind", "dmme")]
     [Parameter("time", ParameterType.DateTime,
-        "How long to wait until sending the message, e.g. \"5 days\" or \"2 hours\".")]
+        "How long to wait until sending the message. Supported formats are:\n" +
+        "    - Relative interval (e.g. \"in 10 seconds\", \"in 2 hours\", \"in 5 days\")\n" +
+        "    - Time (e.g. \"at 12:00 UTC+0\", \"at 5pm UTC-7\")\n" +
+        "    - Weekday + Time (e.g. \"on monday 12:00 UTC+0\", \"on friday 5pm UTC-7\")\n" +
+        "    - Date + Time (e.g. \"on 1 jan 2020 12:00 UTC+0\", \"on 10 oct 2010 5pm UTC-7\")\n" +
+        "    - Discord Timestamp (e.g. \"<t:1234567890>\", \"<t:1234567890:R>\")")]
     [Parameter("message", ParameterType.String, "The reminder message to DM.")]
     [ExternalUsageAllowed]
-    [Example(".remindme 2 hours join stream")]
-    [Example(".remindme 6 months rethink life")]
+    [Example(".remindme in 2 hours join stream")]
+    [Example(".remindme at 4:30pm go shopping")]
+    [Example(".remindme on 1 jan 2020 12:00 UTC+0 rethink life")]
     public async Task RemindMeCommandAsync([Remainder] string argsString = "")
     {
         await TestableRemindMeCommandAsync(

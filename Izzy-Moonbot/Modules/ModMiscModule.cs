@@ -371,7 +371,8 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                 $"`{_config.Prefix}schedule add <jobtype> <date/time> [...]` - Create and schedule a job. Run `{_config.Prefix}schedule about <jobtype>` to figure out the arguments.\n" +
                 $"`{_config.Prefix}schedule remove <id>` - Remove a scheduled job by its ID.\n" +
                 $"\n" +
-                supportedJobTypesMessage);
+                $"{supportedJobTypesMessage}\n" +
+                $"All of Izzy's <date/time> formats are supported (see `.help remindme`).");
             return;
         }
 
