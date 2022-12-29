@@ -475,7 +475,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
         var args = DiscordHelper.GetArguments(argsString);
 
         var channelName = args.Arguments[0];
-        var timeArg = string.Join("", argsString.Skip(args.Indices[0]));
+        var argsAfterChannel = string.Join("", argsString.Skip(args.Indices[0]));
 
         var channelId = await DiscordHelper.GetChannelIdIfAccessAsync(channelName, Context);
         var channel = (channelId != 0) ? Context.Guild.GetTextChannel(channelId) : null;
@@ -493,28 +493,19 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
             return;
         }
 
-        TimeHelperResponse? time = null;
-        if (timeArg.Trim() != "")
+        DateTimeOffset? timeArg = null;
+        if (argsAfterChannel.Trim() != "")
         {
-            time = TimeHelper.TryParseDateTime(timeArg, out var parseError)?.Item1;
-            if (time is null)
+            if (TimeHelper.TryParseInterval(argsAfterChannel, out var parseError, inThePast: true) is not var (parsedTimeArg, _remainingArguments))
             {
-                await Context.Channel.SendMessageAsync($"Failed to comprehend time: {parseError}");
+                await ReplyAsync($"Failed to comprehend time: {parseError}");
                 return;
             }
-            if (time.RepeatType is not null)
-            {
-                await ReplyAsync("I can't wipe a channel repeatedly! Please give me a time that isn't repeating.");
-                return;
-            }
+            timeArg = parsedTimeArg;
         }
 
-        var wipeThreshold = (time == null) ?
-            // default to wiping the last 24 hours
-            DateTimeHelper.UtcNow.AddHours(-24) :
-            // unfortunately TimeHelper assumes user input is always talking about a future time, but we want a past time
-            // TODO: rethink the TimeHelper API to avoid hacks like this
-            (DateTimeHelper.UtcNow - (time.Time - DateTimeHelper.UtcNow));
+        // default to wiping the last 24 hours
+        var wipeThreshold = timeArg ?? DateTimeHelper.UtcNow.AddHours(-24);
 
         if ((DateTimeHelper.UtcNow - wipeThreshold).TotalDays > 14)
         {

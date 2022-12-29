@@ -117,7 +117,7 @@ public static class TimeHelper
         }
     }
 
-    public static (DateTimeOffset, string)? TryParseInterval(string argsString, out string? errorString)
+    public static (DateTimeOffset, string)? TryParseInterval(string argsString, out string? errorString, bool inThePast = false)
     {
         var args = DiscordHelper.GetArguments(argsString);
         if (!args.Arguments.Any())
@@ -153,13 +153,13 @@ public static class TimeHelper
         var unitString = unitMatch.Groups["unit"].Value;
         var dateTimeOffset = unitString switch
         {
-            "year" => DateTimeHelper.UtcNow.AddYears(dateInt),
-            "month" => DateTimeHelper.UtcNow.AddMonths(dateInt),
-            "week" => DateTimeHelper.UtcNow.AddDays(dateInt * 7),
-            "day" => DateTimeHelper.UtcNow.AddDays(dateInt),
-            "hour" => DateTimeHelper.UtcNow.AddHours(dateInt),
-            "minute" => DateTimeHelper.UtcNow.AddMinutes(dateInt),
-            "second" => DateTimeHelper.UtcNow.AddSeconds(dateInt),
+            "year" => inThePast ? DateTimeHelper.UtcNow.AddYears(-dateInt) : DateTimeHelper.UtcNow.AddYears(dateInt),
+            "month" => inThePast ? DateTimeHelper.UtcNow.AddMonths(-dateInt) : DateTimeHelper.UtcNow.AddMonths(dateInt),
+            "week" => inThePast ? DateTimeHelper.UtcNow.AddDays(-(dateInt * 7)) : DateTimeHelper.UtcNow.AddDays(dateInt * 7),
+            "day" => inThePast ? DateTimeHelper.UtcNow.AddDays(-dateInt) : DateTimeHelper.UtcNow.AddDays(dateInt),
+            "hour" => inThePast ? DateTimeHelper.UtcNow.AddHours(-dateInt) : DateTimeHelper.UtcNow.AddHours(dateInt),
+            "minute" => inThePast ? DateTimeHelper.UtcNow.AddMinutes(-dateInt) : DateTimeHelper.UtcNow.AddMinutes(dateInt),
+            "second" => inThePast ? DateTimeHelper.UtcNow.AddSeconds(-dateInt) : DateTimeHelper.UtcNow.AddSeconds(dateInt),
             _ => throw new FormatException($"UNKNOWN_INERVAL_UNIT: {unitString}")
         };
 

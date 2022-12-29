@@ -322,4 +322,41 @@ public class TimeHelperTests
         );
         Assert.AreEqual(err, null);
     }
+
+    [TestMethod()]
+    public void TryParseInterval_InThePast_Tests()
+    {
+        DateTimeHelper.FakeUtcNow = TestUtils.FiMEpoch;
+        string? err;
+
+        var response = TimeHelper.TryParseInterval("10 minutes", out err, inThePast: true);
+        Assert.IsNotNull(response);
+        Assert.AreEqual(DateTimeHelper.UtcNow.AddMinutes(-10), response?.Item1);
+        Assert.AreEqual("", response?.Item2);
+        Assert.AreEqual(err, null);
+
+        response = TimeHelper.TryParseInterval("1 hour", out err, inThePast: true);
+        Assert.IsNotNull(response);
+        Assert.AreEqual(DateTimeHelper.UtcNow.AddHours(-1), response?.Item1);
+        Assert.AreEqual("", response?.Item2);
+        Assert.AreEqual(err, null);
+
+        response = TimeHelper.TryParseInterval("37 seconds", out err, inThePast: true);
+        Assert.IsNotNull(response);
+        Assert.AreEqual(DateTimeHelper.UtcNow.AddSeconds(-37), response?.Item1);
+        Assert.AreEqual("", response?.Item2);
+        Assert.AreEqual(err, null);
+
+        response = TimeHelper.TryParseInterval("7 days", out err, inThePast: true);
+        Assert.IsNotNull(response);
+        Assert.AreEqual(DateTimeHelper.UtcNow.AddDays(-7), response?.Item1);
+        Assert.AreEqual("", response?.Item2);
+        Assert.AreEqual(err, null);
+
+        response = TimeHelper.TryParseInterval("6 months", out err, inThePast: true);
+        Assert.IsNotNull(response);
+        Assert.AreEqual(DateTimeHelper.UtcNow.AddMonths(-6), response?.Item1);
+        Assert.AreEqual("", response?.Item2);
+        Assert.AreEqual(err, null);
+    }
 }
