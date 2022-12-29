@@ -112,7 +112,7 @@ public class ConfigListener
         _logger.Log($"Updating all scheduled jobs for banner rotation to occur {current} minutes after enabling rotation instead of after {original} minutes.", level: LogLevel.Debug);
         foreach (var scheduledJob in scheduledJobs)
         {
-            scheduledJob.ExecuteAt = scheduledJob.CreatedAt.AddMinutes(current);
+            scheduledJob.ExecuteAt = (scheduledJob.LastExecutedAt ?? scheduledJob.CreatedAt).AddMinutes(current);
             await _schedule.ModifyScheduledJob(scheduledJob.Id, scheduledJob);
         }
     }
