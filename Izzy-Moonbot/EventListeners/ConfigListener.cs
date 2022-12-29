@@ -58,6 +58,12 @@ public class ConfigListener
 
         if (original == BannerMode.None && current != BannerMode.None)
         {
+            if (_config.BannerInterval <= 0)
+            {
+                _logger.Log($"For some reason BannerInterval is non-positive, so we can't create a banner rotation task.");
+                return;
+            }
+
             // Create repeating job.
             var currentTime = DateTimeOffset.UtcNow;
             var executeTime = currentTime.AddMinutes(_config.BannerInterval);

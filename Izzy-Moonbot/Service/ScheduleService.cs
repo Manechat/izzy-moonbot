@@ -149,12 +149,18 @@ public class ScheduleService
 
     public async Task CreateScheduledJob(ScheduledJob job)
     {
+        if (job.RepeatType == ScheduledJobRepeatType.Relative && (job.LastExecutedAt ?? job.CreatedAt) >= job.ExecuteAt)
+            throw new ArgumentException($"CreateScheduledJob() was passed a relative repeating job with non-positive interval: {job.ToDiscordString()}");
+
         _scheduledJobs.Add(job);
         await FileHelper.SaveScheduleAsync(_scheduledJobs);
     }
 
     public async Task ModifyScheduledJob(string id, ScheduledJob job)
     {
+        if (job.RepeatType == ScheduledJobRepeatType.Relative && (job.LastExecutedAt ?? job.CreatedAt) >= job.ExecuteAt)
+            throw new ArgumentException($"ModifyScheduledJob() was passed a relative repeating job with non-positive interval: {job.ToDiscordString()}");
+
         _scheduledJobs[_scheduledJobs.IndexOf(_scheduledJobs.First(altJob => altJob.Id == id))] = job;
         await FileHelper.SaveScheduleAsync(_scheduledJobs);
     }
