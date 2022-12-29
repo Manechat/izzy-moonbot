@@ -390,6 +390,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                     "Heya! Here's a list of all the scheduled jobs!\n",
                     jobs.Select(j => j.ToString()).ToList(),
                     "\nIf you need a raw text file, run `.schedule list-file`.",
+                    codeblock: false,
                     allowedMentions: AllowedMentions.None
                 );
             }
@@ -412,6 +413,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                     $"Heya! Here's a list of all the scheduled {jobType} jobs!\n",
                     jobs.Select(j => j.ToString()).ToList(),
                     $"\nIf you need a raw text file, run `.schedule list-file {jobType}`.",
+                    codeblock: false,
                     allowedMentions: AllowedMentions.None
                 );
             }
