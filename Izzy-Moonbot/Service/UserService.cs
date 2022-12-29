@@ -24,6 +24,18 @@ public class UserService
     /// <param name="user">The IUser instance to check.</param>
     /// <returns>`true` if the user exists, `false` if not.</returns>
     public async Task<bool> Exists(IUser user) => await GetUser(user) != null;
+
+    // /!\ THE CODE BELOW IS TERRIBLY CURSED. /!\
+    // ONLY ENABLE IF YOU KNOW WHAT YOU'RE DOING.
+    /*public User? this[ulong id]
+    {
+        get => GetUser(id).Result;
+        set
+        {
+            if (value == null) throw new NullReferenceException("User cannot be null.");
+            ModifyUser(value);
+        }
+    }*/
     
     /// <summary>
     /// Check if the user exists in the database.
@@ -81,11 +93,27 @@ public class UserService
         await _users.InsertManyAsync(users);
     }
 
-    public async Task<bool> ModifyUser(User user)
+    private (UpdateDefinition<User>, FilterDefinition<User>) _processUserUpdate(User user)
     {
         var filter = Builders<User>.Filter.Eq("Id", user.Id);
-        var update = Builders<User>.Update.Combine(new ObjectUpdateDefinition<User>(user));
+        var update = Builders<User>.Update.Set("Id", user.Id);
 
+        foreach (var property in user.GetType().GetProperties())
+        {
+            var value = property.GetValue(user);
+
+            update = update.Set(property.Name, value);
+        }
+
+        return (update, filter);
+    }
+
+    public async Task<bool> ModifyUser(User user)
+    {
+        var builtUpdate = _processUserUpdate(user);
+        var update = builtUpdate.Item1;
+        var filter = builtUpdate.Item2;
+        
         var oldUser = await GetUser(user.Id);
         if (oldUser == null) throw new NullReferenceException($"User with id {user.Id} does not exist, cannot modify.");
 
