@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Izzy_Moonbot.Helpers;
@@ -7,582 +8,511 @@ namespace Izzy_Moonbot.Helpers;
 
 public static class TimeHelper
 {
-    public static string GetTimeType(string input)
+    public static (TimeHelperResponse, string)? TryParseDateTime(string argsString, out string? errorString)
     {
-        var timeFormatRegex = new Regex(
-            "(?<query1>every |in |on |on the |at |)",
-            RegexOptions.IgnoreCase);
+        errorString = null;
 
-        switch (input.Split(" ")[0].ToLower())
+        var args = DiscordHelper.GetArguments(argsString);
+        if (!args.Arguments.Any())
         {
-            case "every":
-                return "repeat";
-            case "in":
-                return "relative";
-            case "at":
-                return "absolute time";
-            case "on":
-            case "on the":
-                return "absolute date";
-            default:
-                return "unknown";
-        }
-    }
-    
-    public static TimeHelperResponse Convert(string input)
-    {
-        var timeFormatRegex = new Regex(
-            "^(?<query1>every |in |on |on the |at |)(?<weekday>monday|tuesday|wednesday|thursday|friday|saturday|sunday|mon|tue|wed|thu|fri|sat|sun|)(?<query2>(?<date>a |\\d\\d\\d\\d |\\d\\d\\d |\\d\\d |\\d |\\d\\dst |\\dst |\\d\\dnd |\\dnd |\\d\\drd |\\drd |\\d\\dth |\\dth |)| at )(of )?(?<month>years|year|months|month|days|day|weeks|week|days|day|hours|hour|minutes|minute|seconds|second|january|february|march|april|june|july|august|september|october|november|december|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|)(?<year> \\d\\d| \\d\\d\\d\\d|)(?<query3> at |)(?<time>\\d\\d:\\d\\d|\\d:\\d\\d|\\d\\d|\\d|\\dpm|\\d:\\d\\dpm|\\d\\d:\\d\\dpm|\\d\\dpm|\\dam|\\d:\\d\\dam|\\d\\dam|\\d\\d:\\d\\dam|)$",
-            RegexOptions.IgnoreCase);
-
-        var relativeMonths = new[]
-        {
-            "years", "year", "months", "month", "days", "day", "weeks", "week", "days", "day", "hours", "hour", "minutes", "minute", "seconds", "second"
-        };
-
-        var absoluteMonths = new[]
-        {
-            "january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december",
-            "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"
-        };
-
-        if (timeFormatRegex.IsMatch(input))
-        {
-            var match = timeFormatRegex.Match(input);
-            
-            var query1 = match.Groups["query1"];
-            var weekday = match.Groups["weekday"];
-            var query2 = match.Groups["query2"];
-            var date = match.Groups["date"];
-            var month = match.Groups["month"];
-            var year = match.Groups["year"];
-            var query3 = match.Groups["query3"];
-            var time = match.Groups["time"];
-
-            if (query1.Success)
-            {
-                // We likely already know what to expect
-                if (query1.Value.Trim().ToLower() == "in")
-                {
-                    // Relative time
-                    if (date.Value.Trim().ToLower() == "" || month.Value.Trim().ToLower() == "")
-                        throw new FormatException(
-                            "BAD_FORMAT: The provided string doesn't match any possible date format.");
-                    if (!relativeMonths.Contains(month.Value.Trim().ToLower()))
-                        throw new FormatException(
-                            "UNKNOWN_RELATIVE_MONTH: The provided relative month isn't a relative month.");
-                    return ConvertRelative(date.Value.Trim().ToLower(), month.Value.Trim().ToLower());
-                }
-
-                if (query1.Value.Trim().ToLower() == "on" || query1.Value.Trim().ToLower() == "on the")
-                {
-                    // Absolute time, but can be exact date or relative to week
-                    if (weekday.Value.Trim().ToLower() != "" &&
-                        query3.Value.Trim().ToLower() == "at" &&
-                        time.Value.Trim().ToLower() != "")
-                    {
-                        // Most likely a weekly 
-                        return ConvertWeekRelative(weekday.Value.Trim().ToLower(), time.Value.Trim().ToLower());
-                    }
-
-                    if (
-                        date.Value.Trim().ToLower() != "" &&
-                        query3.Value.Trim().ToLower() == "at" &&
-                        time.Value.Trim().ToLower() != ""
-                    )
-                    {
-                        if (!absoluteMonths.Contains(month.Value.Trim().ToLower()))
-                            throw new FormatException("UNKNOWN_ABSOLUTE_MONTH: The provided month isn't a month.");
-
-                        return ConvertAbsolute(date.Value.Trim().ToLower(), month.Value.Trim().ToLower(),
-                            year.Value.Trim().ToLower() != ""
-                                ? year.Value.Trim().ToLower()
-                                : DateTimeHelper.UtcNow.Year.ToString(), time.Value.Trim().ToLower());
-                    }
-                    
-                    throw new FormatException("UNKNOWN_QUERY: The provided string doesn't match any possible date format.");
-                }
-
-                if (query1.Value.Trim().ToLower() == "at")
-                {
-                    // Accurate time, relative date
-                    if (time.Value.Trim().ToLower() == "")
-                        throw new FormatException(
-                            "BAD_FORMAT: The provided string doesn't match any possible date format.");
-                    return ConvertTimeRelative(time.Value.Trim().ToLower());
-                }
-                if (query1.Value.Trim().ToLower() == "every")
-                {
-                    if (
-                        month.Value.Trim().ToLower() != "" &&
-                        relativeMonths.Contains(month.Value.Trim().ToLower()) &&
-                        query3.Value.Trim().ToLower() == "" && time.Value.Trim().ToLower() == ""
-                        )
-                        return ConvertRepeatingRelative(date.Value.Trim().ToLower(), month.Value.Trim().ToLower());
-
-                    if (
-                        weekday.Value.Trim().ToLower() != "" &&
-                        query3.Value.Trim().ToLower() == "at" &&
-                        time.Value.Trim().ToLower() != ""
-                        )
-                        return ConvertRepeatingWeekRelative(weekday.Value.Trim().ToLower(),
-                            time.Value.Trim().ToLower());
-
-                    if (
-                        time.Value.Trim().ToLower() != "" &&
-                        month.Value.Trim().ToLower() == "day" &&
-                        query3.Value.Trim().ToLower() == "at" &&
-                        weekday.Value.Trim().ToLower() == "" &&
-                        date.Value.Trim().ToLower() == ""
-                    )
-                        return ConvertRepeatingTimeRelative(time.Value.Trim().ToLower());
-                    
-                    if (
-                        date.Value.Trim().ToLower() != "" &&
-                        absoluteMonths.Contains(month.Value.Trim().ToLower()) &&
-                        query3.Value.Trim().ToLower() == "at" &&
-                        time.Value.Trim().ToLower() != ""
-                        )
-                        return ConvertRepeatingAbsolute(date.Value.Trim().ToLower(), month.Value.Trim().ToLower(),
-                            time.Value.Trim().ToLower());
-                    
-                    throw new FormatException("UNKNOWN_QUERY: The provided string doesn't match any possible date format.");
-                }
-                
-                // We must judge from what we've been given to work out what to expect
-                /*
-                     * Relative:
-                     *      query2 and date match
-                     *      month is "years|year|months|month|days|day|weeks|week|days|day|hours|hour|minutes|minute|seconds|second"
-                     *      rest unset
-                     *
-                     * Relative week:
-                     *      weekday is set
-                     *      query2 is "at"
-                     *      time is set
-                     *      rest unset
-                     *
-                     * Absolute:
-                     *      query2 and date match
-                     *      month is "january|february|march|april|june|july|august|september|october|november|december|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec"
-                     *      query3 is "at"
-                     *      time is set
-                     *      rest unset
-                     */
-
-                if (
-                    date.Value.Trim().ToLower() != "" && month.Value.Trim().ToLower() != "" &&
-                    relativeMonths.Contains(month.Value.Trim().ToLower()) &&
-                    query3.Value.Trim().ToLower() == "" && time.Value.Trim().ToLower() == ""
-                )
-                    return ConvertRelative(date.Value.Trim().ToLower(), month.Value.Trim().ToLower());
-
-                if (weekday.Value.Trim().ToLower() != "" &&
-                    query3.Value.Trim().ToLower() == "at" &&
-                    time.Value.Trim().ToLower() != ""
-                    )
-                    return ConvertWeekRelative(weekday.Value.Trim().ToLower(), time.Value.Trim().ToLower());
-
-                if (
-                    time.Value.Trim().ToLower() != "" &&
-                    weekday.Value.Trim().ToLower() == "" &&
-                    date.Value.Trim().ToLower() == ""
-                )
-                    return ConvertTimeRelative(time.Value.Trim().ToLower());
-                
-                if (
-                    date.Value.Trim().ToLower() != "" &&
-                    absoluteMonths.Contains(month.Value.Trim().ToLower()) &&
-                    query3.Value.Trim().ToLower() == "at" &&
-                    time.Value.Trim().ToLower() != ""
-                )
-                    return ConvertAbsolute(date.Value.Trim().ToLower(), month.Value.Trim().ToLower(),
-                        year.Value.Trim().ToLower() != ""
-                            ? year.Value.Trim().ToLower()
-                            : DateTimeHelper.UtcNow.Year.ToString(),
-                        time.Value.Trim().ToLower());
-
-                throw new FormatException("UNKNOWN_QUERY: The provided string doesn't match any possible date format.");
-            }
-
-            throw new FormatException("NO_REGEX_MATCH: The provided string doesn't match any possible date format.");
+            errorString = $"empty or all-whitespace string \"{argsString}\" can't be a datetime";
+            return null;
         }
 
-        throw new FormatException("NO_REGEX_MATCH: The provided string doesn't match any possible date format.");
-    }
-
-    private static TimeHelperResponse ConvertRelative(string date, string month)
-    {
-        var dateInt = date == "a" ? 1 : 0;
-        if (dateInt == 0)
+        if (args.Arguments[0] == "in")
         {
-            if (!int.TryParse(date, out dateInt))
-                throw new FormatException("DATE_NOT_INT: Couldn't convert what should be a number to a number.");
+            var intervalArgsString = string.Join("", argsString.Skip(args.Indices[0]));
+            if (TryParseInterval(intervalArgsString, out errorString) is var (dto, remainingArgs))
+                return (new TimeHelperResponse(dto, null), remainingArgs);
+            return null; // only one possible case, so on failure we simply propagate the error and return
         }
-
-        var dateTime = DateTimeHelper.UtcNow;
-        
-        switch (month)
+        else if (args.Arguments[0] == "at")
         {
-            case "years":
-            case "year":
-                dateTime = dateTime.AddYears(dateInt);
-                break;
-            case "months":
-            case "month":
-                dateTime = dateTime.AddMonths(dateInt);
-                break;
-            case "weeks":
-            case "week":
-                dateTime = dateTime.AddDays(dateInt * 7);
-                break;
-            case "days":
-            case "day":
-                dateTime = dateTime.AddDays(dateInt);
-                break;
-            case "hours":
-            case "hour":
-                dateTime = dateTime.AddHours(dateInt);
-                break;
-            case "minutes":
-            case "minute":
-                dateTime = dateTime.AddMinutes(dateInt);
-                break;
-            case "seconds":
-            case "second":
-                dateTime = dateTime.AddSeconds(dateInt);
-                break;
-            default:
-                throw new FormatException("UNKNOWN_RELATIVE_MONTH: Unable to convert a relative month string into a DateTimeOffset.");
+            var timeArgsString = string.Join("", argsString.Skip(args.Indices[0]));
+            if (TryParseTimeInput(timeArgsString, out errorString) is var (dto, remainingArgs))
+                return (new TimeHelperResponse(dto, null), remainingArgs);
+            return null; // only one possible case, so on failure we simply propagate the error and return
         }
-
-        return new TimeHelperResponse(dateTime, false, null);
-    }
-
-    private static TimeHelperResponse ConvertWeekRelative(string weekday, string time)
-    {
-        var weekdayInt = weekday switch
+        else if (args.Arguments[0] == "on")
         {
-            "sunday" => 0,
-            "monday" => 1,
-            "tuesday" => 2,
-            "wednesday" => 3,
-            "thursday" => 4,
-            "friday" => 5,
-            "saturday" => 6,
-            _ => throw new FormatException("UNKNOWN_WEEKDAY: Weekday provided is unknown.")
-        };
+            var subArgsString = string.Join("", argsString.Skip(args.Indices[0]));
+            if (TryParseWeekdayTime(subArgsString, out var weekdayError) is var (weekdayDto, weekdayRemainingArgs))
+                return (new TimeHelperResponse(weekdayDto, null), weekdayRemainingArgs);
+            if (TryParseAbsoluteDateTime(subArgsString, out var dateError) is var (dateDto, dateRemainingArgs))
+                return (new TimeHelperResponse(dateDto, null), dateRemainingArgs);
 
-        var daysToAdd = 0;
-
-        var dateTime = DateTimeHelper.UtcNow;
-        var currentWeekDay = (int) dateTime.DayOfWeek;
-        
-        // monday -> friday = 4
-        // friday -> monday = -4 (-4+7 = 3)
-        if (weekdayInt - currentWeekDay >= 0)
-            daysToAdd = weekdayInt - currentWeekDay;
-        else
-            daysToAdd = (weekdayInt - currentWeekDay) + 7;
-
-        dateTime = dateTime.AddDays(daysToAdd);
-        
-        var convertedTime = ConvertTime(time);
-        var hourInt = convertedTime[0];
-        var minuteInt = convertedTime[1];
-
-        var outputDateTime = new DateTimeOffset(dateTime.Year, dateTime.Month,
-            dateTime.Day, hourInt, minuteInt, 0, TimeSpan.Zero);
-        
-        return new TimeHelperResponse(outputDateTime, false, null);
-    }
-
-    private static TimeHelperResponse ConvertTimeRelative(string time)
-    {
-        var convertedTime = ConvertTime(time);
-        var hourInt = convertedTime[0];
-        var minuteInt = convertedTime[1];
-
-        var outputDateTime = new DateTimeOffset(DateTimeHelper.UtcNow.Year, DateTimeHelper.UtcNow.Month,
-            DateTimeHelper.UtcNow.Day, hourInt, minuteInt, 0, TimeSpan.Zero);
-        
-        return new TimeHelperResponse(outputDateTime, false, null);
-    }
-
-    private static TimeHelperResponse ConvertAbsolute(string date, string month, string year, string time)
-    {
-        // Convert date to something easier to process.
-        var dateInt = 0;
-        if (date.EndsWith("st") ||
-            date.EndsWith("nd") ||
-            date.EndsWith("rd") ||
-            date.EndsWith("th"))
+            errorString = $"Failed to extract a date/time from the start of \"{argsString}\". Using \"on\" means either weekday + time or date + time, but:\n" +
+                $"Not a valid weekday + time because: {weekdayError}\n" +
+                $"Not a valid date + time because: {dateError}";
+            return null;
+        }
+        else if (args.Arguments[0] == "every")
         {
-            var dateWithoutSuffix = date.Remove(date.Length - 2, 2);
+            // no disambiguation word, so we have to try every *repeatable* format, i.e.
+            // no timestamps and AbsoluteDateTime are replaced by DayMonthTime
+            var subArgsString = string.Join("", argsString.Skip(args.Indices[0]));
+            if (TryParseInterval(subArgsString, out var intervalError) is var (intervalDto, intervalRemainingArgs))
+                return (new TimeHelperResponse(intervalDto, "relative"), intervalRemainingArgs);
+            if (TryParseTimeInput(subArgsString, out var timeError) is var (timeDto, timeRemainingArgs))
+                return (new TimeHelperResponse(timeDto, "daily"), timeRemainingArgs);
+            if (TryParseWeekdayTime(subArgsString, out var weekdayError) is var (weekdayDto, weekdayRemainingArgs))
+                return (new TimeHelperResponse(weekdayDto, "weekly"), weekdayRemainingArgs);
+            if (TryParseDayMonthTime(subArgsString, out var dateError) is var (dateDto, dateRemainingArgs))
+                return (new TimeHelperResponse(dateDto, "yearly"), dateRemainingArgs);
 
-            if (!int.TryParse(dateWithoutSuffix, out dateInt))
-                throw new FormatException("DATE_NOT_INT: Couldn't convert what should be a number to a number.");
+            errorString = $"Failed to extract a date/time from the start of \"{argsString}\". Using \"every\" means a repeating date/time, but:\n" +
+                $"Not a valid repeating interval because: {intervalError}\n" +
+                $"Not a valid repeating time because: {timeError}\n" +
+                $"Not a valid repeating weekday + time because: {weekdayError}\n" +
+                $"Not a valid repeating date + time because: {dateError}";
+            return null;
         }
         else
         {
-            if (!int.TryParse(date, out dateInt))
-                throw new FormatException("DATE_NOT_INT: Couldn't convert what should be a number to a number.");
+            // no disambiguation word, so we have to try every valid format
+            if (TryParseDiscordTimestamp(argsString, out var timestampError) is var (timestampDto, timestampRemainingArgs))
+                return (new TimeHelperResponse(timestampDto, null), timestampRemainingArgs);
+            if (TryParseInterval(argsString, out var intervalError) is var (intervalDto, intervalRemainingArgs))
+                return (new TimeHelperResponse(intervalDto, null), intervalRemainingArgs);
+            if (TryParseTimeInput(argsString, out var timeError) is var (timeDto, timeRemainingArgs))
+                return (new TimeHelperResponse(timeDto, null), timeRemainingArgs);
+            if (TryParseWeekdayTime(argsString, out var weekdayError) is var (weekdayDto, weekdayRemainingArgs))
+                return (new TimeHelperResponse(weekdayDto, null), weekdayRemainingArgs);
+            if (TryParseAbsoluteDateTime(argsString, out var dateError) is var (dateDto, dateRemainingArgs))
+                return (new TimeHelperResponse(dateDto, null), dateRemainingArgs);
+
+            errorString = $"Failed to extract a date/time from the start of \"{argsString}\":\n" +
+                $"{timestampError}\n" + // there are no substeps for parsing a Discord timestamp, so the "...because:" will always be redundant
+                $"Not a valid interval because: {intervalError}\n" +
+                $"Not a valid time because: {timeError}\n" +
+                $"Not a valid weekday + time because: {weekdayError}\n" +
+                $"Not a valid date + time because: {dateError}";
+            return null;
         }
-        
-        // Convert month to something easier to process.
-        var monthInt = month switch
-        {
-            "january" or "jan" => 1,
-            "february" or "feb" => 2,
-            "march" or "mar" => 3,
-            "april" or "apr" => 4,
-            "may" => 5,
-            "june" or "jun" => 6,
-            "july" or "jul" => 7,
-            "august" or "aug" => 8,
-            "september" or "sep" => 9,
-            "october" or "oct" => 10,
-            "november" or "nov" => 11,
-            "december" or "dec" => 12,
-            _ => throw new FormatException("UNKNOWN_MONTH: Month provided is unknown.")
-        };
+    }
 
-        var yearInt = 0;
-
-        if (year.Length == 2)
+    public static (DateTimeOffset, string)? TryParseDiscordTimestamp(string argsString, out string? errorString)
+    {
+        var args = DiscordHelper.GetArguments(argsString);
+        if (!args.Arguments.Any())
         {
-            var fullYear = $"20{year}";
-            
-            if (!int.TryParse(fullYear, out yearInt))
-                throw new FormatException("YEAR_NOT_INT: Couldn't convert what should be a number to a number.");
+            errorString = $"empty or all-whitespace string \"{argsString}\" can't be a Discord timestamp";
+            return null;
+        }
+
+        var match = Regex.Match(args.Arguments[0], "^<t:(?<epoch>[0-9]+)(:[a-zA-Z])?>$");
+        if (match.Success)
+        {
+            var epochString = match.Groups["epoch"].Value;
+            var epochSeconds = long.Parse(epochString);
+            var dateTimeOffset = DateTimeOffset.FromUnixTimeSeconds(epochSeconds);
+
+            errorString = null;
+            return (dateTimeOffset, string.Join("", argsString.Skip(args.Indices[0])));
         }
         else
         {
-            if (!int.TryParse(year, out yearInt))
-                throw new FormatException("YEAR_NOT_INT: Couldn't convert what should be a number to a number.");
+            errorString = $"\"{args.Arguments[0]}\" is not a Discord timestamp (e.g. \"<t:1234567890>\", \"<t:1234567890:R>\")";
+            return null;
         }
-        
-        var convertedTime = ConvertTime(time);
-        var hourInt = convertedTime[0];
-        var minuteInt = convertedTime[1];
-        
-        if (yearInt == 0) throw new FormatException("YEAR_INVALID: Year is invalid.");
-        if (dateInt == 0) throw new FormatException("DAY_INVALID: Day is invalid.");
-
-        var dateTime = new DateTimeOffset(yearInt, monthInt, dateInt, hourInt, minuteInt, 0, TimeSpan.Zero);
-        
-        return new TimeHelperResponse(dateTime, false, null);
     }
 
-    private static int[] ConvertTime(string time)
+    public static (DateTimeOffset, string)? TryParseInterval(string argsString, out string? errorString, bool inThePast = false)
     {
-        var timeRegex = new Regex("^(?<hour>\\d\\d|\\d)(:(?<minute>\\d\\d))?(?<period>am|pm)?$",
-            RegexOptions.IgnoreCase);
+        var args = DiscordHelper.GetArguments(argsString);
+        if (!args.Arguments.Any())
+        {
+            errorString = $"empty or all-whitespace string \"{argsString}\" can't be a date/time interval";
+            return null;
+        }
 
-        var hourInt = 0;
+        if (!int.TryParse(args.Arguments[0], out int dateInt))
+        {
+            errorString = $"\"{args.Arguments[0]}\" is not a positive integer";
+            return null;
+        }
+        if (dateInt < 0)
+        {
+            errorString = $"{dateInt} is negative; only positive integers are supported";
+            return null;
+        }
+
+        if (args.Arguments.Length < 2)
+        {
+            errorString = $"incomplete date/time interval: \"{argsString}\" contains a number but not a unit";
+            return null;
+        }
+
+        var unitMatch = Regex.Match(args.Arguments[1], "^(?<unit>year|month|day|week|hour|minute|second)s?$");
+        if (!unitMatch.Success)
+        {
+            errorString = $"\"{args.Arguments[1]}\" is not one of the supported date/time interval units: year(s), month(s), day(s), week(s), hour(s), minute(s), second(s)";
+            return null;
+        }
+
+        var unitString = unitMatch.Groups["unit"].Value;
+        var dateTimeOffset = unitString switch
+        {
+            "year" => inThePast ? DateTimeHelper.UtcNow.AddYears(-dateInt) : DateTimeHelper.UtcNow.AddYears(dateInt),
+            "month" => inThePast ? DateTimeHelper.UtcNow.AddMonths(-dateInt) : DateTimeHelper.UtcNow.AddMonths(dateInt),
+            "week" => inThePast ? DateTimeHelper.UtcNow.AddDays(-(dateInt * 7)) : DateTimeHelper.UtcNow.AddDays(dateInt * 7),
+            "day" => inThePast ? DateTimeHelper.UtcNow.AddDays(-dateInt) : DateTimeHelper.UtcNow.AddDays(dateInt),
+            "hour" => inThePast ? DateTimeHelper.UtcNow.AddHours(-dateInt) : DateTimeHelper.UtcNow.AddHours(dateInt),
+            "minute" => inThePast ? DateTimeHelper.UtcNow.AddMinutes(-dateInt) : DateTimeHelper.UtcNow.AddMinutes(dateInt),
+            "second" => inThePast ? DateTimeHelper.UtcNow.AddSeconds(-dateInt) : DateTimeHelper.UtcNow.AddSeconds(dateInt),
+            _ => throw new FormatException($"UNKNOWN_INERVAL_UNIT: {unitString}")
+        };
+
+        errorString = null;
+        return (dateTimeOffset, string.Join("", argsString.Skip(args.Indices[1])));
+    }
+
+    public static (TimeSpan, string)? TryParseOffset(string argsString, out string? errorString)
+    {
+        var args = DiscordHelper.GetArguments(argsString);
+        if (!args.Arguments.Any())
+        {
+            errorString = $"empty or all-whitespace string \"{argsString}\" can't be a time token";
+            return null;
+        }
+
+        var offsetRegex = new Regex("^UTC(?<sign>\\+|-)(?<hours>\\d\\d?)(\\:(?<minutes>\\d\\d))?$", RegexOptions.IgnoreCase);
+        var match = offsetRegex.Match(args.Arguments[0]);
+        if (!match.Success)
+        {
+            errorString = $"\"{args.Arguments[0]}\" is not a valid UTC offset (e.g. \"UTC+0\", \"UTC-8\", \"UTC+11\", \"UTC-05:30\")";
+            return null;
+        }
+
+        var sign = match.Groups["sign"].Value;
+        var hours = match.Groups["hours"].Value;
+        var minutes = match.Groups["minutes"].Value;
+
+        var span = new TimeSpan(
+            hours == "" ? 0 : int.Parse(hours),
+            minutes == "" ? 0 : int.Parse(minutes),
+            0);
+
+        if (sign == "-")
+            span = TimeSpan.Zero - span;
+
+        errorString = null;
+        return (span, string.Join("", argsString.Skip(args.Indices[0])));
+    }
+
+    // this is for a single "2pm" or "17:30" token in a larger date format
+    // is called by TryParseTimeInput()
+    public static (int, int, string)? TryParseTimeToken(string argsString, out string? errorString)
+    {
+        var args = DiscordHelper.GetArguments(argsString);
+        if (!args.Arguments.Any())
+        {
+            errorString = $"empty or all-whitespace string \"{argsString}\" can't be a time token";
+            return null;
+        }
+
+        var timeRegex = new Regex("^(?<hour>\\d\\d|\\d)(:(?<minute>\\d\\d))?(?<period>am|pm)?$", RegexOptions.IgnoreCase);
+        var match = timeRegex.Match(args.Arguments[0]);
+        if (!match.Success)
+        {
+            errorString = $"\"{args.Arguments[0]}\" is not a valid time (e.g. \"2pm\", \"2:30am\", \"17:15\", \"10:00pm\")";
+            return null;
+        }
+
+        var hourInt = int.Parse(match.Groups["hour"].Value);
+
+        var period = match.Groups["period"].Value;
+        if (period.ToLower() == "pm" && (hourInt >= 1 && hourInt <= 11))
+            hourInt += 12;
+        else if (period.ToLower() == "am" && hourInt == 12)
+            hourInt = 0;
+
         var minuteInt = 0;
+        var minuteString = match.Groups["minute"].Value;
+        if (minuteString != "")
+            minuteInt = int.Parse(minuteString.ToLower());
 
-        if (timeRegex.IsMatch(time))
-        {
-            var match = timeRegex.Match(time);
-
-            var hour = match.Groups["hour"];
-            var minute = match.Groups["minute"];
-            var period = match.Groups["period"];
-
-            if(hour.Value.Trim().ToLower() == "")
-                throw new FormatException("HOUR_MISSING: The time provided doesn't have an hour.");
-
-            if (!int.TryParse(hour.Value.Trim().ToLower(), out hourInt))
-                throw new FormatException("HOUR_NOT_INT: The hour should be an integer.");
-            
-            if (period.Value.Trim().ToLower() == "pm" && (hourInt >= 1 && hourInt <= 11))
-            {
-                hourInt += 12;
-            }
-            
-            if (hourInt == 12 && period.Value.Trim().ToLower() == "am")
-            {
-                hourInt = 0;
-            }
-
-            if (minute.Value.Trim().ToLower() != "")
-            {
-                if (!int.TryParse(minute.Value.Trim().ToLower(), out minuteInt))
-                    throw new FormatException("MINUTE_NOT_INT: The minute should be an integer.");
-            }
-        }
-        else
-            throw new FormatException("TIME_REGEX_FAIL: The time provided couldn't be processed by regex");
-
-        return new[]
-        {
-            hourInt,
-            minuteInt
-        };
-    }
-    
-    private static TimeHelperResponse ConvertRepeatingRelative(string date, string month)
-    {
-        var dateInt = date == "" ? 1 : 0;
-        if (dateInt == 0)
-        {
-            if (!int.TryParse(date, out dateInt))
-                throw new FormatException("DATE_NOT_INT: Couldn't convert what should be a number to a number.");
-        }
-
-        var dateTime = DateTimeHelper.UtcNow;
-        
-        switch (month)
-        {
-            case "years":
-            case "year":
-                dateTime = dateTime.AddYears(dateInt);
-                break;
-            case "months":
-            case "month":
-                dateTime = dateTime.AddMonths(dateInt);
-                break;
-            case "weeks":
-            case "week":
-                dateTime = dateTime.AddDays(dateInt * 7);
-                break;
-            case "days":
-            case "day":
-                dateTime = dateTime.AddDays(dateInt);
-                break;
-            case "hours":
-            case "hour":
-                dateTime = dateTime.AddHours(dateInt);
-                break;
-            case "minutes":
-            case "minute":
-                dateTime = dateTime.AddMinutes(dateInt);
-                break;
-            case "seconds":
-            case "second":
-                dateTime = dateTime.AddSeconds(dateInt);
-                break;
-            default:
-                throw new FormatException("UNKNOWN_RELATIVE_MONTH: Unable to convert a relative month string into a DateTimeOffset.");
-        }
-
-        return new TimeHelperResponse(dateTime, true, "relative");
+        errorString = null;
+        return (hourInt, minuteInt, string.Join("", argsString.Skip(args.Indices[0])));
     }
 
-    private static TimeHelperResponse ConvertRepeatingWeekRelative(string weekday, string time)
+    // this is for the date/time input format that only specifies a time, e.g. "2pm UTC+0"
+    // calls TryParseTimeToken()
+    public static (DateTimeOffset, string)? TryParseTimeInput(string argsString, out string? errorString)
     {
-        var weekdayInt = weekday switch
+        if (TryParseTimeToken(argsString, out errorString) is not var (hours, minutes, argsAfterTime))
+            return null;
+
+        if (argsAfterTime.Trim() == "")
         {
-            "sunday" => 0,
-            "monday" => 1,
-            "tuesday" => 2,
-            "wednesday" => 3,
-            "thursday" => 4,
-            "friday" => 5,
-            "saturday" => 6,
-            _ => throw new FormatException("UNKNOWN_WEEKDAY: Weekday provided is unknown.")
-        };
+            errorString = $"\"{argsString}\" is missing a UTC offset after the time (e.g. \"UTC+0\", \"UTC-8\", \"UTC+11\", \"UTC-05:30\")";
+            return null;
+        }
 
-        var daysToAdd = 0;
+        if (TryParseOffset(argsAfterTime, out errorString) is not var (offset, argsAfterOffset))
+            return null;
 
-        var dateTime = DateTimeHelper.UtcNow;
-        var currentWeekDay = (int) dateTime.DayOfWeek;
-        
+        var dto = new DateTimeOffset(
+            DateTimeHelper.UtcNow.Year, DateTimeHelper.UtcNow.Month, DateTimeHelper.UtcNow.Day,
+            hours, minutes, 0, offset);
+
+        if (dto < DateTimeHelper.UtcNow)
+            dto = dto.AddDays(1);
+
+        errorString = null;
+        return (dto, argsAfterOffset);
+    }
+
+    private static Dictionary<string, int> WeekdayNames = new() {
+        { "sunday", 0 },
+        { "monday", 1 },
+        { "tuesday", 2 },
+        { "wednesday", 3 },
+        { "thursday", 4 },
+        { "friday", 5 },
+        { "saturday", 6 },
+        { "sun", 0 },
+        { "mon", 1 },
+        { "tue", 2 },
+        { "wed", 3 },
+        { "thu", 4 },
+        { "fri", 5 },
+        { "sat", 6 },
+    };
+
+    public static (DateTimeOffset, string)? TryParseWeekdayTime(string argsString, out string? errorString)
+    {
+        var args = DiscordHelper.GetArguments(argsString);
+        if (!args.Arguments.Any())
+        {
+            errorString = $"empty or all-whitespace string \"{argsString}\" can't be a weekday + time";
+            return null;
+        }
+
+        if (!WeekdayNames.Keys.Contains(args.Arguments[0]))
+        {
+            errorString = $"\"{args.Arguments[0]}\" is not one of the supported weekday names: sun(day), mon(day), tue(sday), wed(nesday), thu(rsday), fri(day), sat(urday)";
+            return null;
+        }
+        var weekdayInt = WeekdayNames[args.Arguments[0]];
+
+        var argsAfterWeekday = string.Join("", argsString.Skip(args.Indices[0]));
+        if (argsAfterWeekday.Trim() == "")
+        {
+            errorString = $"\"{argsString}\" is missing a time and UTC offset after the weekday";
+            return null;
+        }
+
+        if (TryParseTimeToken(argsAfterWeekday, out errorString) is not var (hours, minutes, argsAfterTime))
+            return null;
+
+        if (argsAfterTime.Trim() == "")
+        {
+            errorString = $"\"{argsString}\" is missing a UTC offset after the time (e.g. \"UTC+0\", \"UTC-8\", \"UTC+11\", \"UTC-05:30\")";
+            return null;
+        }
+
+        if (TryParseOffset(argsAfterTime, out errorString) is not var (offset, argsAfterOffset))
+            return null;
+
+        var dto = new DateTimeOffset(
+            DateTimeHelper.UtcNow.Year, DateTimeHelper.UtcNow.Month, DateTimeHelper.UtcNow.Day,
+            hours, minutes, 0, offset);
+
         // monday -> friday = 4
         // friday -> monday = -4 (-4+7 = 3)
-        if (weekdayInt - currentWeekDay >= 0)
-            daysToAdd = weekdayInt - currentWeekDay;
-        else
-            daysToAdd = (weekdayInt - currentWeekDay) + 7;
+        var daysToAdd = weekdayInt - (int)DateTimeHelper.UtcNow.DayOfWeek;
+        if (daysToAdd <= 0)
+            daysToAdd += 7;
+        dto = dto.AddDays(daysToAdd);
 
-        dateTime = dateTime.AddDays(daysToAdd);
-        
-        var convertedTime = ConvertTime(time);
-        var hourInt = convertedTime[0];
-        var minuteInt = convertedTime[1];
-
-        var outputDateTime = new DateTimeOffset(dateTime.Year, dateTime.Month,
-            dateTime.Day, hourInt, minuteInt, 0, TimeSpan.Zero);
-
-        return new TimeHelperResponse(outputDateTime, true, "weekly");
-    }
-    
-    private static TimeHelperResponse ConvertRepeatingTimeRelative(string time)
-    {
-        var convertedTime = ConvertTime(time);
-        var hourInt = convertedTime[0];
-        var minuteInt = convertedTime[1];
-
-        var outputDateTime = new DateTimeOffset(DateTimeHelper.UtcNow.Year, DateTimeHelper.UtcNow.Month,
-            DateTimeHelper.UtcNow.Day, hourInt, minuteInt, 0, TimeSpan.Zero);
-        
-        return new TimeHelperResponse(outputDateTime, true, "daily");
+        errorString = null;
+        return (dto, argsAfterOffset);
     }
 
-    private static TimeHelperResponse ConvertRepeatingAbsolute(string date, string month, string time)
+    public static int? TryParseDateToken(string dateToken, out string? errorString)
     {
-        // Convert date to something easier to process.
-        var dateInt = 0;
-        if (date.EndsWith("st") ||
-            date.EndsWith("nd") ||
-            date.EndsWith("rd") ||
-            date.EndsWith("th"))
+        if (!int.TryParse(dateToken, out int dateInt))
         {
-            var dateWithoutSuffix = date.Remove(date.Length - 2, 2);
-
-            if (!int.TryParse(dateWithoutSuffix, out dateInt))
-                throw new FormatException("DATE_NOT_INT: Couldn't convert what should be a number to a number.");
+            errorString = $"\"{dateToken}\" is not a positive integer";
+            return null;
         }
-        else
+        if (dateInt <= 0)
         {
-            if (!int.TryParse(date, out dateInt))
-                throw new FormatException("DATE_NOT_INT: Couldn't convert what should be a number to a number.");
+            errorString = $"{dateToken} is zero or negative; days are always positive";
+            return null;
         }
-        
-        // Convert month to something easier to process.
-        var monthInt = month switch
+        if (dateInt > 31)
         {
-            "january" or "jan" => 1,
-            "february" or "feb" => 2,
-            "march" or "mar" => 3,
-            "april" or "apr" => 4,
-            "may" => 5,
-            "june" or "jun" => 6,
-            "july" or "jul" => 7,
-            "august" or "aug" => 8,
-            "september" or "sep" => 9,
-            "october" or "oct" => 10,
-            "november" or "nov" => 11,
-            "december" or "dec" => 12,
-            _ => throw new FormatException("UNKNOWN_MONTH: Month provided is unknown.")
-        };
-        
-        var convertedTime = ConvertTime(time);
-        var hourInt = convertedTime[0];
-        var minuteInt = convertedTime[1];
+            errorString = $"{dateToken} is not a valid day because days never go higher than 31";
+            return null;
+        }
 
-        if (dateInt == 0) throw new FormatException("DAY_INVALID: Day is invalid.");
+        errorString = null;
+        return dateInt;
+    }
 
-        var dateTime = new DateTimeOffset(DateTimeHelper.UtcNow.Year, monthInt, dateInt, hourInt, minuteInt, 0, TimeSpan.Zero);
+    private static Dictionary<string, int> MonthNames = new() {
+        { "january", 1 },
+        { "jan", 1 },
+        { "february", 2 },
+        { "feb", 2 },
+        { "march", 3 },
+        { "mar", 3 },
+        { "april", 4 },
+        { "apr", 4 },
+        { "may", 5 },
+        { "june", 6 },
+        { "jun", 6 },
+        { "july", 7 },
+        { "jul", 7 },
+        { "august", 8 },
+        { "aug", 8 },
+        { "september", 9 },
+        { "sep", 9 },
+        { "october", 10 },
+        { "oct", 10 },
+        { "november", 11 },
+        { "nov", 11 },
+        { "december", 12 },
+        { "dec", 12 },
+    };
 
-        if (DateTimeHelper.UtcNow.ToUnixTimeMilliseconds() > dateTime.ToUnixTimeMilliseconds()) 
-            dateTime = dateTime.AddYears(1);
+    public static int? TryParseMonthToken(string monthToken, out string? errorString)
+    {
+        if (!MonthNames.Keys.Contains(monthToken))
+        {
+            errorString = $"\"{monthToken}\" is not one of the supported month names: jan(uary), feb(ruary), mar(ch), apr(il), may, jun(e), jul(y), aug(ust), sep(tember), oct(ober), nov(ember), dec(ember)";
+            return null;
+        }
 
-        return new TimeHelperResponse(dateTime, true, "yearly");
+        errorString = null;
+        return MonthNames[monthToken];
+    }
+
+    // same as TryParseAbsoluteDateTime, but without the year part
+    public static (DateTimeOffset, string)? TryParseDayMonthTime(string argsString, out string? errorString)
+    {
+        var args = DiscordHelper.GetArguments(argsString);
+        if (!args.Arguments.Any())
+        {
+            errorString = $"empty or all-whitespace string \"{argsString}\" can't be a date + time";
+            return null;
+        }
+
+        if (TryParseDateToken(args.Arguments[0], out errorString) is not int dateInt)
+            return null;
+
+        if (args.Arguments.Length < 2)
+        {
+            errorString = $"\"{argsString}\" is missing a month, time and UTC offset after the day";
+            return null;
+        }
+
+        if (TryParseMonthToken(args.Arguments[1], out errorString) is not int monthInt)
+            return null;
+
+        var argsAfterMonth = string.Join("", argsString.Skip(args.Indices[1]));
+        if (argsAfterMonth.Trim() == "")
+        {
+            errorString = $"\"{argsString}\" is missing a time and UTC offset after the month";
+            return null;
+        }
+
+        if (TryParseTimeToken(argsAfterMonth, out errorString) is not var (hours, minutes, argsAfterTime))
+            return null;
+
+        if (argsAfterTime.Trim() == "")
+        {
+            errorString = $"\"{argsString}\" is missing a UTC offset after the time (e.g. \"UTC+0\", \"UTC-8\", \"UTC+11\", \"UTC-05:30\")";
+            return null;
+        }
+
+        if (TryParseOffset(argsAfterTime, out errorString) is not var (offset, argsAfterOffset))
+            return null;
+
+        var dto = new DateTimeOffset(DateTimeHelper.UtcNow.Year, monthInt, dateInt, hours, minutes, 0, offset);
+
+        if (dto < DateTimeHelper.UtcNow)
+            dto = dto.AddYears(1);
+
+        errorString = null;
+        return (dto, argsAfterOffset);
+    }
+
+    public static (DateTimeOffset, string)? TryParseAbsoluteDateTime(string argsString, out string? errorString)
+    {
+        var args = DiscordHelper.GetArguments(argsString);
+        if (!args.Arguments.Any())
+        {
+            errorString = $"empty or all-whitespace string \"{argsString}\" can't be a date + time";
+            return null;
+        }
+
+        if (TryParseDateToken(args.Arguments[0], out errorString) is not int dateInt)
+            return null;
+
+        if (args.Arguments.Length < 2)
+        {
+            errorString = $"\"{argsString}\" is missing a month, year, time and UTC offset after the day";
+            return null;
+        }
+
+        if (TryParseMonthToken(args.Arguments[1], out errorString) is not int monthInt)
+            return null;
+
+        if (args.Arguments.Length < 3)
+        {
+            errorString = $"\"{argsString}\" is missing a year, time and UTC offset after the month";
+            return null;
+        }
+
+        var yearArg = args.Arguments[2];
+        if (!int.TryParse(yearArg, out int yearInt))
+        {
+            errorString = $"\"{yearArg}\" is not a positive integer";
+            return null;
+        }
+        if (yearInt < 0)
+        {
+            errorString = $"{yearInt} is negative; only positive years are supported";
+            return null;
+        }
+
+        var argsAfterYear = string.Join("", argsString.Skip(args.Indices[2]));
+        if (argsAfterYear.Trim() == "")
+        {
+            errorString = $"\"{argsString}\" is missing a time and UTC offset after the year";
+            return null;
+        }
+
+        if (TryParseTimeToken(argsAfterYear, out errorString) is not var (hours, minutes, argsAfterTime))
+            return null;
+
+        if (argsAfterTime.Trim() == "")
+        {
+            errorString = $"\"{argsString}\" is missing a UTC offset after the time (e.g. \"UTC+0\", \"UTC-8\", \"UTC+11\", \"UTC-05:30\")";
+            return null;
+        }
+
+        if (TryParseOffset(argsAfterTime, out errorString) is not var (offset, argsAfterOffset))
+            return null;
+
+        var dto = new DateTimeOffset(yearInt, monthInt, dateInt, hours, minutes, 0, offset);
+
+        errorString = null;
+        return (dto, argsAfterOffset);
     }
 }
 
 public class TimeHelperResponse
 {
-    public bool Repeats;
     public string? RepeatType;
     public DateTimeOffset Time;
 
-    public TimeHelperResponse(DateTimeOffset time, bool repeats, string? repeatType)
+    public TimeHelperResponse(DateTimeOffset time, string? repeatType)
     {
         Time = time;
-        Repeats = repeats;
         RepeatType = repeatType;
     }
 }

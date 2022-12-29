@@ -371,7 +371,8 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                 $"`{_config.Prefix}schedule add <jobtype> <date/time> [...]` - Create and schedule a job. Run `{_config.Prefix}schedule about <jobtype>` to figure out the arguments.\n" +
                 $"`{_config.Prefix}schedule remove <id>` - Remove a scheduled job by its ID.\n" +
                 $"\n" +
-                supportedJobTypesMessage);
+                $"{supportedJobTypesMessage}\n" +
+                $"All of Izzy's <date/time> formats are supported (see `.help remindme`).");
             return;
         }
 
@@ -576,64 +577,65 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                 return;
             }
 
-            // every job type needs an execution time, so that's always the next argument
-            var timeType = TimeHelper.GetTimeType(args.Arguments[2]);
-            var timeArgCount = (timeType == "unknown") ? 2 : 3;
-            var timeArgs = args.Arguments.Skip(2).Take(timeArgCount);
-            var timeHelperResponse = TimeHelper.Convert(string.Join(' ', timeArgs));
+            var timeArgString = string.Join("", argsString.Skip(args.Indices[1]));
+            if (TimeHelper.TryParseDateTime(timeArgString, out var parseError) is not var (timeHelperResponse, actionArgsString))
+            {
+                await context.Channel.SendMessageAsync($"Failed to comprehend time: {parseError}");
+                return;
+            }
 
-            var actionArgsIndex = 2 + timeArgCount;
-            var actionArgs = args.Arguments.Skip(actionArgsIndex);
+            var actionArgs = DiscordHelper.GetArguments(actionArgsString);
+            var actionArgTokens = actionArgs.Arguments;
             ScheduledJobAction action;
             switch (typeArg)
             {
                 case "remove-role":
                     {
-                        if (!ulong.TryParse(actionArgs.ElementAt(0), out ulong roleId))
+                        if (!ulong.TryParse(actionArgTokens.ElementAt(0), out ulong roleId))
                         {
-                            await context.Channel.SendMessageAsync($"Failed to parse arguments: \"{actionArgs.ElementAt(0)}\" is not a role id");
+                            await context.Channel.SendMessageAsync($"Failed to parse arguments: \"{actionArgTokens.ElementAt(0)}\" is not a role id");
                             return;
                         }
-                        if (!ulong.TryParse(actionArgs.ElementAt(1), out ulong userId))
+                        if (!ulong.TryParse(actionArgTokens.ElementAt(1), out ulong userId))
                         {
-                            await context.Channel.SendMessageAsync($"Failed to parse arguments: \"{actionArgs.ElementAt(1)}\" is not a user id");
+                            await context.Channel.SendMessageAsync($"Failed to parse arguments: \"{actionArgTokens.ElementAt(1)}\" is not a user id");
                             return;
                         }
-                        action = new ScheduledRoleRemovalJob(roleId, userId, actionArgs.ElementAtOrDefault(2));
+                        action = new ScheduledRoleRemovalJob(roleId, userId, actionArgTokens.ElementAtOrDefault(2));
                         break;
                     }
                 case "add-role":
                     {
-                        if (!ulong.TryParse(actionArgs.ElementAt(0), out ulong roleId))
+                        if (!ulong.TryParse(actionArgTokens.ElementAt(0), out ulong roleId))
                         {
-                            await context.Channel.SendMessageAsync($"Failed to parse arguments: \"{actionArgs.ElementAt(0)}\" is not a role id");
+                            await context.Channel.SendMessageAsync($"Failed to parse arguments: \"{actionArgTokens.ElementAt(0)}\" is not a role id");
                             return;
                         }
-                        if (!ulong.TryParse(actionArgs.ElementAt(1), out ulong userId))
+                        if (!ulong.TryParse(actionArgTokens.ElementAt(1), out ulong userId))
                         {
-                            await context.Channel.SendMessageAsync($"Failed to parse arguments: \"{actionArgs.ElementAt(1)}\" is not a user id");
+                            await context.Channel.SendMessageAsync($"Failed to parse arguments: \"{actionArgTokens.ElementAt(1)}\" is not a user id");
                             return;
                         }
-                        action = new ScheduledRoleAdditionJob(roleId, userId, actionArgs.ElementAtOrDefault(2));
+                        action = new ScheduledRoleAdditionJob(roleId, userId, actionArgTokens.ElementAtOrDefault(2));
                         break;
                     }
                 case "unban":
                     {
-                        if (!ulong.TryParse(actionArgs.ElementAt(0), out ulong userId))
+                        if (!ulong.TryParse(actionArgTokens.ElementAt(0), out ulong userId))
                         {
-                            await context.Channel.SendMessageAsync($"Failed to parse arguments: \"{actionArgs.ElementAt(0)}\" is not a user id");
+                            await context.Channel.SendMessageAsync($"Failed to parse arguments: \"{actionArgTokens.ElementAt(0)}\" is not a user id");
                             return;
                         }
                         action = new ScheduledUnbanJob(userId);
                         break;
                     }
                 case "echo":
-                    if (!ulong.TryParse(actionArgs.ElementAt(0), out ulong channelId))
+                    if (!ulong.TryParse(actionArgTokens.ElementAt(0), out ulong channelId))
                     {
-                        await context.Channel.SendMessageAsync($"Failed to parse arguments: \"{actionArgs.ElementAt(0)}\" is not a channel/user id");
+                        await context.Channel.SendMessageAsync($"Failed to parse arguments: \"{actionArgTokens.ElementAt(0)}\" is not a channel/user id");
                         return;
                     }
-                    action = new ScheduledEchoJob(channelId, string.Join("", argsString.Skip(args.Indices[actionArgsIndex])));
+                    action = new ScheduledEchoJob(channelId, string.Join("", actionArgsString.Skip(actionArgs.Indices[0])));
                     break;
                 case "banner":
                     action = new ScheduledBannerRotationJob();

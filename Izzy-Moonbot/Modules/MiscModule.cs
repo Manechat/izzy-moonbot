@@ -91,11 +91,17 @@ public class MiscModule : ModuleBase<SocketCommandContext>
     [Summary("Ask Izzy to DM you a message in the future.")]
     [Alias("remind", "dmme")]
     [Parameter("time", ParameterType.DateTime,
-        "How long to wait until sending the message, e.g. \"5 days\" or \"2 hours\".")]
+        "How long to wait until sending the message. Supported formats are:\n" +
+        "    - Relative interval (e.g. \"in 10 seconds\", \"in 2 hours\", \"in 5 days\")\n" +
+        "    - Time (e.g. \"at 12:00 UTC+0\", \"at 5pm UTC-7\")\n" +
+        "    - Weekday + Time (e.g. \"on monday 12:00 UTC+0\", \"on friday 5pm UTC-7\")\n" +
+        "    - Date + Time (e.g. \"on 1 jan 2020 12:00 UTC+0\", \"on 10 oct 2010 5pm UTC-7\")\n" +
+        "    - Discord Timestamp (e.g. \"<t:1234567890>\", \"<t:1234567890:R>\")")]
     [Parameter("message", ParameterType.String, "The reminder message to DM.")]
     [ExternalUsageAllowed]
-    [Example(".remindme 2 hours join stream")]
-    [Example(".remindme 6 months rethink life")]
+    [Example(".remindme in 2 hours join stream")]
+    [Example(".remindme at 4:30pm go shopping")]
+    [Example(".remindme on 1 jan 2020 12:00 UTC+0 rethink life")]
     public async Task RemindMeCommandAsync([Remainder] string argsString = "")
     {
         await TestableRemindMeCommandAsync(
@@ -115,73 +121,33 @@ public class MiscModule : ModuleBase<SocketCommandContext>
             return;
         }
 
-        var args = DiscordHelper.GetArguments(argsString);
-
-        var timeType = TimeHelper.GetTimeType(args.Arguments[0]);
-
-        _logger.Log(timeType, level: LogLevel.Trace);
-
-        if (timeType == "unknown" || timeType == "relative")
+        if (TimeHelper.TryParseDateTime(argsString, out var parseError) is not var (timeHelperResponse, content))
         {
-            if (args.Arguments.Length < (timeType == "unknown" ? 2 : 3))
-            {
-                await context.Channel.SendMessageAsync("Please provide a time/date!");
-                return;
-            }
-
-            if (args.Arguments.Length < (timeType == "unknown" ? 3 : 4))
-            {
-                await context.Channel.SendMessageAsync("You have to tell me what to remind you!");
-                return;
-            }
-
-            var relativeTimeUnits = new[]
-            {
-                "years", "year", "months", "month", "days", "day", "weeks", "week", "days", "day", "hours", "hour",
-                "minutes", "minute", "seconds", "second"
-            };
-
-            var timeNumber = args.Arguments[(timeType == "unknown" ? 0 : 1)];
-            var timeUnit = args.Arguments[(timeType == "unknown" ? 1 : 2)];
-
-            if (!int.TryParse(timeNumber, out var time))
-            {
-                await context.Channel.SendMessageAsync($"I couldn't convert `{timeNumber}` to a number, please try again.");
-                return;
-            }
-
-            if (!relativeTimeUnits.Contains(timeUnit))
-            {
-                await context.Channel.SendMessageAsync($"I couldn't convert `{timeUnit}` to a duration type, please try again.");
-                return;
-            }
-
-            var timeHelperResponse = TimeHelper.Convert($"in {time} {timeUnit}");
-
-            var content = string.Join("", argsString.Skip(args.Indices[(timeType == "unknown" ? 1 : 2)]));
-            content = DiscordHelper.StripQuotes(content);
-
-            if (content == "")
-            {
-                await context.Channel.SendMessageAsync("You have to tell me what to remind you!");
-                return;
-            }
-
-            _logger.Log($"Adding scheduled job to remind user to \"{content}\" at {timeHelperResponse.Time:F}",
-                context: context, level: LogLevel.Debug);
-            var action = new ScheduledEchoJob(context.User, content);
-            var task = new ScheduledJob(DateTimeHelper.UtcNow,
-                timeHelperResponse.Time, action);
-            await _schedule.CreateScheduledJob(task);
-            _logger.Log($"Added scheduled job for user", context: context, level: LogLevel.Debug);
-
-            await context.Channel.SendMessageAsync($"Okay! I'll DM you a reminder <t:{timeHelperResponse.Time.ToUnixTimeSeconds()}:R>.");
-        }
-        else
-        {
-            await context.Channel.SendMessageAsync($"<@186730180872634368> https://www.youtube.com/watch?v=-5wpm-gesOY{Environment.NewLine}(I don't currently support timezones, which is required for the input you just gave me, so I'm telling my primary dev that she has to make me support them)");
+            await context.Channel.SendMessageAsync($"Failed to comprehend time: {parseError}");
             return;
         }
+        if (timeHelperResponse.RepeatType is not null)
+        {
+            await Context.Channel.SendMessageAsync("I don't support repeating reminders, since there'd be " +
+                "no way for you to ever turn it off. Please give me a time that isn't repeating.");
+            return;
+        }
+
+        if (content == "")
+        {
+            await context.Channel.SendMessageAsync("You have to tell me what to remind you!");
+            return;
+        }
+
+        _logger.Log($"Adding scheduled job to remind user to \"{content}\" at {timeHelperResponse.Time:F}",
+            context: context, level: LogLevel.Debug);
+        var action = new ScheduledEchoJob(context.User, content);
+        var task = new ScheduledJob(DateTimeHelper.UtcNow,
+            timeHelperResponse.Time, action);
+        await _schedule.CreateScheduledJob(task);
+        _logger.Log($"Added scheduled job for user", context: context, level: LogLevel.Debug);
+
+        await context.Channel.SendMessageAsync($"Okay! I'll DM you a reminder <t:{timeHelperResponse.Time.ToUnixTimeSeconds()}:R>.");
     }
 
     [Command("rule")]

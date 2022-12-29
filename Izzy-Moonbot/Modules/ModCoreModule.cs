@@ -159,13 +159,26 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
 
         var args = DiscordHelper.GetArguments(argsString);
 
-        var user = args.Arguments[0];
-        var duration = string.Join("", argsString.Skip(args.Indices[0]));
-
-        duration = DiscordHelper.StripQuotes(duration);
-
-        var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(user, Context);
+        var userArg = args.Arguments[0];
+        var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(userArg, Context);
         var member = Context.Guild?.GetUser(userId);
+
+        var timeArg = string.Join("", argsString.Skip(args.Indices[0]));
+        TimeHelperResponse? time = null;
+        if (timeArg.Trim() != "")
+        {
+            time = TimeHelper.TryParseDateTime(timeArg, out var parseError)?.Item1;
+            if (time is null)
+            {
+                await Context.Channel.SendMessageAsync($"Failed to comprehend time: {parseError}");
+                return;
+            }
+            if (time.RepeatType is not null)
+            {
+                await Context.Channel.SendMessageAsync("I can't ban a user repeatedly! Please give me a time that isn't repeating.");
+                return;
+            }
+        }
 
         if (userId == Context.Client.CurrentUser.Id)
         {
@@ -199,40 +212,17 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
             return;
         }
 
-        // Comprehend time
-        TimeHelperResponse? time = null;
-        try
-        {
-            if (duration != "")
-                time = TimeHelper.Convert(duration);
-        }
-        catch (FormatException exception)
-        {
-            await Context.Channel.SendMessageAsync($"I encountered an error while attempting to comprehend time: {exception.Message.Split(": ")[1]}");
-            return;
-        }
-
-        if (time is { Repeats: true })
-        {
-            await Context.Channel.SendMessageAsync("I can't ban a user repeatedly! Please give me a time that isn't repeating.");
-            return;
-        }
-
         // Okay, enough joking around, serious Izzy time
         var hasExistingBan = await Context.Guild!.GetIsBannedAsync(userId);
 
         if (!hasExistingBan)
         {
             // No ban exists, very serious Izzy time.
-            await Context.Guild.AddBanAsync(userId, pruneDays: 0, reason: $"Banned by {Context.User.Username}#{Context.User.Discriminator}{(time == null ? "" : $" for {duration}")}.");
+            await Context.Guild.AddBanAsync(userId, pruneDays: 0, reason: $"Banned by {Context.User.Username}#{Context.User.Discriminator}{(time == null ? "" : $" for {timeArg}")}.");
 
             if (time != null)
             {
                 // Create scheduled task!
-                Dictionary<string, string> fields = new Dictionary<string, string>
-                {
-                    { "userId", userId.ToString() }
-                };
                 var action = new ScheduledUnbanJob(userId);
                 var job = new ScheduledJob(DateTimeHelper.UtcNow, time.Time, action);
                 await _schedule.CreateScheduledJob(job);
@@ -241,7 +231,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
             await Context.Channel.SendMessageAsync(
                 $"<:izzydeletethis:1028964499723661372> I've banned {(member == null ? $"<@{userId}>" : member.DisplayName)} ({userId}).{(time != null ? $" They'll be unbanned <t:{time.Time.ToUnixTimeSeconds()}:R>." : "")}{Environment.NewLine}{Environment.NewLine}" +
                 $"Here's a userlog I unicycled that you can use if you want to!{Environment.NewLine}```{Environment.NewLine}" +
-                $"Type: Ban ({(duration == "" ? "" : $"{duration} ")}{(time == null ? "Indefinite" : $"<t:{time.Time.ToUnixTimeSeconds()}:R>")}){Environment.NewLine}" +
+                $"Type: Ban ({(timeArg == "" ? "" : $"{timeArg} ")}{(time == null ? "Indefinite" : $"<t:{time.Time.ToUnixTimeSeconds()}:R>")}){Environment.NewLine}" +
                 $"User: <@{userId}> {(member != null ? $"({member.Username}#{member.Discriminator})" : "")} ({userId}){Environment.NewLine}" +
                 $"Names: {(_users.ContainsKey(userId) ? string.Join(", ", _users[userId].Aliases) : "None (user isn't known by Izzy)")}{Environment.NewLine}" +
                 $"```");
@@ -301,7 +291,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
 
                 await Context.Channel.SendMessageAsync($"This user is already banned. I have modified an existing scheduled unban for them from <t:{jobOriginalExecution}:R> to <t:{job.ExecuteAt.ToUnixTimeSeconds()}:R>.{Environment.NewLine}{Environment.NewLine}" +
                                  $"Here's a userlog I unicycled that you can use if you want to!{Environment.NewLine}```{Environment.NewLine}" +
-                                 $"Type: Ban ({duration} <t:{time.Time.ToUnixTimeSeconds()}:R>){Environment.NewLine}" +
+                                 $"Type: Ban ({timeArg} <t:{time.Time.ToUnixTimeSeconds()}:R>){Environment.NewLine}" +
                                  $"User: <@{userId}> {(member != null ? $"({member.Username}#{member.Discriminator})" : "")} ({userId}){Environment.NewLine}" +
                                  $"Names: {(_users.ContainsKey(userId) ? string.Join(", ", _users[userId].Aliases) : "None (user isn't known by Izzy)")}{Environment.NewLine}" +
                                  $"```");
@@ -317,7 +307,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
                 await Context.Channel.SendMessageAsync(
                     $"This user is already banned. I have scheduled an unban for this user. They'll be unbanned <t:{time.Time.ToUnixTimeSeconds()}:R>{Environment.NewLine}{Environment.NewLine}" +
                     $"Here's a userlog I unicycled that you can use if you want to!{Environment.NewLine}```{Environment.NewLine}" +
-                    $"Type: Ban ({duration} <t:{time.Time.ToUnixTimeSeconds()}:R>){Environment.NewLine}" +
+                    $"Type: Ban ({timeArg} <t:{time.Time.ToUnixTimeSeconds()}:R>){Environment.NewLine}" +
                     $"User: <@{userId}> {(member != null ? $"({member.Username}#{member.Discriminator})" : "")} ({userId}){Environment.NewLine}" +
                     $"Names: {(_users.ContainsKey(userId) ? string.Join(", ", _users[userId].Aliases) : "None (user isn't known by Izzy)")}{Environment.NewLine}" +
                     $"```");
@@ -359,9 +349,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
 
         var roleResolvable = args.Arguments[0];
         var userResolvable = args.Arguments[1];
-        var duration = string.Join("", argsString.Skip(args.Indices[1]));
-
-        duration = DiscordHelper.StripQuotes(duration);
+        var timeArg = string.Join("", argsString.Skip(args.Indices[1]));
 
         var roleId = DiscordHelper.GetRoleIdIfAccessAsync(roleResolvable, context);
         if (roleId == 0)
@@ -379,23 +367,20 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
         }
         var maybeMember = context.Guild?.GetUser(userId);
 
-        // Comprehend time
         TimeHelperResponse? time = null;
-        try
+        if (timeArg.Trim() != "")
         {
-            if (duration != "")
-                time = TimeHelper.Convert(duration);
-        }
-        catch (FormatException exception)
-        {
-            await context.Channel.SendMessageAsync($"I encountered an error while attempting to comprehend time: {exception.Message.Split(": ")[1]}");
-            return;
-        }
-
-        if (time is { Repeats: true })
-        {
-            await context.Channel.SendMessageAsync("I can't assign a role repeatedly! Please give me a time that isn't repeating.");
-            return;
+            time = TimeHelper.TryParseDateTime(timeArg, out var parseError)?.Item1;
+            if (time is null)
+            {
+                await Context.Channel.SendMessageAsync($"Failed to comprehend time: {parseError}");
+                return;
+            }
+            if (time.RepeatType is not null)
+            {
+                await context.Channel.SendMessageAsync("I can't assign a role repeatedly! Please give me a time that isn't repeating.");
+                return;
+            }
         }
 
         if (maybeMember is IIzzyGuildUser member)
@@ -437,7 +422,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
             {
                 _logger.Log($"Adding scheduled job to remove role {roleId} from user {userId} at {time.Time}", level: LogLevel.Debug);
                 var action = new ScheduledRoleRemovalJob(roleId, member.Id,
-                    $".assignrole command for user {member.Id} and role {roleId} with duration {duration}.");
+                    $".assignrole command for user {member.Id} and role {roleId} with duration {timeArg}.");
                 var task = new ScheduledJob(DateTimeHelper.UtcNow, time.Time, action);
                 await _schedule.CreateScheduledJob(task);
                 _logger.Log($"Added scheduled job for new user", level: LogLevel.Debug);
@@ -490,9 +475,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
         var args = DiscordHelper.GetArguments(argsString);
 
         var channelName = args.Arguments[0];
-        var duration = string.Join("", argsString.Skip(args.Indices[0]));
-
-        duration = DiscordHelper.StripQuotes(duration);
+        var argsAfterChannel = string.Join("", argsString.Skip(args.Indices[0]));
 
         var channelId = await DiscordHelper.GetChannelIdIfAccessAsync(channelName, Context);
         var channel = (channelId != 0) ? Context.Guild.GetTextChannel(channelId) : null;
@@ -510,31 +493,19 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
             return;
         }
 
-        // Comprehend time
-        TimeHelperResponse? time = null;
-        try
+        DateTimeOffset? timeArg = null;
+        if (argsAfterChannel.Trim() != "")
         {
-            if (duration != "")
-                time = TimeHelper.Convert(duration);
-        }
-        catch (FormatException exception)
-        {
-            await ReplyAsync($"I encountered an error while attempting to comprehend time: {exception.Message.Split(": ")[1]}");
-            return;
+            if (TimeHelper.TryParseInterval(argsAfterChannel, out var parseError, inThePast: true) is not var (parsedTimeArg, _remainingArguments))
+            {
+                await ReplyAsync($"Failed to comprehend time: {parseError}");
+                return;
+            }
+            timeArg = parsedTimeArg;
         }
 
-        if (time is { Repeats: true })
-        {
-            await ReplyAsync("I can't wipe a channel repeatedly! Please give me a time that isn't repeating.");
-            return;
-        }
-
-        var wipeThreshold = (time == null) ?
-            // default to wiping the last 24 hours
-            DateTimeHelper.UtcNow.AddHours(-24) :
-            // unfortunately TimeHelper assumes user input is always talking about a future time, but we want a past time
-            // TODO: rethink the TimeHelper API to avoid hacks like this
-            (DateTimeHelper.UtcNow - (time.Time - DateTimeHelper.UtcNow));
+        // default to wiping the last 24 hours
+        var wipeThreshold = timeArg ?? DateTimeHelper.UtcNow.AddHours(-24);
 
         if ((DateTimeHelper.UtcNow - wipeThreshold).TotalDays > 14)
         {
