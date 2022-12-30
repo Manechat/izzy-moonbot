@@ -438,9 +438,12 @@ namespace Izzy_Moonbot
 
                     Func<CommandInfo, bool> canRunCommand = cinfo =>
                     {
-                        if (cinfo.Preconditions.Any(attribute => attribute is ModCommandAttribute)) return isMod;
-                        if (cinfo.Preconditions.Any(attribute => attribute is DevCommandAttribute)) return isDev;
-                        return true;
+                        var modAttr = cinfo.Preconditions.Any(attribute => attribute is ModCommandAttribute);
+                        var devAttr = cinfo.Preconditions.Any(attribute => attribute is DevCommandAttribute);
+                        if (modAttr && devAttr) return isMod || isDev;
+                        else if (modAttr) return isMod;
+                        else if (devAttr) return isDev;
+                        else return true;
                     };
                     Func<string, bool> canRunCommandName = name =>
                     {
