@@ -100,7 +100,7 @@ public static class TimeHelper
             return null;
         }
 
-        var match = Regex.Match(args.Arguments[0], "^<t:(?<epoch>[0-9]+)(:[a-zA-Z])?>$");
+        var match = Regex.Match(args.Arguments[0], "^<t:(?<epoch>[0-9]+)(:[a-z])?>$", RegexOptions.IgnoreCase);
         if (match.Success)
         {
             var epochString = match.Groups["epoch"].Value;
@@ -143,7 +143,7 @@ public static class TimeHelper
             return null;
         }
 
-        var unitMatch = Regex.Match(args.Arguments[1], "^(?<unit>year|month|day|week|hour|minute|second)s?$");
+        var unitMatch = Regex.Match(args.Arguments[1], "^(?<unit>year|month|day|week|hour|minute|second)s?$", RegexOptions.IgnoreCase);
         if (!unitMatch.Success)
         {
             errorString = $"\"{args.Arguments[1]}\" is not one of the supported date/time interval units: year(s), month(s), day(s), week(s), hour(s), minute(s), second(s)";
@@ -289,12 +289,13 @@ public static class TimeHelper
             return null;
         }
 
-        if (!WeekdayNames.Keys.Contains(args.Arguments[0]))
+        var weekdayToken = args.Arguments[0].ToLower();
+        if (!WeekdayNames.Keys.Contains(weekdayToken))
         {
-            errorString = $"\"{args.Arguments[0]}\" is not one of the supported weekday names: sun(day), mon(day), tue(sday), wed(nesday), thu(rsday), fri(day), sat(urday)";
+            errorString = $"\"{weekdayToken}\" is not one of the supported weekday names: sun(day), mon(day), tue(sday), wed(nesday), thu(rsday), fri(day), sat(urday)";
             return null;
         }
-        var weekdayInt = WeekdayNames[args.Arguments[0]];
+        var weekdayInt = WeekdayNames[weekdayToken];
 
         var argsAfterWeekday = string.Join("", argsString.Skip(args.Indices[0]));
         if (argsAfterWeekday.Trim() == "")
@@ -378,8 +379,9 @@ public static class TimeHelper
         { "dec", 12 },
     };
 
-    public static int? TryParseMonthToken(string monthToken, out string? errorString)
+    public static int? TryParseMonthToken(string inputMonthToken, out string? errorString)
     {
+        var monthToken = inputMonthToken.ToLower();
         if (!MonthNames.Keys.Contains(monthToken))
         {
             errorString = $"\"{monthToken}\" is not one of the supported month names: jan(uary), feb(ruary), mar(ch), apr(il), may, jun(e), jul(y), aug(ust), sep(tember), oct(ober), nov(ember), dec(ember)";
