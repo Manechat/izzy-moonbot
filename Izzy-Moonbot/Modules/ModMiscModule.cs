@@ -24,9 +24,9 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
 {
     private readonly Config _config;
     private readonly ScheduleService _schedule;
-    private readonly Dictionary<ulong, User> _users;
+    private readonly UserService _users;
 
-    public ModMiscModule(Config config, Dictionary<ulong, User> users, ScheduleService schedule)
+    public ModMiscModule(Config config, UserService users, ScheduleService schedule)
     {
         _config = config;
         _schedule = schedule;
@@ -105,61 +105,65 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
             var reloadUserCount = 0;
             var knownUserCount = 0;
 
+            var userList = new List<User>();
+
             await foreach (var socketGuildUser in Context.Guild.Users.ToAsyncEnumerable())
             {
                 var skip = false;
-                if (!_users.ContainsKey(socketGuildUser.Id))
+                if (!await _users.Exists(socketGuildUser))
                 {
                     var newUser = new User();
                     newUser.Username = $"{socketGuildUser.Username}#{socketGuildUser.Discriminator}";
                     newUser.Aliases.Add(socketGuildUser.Username);
                     if (socketGuildUser.JoinedAt.HasValue) newUser.Joins.Add(socketGuildUser.JoinedAt.Value);
-                    _users.Add(socketGuildUser.Id, newUser);
+                    await _users.CreateUser(newUser);
                     newUserCount += 1;
                     skip = true;
                 }
                 else
                 {
-                    if (_users[socketGuildUser.Id].Username !=
+                    var user = await _users.GetUser(socketGuildUser) ?? throw new NullReferenceException("User is null!");
+                    
+                    if (user.Username !=
                         $"{socketGuildUser.Username}#{socketGuildUser.Discriminator}")
                     {
-                        _users[socketGuildUser.Id].Username =
+                        user.Username =
                             $"{socketGuildUser.Username}#{socketGuildUser.Discriminator}";
                         if (!skip) reloadUserCount += 1;
                         skip = true;
                     }
 
-                    if (!_users[socketGuildUser.Id].Aliases.Contains(socketGuildUser.DisplayName))
+                    if (!user.Aliases.Contains(socketGuildUser.DisplayName))
                     {
-                        _users[socketGuildUser.Id].Aliases.Add(socketGuildUser.DisplayName);
+                        user.Aliases.Add(socketGuildUser.DisplayName);
                         if (!skip) reloadUserCount += 1;
                         skip = true;
                     }
 
                     if (socketGuildUser.JoinedAt.HasValue &&
-                        !_users[socketGuildUser.Id].Joins.Contains(socketGuildUser.JoinedAt.Value))
+                        !user.Joins.Contains(socketGuildUser.JoinedAt.Value))
                     {
-                        _users[socketGuildUser.Id].Joins.Add(socketGuildUser.JoinedAt.Value);
+                        user.Joins.Add(socketGuildUser.JoinedAt.Value);
                         if (!skip) reloadUserCount += 1;
                         skip = true;
                     }
 
                     if (_config.MemberRole != null)
                     {
-                        if (_users[socketGuildUser.Id].Silenced &&
+                        if (user.Silenced &&
                             socketGuildUser.Roles.Select(role => role.Id).Contains((ulong)_config.MemberRole))
                         {
                             // Unsilenced, Remove the flag.
-                            _users[socketGuildUser.Id].Silenced = false;
+                            user.Silenced = false;
                             if (!skip) reloadUserCount += 1;
                             skip = true;
                         }
 
-                        if (!_users[socketGuildUser.Id].Silenced &&
+                        if (!user.Silenced &&
                             !socketGuildUser.Roles.Select(role => role.Id).Contains((ulong)_config.MemberRole))
                         {
                             // Silenced, add the flag
-                            _users[socketGuildUser.Id].Silenced = true;
+                            user.Silenced = true;
                             if (!skip) reloadUserCount += 1;
                             skip = true;
                         }
@@ -167,28 +171,28 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
 
                     foreach (var roleId in _config.RolesToReapplyOnRejoin)
                     {
-                        if (!_users[socketGuildUser.Id].RolesToReapplyOnRejoin.Contains(roleId) &&
+                        if (!user.RolesToReapplyOnRejoin.Contains(roleId) &&
                             socketGuildUser.Roles.Select(role => role.Id).Contains(roleId))
                         {
-                            _users[socketGuildUser.Id].RolesToReapplyOnRejoin.Add(roleId);
+                            user.RolesToReapplyOnRejoin.Add(roleId);
                             if (!skip) reloadUserCount += 1;
                             skip = true;
                         }
 
-                        if (_users[socketGuildUser.Id].RolesToReapplyOnRejoin.Contains(roleId) &&
+                        if (user.RolesToReapplyOnRejoin.Contains(roleId) &&
                             !socketGuildUser.Roles.Select(role => role.Id).Contains(roleId))
                         {
-                            _users[socketGuildUser.Id].RolesToReapplyOnRejoin.Remove(roleId);
+                            user.RolesToReapplyOnRejoin.Remove(roleId);
                             if (!skip) reloadUserCount += 1;
                             skip = true;
                         }
                     }
 
-                    foreach (var roleId in _users[socketGuildUser.Id].RolesToReapplyOnRejoin)
+                    foreach (var roleId in user.RolesToReapplyOnRejoin)
                     {
                         if (!socketGuildUser.Guild.Roles.Select(role => role.Id).Contains(roleId))
                         {
-                            _users[socketGuildUser.Id].RolesToReapplyOnRejoin.Remove(roleId);
+                            user.RolesToReapplyOnRejoin.Remove(roleId);
                             _config.RolesToReapplyOnRejoin.Remove(roleId);
                             await FileHelper.SaveConfigAsync(_config);
                             if (!skip) reloadUserCount += 1;
@@ -199,19 +203,19 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
 
                             if (!_config.RolesToReapplyOnRejoin.Contains(roleId))
                             {
-                                _users[socketGuildUser.Id].RolesToReapplyOnRejoin.Remove(roleId);
+                                user.RolesToReapplyOnRejoin.Remove(roleId);
                                 if (!skip) reloadUserCount += 1;
                                 skip = true;
                             }
                         }
                     }
 
+                    await _users.ModifyUser(user);
+
                     if (!skip) knownUserCount += 1;
                 }
             }
-
-            await FileHelper.SaveUsersAsync(_users);
-
+            
             await Context.Message.ReplyAsync(
                 $"Done! I discovered {Context.Guild.Users.Count} members, of which{Environment.NewLine}" +
                 $"{newUserCount} were unknown to me until now,{Environment.NewLine}" +
