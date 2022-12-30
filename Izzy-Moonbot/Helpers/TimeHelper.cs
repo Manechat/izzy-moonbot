@@ -22,16 +22,24 @@ public static class TimeHelper
         if (args.Arguments[0] == "in")
         {
             var intervalArgsString = string.Join("", argsString.Skip(args.Indices[0]));
-            if (TryParseInterval(intervalArgsString, out errorString) is var (dto, remainingArgs))
+            if (TryParseInterval(intervalArgsString, out var intervalError) is var (dto, remainingArgs))
                 return (new TimeHelperResponse(dto, null), remainingArgs);
-            return null; // only one possible case, so on failure we simply propagate the error and return
+
+            errorString = $"Failed to extract a date/time from the start of \"{argsString}\":\n" +
+                $"Not a valid interval because: {intervalError}\n" +
+                $"    Valid example: \"in 1 hour\"";
+            return null;
         }
         else if (args.Arguments[0] == "at")
         {
             var timeArgsString = string.Join("", argsString.Skip(args.Indices[0]));
-            if (TryParseTimeInput(timeArgsString, out errorString) is var (dto, remainingArgs))
+            if (TryParseTimeInput(timeArgsString, out var timeError) is var (dto, remainingArgs))
                 return (new TimeHelperResponse(dto, null), remainingArgs);
-            return null; // only one possible case, so on failure we simply propagate the error and return
+
+            errorString = $"Failed to extract a date/time from the start of \"{argsString}\":\n" +
+                $"Not a valid time because: {timeError}\n" +
+                $"    Valid example: \"at 12:00 UTC+0\"";
+            return null;
         }
         else if (args.Arguments[0] == "on")
         {
@@ -43,7 +51,9 @@ public static class TimeHelper
 
             errorString = $"Failed to extract a date/time from the start of \"{argsString}\". Using \"on\" means either weekday + time or date + time, but:\n" +
                 $"Not a valid weekday + time because: {weekdayError}\n" +
-                $"Not a valid date + time because: {dateError}";
+                $"    Valid example: \"on monday 12:00 UTC+0\"\n" +
+                $"Not a valid date + time because: {dateError}\n" +
+                $"    Valid example: \"on 1 jan 2020 12:00 UTC+0\"";
             return null;
         }
         else if (args.Arguments[0] == "every")
@@ -62,9 +72,13 @@ public static class TimeHelper
 
             errorString = $"Failed to extract a date/time from the start of \"{argsString}\". Using \"every\" means a repeating date/time, but:\n" +
                 $"Not a valid repeating interval because: {intervalError}\n" +
+                $"    Valid example: \"every 1 hour\"\n" +
                 $"Not a valid repeating time because: {timeError}\n" +
+                $"    Valid example: \"every 12:00 UTC+0\"\n" +
                 $"Not a valid repeating weekday + time because: {weekdayError}\n" +
-                $"Not a valid repeating date + time because: {dateError}";
+                $"    Valid example: \"every monday 12:00 UTC+0\"\n" +
+                $"Not a valid repeating date + time because: {dateError}\n" +
+                $"    Valid example: \"every 1 jan 12:00 UTC+0\"";
             return null;
         }
         else
@@ -84,9 +98,13 @@ public static class TimeHelper
             errorString = $"Failed to extract a date/time from the start of \"{argsString}\":\n" +
                 $"{timestampError}\n" + // there are no substeps for parsing a Discord timestamp, so the "...because:" will always be redundant
                 $"Not a valid interval because: {intervalError}\n" +
+                $"    Valid example: \"in 1 hour\"\n" +
                 $"Not a valid time because: {timeError}\n" +
+                $"    Valid example: \"at 12:00 UTC+0\"\n" +
                 $"Not a valid weekday + time because: {weekdayError}\n" +
-                $"Not a valid date + time because: {dateError}";
+                $"    Valid example: \"on monday 12:00 UTC+0\"\n" +
+                $"Not a valid date + time because: {dateError}\n" +
+                $"    Valid example: \"on 1 jan 2020 12:00 UTC+0\"";
             return null;
         }
     }
