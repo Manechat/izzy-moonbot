@@ -70,15 +70,30 @@ public static class TimeHelper
             if (TryParseDayMonthTime(subArgsString, out var dateError) is var (dateDto, dateRemainingArgs))
                 return (new TimeHelperResponse(dateDto, "yearly"), dateRemainingArgs);
 
-            errorString = $"Failed to extract a date/time from the start of \"{argsString}\". Using \"every\" means a repeating date/time, but:\n" +
-                $"Not a valid repeating interval because: {intervalError}\n" +
-                $"    Valid example: \"every 1 hour\"\n" +
-                $"Not a valid repeating time because: {timeError}\n" +
-                $"    Valid example: \"every 12:00 UTC+0\"\n" +
-                $"Not a valid repeating weekday + time because: {weekdayError}\n" +
-                $"    Valid example: \"every monday 12:00 UTC+0\"\n" +
-                $"Not a valid repeating date + time because: {dateError}\n" +
-                $"    Valid example: \"every 1 jan 12:00 UTC+0\"";
+            if (args.Arguments.Length == 1)
+            {
+                errorString = "Failed to extract a date/time because there's nothing after the 'every'.\n" +
+                              "    Valid example: \"every 1 hour\"";
+                return null;
+            }
+
+            errorString = ErrorBasedOnIntendedFormat(args.Arguments.Skip(1).ToArray(),
+                "Failed to extract a date/time from the start of \"{argsString}\" because it looks like a Discord timestamp, but repeating timestamps are not supported.\n" +
+                $"    Valid examples: \"<t:1234567890>\", \"every 1 hour\"",
+                $"Failed to extract a repeating date/time interval from the start of \"{argsString}\" because:\n" +
+                $"    {intervalError}\n" +
+                $"    Valid example: \"every 1 hour\"",
+                $"Failed to extract a daily repeating time from the start of \"{argsString}\" because:\n" +
+                $"    {timeError}\n" +
+                $"    Valid example: \"every 12:00 UTC+0\"",
+                $"Failed to extract a weekly repeating weekday + time from the start of \"{argsString}\" because:\n" +
+                $"    {weekdayError}\n" +
+                $"    Valid example: \"every monday 12:00 UTC+0\"",
+                $"Failed to extract a yearly repeating date + time from the start of \"{argsString}\" because:\n" +
+                $"    {dateError}\n" +
+                $"    Valid example: \"every 1 jan 12:00 UTC+0\"",
+                $"If you were trying for a different date/time format, see `.help remindme` for examples of all supported formats."
+            );
             return null;
         }
         else
@@ -95,18 +110,52 @@ public static class TimeHelper
             if (TryParseAbsoluteDateTime(argsString, out var dateError) is var (dateDto, dateRemainingArgs))
                 return (new TimeHelperResponse(dateDto, null), dateRemainingArgs);
 
-            errorString = $"Failed to extract a date/time from the start of \"{argsString}\":\n" +
-                $"{timestampError}\n" + // there are no substeps for parsing a Discord timestamp, so the "...because:" will always be redundant
-                $"Not a valid interval because: {intervalError}\n" +
-                $"    Valid example: \"in 1 hour\"\n" +
-                $"Not a valid time because: {timeError}\n" +
-                $"    Valid example: \"at 12:00 UTC+0\"\n" +
-                $"Not a valid weekday + time because: {weekdayError}\n" +
-                $"    Valid example: \"on monday 12:00 UTC+0\"\n" +
-                $"Not a valid date + time because: {dateError}\n" +
-                $"    Valid example: \"on 1 jan 2020 12:00 UTC+0\"";
+            errorString = ErrorBasedOnIntendedFormat(args.Arguments,
+                timestampError ?? "<unreachable>",
+                $"Failed to extract a date/time interval from the start of \"{argsString}\" because:\n" +
+                $"    {intervalError}\n" +
+                $"    Valid example: \"in 1 hour\"",
+                $"Failed to extract a time from the start of \"{argsString}\" because:\n" +
+                $"    {timeError}\n" +
+                $"    Valid example: \"at 12:00 UTC+0\"",
+                $"Failed to extract a weekday + time from the start of \"{argsString}\" because:\n" +
+                $"    {weekdayError}\n" +
+                $"    Valid example: \"on monday 12:00 UTC+0\"",
+                $"Failed to extract a date + time from the start of \"{argsString}\" because:\n" +
+                $"    {dateError}\n" +
+                $"    Valid example: \"on 1 jan 2020 12:00 UTC+0\"",
+                $"If you were trying for a different date/time format, see `.help remindme` for examples of all supported formats."
+            );
             return null;
         }
+    }
+
+    private static string ErrorBasedOnIntendedFormat(
+        string[] argTokens,
+        string timestampError, string intervalError, string timeError, string weekdayError, string dateError,
+        string footer)
+    {
+        // we assume the caller already checked there's at least one token
+        if (argTokens[0].StartsWith('<'))
+            return timestampError + "\n\n" + footer;
+
+        if (TryParseTimeToken(argTokens[0], out _) is not null)
+            return timeError + "\n\n" + footer;
+
+        if (int.TryParse(argTokens[0], out _) || int.TryParse(argTokens[0].Substring(argTokens[0].Length - 2), out _))
+        {
+            if (argTokens.Length == 1)
+                return timestampError + "\n\n" + footer;
+            else if (argTokens.Length == 2)
+                if (MonthNames.Keys.Contains(argTokens[1].ToLower()))
+                    return dateError + "\n\n" + footer;
+                else
+                    return intervalError + "\n\n" + footer;
+            else
+                return dateError + "\n\n" + footer;
+        }
+
+        return weekdayError + "\n\n" + footer;
     }
 
     public static (DateTimeOffset, string)? TryParseDiscordTimestamp(string argsString, out string? errorString)
