@@ -332,7 +332,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
 
             PaginationHelper.PaginateIfNeededAndSendMessage(
                 context,
-                $"Hii! Here's a list of all the commands I could find in the {moduleInfo.Name.Replace("Module", "")} category!\n```",
+                $"Hii! Here's a list of all the commands I could find in the {moduleInfo.Name.Replace("Module", "")} category!",
                 commands,
                 $"Run `{prefix}help <command>` for help regarding a specific command!" +
                 $"{(potentialAliases.Length != 0 ? $"{Environment.NewLine}ℹ  This category shares a name with an alias. For information regarding this alias, run `{prefix}help {potentialAliases.First().Name.ToLower()}`." : "")}"

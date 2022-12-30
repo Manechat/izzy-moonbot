@@ -70,9 +70,9 @@ public class ConfigCommand
 
                 PaginationHelper.PaginateIfNeededAndSendMessage(
                     context,
-                    $"Hii!! Here's a list of all the config items I could find in the {configDescriber.CategoryToString(category)} category!\n```",
+                    $"Hii!! Here's a list of all the config items I could find in the {configDescriber.CategoryToString(category)} category!",
                     itemList,
-                    $"```\nRun `{config.Prefix}config <item>` to view information about an item! Please note that config items are *case sensitive*."
+                    $"Run `{config.Prefix}config <item>` to view information about an item! Please note that config items are *case sensitive*."
                 );
                 return;
             }
@@ -319,9 +319,9 @@ public class ConfigCommand
 
                             PaginationHelper.PaginateIfNeededAndSendMessage(
                                 context,
-                                $"**{configItemKey}** contains the following values:\n```",
+                                $"**{configItemKey}** contains the following values:",
                                 stringSet.OrderBy(x => x).ToList(),
-                                "```",
+                                "",
                                 allowedMentions: AllowedMentions.None
                             );
                             break;
@@ -543,9 +543,9 @@ public class ConfigCommand
 
                                 PaginationHelper.PaginateIfNeededAndSendMessage(
                                     context,
-                                    $"**{configItemKey}** contains the following keys:\n```",
+                                    $"**{configItemKey}** contains the following keys:",
                                     items.ToList(),
-                                    $"```"
+                                    $""
                                 );
                             }
                             catch (ArgumentOutOfRangeException ex)
@@ -730,9 +730,9 @@ public class ConfigCommand
 
                                 PaginationHelper.PaginateIfNeededAndSendMessage(
                                     context,
-                                    $"**{configItemKey}** contains the following keys:\n```",
+                                    $"**{configItemKey}** contains the following keys:",
                                     dict.Select(kv => $"{kv.Key} ({kv.Value.Count} entries)\n").ToList(),
-                                    $"```"
+                                    $""
                                 );
                             }
                             catch (ArgumentOutOfRangeException ex)
@@ -771,9 +771,9 @@ public class ConfigCommand
 
                                 PaginationHelper.PaginateIfNeededAndSendMessage(
                                     context,
-                                    $"**{value}** contains the following values:\n```",
+                                    $"**{value}** contains the following values:",
                                     stringSet.OrderBy(x => x).ToList(),
-                                    $"```",
+                                    $"",
                                     allowedMentions: AllowedMentions.None
                                 );
                             }
