@@ -523,34 +523,29 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
         // so we need to remember the message creation times in order to do our own sorting at the end.
         var bulkDeletionLog = new List<(DateTimeOffset, string, string)>();
 
-        // Because snowflake ids correspond to datetime moments, we can use a snowflake to directly ask for all messages
-        // after a certain moment, even if that snowflake is not the actual id of any message in the channel.
-        var snowflakeWipeThreshold = SnowflakeUtils.ToSnowflake(wipeThreshold);
-        var asyncRecentMessages = channel.GetMessagesAsync(snowflakeWipeThreshold, Direction.After);
-        await foreach (var recentMessages in asyncRecentMessages)
+        var bulkDeletionLimit = 500;
+
+        var recentMessages = (await channel.GetMessagesAsync(bulkDeletionLimit).FlattenAsync())
+            .TakeWhile(m => m.CreatedAt > wipeThreshold);
+
+        if (recentMessages.Count() == bulkDeletionLimit)
+            await ReplyAsync($"Reached my hardcoded limit of {bulkDeletionLimit} messages.\n" +
+                $"If there are even more recent messages that should've been deleted, please run .wipe again.");
+
+        foreach (var message in recentMessages)
         {
-            foreach (var message in recentMessages)
-            {
-                messageIdsToDelete.Add(message.Id);
-                bulkDeletionLog.Add((
-                    message.CreatedAt,
-                    $"{message.Author.Username} ({message.Author.Id})",
-                    $"[{message.CreatedAt}] {message.Author.Username}: {message.Content}"
-                ));
-            }
+            messageIdsToDelete.Add(message.Id);
+            bulkDeletionLog.Add((
+                message.CreatedAt,
+                $"{message.Author.Username} ({message.Author.Id})",
+                $"[{message.CreatedAt}] {message.Author.Username}: {message.Content}"
+            ));
         }
 
         // Actually do the deletion
         var messagesToDeleteCount = messageIdsToDelete.Count;
         _logger.Log($"Deleting {messagesToDeleteCount} messages from channel {channelName}");
-        var discordBulkDeletionLimit = 100;
-        while (messageIdsToDelete.Any())
-        {
-            var messageIdsBatch = messageIdsToDelete.Take(discordBulkDeletionLimit).ToList();
-            messageIdsToDelete.RemoveRange(0, Math.Min(messageIdsToDelete.Count, discordBulkDeletionLimit));
-
-            await channel.DeleteMessagesAsync(messageIdsBatch);
-        }
+        await channel.DeleteMessagesAsync(messageIdsToDelete);
 
         // Finally, post a bulk deletion log in LogChannel
         var logChannelId = _config.LogChannel;
