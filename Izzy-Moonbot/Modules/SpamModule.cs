@@ -50,7 +50,7 @@ public class SpamModule : ModuleBase<SocketCommandContext>
         }
         else
         {
-            double pressure = _spamService.GetPressure(user.Id);
+            double pressure = await _spamService.GetPressure(user.Id);
 
             await context.Channel.SendMessageAsync($"Current Pressure for {user.Username}#{user.Discriminator}: {pressure}");
         }
@@ -86,7 +86,7 @@ public class SpamModule : ModuleBase<SocketCommandContext>
         }
         else
         {
-            var previousMessages = _spamService.GetPreviousMessages(user.Id);
+            var previousMessages = await _spamService.GetPreviousMessages(user.Id);
 
             var messageList = previousMessages.Select(item => 
                 $"https://discord.com/channels/{item.GuildId}/{item.ChannelId}/{item.Id} at <t:{item.Timestamp.ToUniversalTime().ToUnixTimeSeconds()}:F> (<t:{item.Timestamp.ToUniversalTime().ToUnixTimeSeconds()}:R>)"
