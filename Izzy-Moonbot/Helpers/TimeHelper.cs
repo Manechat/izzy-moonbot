@@ -250,6 +250,12 @@ public static class TimeHelper
         if (minuteString != "")
             minuteInt = int.Parse(minuteString.ToLower());
 
+        if (period == "" && minuteString == "")
+        {
+            errorString = $"\"{args.Arguments[0]}\" is just a number, not a valid time (e.g. \"2pm\", \"2:30am\", \"17:15\", \"10:00pm\")";
+            return null;
+        }
+
         errorString = null;
         return (hourInt, minuteInt, string.Join("", argsString.Skip(args.Indices[0])));
     }
