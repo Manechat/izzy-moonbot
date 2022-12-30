@@ -572,6 +572,12 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
         } 
         else if (args.Arguments[0].ToLower() == "add")
         {
+            if (args.Arguments.Length == 1)
+            {
+                await context.Channel.SendMessageAsync("What did you want me to add?");
+                return;
+            }
+
             var typeArg = args.Arguments[1];
             if (jobTypes[typeArg] is not Type type)
             {
