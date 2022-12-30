@@ -15,12 +15,12 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     steps:
-  - name: Prune
-    uses: vlaurin/action-ghcr-prune@main
-    with:
-      token: ${{ secrets.YOUR_TOKEN }}
-      organization: manechat
-      container: izzymoonbot
-      dry-run: true # Dry-run first, then change to `false`
-      keep-tags: latest
-      untagged: true
+    - name: Prune
+      uses: vlaurin/action-ghcr-prune@main
+      with:
+        token: ${{ secrets.YOUR_TOKEN }}
+        organization: manechat
+        container: izzymoonbot
+        dry-run: true # Dry-run first, then change to `false`
+        keep-tags: latest
+        untagged: true
