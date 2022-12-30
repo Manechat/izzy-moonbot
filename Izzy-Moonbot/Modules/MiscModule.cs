@@ -96,7 +96,13 @@ public class MiscModule : ModuleBase<SocketCommandContext>
         "    - Time (e.g. \"at 12:00 UTC+0\", \"at 5pm UTC-7\")\n" +
         "    - Weekday + Time (e.g. \"on monday 12:00 UTC+0\", \"on friday 5pm UTC-7\")\n" +
         "    - Date + Time (e.g. \"on 1 jan 2020 12:00 UTC+0\", \"on 10 oct 2010 5pm UTC-7\")\n" +
-        "    - Discord Timestamp (e.g. \"<t:1234567890>\", \"<t:1234567890:R>\")")]
+        "    - Discord Timestamp (e.g. \"<t:1234567890>\", \"<t:1234567890:R>\")\n" +
+        "Repeating reminders are also supported, and will be sent with an Unsubscibe button.\n" +
+        "    - Repeating interval (e.g. \"every 10 seconds\", \"every 2 hours\", \"every 5 days\")\n" +
+        "    - Daily Repeating Time (e.g. \"every 12:00 UTC+0\", \"every 5pm UTC-7\")\n" +
+        "    - Weekly Repeating Weekday + Time (e.g. \"every monday 12:00 UTC+0\", \"every friday 5pm UTC-7\")\n" +
+        "    - Yearly Repeating Date + Time (e.g. \"every 1 jan 2020 12:00 UTC+0\", \"every 10 oct 2010 5pm UTC-7\")"
+    )]
     [Parameter("message", ParameterType.String, "The reminder message to DM.")]
     [ExternalUsageAllowed]
     [Example(".remindme in 2 hours join stream")]
