@@ -13,9 +13,9 @@ namespace Izzy_Moonbot.Service;
 public class ModService
 {
     private readonly Config _config;
-    private readonly Dictionary<ulong, User> _users;
+    private readonly UserService _users;
 
-    public ModService(Config config, Dictionary<ulong, User> users)
+    public ModService(Config config, UserService users)
     {
         _config = config;
         _users = users;
@@ -30,9 +30,12 @@ public class ModService
         if (_config.MemberRole == null) throw new TargetException("MemberRole config value is null (not set)");
         
         await user.RemoveRoleAsync((ulong) _config.MemberRole, reason is null ? null : new Discord.RequestOptions { AuditLogReason = reason });
-            
-        _users[user.Id].Silenced = true;
-        await FileHelper.SaveUsersAsync(_users);
+
+        var userData = await _users.GetUser(user) ?? throw new NullReferenceException("User is null!");
+
+        userData.Silenced = true;
+
+        await _users.ModifyUser(userData);
     }
 
     public async Task SilenceUsers(IEnumerable<SocketGuildUser> users, string? reason = null)
@@ -49,8 +52,11 @@ public class ModService
         {
             await user.RemoveRoleAsync((ulong)_config.MemberRole, reason is null ? null : new Discord.RequestOptions { AuditLogReason = reason });
 
-            _users[user.Id].Silenced = true;
-            await FileHelper.SaveUsersAsync(_users);
+            var userData = await _users.GetUser(user) ?? throw new NullReferenceException("User is null!");
+
+            userData.Silenced = true;
+
+            await _users.ModifyUser(userData);
         }
     }
 
