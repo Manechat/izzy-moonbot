@@ -287,75 +287,17 @@ public class DevModule : ModuleBase<SocketCommandContext>
                 await ReplyAsync("Invites disabled: " + Context.Guild.Features.HasFeature("INVITES_DISABLED"));
                 break;
             case "timehelper":
-                var timestring = string.Join(" ", args);
-                try
+                if (TimeHelper.TryParseDateTime(argString, out var err) is not var (time, remainingArgsString))
                 {
-                    var time = TimeHelper.Convert(timestring);
+                    await ReplyAsync($"TryParseDateTime returned null for \"{argString}\"\n" +
+                        $"with error message: {err}");
+                    return;
+                }
 
-                    await ReplyAsync($"Successfully converted {timestring} to a DateTimeOffset.{Environment.NewLine}" +
-                                     $"DateTime: <t:{time.Time.ToUnixTimeSeconds()}:F> (<t:{time.Time.ToUnixTimeSeconds()}:R>){Environment.NewLine}" +
-                                     $"Repeats: {(time.Repeats ? "yes" : "no")}{Environment.NewLine}" +
-                                     $"Repeats every: {time.RepeatType ?? "Doesn't repeat"}");
-                }
-                catch (FormatException exception)
-                {
-                    await ReplyAsync($"Exception: {exception.Message}");
-                }
-                break;
-            case "repeat-scheduled":
-                var timeinput = string.Join(" ", args);
-                try
-                {
-                    var time = TimeHelper.Convert(timeinput);
-
-                    var repeatType = time.RepeatType switch
-                    {
-                        "relative" => ScheduledJobRepeatType.Relative,
-                        "daily" => ScheduledJobRepeatType.Daily,
-                        "weekly" => ScheduledJobRepeatType.Weekly,
-                        "yearly" => ScheduledJobRepeatType.Yearly,
-                        _ => ScheduledJobRepeatType.None
-                    };
-                    var repeataction = new ScheduledEchoJob(Context.Channel.Id,
-                        $"Hello! I'm a repeating job occuring `{timeinput}`!");
-                    var repeattask = new ScheduledJob(DateTimeOffset.UtcNow,
-                        time.Time, repeataction, repeatType);
-                    await _scheduleService.CreateScheduledJob(repeattask);
-                    await Context.Message.ReplyAsync("Created repeating scheduled task.");
-                    break;
-                }
-                catch (FormatException exception)
-                {
-                    await ReplyAsync($"Exception: {exception.Message}");
-                }
-                break;
-            case "repeat-scheduled-misty":
-                var timein = string.Join(" ", args);
-                try
-                {
-                    var time = TimeHelper.Convert(timein);
-
-                    var repeatType = time.RepeatType switch
-                    {
-                        "relative" => ScheduledJobRepeatType.Relative,
-                        "daily" => ScheduledJobRepeatType.Daily,
-                        "weekly" => ScheduledJobRepeatType.Weekly,
-                        "yearly" => ScheduledJobRepeatType.Yearly,
-                        _ => ScheduledJobRepeatType.None
-                    };
-
-                    _loggingService.Log($"{time.Time:F} {time.RepeatType}");
-                    var repeataction = new ScheduledEchoJob(Context.Channel.Id, "misty");
-                    var repeattask = new ScheduledJob(DateTimeOffset.UtcNow,
-                        time.Time, repeataction, repeatType);
-                    await _scheduleService.CreateScheduledJob(repeattask);
-                    await Context.Message.ReplyAsync("Created repeating scheduled task.");
-                    break;
-                }
-                catch (FormatException exception)
-                {
-                    await ReplyAsync($"Exception: {exception.Message}");
-                }
+                await ReplyAsync(
+                    $"TryParseDateTime converted \"{argString}\" to a DateTimeOffset of {time.Time}" +
+                        $"{(time.RepeatType is null ? "" : $" repeating {time.RepeatType}")}\n" +
+                    $"with remainingArgsString: \"{remainingArgsString}\"");
                 break;
             case "getuser":
                 if (ulong.TryParse(args[0], out var id))

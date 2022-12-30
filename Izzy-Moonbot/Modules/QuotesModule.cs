@@ -306,9 +306,9 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
 
             PaginationHelper.PaginateIfNeededAndSendMessage(
                 context,
-                "Here's a list of users/categories of quotes I've found.\n```",
+                "Here's a list of users/categories of quotes I've found.",
                 quoteKeys,
-                $"```\nRun `{_config.Prefix}quote <user/category>` to get a random quote from that user/category if specified.\n" +
+                $"Run `{_config.Prefix}quote <user/category>` to get a random quote from that user/category if specified.\n" +
                 $"Run `{_config.Prefix}quote` for a random quote from a random user/category.",
                 pageSize: 15,
                 allowedMentions: AllowedMentions.None
@@ -418,9 +418,9 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
 
             PaginationHelper.PaginateIfNeededAndSendMessage(
                 context,
-                $"Here's all the quotes I could find for **{member.DisplayName}**.\n```",
+                $"Here's all the quotes I could find for **{member.DisplayName}**.",
                 quotes,
-                $"```\nRun `{_config.Prefix}quote <user/category> <number>` to get a specific quote.\n" +
+                $"Run `{_config.Prefix}quote <user/category> <number>` to get a specific quote.\n" +
                 $"Run `{_config.Prefix}quote <user/category>` to get a random quote from that user/category.\n" +
                 $"Run `{_config.Prefix}quote` for a random quote from a random user/category.",
                 pageSize: 15,

@@ -25,11 +25,17 @@ public class PaginationHelper
     private int _pageNumber = 0;
     public string[] Pages;
 
-    public static void PaginateIfNeededAndSendMessage(IIzzyContext context, string header, IList<string> lineItems, string footer, uint pageSize = 10, AllowedMentions? allowedMentions = null)
+    public static void PaginateIfNeededAndSendMessage(IIzzyContext context, string header, IList<string> lineItems, string footer, bool codeblock = true, uint pageSize = 10, AllowedMentions? allowedMentions = null)
     {
         if (lineItems.Count <= pageSize)
         {
-            context.Channel.SendMessageAsync($"{header}\n{string.Join('\n', lineItems)}\n{footer}", allowedMentions: allowedMentions);
+            context.Channel.SendMessageAsync(
+                $"{header}\n" +
+                (codeblock ? "```\n" : "") +
+                $"{string.Join('\n', lineItems)}" +
+                (codeblock ? "\n```" : "") +
+                $"\n{footer}",
+                allowedMentions: allowedMentions);
             return;
         }
 
@@ -46,7 +52,7 @@ public class PaginationHelper
             pages[pageNumber] += lineItems[i] + '\n';
         }
 
-        new PaginationHelper(context, pages.ToArray(), new string[] { header, footer }, codeblock: false, allowedMentions: allowedMentions);
+        new PaginationHelper(context, pages.ToArray(), new string[] { header, footer }, codeblock: codeblock, allowedMentions: allowedMentions);
     }
 
     public PaginationHelper(SocketCommandContext context, string[] pages, string[] staticParts,

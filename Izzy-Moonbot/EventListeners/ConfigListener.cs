@@ -58,6 +58,12 @@ public class ConfigListener
 
         if (original == BannerMode.None && current != BannerMode.None)
         {
+            if (_config.BannerInterval <= 0)
+            {
+                _logger.Log($"For some reason BannerInterval is non-positive, so we can't create a banner rotation task.");
+                return;
+            }
+
             // Create repeating job.
             var currentTime = DateTimeOffset.UtcNow;
             var executeTime = currentTime.AddMinutes(_config.BannerInterval);
@@ -106,7 +112,7 @@ public class ConfigListener
         _logger.Log($"Updating all scheduled jobs for banner rotation to occur {current} minutes after enabling rotation instead of after {original} minutes.", level: LogLevel.Debug);
         foreach (var scheduledJob in scheduledJobs)
         {
-            scheduledJob.ExecuteAt = scheduledJob.CreatedAt.AddMinutes(current);
+            scheduledJob.ExecuteAt = (scheduledJob.LastExecutedAt ?? scheduledJob.CreatedAt).AddMinutes(current);
             await _schedule.ModifyScheduledJob(scheduledJob.Id, scheduledJob);
         }
     }

@@ -136,6 +136,25 @@ public class MiscModuleTests
     }
 
     [TestMethod()]
+    public async Task RemindMe_DiscordTimestamp_Tests()
+    {
+        var (cfg, _, (_, sunny), _, (generalChannel, modChat, _), guild, client) = TestUtils.DefaultStubs();
+        DiscordHelper.DefaultGuildId = guild.Id;
+        cfg.ModChannel = modChat.Id;
+        var (ss, mm) = await SetupMiscModule(cfg);
+
+        DateTimeHelper.FakeUtcNow = TestUtils.FiMEpoch;
+        var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".remindme <t:1286668860:R> test");
+        await mm.TestableRemindMeCommandAsync(context, "<t:1286668860:R> test");
+        Assert.AreEqual("Okay! I'll DM you a reminder <t:1286668860:R>.", generalChannel.Messages.Last().Content);
+        Assert.IsFalse(client.DirectMessages.ContainsKey(sunny.Id));
+
+        DateTimeHelper.FakeUtcNow = DateTimeHelper.FakeUtcNow?.AddMinutes(1);
+        await ss.Unicycle(client);
+        Assert.AreEqual("test", client.DirectMessages[sunny.Id].Last().Content);
+    }
+
+    [TestMethod()]
     public async Task Rule_Command_Tests()
     {
         var (cfg, _, (_, sunny), _, (generalChannel, modChat, _), guild, client) = TestUtils.DefaultStubs();
