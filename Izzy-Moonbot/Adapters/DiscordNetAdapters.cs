@@ -351,6 +351,10 @@ public class SocketMessageComponentAdapter : IIzzySocketMessageComponent
     public IIzzyHasId User { get => new IdHaver(_component.User.Id); }
     public IIzzyHasId Message { get => new IdHaver(_component.Message.Id); }
     public IIzzyHasCustomId Data { get => new CustomIdHaver(_component.Data.CustomId); }
+    public async Task UpdateAsync(Action<IIzzyMessageProperties> action) =>
+        await _component.UpdateAsync(msg => {
+            action(new MessagePropertiesAdapter(msg));
+        });
     public Task DeferAsync() => _component.DeferAsync();
 }
 
@@ -401,12 +405,12 @@ public class DiscordSocketClientAdapter : IIzzyClient
         var user = await _client.GetUserAsync(userId);
         return user is null ? null : new DiscordNetUserAdapter(user);
     }
-    public async Task SendDirectMessageAsync(ulong userId, string text)
+    public async Task SendDirectMessageAsync(ulong userId, string text, MessageComponent? components = null)
     {
         var user = await _client.GetUserAsync(userId);
         if (user == null) return;
 
-        await user.SendMessageAsync(text);
+        await user.SendMessageAsync(text, components: components);
     }
 }
 

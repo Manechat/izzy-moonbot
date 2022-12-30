@@ -126,12 +126,6 @@ public class MiscModule : ModuleBase<SocketCommandContext>
             await context.Channel.SendMessageAsync($"Failed to comprehend time: {parseError}");
             return;
         }
-        if (timeHelperResponse.RepeatType is not null)
-        {
-            await Context.Channel.SendMessageAsync("I don't support repeating reminders, since there'd be " +
-                "no way for you to ever turn it off. Please give me a time that isn't repeating.");
-            return;
-        }
 
         if (content == "")
         {
@@ -139,11 +133,18 @@ public class MiscModule : ModuleBase<SocketCommandContext>
             return;
         }
 
-        _logger.Log($"Adding scheduled job to remind user to \"{content}\" at {timeHelperResponse.Time:F}",
+        var repeatType = timeHelperResponse.RepeatType switch
+        {
+            "relative" => ScheduledJobRepeatType.Relative,
+            "daily" => ScheduledJobRepeatType.Daily,
+            "weekly" => ScheduledJobRepeatType.Weekly,
+            "yearly" => ScheduledJobRepeatType.Yearly,
+            _ => ScheduledJobRepeatType.None
+        };
+        _logger.Log($"Adding scheduled job to remind user to \"{content}\" at {timeHelperResponse.Time:F}{(repeatType == ScheduledJobRepeatType.None ? "" : $" repeating {timeHelperResponse.RepeatType}")}",
             context: context, level: LogLevel.Debug);
         var action = new ScheduledEchoJob(context.User, content);
-        var task = new ScheduledJob(DateTimeHelper.UtcNow,
-            timeHelperResponse.Time, action);
+        var task = new ScheduledJob(DateTimeHelper.UtcNow, timeHelperResponse.Time, action, repeatType);
         await _schedule.CreateScheduledJob(task);
         _logger.Log($"Added scheduled job for user", context: context, level: LogLevel.Debug);
 
