@@ -66,7 +66,10 @@ namespace Izzy_Moonbot
             _spamService = spamService;
             _configListener = configListener;
 
-            var discordConfig = new DiscordSocketConfig { GatewayIntents = GatewayIntents.All, MessageCacheSize = 50 };
+            var discordConfig = new DiscordSocketConfig {
+                GatewayIntents = GatewayIntents.Guilds | GatewayIntents.GuildMembers | GatewayIntents.GuildMessages | GatewayIntents.DirectMessages,
+                MessageCacheSize = 50
+            };
             _client = new DiscordSocketClient(discordConfig);
         }
 
