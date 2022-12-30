@@ -22,11 +22,11 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
     private readonly LoggingService _logger;
     private readonly Config _config;
     private readonly ScheduleService _schedule;
-    private readonly Dictionary<ulong, User> _users;
+    private readonly UserService _users;
     private readonly ModService _mod;
     private readonly ConfigDescriber _configDescriber;
 
-    public ModCoreModule(LoggingService logger, Config config, Dictionary<ulong, User> users,
+    public ModCoreModule(LoggingService logger, Config config, UserService users,
         ScheduleService schedule, ModService mod, ConfigDescriber configDescriber)
     {
         _logger = logger;
@@ -91,15 +91,17 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
                 return;
             }
 
+            var userData = await _users.GetUser(discordUser) ?? null;
+
             output += $"**User:** `<@{discordUser.Id}>` {discordUser.Username} ({discordUser.Id}){Environment.NewLine}";
-            output += _users.ContainsKey(discordUser.Id)
-                ? $"**Names:** {string.Join(", ", _users[discordUser.Id].Aliases)}{Environment.NewLine}"
+            output += userData != null
+                ? $"**Names:** {string.Join(", ", userData.Aliases)}{Environment.NewLine}"
                 : $"**Names:** None (user isn't known by Izzy){Environment.NewLine}";
             output += $"**Roles:** None (user isn't in this server){Environment.NewLine}";
             output += "**History:** ";
             output += $"Created <t:{discordUser.CreatedAt.ToUnixTimeSeconds()}:R>";
-            output += _users.ContainsKey(discordUser.Id)
-                ? $", last seen <t:{_users[discordUser.Id].Timestamp.ToUnixTimeSeconds()}:R>{Environment.NewLine}"
+            output += userData != null
+                ? $", last seen <t:{userData.Timestamp.ToUnixTimeSeconds()}:R>{Environment.NewLine}"
                 : Environment.NewLine;
             output += $"**Avatar(s):** {Environment.NewLine}";
             output += $"    Server: User is not in this server.{Environment.NewLine}";
@@ -107,8 +109,10 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
         }
         else
         {
+            var userData = await _users.GetUser(member) ?? throw new NullReferenceException("User is null!");
+            
             output += $"**User:** `<@{member.Id}>` {member.Username} ({member.Id}){Environment.NewLine}";
-            output += $"**Names:** {string.Join(", ", _users[member.Id].Aliases)}{Environment.NewLine}";
+            output += $"**Names:** {string.Join(", ", userData.Aliases)}{Environment.NewLine}";
             output +=
                 $"**Roles:** {string.Join(", ", member.Roles.Where(role => role.Id != Context.Guild.Id).Select(role => role.Name))}{Environment.NewLine}";
             output += $"**History:** ";
@@ -119,7 +123,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
                     $", joined <t:{member.JoinedAt.Value.ToUnixTimeSeconds()}:R>";
             }
 
-            output += $", last seen <t:{_users[member.Id].Timestamp.ToUnixTimeSeconds()}:R>{Environment.NewLine}";
+            output += $", last seen <t:{userData.Timestamp.ToUnixTimeSeconds()}:R>{Environment.NewLine}";
             output += $"**Avatar(s):** {Environment.NewLine}";
             output += $"    Server: {member.GetGuildAvatarUrl() ?? "No server avatar found."}{Environment.NewLine}";
             output += $"    Global: {member.GetAvatarUrl() ?? "No global avatar found."}";
@@ -211,6 +215,8 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
                 "That user is either at the same level or higher than me in the role hierarchy, I cannot ban them. <:izzynothoughtsheadempty:910198222255972382>");
             return;
         }
+        
+        var userData = await _users.GetUser(userId) ?? null;
 
         // Okay, enough joking around, serious Izzy time
         var hasExistingBan = await Context.Guild!.GetIsBannedAsync(userId);
@@ -233,7 +239,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
                 $"Here's a userlog I unicycled that you can use if you want to!{Environment.NewLine}```{Environment.NewLine}" +
                 $"Type: Ban ({(timeArg == "" ? "" : $"{timeArg} ")}{(time == null ? "Indefinite" : $"<t:{time.Time.ToUnixTimeSeconds()}:R>")}){Environment.NewLine}" +
                 $"User: <@{userId}> {(member != null ? $"({member.Username}#{member.Discriminator})" : "")} ({userId}){Environment.NewLine}" +
-                $"Names: {(_users.ContainsKey(userId) ? string.Join(", ", _users[userId].Aliases) : "None (user isn't known by Izzy)")}{Environment.NewLine}" +
+                $"Names: {(userData != null ? string.Join(", ", userData.Aliases) : "None (user isn't known by Izzy)")}{Environment.NewLine}" +
                 $"```");
         }
         else
@@ -256,7 +262,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
                                      $"Here's a userlog I unicycled that you can use if you want to!{Environment.NewLine}```{Environment.NewLine}" +
                                      $"Type: Ban (Indefinite){Environment.NewLine}" +
                                      $"User: <@{userId}> {(member != null ? $"({member.Username}#{member.Discriminator})" : "")} ({userId}){Environment.NewLine}" +
-                                     $"Names: {(_users.ContainsKey(userId) ? string.Join(", ", _users[userId].Aliases) : "None (user isn't known by Izzy)")}{Environment.NewLine}" +
+                                     $"Names: {(userData != null ? string.Join(", ", userData.Aliases) : "None (user isn't known by Izzy)")}{Environment.NewLine}" +
                                      $"```");
                 }
                 else
@@ -293,7 +299,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
                                  $"Here's a userlog I unicycled that you can use if you want to!{Environment.NewLine}```{Environment.NewLine}" +
                                  $"Type: Ban ({timeArg} <t:{time.Time.ToUnixTimeSeconds()}:R>){Environment.NewLine}" +
                                  $"User: <@{userId}> {(member != null ? $"({member.Username}#{member.Discriminator})" : "")} ({userId}){Environment.NewLine}" +
-                                 $"Names: {(_users.ContainsKey(userId) ? string.Join(", ", _users[userId].Aliases) : "None (user isn't known by Izzy)")}{Environment.NewLine}" +
+                                 $"Names: {(userData != null ? string.Join(", ", userData.Aliases) : "None (user isn't known by Izzy)")}{Environment.NewLine}" +
                                  $"```");
             }
             else
@@ -309,7 +315,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
                     $"Here's a userlog I unicycled that you can use if you want to!{Environment.NewLine}```{Environment.NewLine}" +
                     $"Type: Ban ({timeArg} <t:{time.Time.ToUnixTimeSeconds()}:R>){Environment.NewLine}" +
                     $"User: <@{userId}> {(member != null ? $"({member.Username}#{member.Discriminator})" : "")} ({userId}){Environment.NewLine}" +
-                    $"Names: {(_users.ContainsKey(userId) ? string.Join(", ", _users[userId].Aliases) : "None (user isn't known by Izzy)")}{Environment.NewLine}" +
+                    $"Names: {(userData != null ? string.Join(", ", userData.Aliases) : "None (user isn't known by Izzy)")}{Environment.NewLine}" +
                     $"```");
             }
         }
