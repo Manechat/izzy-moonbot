@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord;
+using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Settings;
 using MongoDB.Driver;
@@ -24,6 +25,13 @@ public class UserService
     /// <param name="user">The IUser instance to check.</param>
     /// <returns>`true` if the user exists, `false` if not.</returns>
     public async Task<bool> Exists(IUser user) => await GetUser(user) != null;
+    
+    /// <summary>
+    /// Check if the user exists in the database.
+    /// </summary>
+    /// <param name="user">The IIzzyGuildUser instance to check.</param>
+    /// <returns>`true` if the user exists, `false` if not.</returns>
+    public async Task<bool> Exists(IIzzyGuildUser user) => await GetUser(user) != null;
 
     // /!\ THE CODE BELOW IS TERRIBLY CURSED. /!\
     // ONLY ENABLE IF YOU KNOW WHAT YOU'RE DOING.
@@ -57,6 +65,13 @@ public class UserService
     /// <param name="user">The IUser instance to get information for.</param>
     /// <returns>A user object, or null if no user is found.</returns>
     public async Task<User?> GetUser(IUser user) => await GetUser(user.Id);
+
+    /// <summary>
+    /// Get a user by an instance of IIzzyGuildUser.
+    /// </summary>
+    /// <param name="user">The IIzzyGuildUser instance to get information for.</param>
+    /// <returns>A user object, or null if no user is found.</returns>
+    public async Task<User?> GetUser(IIzzyGuildUser user) => await GetUser(user.Id);
     
     /// <summary>
     /// Get a user by their Discord ID.
