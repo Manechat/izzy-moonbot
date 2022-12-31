@@ -96,7 +96,13 @@ public class MiscModule : ModuleBase<SocketCommandContext>
         "    - Time (e.g. \"at 12:00 UTC+0\", \"at 5pm UTC-7\")\n" +
         "    - Weekday + Time (e.g. \"on monday 12:00 UTC+0\", \"on friday 5pm UTC-7\")\n" +
         "    - Date + Time (e.g. \"on 1 jan 2020 12:00 UTC+0\", \"on 10 oct 2010 5pm UTC-7\")\n" +
-        "    - Discord Timestamp (e.g. \"<t:1234567890>\", \"<t:1234567890:R>\")")]
+        "    - Discord Timestamp (e.g. \"<t:1234567890>\", \"<t:1234567890:R>\")\n" +
+        "Repeating reminders are also supported, and will be sent with an Unsubscibe button.\n" +
+        "    - Repeating interval (e.g. \"every 10 seconds\", \"every 2 hours\", \"every 5 days\")\n" +
+        "    - Daily Repeating Time (e.g. \"every 12:00 UTC+0\", \"every 5pm UTC-7\")\n" +
+        "    - Weekly Repeating Weekday + Time (e.g. \"every monday 12:00 UTC+0\", \"every friday 5pm UTC-7\")\n" +
+        "    - Yearly Repeating Date + Time (e.g. \"every 1 jan 2020 12:00 UTC+0\", \"every 10 oct 2010 5pm UTC-7\")"
+    )]
     [Parameter("message", ParameterType.String, "The reminder message to DM.")]
     [ExternalUsageAllowed]
     [Example(".remindme in 2 hours join stream")]
@@ -126,12 +132,6 @@ public class MiscModule : ModuleBase<SocketCommandContext>
             await context.Channel.SendMessageAsync($"Failed to comprehend time: {parseError}");
             return;
         }
-        if (timeHelperResponse.RepeatType is not null)
-        {
-            await Context.Channel.SendMessageAsync("I don't support repeating reminders, since there'd be " +
-                "no way for you to ever turn it off. Please give me a time that isn't repeating.");
-            return;
-        }
 
         if (content == "")
         {
@@ -139,11 +139,18 @@ public class MiscModule : ModuleBase<SocketCommandContext>
             return;
         }
 
-        _logger.Log($"Adding scheduled job to remind user to \"{content}\" at {timeHelperResponse.Time:F}",
+        var repeatType = timeHelperResponse.RepeatType switch
+        {
+            "relative" => ScheduledJobRepeatType.Relative,
+            "daily" => ScheduledJobRepeatType.Daily,
+            "weekly" => ScheduledJobRepeatType.Weekly,
+            "yearly" => ScheduledJobRepeatType.Yearly,
+            _ => ScheduledJobRepeatType.None
+        };
+        _logger.Log($"Adding scheduled job to remind user to \"{content}\" at {timeHelperResponse.Time:F}{(repeatType == ScheduledJobRepeatType.None ? "" : $" repeating {timeHelperResponse.RepeatType}")}",
             context: context, level: LogLevel.Debug);
         var action = new ScheduledEchoJob(context.User, content);
-        var task = new ScheduledJob(DateTimeHelper.UtcNow,
-            timeHelperResponse.Time, action);
+        var task = new ScheduledJob(DateTimeHelper.UtcNow, timeHelperResponse.Time, action, repeatType);
         await _schedule.CreateScheduledJob(task);
         _logger.Log($"Added scheduled job for user", context: context, level: LogLevel.Debug);
 

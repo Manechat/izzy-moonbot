@@ -589,6 +589,9 @@ public class StubClient : IIzzyClient
             Data = new CustomIdHaver(customId);
         }
 
+        public Task UpdateAsync(Action<IIzzyMessageProperties> action) =>
+            throw new NotImplementedException();
+
         public Task DeferAsync()
         {
             Acknowledged = true;
@@ -642,11 +645,11 @@ public class StubClient : IIzzyClient
     // so pretending that there is a single List of DMs for each userId is fine.
     public Dictionary<ulong, List<StubMessage>> DirectMessages { get; } = new Dictionary<ulong, List<StubMessage>>();
 
-    public async Task SendDirectMessageAsync(ulong userId, string text)
+    public async Task SendDirectMessageAsync(ulong userId, string text, MessageComponent? components = null)
     {
         if (await GetUserAsync(userId) == null) return;
 
-        var dm = new StubMessage(Convert.ToUInt64(DirectMessages.Count), text, CurrentUser.Id);
+        var dm = new StubMessage(Convert.ToUInt64(DirectMessages.Count), text, CurrentUser.Id, components: components);
         if (DirectMessages.ContainsKey(userId))
             DirectMessages[userId].Add(dm);
         else

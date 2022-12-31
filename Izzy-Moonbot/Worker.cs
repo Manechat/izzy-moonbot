@@ -107,6 +107,7 @@ namespace Izzy_Moonbot
                 _spamService.RegisterEvents(clientAdapter);
                 _raidService.RegisterEvents(_client);
                 _filterService.RegisterEvents(clientAdapter);
+                _scheduleService.RegisterEvents(clientAdapter);
 
                 _client.LatencyUpdated += async (int old, int value) =>
                 {
