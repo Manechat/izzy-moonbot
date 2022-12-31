@@ -89,7 +89,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
 
     [Command("remindme")]
     [Summary("Ask Izzy to DM you a message in the future.")]
-    [Alias("remind", "dmme")]
+    [Alias("dmme")]
     [Parameter("time", ParameterType.DateTime,
         "How long to wait until sending the message. Supported formats are:\n" +
         "    - Relative interval (e.g. \"in 10 seconds\", \"in 2 hours\", \"in 5 days\")\n" +
