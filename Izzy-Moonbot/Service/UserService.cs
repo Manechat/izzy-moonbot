@@ -97,12 +97,68 @@ public class UserService
         
         return userData.FirstOrDefault();
     }
+    
+    /// <summary>
+    /// Get multiple users by their instances of IUser.
+    /// </summary>
+    /// <remarks>
+    /// The order is not maintained, do not assume that users[0] == result[0].
+    /// </remarks>
+    /// <param name="users">The IUser instances to get the users of.</param>
+    /// <returns>An array of users.</returns>
+    public async Task<User[]> GetUsers(IEnumerable<IUser> users) => await GetUsers(users.Select(user => user.Id));
 
+    /// <summary>
+    /// Get multiple users by their instances of IIzzyGuildUser.
+    /// </summary>
+    /// <remarks>
+    /// The order is not maintained, do not assume that users[0] == result[0].
+    /// </remarks>
+    /// <param name="user">The IIzzyGuildUser instances to get the users of.</param>
+    /// <returns>An array of users.</returns>
+    public async Task<User[]> GetUsers(IEnumerable<IIzzyGuildUser> users) => await GetUsers(users.Select(user => user.Id));
+    
+    /// <summary>
+    /// Get multiple users by their IDs.
+    /// </summary>
+    /// <remarks>
+    /// The order is not maintained, do not assume that ids[0] == result[0].
+    /// </remarks>
+    /// <param name="ids">The IDs of the users to get.</param>
+    /// <returns>An array of users.</returns>
+    public async Task<User[]> GetUsers(IEnumerable<ulong> ids)
+    {
+        var userData = await _users.FindAsync(userCompare => ids.Contains(userCompare.Id));
+
+        return userData.ToEnumerable().ToArray();
+    }
+
+    /// <summary>
+    /// Get multiple users from a search string.
+    /// </summary>
+    /// <param name="search">The string to search for.</param>
+    /// <returns>An array of users.</returns>
+    public async Task<User[]> GetUsers(string search)
+    {
+        var usersData =
+            await _users.FindAsync(userCompare => userCompare.Aliases.Any(aliases => aliases.Contains(search)));
+
+        return usersData.ToEnumerable().ToArray();
+    }
+
+    /// <summary>
+    /// Create a user.
+    /// </summary>
+    /// <param name="user">The User object to add to the database.</param>
     public async Task CreateUser(User user)
     {
         await _users.InsertOneAsync(user);
     }
 
+    /// <summary>
+    /// Create multiple users at once.
+    /// </summary>
+    /// <param name="users">The User objects to add to the database.</param>
     public async Task CreateUsers(IEnumerable<User> users)
     {
         await _users.InsertManyAsync(users);
@@ -123,6 +179,13 @@ public class UserService
         return (update, filter);
     }
 
+    /// <summary>
+    /// Modify a users entry in the database.
+    /// </summary>
+    /// <param name="user">The updated user object</param>
+    /// <returns>Whether the modification succeeded.</returns>
+    /// <exception cref="NullReferenceException">The user does not exist in the database.</exception>
+    /// <exception cref="MongoException">The modification wasn't acknowledged by the database.</exception>
     public async Task<bool> ModifyUser(User user)
     {
         var builtUpdate = _processUserUpdate(user);
