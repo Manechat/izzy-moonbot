@@ -5,7 +5,6 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Discord;
-using Discord.WebSocket;
 using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Settings;
@@ -15,9 +14,9 @@ namespace Izzy_Moonbot.Service;
 public class QuoteService
 {
     private readonly QuoteStorage _quoteStorage;
-    private readonly Dictionary<ulong, User> _users;
+    private readonly UserService _users;
     
-    public QuoteService(QuoteStorage quoteStorage, Dictionary<ulong, User> users)
+    public QuoteService(QuoteStorage quoteStorage, UserService users)
     {
         _quoteStorage = quoteStorage;
         _users = users;
@@ -181,7 +180,8 @@ public class QuoteService
 
                 if (potentialUser == null)
                 {
-                    return _users.ContainsKey(id) ? $"{id} ({_users[id].Username}) {aliasText}" : $"{id} {aliasText}";
+                    var userData = _users.GetUser(id).GetAwaiter().GetResult() ?? null;
+                    return userData != null ? $"{id} ({userData.Username}) {aliasText}" : $"{id} {aliasText}";
                 }
 
                 return
@@ -240,7 +240,8 @@ public class QuoteService
         {
             // It's a user, but since we're technically looking for a category, this user likely left.
             // Check to see if Izzy knows about them, if she does, set quote name to username, else just mention them.
-            quoteName = _users.ContainsKey(userId) ? _users[userId].Username : $"<@{userId}>";
+            var userData = _users.GetUser(userId).GetAwaiter().GetResult() ?? null;
+            quoteName = userData != null ? userData.Username : $"<@{userId}>";
         }
         
         var quoteContent = quotes[id];
@@ -288,7 +289,8 @@ public class QuoteService
         {
             // It's a user, but since we're technically looking for a category, this user likely left.
             // Check to see if Izzy knows about them, if she does, set quote name to username, else just mention them.
-            quoteName = _users.ContainsKey(userId) ? _users[userId].Username : $"<@{userId}>";
+            var userData = _users.GetUser(userId).GetAwaiter().GetResult() ?? null;
+            quoteName = userData != null ? userData.Username : $"<@{userId}>";
         }
         
         var quotes = keyValuePair.Value.Select(quoteContent => 
@@ -317,7 +319,8 @@ public class QuoteService
             var potentialUser = guild.GetUser(id);
             if (potentialUser == null)
             {
-                quoteName = _users.ContainsKey(id) ? _users[id].Username : $"<@{id}>";
+                var userData = _users.GetUser(id).GetAwaiter().GetResult() ?? null;
+                quoteName = userData != null ? userData.Username : $"<@{id}>";
             }
             else quoteName = potentialUser.DisplayName;
         }
@@ -373,7 +376,8 @@ public class QuoteService
         {
             // It's a user, but since we're technically looking for a category, this user likely left.
             // Check to see if Izzy knows about them, if she does, set quote name to username, else just mention them.
-            quoteName = _users.ContainsKey(userId) ? _users[userId].Username : $"<@{userId}>";
+            var userData = _users.GetUser(userId).GetAwaiter().GetResult() ?? null;
+            quoteName = userData != null ? userData.Username : $"<@{userId}>";
         }
         
         var quoteContent = quotes[quoteId];
