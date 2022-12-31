@@ -721,7 +721,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
     [DevCommand(Group = "Permissions")]
     [Parameter("channel", ParameterType.Channel, "The channel to send the message to.", true)]
     [Parameter("time", ParameterType.DateTime, "When to send the message, whether it repeats, etc. See `.help remindme` for supported formats.")]
-    [Parameter("message", ParameterType.String, "The reminder message to DM.")]
+    [Parameter("message", ParameterType.String, "The reminder message to send.")]
     [Example(".remind #manechat in 2 hours join stream")]
     [Example(".remind #tailchat at 4:30pm go shopping")]
     [Example(".remind #modchat on 1 jan 2020 12:00 UTC+0 rethink life")]
