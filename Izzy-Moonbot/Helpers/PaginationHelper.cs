@@ -49,7 +49,9 @@ public class PaginationHelper
                 pages.Add("");
             }
 
-            pages[pageNumber] += lineItems[i] + '\n';
+            if (pages[pageNumber] != "")
+                pages[pageNumber] += '\n';
+            pages[pageNumber] += lineItems[i];
         }
 
         new PaginationHelper(context, pages.ToArray(), new string[] { header, footer }, codeblock: codeblock, allowedMentions: allowedMentions);
