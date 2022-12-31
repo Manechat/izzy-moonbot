@@ -68,7 +68,10 @@ namespace Izzy_Moonbot
             _spamService = spamService;
             _configListener = configListener;
 
-            var discordConfig = new DiscordSocketConfig { GatewayIntents = GatewayIntents.All, MessageCacheSize = 50 };
+            var discordConfig = new DiscordSocketConfig {
+                GatewayIntents = GatewayIntents.Guilds | GatewayIntents.GuildMembers | GatewayIntents.GuildMessages | GatewayIntents.DirectMessages,
+                MessageCacheSize = 50
+            };
             _client = new DiscordSocketClient(discordConfig);
         }
 
@@ -106,6 +109,7 @@ namespace Izzy_Moonbot
                 _spamService.RegisterEvents(clientAdapter);
                 _raidService.RegisterEvents(_client);
                 _filterService.RegisterEvents(clientAdapter);
+                _scheduleService.RegisterEvents(clientAdapter);
 
                 _client.LatencyUpdated += async (int old, int value) =>
                 {
@@ -483,9 +487,12 @@ namespace Izzy_Moonbot
 
                     Func<CommandInfo, bool> canRunCommand = cinfo =>
                     {
-                        if (cinfo.Preconditions.Any(attribute => attribute is ModCommandAttribute)) return isMod;
-                        if (cinfo.Preconditions.Any(attribute => attribute is DevCommandAttribute)) return isDev;
-                        return true;
+                        var modAttr = cinfo.Preconditions.Any(attribute => attribute is ModCommandAttribute);
+                        var devAttr = cinfo.Preconditions.Any(attribute => attribute is DevCommandAttribute);
+                        if (modAttr && devAttr) return isMod || isDev;
+                        else if (modAttr) return isMod;
+                        else if (devAttr) return isDev;
+                        else return true;
                     };
                     Func<string, bool> canRunCommandName = name =>
                     {

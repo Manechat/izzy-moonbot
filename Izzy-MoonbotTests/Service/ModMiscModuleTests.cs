@@ -24,7 +24,7 @@ public class ModMiscModuleTests
         var ss = new ScheduleService(cfg, mod, modLog, logger, generalStorage, scheduledJobs);
 
         var users = new Dictionary<ulong, User>();
-        return (ss, new ModMiscModule(cfg, users, ss));
+        return (ss, new ModMiscModule(cfg, users, ss, logger));
     }
 
     [TestMethod()]
@@ -247,4 +247,39 @@ public class ModMiscModuleTests
         Assert.AreEqual(7, generalChannel.Messages.Count);
     }
 
+    [TestMethod()]
+    public async Task Remind_Command_Tests()
+    {
+        var (cfg, _, (_, sunny), roles, (generalChannel, modChat, _), guild, client) = TestUtils.DefaultStubs();
+        DiscordHelper.DefaultGuildId = guild.Id;
+        cfg.ModChannel = modChat.Id;
+        var (ss, mmm) = SetupModMiscModule(cfg);
+
+        DateTimeHelper.FakeUtcNow = TestUtils.FiMEpoch;
+        await ss.Unicycle(client);
+
+        var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".remind");
+        await mmm.TestableRemindCommandAsync(context, "");
+        Assert.AreEqual("Remind you of what now? (see `.help remind`)", generalChannel.Messages.Last().Content);
+        Assert.AreEqual(2, generalChannel.Messages.Count);
+        Assert.AreEqual(0, ss.GetScheduledJobs().Count);
+
+        await ss.Unicycle(client);
+
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, $".remind <#{generalChannel.Id}> 1 minute test");
+        await mmm.TestableRemindCommandAsync(context, $"<#{generalChannel.Id}> 1 minute test");
+        Assert.AreEqual($"Okay! I'll send that reminder to <#{generalChannel.Id}> <t:1286668860:R>.", generalChannel.Messages.Last().Content);
+        Assert.AreEqual(4, generalChannel.Messages.Count);
+        Assert.AreEqual(1, ss.GetScheduledJobs().Count);
+
+        await ss.Unicycle(client);
+
+        DateTimeHelper.FakeUtcNow = DateTimeHelper.FakeUtcNow?.AddMinutes(1);
+
+        await ss.Unicycle(client);
+
+        Assert.AreEqual(5, generalChannel.Messages.Count);
+        Assert.AreEqual("test", generalChannel.Messages.Last().Content);
+        Assert.AreEqual(0, ss.GetScheduledJobs().Count);
+    }
 }

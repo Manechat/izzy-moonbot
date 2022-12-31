@@ -155,6 +155,7 @@ public interface IIzzyClient
         IIzzyHasId User { get; }
         IIzzyHasId Message { get; }
         IIzzyHasCustomId Data { get; }
+        Task UpdateAsync(Action<IIzzyMessageProperties> action);
         Task DeferAsync();
     }
     event Func<IIzzySocketMessageComponent, Task> ButtonExecuted;
@@ -164,7 +165,7 @@ public interface IIzzyClient
     IIzzyContext MakeContext(IIzzyUserMessage message);
     Task<IIzzyUser?> GetUserAsync(ulong userId);
     IIzzyGuild? GetGuild(ulong v);
-    Task SendDirectMessageAsync(ulong userId, string text);
+    Task SendDirectMessageAsync(ulong userId, string text, MessageComponent? components = null);
 }
 
 public interface IIzzyContext

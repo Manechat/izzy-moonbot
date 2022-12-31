@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Discord;
@@ -49,7 +50,9 @@ public class PaginationHelper
                 pages.Add("");
             }
 
-            pages[pageNumber] += lineItems[i] + '\n';
+            if (pages[pageNumber] != "")
+                pages[pageNumber] += '\n';
+            pages[pageNumber] += lineItems[i];
         }
 
         new PaginationHelper(context, pages.ToArray(), new string[] { header, footer }, codeblock: codeblock, allowedMentions: allowedMentions);
@@ -90,7 +93,7 @@ public class PaginationHelper
 
 
         _message = await context.Channel.SendMessageAsync(
-            $"{_staticParts[0]}{Environment.NewLine}{Environment.NewLine}<a:rdloop:910875692785336351> Pagination is loading. Please wait...{Environment.NewLine}{Environment.NewLine}{_staticParts[1]}",
+            $"{_staticParts[0]}\n\n<a:rdloop:910875692785336351> Pagination is loading. Please wait...\n\n{_staticParts[1]}",
             components: builder.Build(), allowedMentions: _allowedMentions);
 
         _client.ButtonExecuted += ButtonEvent;
@@ -117,53 +120,85 @@ public class PaginationHelper
         var expireMessage = "";
         if (ExpiresAt <= DateTime.UtcNow) expireMessage = "ℹ **This paginated message has expired.**";
 
-        await _message.ModifyAsync(msg =>
+        try
         {
-            var codeBlock = "";
-            if (_useCodeBlock) codeBlock = "```";
-
-            msg.Content =
-                $"{_staticParts[0]}{Environment.NewLine}{codeBlock}{Environment.NewLine}{Pages[_pageNumber]}{Environment.NewLine}{codeBlock}`Page {_pageNumber + 1} out of {Pages.Length}`{Environment.NewLine}{_staticParts[1]}{Environment.NewLine}{Environment.NewLine}{expireMessage}";
-
-            if (_easterEgg)
+            await _message.ModifyAsync(msg =>
             {
-                var builder = new ComponentBuilder()
-                    .WithButton(customId: "goto-start", emote: Emoji.Parse(":track_previous:"))
-                    .WithButton(customId: "goto-previous", emote: Emoji.Parse(":arrow_backward:"))
-                    .WithButton(customId: "trigger-easteregg-active",
-                        emote: Emote.Parse("<:izzyohyou:967943490698887258>"), style: ButtonStyle.Success)
-                    .WithButton(customId: "goto-next", emote: Emoji.Parse(":arrow_forward:"))
-                    .WithButton(customId: "goto-end", emote: Emoji.Parse(":track_next:"));
-                msg.Components = builder.Build();
-            }
+                var codeBlock = "";
+                if (_useCodeBlock) codeBlock = "```";
 
-            if (ExpiresAt <= DateTime.UtcNow)
-            {
+                var truncationWarning = "";
+                var paginationBoilerplate = 200; // intentionally high so we have space for future changes
+                var discordMessageLimit = 2000;
+
+                var header = _staticParts[0];
+                var page = Pages[_pageNumber];
+                var footer = _staticParts[1];
+                if (header.Length + footer.Length + page.Length + paginationBoilerplate > discordMessageLimit)
+                {
+                    truncationWarning = "⚠️ Some items needed to be truncated";
+                    var items = page.Split('\n');
+                    var newlinesInPage = items.Count();
+                    var spaceForPage = discordMessageLimit - header.Length - footer.Length - paginationBoilerplate - newlinesInPage;
+
+                    var maxItemLength = spaceForPage / items.Count();
+                    var truncationMarker = "[...]";
+                    var truncatedItems = items.Select(i =>
+                        i.Length <= maxItemLength ? i :
+                        i.Substring(0, maxItemLength - truncationMarker.Length) + truncationMarker);
+
+                    page = string.Join('\n', truncatedItems);
+                }
+
+                msg.Content =
+                    $"{header}\n{truncationWarning}{codeBlock}\n{page}\n{codeBlock}`Page {_pageNumber + 1} out of {Pages.Length}`\n{footer}\n\n{expireMessage}";
+
                 if (_easterEgg)
                 {
                     var builder = new ComponentBuilder()
-                        .WithButton(customId: "goto-start", emote: Emoji.Parse(":track_previous:"), disabled: true)
-                        .WithButton(customId: "goto-previous", emote: Emoji.Parse(":arrow_backward:"), disabled: true)
+                        .WithButton(customId: "goto-start", emote: Emoji.Parse(":track_previous:"))
+                        .WithButton(customId: "goto-previous", emote: Emoji.Parse(":arrow_backward:"))
                         .WithButton(customId: "trigger-easteregg-active",
-                            emote: Emote.Parse("<:izzyohyou:967943490698887258>"), style: ButtonStyle.Success,
-                            disabled: true)
-                        .WithButton(customId: "goto-next", emote: Emoji.Parse(":arrow_forward:"), disabled: true)
-                        .WithButton(customId: "goto-end", emote: Emoji.Parse(":track_next:"), disabled: true);
+                            emote: Emote.Parse("<:izzyohyou:967943490698887258>"), style: ButtonStyle.Success)
+                        .WithButton(customId: "goto-next", emote: Emoji.Parse(":arrow_forward:"))
+                        .WithButton(customId: "goto-end", emote: Emoji.Parse(":track_next:"));
                     msg.Components = builder.Build();
                 }
-                else
+
+                if (ExpiresAt <= DateTime.UtcNow)
                 {
-                    var builder = new ComponentBuilder()
-                        .WithButton(customId: "goto-start", emote: Emoji.Parse(":track_previous:"), disabled: true)
-                        .WithButton(customId: "goto-previous", emote: Emoji.Parse(":arrow_backward:"), disabled: true)
-                        .WithButton(customId: "trigger-easteregg", emote: Emote.Parse("<:izzylurk:994638513431646298>"),
-                            disabled: true)
-                        .WithButton(customId: "goto-next", emote: Emoji.Parse(":arrow_forward:"), disabled: true)
-                        .WithButton(customId: "goto-end", emote: Emoji.Parse(":track_next:"), disabled: true);
-                    msg.Components = builder.Build();
+                    if (_easterEgg)
+                    {
+                        var builder = new ComponentBuilder()
+                            .WithButton(customId: "goto-start", emote: Emoji.Parse(":track_previous:"), disabled: true)
+                            .WithButton(customId: "goto-previous", emote: Emoji.Parse(":arrow_backward:"), disabled: true)
+                            .WithButton(customId: "trigger-easteregg-active",
+                                emote: Emote.Parse("<:izzyohyou:967943490698887258>"), style: ButtonStyle.Success,
+                                disabled: true)
+                            .WithButton(customId: "goto-next", emote: Emoji.Parse(":arrow_forward:"), disabled: true)
+                            .WithButton(customId: "goto-end", emote: Emoji.Parse(":track_next:"), disabled: true);
+                        msg.Components = builder.Build();
+                    }
+                    else
+                    {
+                        var builder = new ComponentBuilder()
+                            .WithButton(customId: "goto-start", emote: Emoji.Parse(":track_previous:"), disabled: true)
+                            .WithButton(customId: "goto-previous", emote: Emoji.Parse(":arrow_backward:"), disabled: true)
+                            .WithButton(customId: "trigger-easteregg", emote: Emote.Parse("<:izzylurk:994638513431646298>"),
+                                disabled: true)
+                            .WithButton(customId: "goto-next", emote: Emoji.Parse(":arrow_forward:"), disabled: true)
+                            .WithButton(customId: "goto-end", emote: Emoji.Parse(":track_next:"), disabled: true);
+                        msg.Components = builder.Build();
+                    }
                 }
-            }
-        });
+            });
+        }
+        catch (ArgumentOutOfRangeException ex)
+        {
+            await _message.Channel.SendMessageAsync("Paginated message update failed with an ArgumentOutOfRangeException. " +
+                "This likely means the page's content was too long for a Discord message. " +
+                $"\nex.Message: {ex.Message}");
+        }
     }
 
     private async Task ButtonEvent(IIzzySocketMessageComponent component)
