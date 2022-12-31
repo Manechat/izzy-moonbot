@@ -92,7 +92,7 @@ public class PaginationHelper
 
 
         _message = await context.Channel.SendMessageAsync(
-            $"{_staticParts[0]}{Environment.NewLine}{Environment.NewLine}<a:rdloop:910875692785336351> Pagination is loading. Please wait...{Environment.NewLine}{Environment.NewLine}{_staticParts[1]}",
+            $"{_staticParts[0]}\n\n<a:rdloop:910875692785336351> Pagination is loading. Please wait...\n\n{_staticParts[1]}",
             components: builder.Build(), allowedMentions: _allowedMentions);
 
         _client.ButtonExecuted += ButtonEvent;
@@ -127,7 +127,7 @@ public class PaginationHelper
                 if (_useCodeBlock) codeBlock = "```";
 
                 msg.Content =
-                    $"{_staticParts[0]}{Environment.NewLine}{codeBlock}{Environment.NewLine}{Pages[_pageNumber]}{Environment.NewLine}{codeBlock}`Page {_pageNumber + 1} out of {Pages.Length}`{Environment.NewLine}{_staticParts[1]}{Environment.NewLine}{Environment.NewLine}{expireMessage}";
+                    $"{_staticParts[0]}\n{codeBlock}\n{Pages[_pageNumber]}\n{codeBlock}`Page {_pageNumber + 1} out of {Pages.Length}`\n{_staticParts[1]}\n\n{expireMessage}";
 
                 if (_easterEgg)
                 {

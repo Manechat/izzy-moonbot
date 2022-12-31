@@ -32,28 +32,28 @@ public class PaginationHelperTests
 
         var paginatedMessage = generalChannel.Messages.Last();
         var firstContent = paginatedMessage.Content;
-        Assert.AreEqual($"Once upon a time...{Environment.NewLine}" +
-            $"```{Environment.NewLine}" +
-            $"Twilight became Twilicorn{Environment.NewLine}" +
-            $"````Page 1 out of 3`{Environment.NewLine}" +
-            $"...the end!{Environment.NewLine}" +
-            $"{Environment.NewLine}", firstContent);
+        Assert.AreEqual($"Once upon a time...\n" +
+            $"```\n" +
+            $"Twilight became Twilicorn\n" +
+            $"````Page 1 out of 3`\n" +
+            $"...the end!\n" +
+            $"\n", firstContent);
 
         client.FireButtonExecuted(sunny.Id, paginatedMessage.Id, "goto-next");
-        Assert.AreEqual($"Once upon a time...{Environment.NewLine}" +
-            $"```{Environment.NewLine}" +
-            $"Everypony lived happily ever after{Environment.NewLine}" +
-            $"````Page 2 out of 3`{Environment.NewLine}" +
-            $"...the end!{Environment.NewLine}" +
-            $"{Environment.NewLine}", paginatedMessage.Content);
+        Assert.AreEqual($"Once upon a time...\n" +
+            $"```\n" +
+            $"Everypony lived happily ever after\n" +
+            $"````Page 2 out of 3`\n" +
+            $"...the end!\n" +
+            $"\n", paginatedMessage.Content);
 
         client.FireButtonExecuted(sunny.Id, paginatedMessage.Id, "goto-next");
-        Assert.AreEqual($"Once upon a time...{Environment.NewLine}" +
-            $"```{Environment.NewLine}" +
-            $"Then Opaline ruined it{Environment.NewLine}" +
-            $"````Page 3 out of 3`{Environment.NewLine}" +
-            $"...the end!{Environment.NewLine}" +
-            $"{Environment.NewLine}", paginatedMessage.Content);
+        Assert.AreEqual($"Once upon a time...\n" +
+            $"```\n" +
+            $"Then Opaline ruined it\n" +
+            $"````Page 3 out of 3`\n" +
+            $"...the end!\n" +
+            $"\n", paginatedMessage.Content);
 
         client.FireButtonExecuted(sunny.Id, paginatedMessage.Id, "goto-start");
         Assert.AreEqual(firstContent, paginatedMessage.Content);
