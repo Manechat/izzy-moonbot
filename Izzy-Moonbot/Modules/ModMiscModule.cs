@@ -25,12 +25,14 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
     private readonly Config _config;
     private readonly ScheduleService _schedule;
     private readonly Dictionary<ulong, User> _users;
+    private readonly LoggingService _logger;
 
-    public ModMiscModule(Config config, Dictionary<ulong, User> users, ScheduleService schedule)
+    public ModMiscModule(Config config, Dictionary<ulong, User> users, ScheduleService schedule, LoggingService logger)
     {
         _config = config;
         _schedule = schedule;
         _users = users;
+        _logger = logger;
     }
 
     [Command("panic")]
@@ -707,5 +709,74 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                $"{(hours == 0 ? "" : $"{hours} Hour{(hours is < 1.9 and > 0.9 ? "" : "s")}")} " +
                $"{(minutes == 0 ? "" : $"{minutes} Minute{(minutes is < 1.9 and > 0.9 ? "" : "s")}")} " +
                $"{(seconds == 0 ? "" : $"{seconds} Second{(seconds is < 1.9 and > 0.9 ? "" : "s")}")}";
+    }
+
+    [Command("remind")]
+    [Summary("Ask Izzy to send a message to a channel in the future.")]
+    [ModCommand(Group = "Permissions")]
+    [DevCommand(Group = "Permissions")]
+    [Parameter("channel", ParameterType.Channel, "The channel to send the message to.", true)]
+    [Parameter("time", ParameterType.DateTime, "When to send the message, whether it repeats, etc. See `.help remindme` for supported formats.")]
+    [Parameter("message", ParameterType.String, "The reminder message to DM.")]
+    [Example(".remind #manechat in 2 hours join stream")]
+    [Example(".remind #tailchat at 4:30pm go shopping")]
+    [Example(".remind #modchat on 1 jan 2020 12:00 UTC+0 rethink life")]
+    public async Task RemindCommandAsync([Remainder] string argsString = "")
+    {
+        await TestableRemindCommandAsync(
+            new SocketCommandContextAdapter(Context),
+            argsString
+        );
+    }
+
+    public async Task TestableRemindCommandAsync(
+        IIzzyContext context,
+        string argsString = "")
+    {
+        if (argsString == "")
+        {
+            await context.Channel.SendMessageAsync($"Remind you of what now? (see `.help remind`)");
+            return;
+        }
+
+        var args = DiscordHelper.GetArguments(argsString);
+
+        var channelName = args.Arguments.FirstOrDefault("");
+        var channelId = await DiscordHelper.GetChannelIdIfAccessAsync(channelName, context);
+        if (channelId == 0)
+        {
+            await context.Channel.SendMessageAsync($"Channel <#{channelId}> ({channelId}) either doesn't exist or I don't have accss to it");
+            return;
+        }
+
+        var argsAfterChannel = string.Join("", argsString.Skip(args.Indices[0]));
+        if (TimeHelper.TryParseDateTime(argsAfterChannel, out var parseError) is not var (timeHelperResponse, content))
+        {
+            await context.Channel.SendMessageAsync($"Failed to comprehend time: {parseError}");
+            return;
+        }
+
+        if (content == "")
+        {
+            await context.Channel.SendMessageAsync("You have to tell me what to send!");
+            return;
+        }
+
+        var repeatType = timeHelperResponse.RepeatType switch
+        {
+            "relative" => ScheduledJobRepeatType.Relative,
+            "daily" => ScheduledJobRepeatType.Daily,
+            "weekly" => ScheduledJobRepeatType.Weekly,
+            "yearly" => ScheduledJobRepeatType.Yearly,
+            _ => ScheduledJobRepeatType.None
+        };
+        _logger.Log($"Adding scheduled job to post \"{content}\" in channel {channelId} at {timeHelperResponse.Time:F}{(repeatType == ScheduledJobRepeatType.None ? "" : $" repeating {timeHelperResponse.RepeatType}")}",
+            context: context, level: LogLevel.Debug);
+        var action = new ScheduledEchoJob(channelId, content);
+        var task = new ScheduledJob(DateTimeHelper.UtcNow, timeHelperResponse.Time, action, repeatType);
+        await _schedule.CreateScheduledJob(task);
+        _logger.Log($"Added scheduled job for reminder", context: context, level: LogLevel.Debug);
+
+        await context.Channel.SendMessageAsync($"Okay! I'll send that reminder to <#{channelId}> <t:{timeHelperResponse.Time.ToUnixTimeSeconds()}:R>.");
     }
 }
