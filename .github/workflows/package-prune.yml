@@ -3,8 +3,7 @@ name: Package Prune
 on:
   workflow_run:
     workflows: [Docker Image CI]
-    types:
-      - completed
+    types: [completed]
   workflow_dispatch:
 
 jobs:
@@ -12,15 +11,15 @@ jobs:
   package-prune:
 
     runs-on: ubuntu-22.04
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event.workflow_dispatch }}
 
     steps:
-    - name: Prune
-      uses: vlaurin/action-ghcr-prune@main
+    - name: GHCR Pruning
+      uses: vlaurin/action-ghcr-prune@v0.4.0
       with:
-        token: ${{ secrets.YOUR_TOKEN }}
+        token: ${{ secrets.GITHUB_TOKEN }}
         organization: manechat
         container: izzymoonbot
-        dry-run: true # Dry-run first, then change to `false`
+        dry-run: false # Dry-run first, then change to `false`
         keep-tags: latest
         untagged: true

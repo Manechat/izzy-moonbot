@@ -354,6 +354,6 @@ botsettings/
 devsettings/
 
 # User Secrets
-appsettings.json
-Izzy-Moonbot/appsettings.json
-Izzy-Moonbot/appsettings.Development.json
+appsettings.json*
+Izzy-Moonbot/appsettings.json*
+Izzy-Moonbot/appsettings.Development.json*

@@ -12,7 +12,7 @@ WORKDIR "/src/Izzy-Moonbot"
 RUN dotnet build "Izzy-Moonbot.csproj" -c Release -o /app/build
 
 FROM build AS publish
-RUN dotnet publish "Izzy-Moonbot.csproj" -c Release -o /app/publish /p:UseAppHost=false --os linux
+RUN dotnet publish "Izzy-Moonbot.csproj" -c Release -o /app/publish /p:UseAppHost=false --runtime linux-arm64 --self-contained false
 
 FROM base AS final
 ARG BUILD_DATE=null
