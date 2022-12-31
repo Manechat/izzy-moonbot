@@ -63,4 +63,55 @@ public class PaginationHelperTests
         Assert.AreEqual(firstContent, paginatedMessage.Content);
     }
 
+    [TestMethod()]
+    public async Task PageTruncation_TestsAsync()
+    {
+        var (_, _, (_, sunny), _, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
+
+        var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, "make some pages");
+
+        PaginationHelper.PaginateIfNeededAndSendMessage(context,
+            // ~700 character header
+            "NANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-\nNANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-\nNANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-\nNANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-NA-NA-NA-NA-\n" +
+            "NANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-\nNANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-\nNANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-\nNANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-NA-NA-NA-NA-\n" +
+            "NANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-\nNANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-\nNANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-\nNANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-NA-NA-NA-NA-\n" +
+            "NANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-\nNANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-\nNANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-\nNANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-NA-NA-NA-NA-",
+            // ~1,500 characters of Pony Ipsum
+            new string[] {
+                "Twilight Sparkle Silver Spoon tail unicorns. Flash Sentry Gummy Lord Tirek wing Equestria Gilda Mr. Cake. Cheese Sandwich Prim Hemline chaos Princess Celestia Mrs. Cake. Magic mane Snips Lightning Dust, Zecora friendship Flam friends wing Princess Celestia Wonderbolts Suri Polomare.",
+                "Derpy rainbow power Ms. Peachbottom mane. Peewee Featherweight unicorn flank. Cupcake Prim Hemline Daring Do Cheerilee Cherry Jubilee. Apple Fluttershy Gilda Wonderbolts Mr. Cake flank Apple Jack.",
+                "Owlowiscious Trenderhoof Lyra, Sweetie Drops Peewee Snails Cheerilee Lord Tirek. Winona Philomena Everfree Forest gryphon Spitfire waterfall kindness, Daring Do Silver Spoon King Sombra. Kindness honesty Filthy Rich pegasai Bloomberg Nightmare Moon. Bloomberg friend pegasus Gilda Donut Joe sun. Fluttershy Winona Silver Shill party Opalescence Lord Tirek.",
+                "Owlowiscious cutie mark Twilight Sparkle Tank apples hot air balloon Opalescence Zecora hooves Sweetie Belle Caramel Prince Blueblood friend Pinkie Pie. Apples horn Mr. Cake Daring Do, Ms. Peachbottom hay Snails pies Trixie hooves. Trixie Aria Blaze A. K. Yearling Cherry Jubilee. Diamond Tiara mane Flam, Pipsqueak apples Ponyville Vinyl Scratch Cranky Doodle Donkey kindness Angel Rarity Nightmare Moon Canterlot. Hay generosity apples sun Princess Luna, Owlowiscious King Sombra Snails Snips apple gryphon.",
+                "You're going to love me! Cloud hooves Mayor Mare Equestria. And that's how Equestria was made! Muffin Gilda moon Goldie Delicious Pumpkin Cake waterfall.",
+                "6th item you'll never see so there's a 2nd page",
+            },
+            // ~700 character footer
+            "NANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-\nNANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-\nNANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-\nNANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-NA-NA-NA-NA-\n" +
+            "NANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-\nNANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-\nNANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-\nNANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-NA-NA-NA-NA-\n" +
+            "NANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-\nNANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-\nNANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-\nNANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-NA-NA-NA-NA-\n" +
+            "NANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-\nNANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-\nNANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-\nNANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-NA-NA-NA-NA-",
+            pageSize: 5,
+            codeblock: true
+        );
+
+        var paginatedMessage = generalChannel.Messages.Last();
+        Assert.AreEqual(
+            "NANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-\nNANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-\nNANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-\nNANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-NA-NA-NA-NA-\n" +
+            "NANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-\nNANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-\nNANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-\nNANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-NA-NA-NA-NA-\n" +
+            "NANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-\nNANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-\nNANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-\nNANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-NA-NA-NA-NA-\n" +
+            "NANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-\nNANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-\nNANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-\nNANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-NA-NA-NA-NA-\n" +
+            "⚠️ Some items needed to be truncated```\n" +
+            "Twilight Sparkle Silver Spoon tail unicorns. Flash Sentry Gummy Lord Tir[...]\n" +
+            "Derpy rainbow power Ms. Peachbottom mane. Peewee Featherweight unicorn f[...]\n" +
+            "Owlowiscious Trenderhoof Lyra, Sweetie Drops Peewee Snails Cheerilee Lor[...]\n" +
+            "Owlowiscious cutie mark Twilight Sparkle Tank apples hot air balloon Opa[...]\n" +
+            "You're going to love me! Cloud hooves Mayor Mare Equestria. And that's h[...]\n" +
+            "````Page 1 out of 2`\n" +
+            "NANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-\nNANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-\nNANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-\nNANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-NA-NA-NA-NA-\n" +
+            "NANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-\nNANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-\nNANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-\nNANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-NA-NA-NA-NA-\n" +
+            "NANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-\nNANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-\nNANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-\nNANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-NA-NA-NA-NA-\n" +
+            "NANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-\nNANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-\nNANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-\nNANA-NANANANANA-NA-NA-NA, NA-NA-NANA-NA-NA-NA-NA-NA-\n" +
+            "\n",
+            paginatedMessage.Content);
+    }
 }

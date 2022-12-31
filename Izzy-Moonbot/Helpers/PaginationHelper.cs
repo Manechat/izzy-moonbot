@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Discord;
@@ -126,8 +127,31 @@ public class PaginationHelper
                 var codeBlock = "";
                 if (_useCodeBlock) codeBlock = "```";
 
+                var truncationWarning = "";
+                var paginationBoilerplate = 200; // intentionally high so we have space for future changes
+                var discordMessageLimit = 2000;
+
+                var header = _staticParts[0];
+                var page = Pages[_pageNumber];
+                var footer = _staticParts[1];
+                if (header.Length + footer.Length + page.Length + paginationBoilerplate > discordMessageLimit)
+                {
+                    truncationWarning = "⚠️ Some items needed to be truncated";
+                    var items = page.Split('\n');
+                    var newlinesInPage = items.Count();
+                    var spaceForPage = discordMessageLimit - header.Length - footer.Length - paginationBoilerplate - newlinesInPage;
+
+                    var maxItemLength = spaceForPage / items.Count();
+                    var truncationMarker = "[...]";
+                    var truncatedItems = items.Select(i =>
+                        i.Length <= maxItemLength ? i :
+                        i.Substring(0, maxItemLength - truncationMarker.Length) + truncationMarker);
+
+                    page = string.Join('\n', truncatedItems);
+                }
+
                 msg.Content =
-                    $"{_staticParts[0]}\n{codeBlock}\n{Pages[_pageNumber]}\n{codeBlock}`Page {_pageNumber + 1} out of {Pages.Length}`\n{_staticParts[1]}\n\n{expireMessage}";
+                    $"{header}\n{truncationWarning}{codeBlock}\n{page}\n{codeBlock}`Page {_pageNumber + 1} out of {Pages.Length}`\n{footer}\n\n{expireMessage}";
 
                 if (_easterEgg)
                 {
