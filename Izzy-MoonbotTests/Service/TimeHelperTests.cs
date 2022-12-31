@@ -93,7 +93,7 @@ public class TimeHelperTests
         Assert.IsNull(TimeHelper.TryParseDateTime("one hour", out err));
         Assert.IsNotNull(err);
         StringAssert.Contains(err, "\"one\"");
-        StringAssert.Contains(err, "not a positive integer");
+        StringAssert.Contains(err, "extract a weekday + time"); // without the 'in', this gets mistaken for an attempted weekday
 
         Assert.IsNull(TimeHelper.TryParseDateTime("in 1 xyz", out err));
         Assert.IsNotNull(err);
@@ -321,6 +321,16 @@ public class TimeHelperTests
             new DateTimeOffset(2011, 1, 1, 12, 0, 0, TimeSpan.Zero), "yearly", ""
         );
         Assert.AreEqual(err, null);
+
+        Assert.IsNull(TimeHelper.TryParseDateTime("every 1 jan 2020 12:00", out err));
+        Assert.IsNotNull(err);
+        StringAssert.Contains(err, "\"every 1 jan 2020 12:00\"");
+        StringAssert.Contains(err, "\"2020\" is not a valid time");
+
+        Assert.IsNull(TimeHelper.TryParseDateTime("every 1 jan 12:00", out err));
+        Assert.IsNotNull(err);
+        StringAssert.Contains(err, "\"every 1 jan 12:00\"");
+        StringAssert.Contains(err, "missing a UTC offset");
     }
 
     [TestMethod()]

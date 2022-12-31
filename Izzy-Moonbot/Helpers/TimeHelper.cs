@@ -22,16 +22,24 @@ public static class TimeHelper
         if (args.Arguments[0] == "in")
         {
             var intervalArgsString = string.Join("", argsString.Skip(args.Indices[0]));
-            if (TryParseInterval(intervalArgsString, out errorString) is var (dto, remainingArgs))
+            if (TryParseInterval(intervalArgsString, out var intervalError) is var (dto, remainingArgs))
                 return (new TimeHelperResponse(dto, null), remainingArgs);
-            return null; // only one possible case, so on failure we simply propagate the error and return
+
+            errorString = $"Failed to extract a date/time from the start of \"{argsString}\":\n" +
+                $"Not a valid interval because: {intervalError}\n" +
+                $"    Valid example: \"in 1 hour\"";
+            return null;
         }
         else if (args.Arguments[0] == "at")
         {
             var timeArgsString = string.Join("", argsString.Skip(args.Indices[0]));
-            if (TryParseTimeInput(timeArgsString, out errorString) is var (dto, remainingArgs))
+            if (TryParseTimeInput(timeArgsString, out var timeError) is var (dto, remainingArgs))
                 return (new TimeHelperResponse(dto, null), remainingArgs);
-            return null; // only one possible case, so on failure we simply propagate the error and return
+
+            errorString = $"Failed to extract a date/time from the start of \"{argsString}\":\n" +
+                $"Not a valid time because: {timeError}\n" +
+                $"    Valid example: \"at 12:00 UTC+0\"";
+            return null;
         }
         else if (args.Arguments[0] == "on")
         {
@@ -43,7 +51,9 @@ public static class TimeHelper
 
             errorString = $"Failed to extract a date/time from the start of \"{argsString}\". Using \"on\" means either weekday + time or date + time, but:\n" +
                 $"Not a valid weekday + time because: {weekdayError}\n" +
-                $"Not a valid date + time because: {dateError}";
+                $"    Valid example: \"on monday 12:00 UTC+0\"\n" +
+                $"Not a valid date + time because: {dateError}\n" +
+                $"    Valid example: \"on 1 jan 2020 12:00 UTC+0\"";
             return null;
         }
         else if (args.Arguments[0] == "every")
@@ -60,11 +70,30 @@ public static class TimeHelper
             if (TryParseDayMonthTime(subArgsString, out var dateError) is var (dateDto, dateRemainingArgs))
                 return (new TimeHelperResponse(dateDto, "yearly"), dateRemainingArgs);
 
-            errorString = $"Failed to extract a date/time from the start of \"{argsString}\". Using \"every\" means a repeating date/time, but:\n" +
-                $"Not a valid repeating interval because: {intervalError}\n" +
-                $"Not a valid repeating time because: {timeError}\n" +
-                $"Not a valid repeating weekday + time because: {weekdayError}\n" +
-                $"Not a valid repeating date + time because: {dateError}";
+            if (args.Arguments.Length == 1)
+            {
+                errorString = "Failed to extract a date/time because there's nothing after the 'every'.\n" +
+                              "    Valid example: \"every 1 hour\"";
+                return null;
+            }
+
+            errorString = ErrorBasedOnIntendedFormat(args.Arguments.Skip(1).ToArray(),
+                "Failed to extract a date/time from the start of \"{argsString}\" because it looks like a Discord timestamp, but repeating timestamps are not supported.\n" +
+                $"    Valid examples: \"<t:1234567890>\", \"every 1 hour\"",
+                $"Failed to extract a repeating date/time interval from the start of \"{argsString}\" because:\n" +
+                $"    {intervalError}\n" +
+                $"    Valid example: \"every 1 hour\"",
+                $"Failed to extract a daily repeating time from the start of \"{argsString}\" because:\n" +
+                $"    {timeError}\n" +
+                $"    Valid example: \"every 12:00 UTC+0\"",
+                $"Failed to extract a weekly repeating weekday + time from the start of \"{argsString}\" because:\n" +
+                $"    {weekdayError}\n" +
+                $"    Valid example: \"every monday 12:00 UTC+0\"",
+                $"Failed to extract a yearly repeating date + time from the start of \"{argsString}\" because:\n" +
+                $"    {dateError}\n" +
+                $"    Valid example: \"every 1 jan 12:00 UTC+0\"",
+                $"If you were trying for a different date/time format, see `.help remindme` for examples of all supported formats."
+            );
             return null;
         }
         else
@@ -81,14 +110,52 @@ public static class TimeHelper
             if (TryParseAbsoluteDateTime(argsString, out var dateError) is var (dateDto, dateRemainingArgs))
                 return (new TimeHelperResponse(dateDto, null), dateRemainingArgs);
 
-            errorString = $"Failed to extract a date/time from the start of \"{argsString}\":\n" +
-                $"{timestampError}\n" + // there are no substeps for parsing a Discord timestamp, so the "...because:" will always be redundant
-                $"Not a valid interval because: {intervalError}\n" +
-                $"Not a valid time because: {timeError}\n" +
-                $"Not a valid weekday + time because: {weekdayError}\n" +
-                $"Not a valid date + time because: {dateError}";
+            errorString = ErrorBasedOnIntendedFormat(args.Arguments,
+                timestampError ?? "<unreachable>",
+                $"Failed to extract a date/time interval from the start of \"{argsString}\" because:\n" +
+                $"    {intervalError}\n" +
+                $"    Valid example: \"in 1 hour\"",
+                $"Failed to extract a time from the start of \"{argsString}\" because:\n" +
+                $"    {timeError}\n" +
+                $"    Valid example: \"at 12:00 UTC+0\"",
+                $"Failed to extract a weekday + time from the start of \"{argsString}\" because:\n" +
+                $"    {weekdayError}\n" +
+                $"    Valid example: \"on monday 12:00 UTC+0\"",
+                $"Failed to extract a date + time from the start of \"{argsString}\" because:\n" +
+                $"    {dateError}\n" +
+                $"    Valid example: \"on 1 jan 2020 12:00 UTC+0\"",
+                $"If you were trying for a different date/time format, see `.help remindme` for examples of all supported formats."
+            );
             return null;
         }
+    }
+
+    private static string ErrorBasedOnIntendedFormat(
+        string[] argTokens,
+        string timestampError, string intervalError, string timeError, string weekdayError, string dateError,
+        string footer)
+    {
+        // we assume the caller already checked there's at least one token
+        if (argTokens[0].StartsWith('<'))
+            return timestampError + "\n\n" + footer;
+
+        if (TryParseTimeToken(argTokens[0], out _) is not null)
+            return timeError + "\n\n" + footer;
+
+        if (int.TryParse(argTokens[0], out _) || int.TryParse(argTokens[0].Substring(argTokens[0].Length - 2), out _))
+        {
+            if (argTokens.Length == 1)
+                return timestampError + "\n\n" + footer;
+            else if (argTokens.Length == 2)
+                if (MonthNames.Keys.Contains(argTokens[1].ToLower()))
+                    return dateError + "\n\n" + footer;
+                else
+                    return intervalError + "\n\n" + footer;
+            else
+                return dateError + "\n\n" + footer;
+        }
+
+        return weekdayError + "\n\n" + footer;
     }
 
     public static (DateTimeOffset, string)? TryParseDiscordTimestamp(string argsString, out string? errorString)
@@ -100,7 +167,7 @@ public static class TimeHelper
             return null;
         }
 
-        var match = Regex.Match(args.Arguments[0], "^<t:(?<epoch>[0-9]+)(:[a-zA-Z])?>$");
+        var match = Regex.Match(args.Arguments[0], "^<t:(?<epoch>[0-9]+)(:[a-z])?>$", RegexOptions.IgnoreCase);
         if (match.Success)
         {
             var epochString = match.Groups["epoch"].Value;
@@ -143,7 +210,7 @@ public static class TimeHelper
             return null;
         }
 
-        var unitMatch = Regex.Match(args.Arguments[1], "^(?<unit>year|month|day|week|hour|minute|second)s?$");
+        var unitMatch = Regex.Match(args.Arguments[1], "^(?<unit>year|month|day|week|hour|minute|second)s?$", RegexOptions.IgnoreCase);
         if (!unitMatch.Success)
         {
             errorString = $"\"{args.Arguments[1]}\" is not one of the supported date/time interval units: year(s), month(s), day(s), week(s), hour(s), minute(s), second(s)";
@@ -232,6 +299,12 @@ public static class TimeHelper
         if (minuteString != "")
             minuteInt = int.Parse(minuteString.ToLower());
 
+        if (period == "" && minuteString == "")
+        {
+            errorString = $"\"{args.Arguments[0]}\" is just a number, not a valid time (e.g. \"2pm\", \"2:30am\", \"17:15\", \"10:00pm\")";
+            return null;
+        }
+
         errorString = null;
         return (hourInt, minuteInt, string.Join("", argsString.Skip(args.Indices[0])));
     }
@@ -289,12 +362,13 @@ public static class TimeHelper
             return null;
         }
 
-        if (!WeekdayNames.Keys.Contains(args.Arguments[0]))
+        var weekdayToken = args.Arguments[0].ToLower();
+        if (!WeekdayNames.Keys.Contains(weekdayToken))
         {
-            errorString = $"\"{args.Arguments[0]}\" is not one of the supported weekday names: sun(day), mon(day), tue(sday), wed(nesday), thu(rsday), fri(day), sat(urday)";
+            errorString = $"\"{weekdayToken}\" is not one of the supported weekday names: sun(day), mon(day), tue(sday), wed(nesday), thu(rsday), fri(day), sat(urday)";
             return null;
         }
-        var weekdayInt = WeekdayNames[args.Arguments[0]];
+        var weekdayInt = WeekdayNames[weekdayToken];
 
         var argsAfterWeekday = string.Join("", argsString.Skip(args.Indices[0]));
         if (argsAfterWeekday.Trim() == "")
@@ -378,8 +452,9 @@ public static class TimeHelper
         { "dec", 12 },
     };
 
-    public static int? TryParseMonthToken(string monthToken, out string? errorString)
+    public static int? TryParseMonthToken(string inputMonthToken, out string? errorString)
     {
+        var monthToken = inputMonthToken.ToLower();
         if (!MonthNames.Keys.Contains(monthToken))
         {
             errorString = $"\"{monthToken}\" is not one of the supported month names: jan(uary), feb(ruary), mar(ch), apr(il), may, jun(e), jul(y), aug(ust), sep(tember), oct(ober), nov(ember), dec(ember)";
