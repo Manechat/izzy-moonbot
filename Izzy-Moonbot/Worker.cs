@@ -39,7 +39,8 @@ namespace Izzy_Moonbot
         private readonly IServiceCollection _services;
         private readonly Config _config;
         private readonly State _state;
-        private readonly Dictionary<ulong, User> _users;
+        private readonly Dictionary<ulong, User> _usersFile;
+        private readonly UserService _users;
         private readonly ConfigListener _configListener;
         private readonly UserListener _userListener;
         private DiscordSocketClient _client;
@@ -48,7 +49,7 @@ namespace Izzy_Moonbot
 
         public Worker(ILogger<Worker> logger, ModLoggingService modLog, IServiceCollection services, ModService modService, RaidService raidService,
             FilterService filterService, ScheduleService scheduleService, IOptions<DiscordSettings> discordSettings,
-            Config config, State state, Dictionary<ulong, User> users, UserListener userListener, SpamService spamService, ConfigListener configListener)
+            Config config, State state, Dictionary<ulong, User> usersFile, UserService users, UserListener userListener, SpamService spamService, ConfigListener configListener)
         {
             _logger = logger;
             _modLog = modLog;
@@ -61,6 +62,7 @@ namespace Izzy_Moonbot
             _services = services;
             _config = config;
             _state = state;
+            _usersFile = usersFile;
             _users = users;
             _userListener = userListener;
             _spamService = spamService;
@@ -189,10 +191,51 @@ namespace Izzy_Moonbot
             };
         }
 
+        private async Task<List<User>> _getUnmigratedUsers()
+        {
+            var users = _usersFile.Select(pair =>
+            {
+                var user = pair.Value;
+                user.Id = pair.Key;
+
+                return user;
+            });
+
+            var enumerable = users as User[] ?? users.ToArray();
+            var foundUsers = (await _users.GetUsers(enumerable.Select(user => user.Id))).Select(user => user.Id);
+
+            return enumerable.Where(user => !foundUsers.Contains(user.Id)).ToList();
+        }
+
+        private async Task MigrateUsers()
+        {
+            try
+            {
+                _logger.LogDebug("Migrating...");
+                
+                // Set user ID and check if users don't exist in database already.
+                var migratedUsers = await _getUnmigratedUsers();
+                
+                _logger.LogDebug(migratedUsers.Any() ? "Some" : "None");
+                
+                if(migratedUsers.Any()) await _users.CreateUsers(migratedUsers);
+                _logger.LogInformation($"Successfully migrated {migratedUsers.Count()} users from file to database.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Failed to migrate users, see below error:\n" +
+                            $"Message: {ex.Message}\n" +
+                            $"Stack: {ex.StackTrace}" +
+                            (ex.InnerException != null ? $"\nInner Exception: {ex.InnerException.Message}" : ""));
+            }
+        }
+
         private void ResyncUsers()
         {
             Task.Run(async () =>
             {
+                await MigrateUsers();
+                
                 var guild = _client.Guilds.Single(guild => guild.Id == _discordSettings.DefaultGuild);
                 if (!guild.HasAllMembers) await guild.DownloadUsersAsync();
 
@@ -203,13 +246,13 @@ namespace Izzy_Moonbot
                 await foreach (var socketGuildUser in guild.Users.ToAsyncEnumerable())
                 {
                     var skip = false;
-                    if (!_users.ContainsKey(socketGuildUser.Id))
+                    if (!await _users.Exists(socketGuildUser.Id))
                     {
                         var newUser = new User();
                         newUser.Username = $"{socketGuildUser.Username}#{socketGuildUser.Discriminator}";
                         newUser.Aliases.Add(socketGuildUser.Username);
                         if (socketGuildUser.JoinedAt.HasValue) newUser.Joins.Add(socketGuildUser.JoinedAt.Value);
-                        _users.Add(socketGuildUser.Id, newUser);
+                        await _users.CreateUser(newUser);
                         
                         // Process new member
                         await _userListener.MemberJoinEvent(socketGuildUser, true);
@@ -219,46 +262,49 @@ namespace Izzy_Moonbot
                     }
                     else
                     {
-                        if (_users[socketGuildUser.Id].Username !=
+                        var user = await _users.GetUser(socketGuildUser) ??
+                                   throw new NullReferenceException("User is null!");
+                        
+                        if (user.Username !=
                             $"{socketGuildUser.Username}#{socketGuildUser.Discriminator}")
                         {
-                            _users[socketGuildUser.Id].Username =
+                            user.Username =
                                 $"{socketGuildUser.Username}#{socketGuildUser.Discriminator}";
                             if (!skip) reloadUserCount += 1;
                             skip = true;
                         }
 
-                        if (!_users[socketGuildUser.Id].Aliases.Contains(socketGuildUser.DisplayName))
+                        if (!user.Aliases.Contains(socketGuildUser.DisplayName))
                         {
-                            _users[socketGuildUser.Id].Aliases.Add(socketGuildUser.DisplayName);
+                            user.Aliases.Add(socketGuildUser.DisplayName);
                             if (!skip) reloadUserCount += 1;
                             skip = true;
                         }
 
                         if (socketGuildUser.JoinedAt.HasValue &&
-                            !_users[socketGuildUser.Id].Joins.Contains(socketGuildUser.JoinedAt.Value))
+                            !user.Joins.Contains(socketGuildUser.JoinedAt.Value))
                         {
-                            _users[socketGuildUser.Id].Joins.Add(socketGuildUser.JoinedAt.Value);
+                            user.Joins.Add(socketGuildUser.JoinedAt.Value);
                             if (!skip) reloadUserCount += 1;
                             skip = true;
                         }
 
                         if (_config.MemberRole != null)
                         {
-                            if (_users[socketGuildUser.Id].Silenced &&
+                            if (user.Silenced &&
                                 socketGuildUser.Roles.Select(role => role.Id).Contains((ulong)_config.MemberRole))
                             {
                                 // Unsilenced, Remove the flag.
-                                _users[socketGuildUser.Id].Silenced = false;
+                                user.Silenced = false;
                                 if (!skip) reloadUserCount += 1;
                                 skip = true;
                             }
 
-                            if (!_users[socketGuildUser.Id].Silenced &&
+                            if (!user.Silenced &&
                                 !socketGuildUser.Roles.Select(role => role.Id).Contains((ulong)_config.MemberRole))
                             {
                                 // Silenced, add the flag
-                                _users[socketGuildUser.Id].Silenced = true;
+                                user.Silenced = true;
                                 if (!skip) reloadUserCount += 1;
                                 skip = true;
                             }
@@ -266,28 +312,28 @@ namespace Izzy_Moonbot
 
                         foreach (var roleId in _config.RolesToReapplyOnRejoin)
                         {
-                            if (!_users[socketGuildUser.Id].RolesToReapplyOnRejoin.Contains(roleId) &&
+                            if (!user.RolesToReapplyOnRejoin.Contains(roleId) &&
                                 socketGuildUser.Roles.Select(role => role.Id).Contains(roleId))
                             {
-                                _users[socketGuildUser.Id].RolesToReapplyOnRejoin.Add(roleId);
+                                user.RolesToReapplyOnRejoin.Add(roleId);
                                 if (!skip) reloadUserCount += 1;
                                 skip = true;
                             }
 
-                            if (_users[socketGuildUser.Id].RolesToReapplyOnRejoin.Contains(roleId) &&
+                            if (user.RolesToReapplyOnRejoin.Contains(roleId) &&
                                 !socketGuildUser.Roles.Select(role => role.Id).Contains(roleId))
                             {
-                                _users[socketGuildUser.Id].RolesToReapplyOnRejoin.Remove(roleId);
+                                user.RolesToReapplyOnRejoin.Remove(roleId);
                                 if (!skip) reloadUserCount += 1;
                                 skip = true;
                             }
                         }
 
-                        foreach (var roleId in _users[socketGuildUser.Id].RolesToReapplyOnRejoin)
+                        foreach (var roleId in user.RolesToReapplyOnRejoin)
                         {
                             if (!socketGuildUser.Guild.Roles.Select(role => role.Id).Contains(roleId))
                             {
-                                _users[socketGuildUser.Id].RolesToReapplyOnRejoin.Remove(roleId);
+                                user.RolesToReapplyOnRejoin.Remove(roleId);
                                 _config.RolesToReapplyOnRejoin.Remove(roleId);
                                 await FileHelper.SaveConfigAsync(_config);
                                 if (!skip) reloadUserCount += 1;
@@ -298,7 +344,7 @@ namespace Izzy_Moonbot
 
                                 if (!_config.RolesToReapplyOnRejoin.Contains(roleId))
                                 {
-                                    _users[socketGuildUser.Id].RolesToReapplyOnRejoin.Remove(roleId);
+                                    user.RolesToReapplyOnRejoin.Remove(roleId);
                                     if (!skip) reloadUserCount += 1;
                                     skip = true;
                                 }
@@ -306,11 +352,10 @@ namespace Izzy_Moonbot
                         }
 
                         if (!skip) knownUserCount += 1;
+                        if (skip) await _users.ModifyUser(user);
                     }
                 }
-
-                await FileHelper.SaveUsersAsync(_users);
-
+                
                 _logger.LogInformation(
                     $"Resynced users. {guild.Users.Count} users found, {newUserCount} unknown, {reloadUserCount} required update, {knownUserCount} up to date.");
                 
