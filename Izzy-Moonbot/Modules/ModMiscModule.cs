@@ -390,7 +390,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
 
                 PaginationHelper.PaginateIfNeededAndSendMessage(
                     context,
-                    "Heya! Here's a list of all the scheduled jobs!\n",
+                    "Heya! Here's a list of all the scheduled jobs!",
                     jobs.Select(j => j.ToString()).ToList(),
                     "\nIf you need a raw text file, run `.schedule list-file`.",
                     pageSize: 5,
@@ -414,7 +414,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
 
                 PaginationHelper.PaginateIfNeededAndSendMessage(
                     context,
-                    $"Heya! Here's a list of all the scheduled {jobType} jobs!\n",
+                    $"Heya! Here's a list of all the scheduled {jobType} jobs!",
                     jobs.Select(j => j.ToString()).ToList(),
                     $"\nIf you need a raw text file, run `.schedule list-file {jobType}`.",
                     pageSize: 5,
