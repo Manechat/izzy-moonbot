@@ -19,13 +19,13 @@ public class UserListener
     // This is mostly used for logging and constructing user settings
     
     private readonly LoggingService _logger;
-    private readonly Dictionary<ulong, User> _users;
+    private readonly UserService _users;
     private readonly ModLoggingService _modLogger;
     private readonly ModService _mod;
     private readonly ScheduleService _schedule;
     private readonly Config _config;
     
-    public UserListener(LoggingService logger, Dictionary<ulong, User> users, ModLoggingService modLogger, ModService mod, ScheduleService schedule, Config config)
+    public UserListener(LoggingService logger, UserService users, ModLoggingService modLogger, ModService mod, ScheduleService schedule, Config config)
     {
         _logger = logger;
         _users = users;
@@ -68,36 +68,39 @@ public class UserListener
         if (member.Guild.Id != DiscordHelper.DefaultGuild()) return;
         
         _logger.Log($"New member join{(catchingUp ? " found after reboot" : "")}: {member.Username}#{member.DiscriminatorValue} ({member.Id})", level: LogLevel.Debug);
-        if (!_users.ContainsKey(member.Id))
+        if (!await _users.Exists(member.Id))
         {
             _logger.Log($"No user data entry for new user, generating one now...", level: LogLevel.Debug);
             User newUser = new User();
             newUser.Username = $"{member.Username}#{member.Discriminator}";
             newUser.Aliases.Add(member.Username);
             if (member.JoinedAt is DateTimeOffset join) newUser.Joins.Add(join);
-            _users.Add(member.Id, newUser);
-            await FileHelper.SaveUsersAsync(_users);
+            await _users.CreateUser(newUser);
             _logger.Log($"New user data entry generated.", level: LogLevel.Debug);
         }
         else if (!catchingUp)
         {
+            var userData = await _users.GetUser(member) ?? throw new NullReferenceException("User is null!");
+            
             _logger.Log($"Found user data entry for new user, add new join date", level: LogLevel.Debug);
-            if (member.JoinedAt is DateTimeOffset join) _users[member.Id].Joins.Add(join);
-            await FileHelper.SaveUsersAsync(_users);
+            if (member.JoinedAt is DateTimeOffset join) userData.Joins.Add(join);
+            await _users.ModifyUser(userData);
             _logger.Log($"Added new join date for new user", level: LogLevel.Debug);
         }
         
         List<ulong> roles = new List<ulong>();
         string expiresString = "";
+        
+        var user = await _users.GetUser(member) ?? throw new NullReferenceException("User is null!");
 
         _logger.Log($"Processing roles for new user join", level: LogLevel.Debug);
-        if (_config.ManageNewUserRoles && _config.MemberRole != null && !(_config.AutoSilenceNewJoins || _users[member.Id].Silenced))
+        if (_config.ManageNewUserRoles && _config.MemberRole != null && !(_config.AutoSilenceNewJoins || user.Silenced))
         {
             _logger.Log($"Adding Config.MemberRole ({_config.MemberRole}) to new user", level: LogLevel.Debug);
             roles.Add((ulong)_config.MemberRole);
         }
 
-        if (_config.ManageNewUserRoles && _config.NewMemberRole != null && (!_config.AutoSilenceNewJoins || !_users[member.Id].Silenced))
+        if (_config.ManageNewUserRoles && _config.NewMemberRole != null && (!_config.AutoSilenceNewJoins || !user.Silenced))
         {
             _logger.Log($"Adding Config.NewMemberRole ({_config.NewMemberRole}) to new user", level: LogLevel.Debug);
             roles.Add((ulong)_config.NewMemberRole);
@@ -119,7 +122,7 @@ public class UserListener
         if (roles.Count != 0)
         {
             if (!_config.AutoSilenceNewJoins) autoSilence = "";
-            if (_users[member.Id].Silenced)
+            if (user.Silenced)
                 autoSilence = 
                     ", silenced (attempted silence bypass)";
             _logger.Log($"Generated action reason, executing action", level: LogLevel.Debug);
@@ -130,15 +133,15 @@ public class UserListener
 
         autoSilence = ", silenced (`AutoSilenceNewJoins` is on)";
         if (!_config.AutoSilenceNewJoins) autoSilence = "";
-        if (_users[member.Id].Silenced)
+        if (user.Silenced)
             autoSilence = 
                 ", silenced (attempted silence bypass)";
-        string joinedBefore = $", Joined {_users[member.Id].Joins.Count - 1} times before";
-        if (_users[member.Id].Joins.Count <= 1) joinedBefore = "";
+        string joinedBefore = $", Joined {user.Joins.Count - 1} times before";
+        if (user.Joins.Count <= 1) joinedBefore = "";
 
         var rolesAutoapplied = new List<string>();
 
-        foreach (var roleId in _users[member.Id].RolesToReapplyOnRejoin)
+        foreach (var roleId in user.RolesToReapplyOnRejoin)
         {
             var shouldAdd = true;
             
@@ -146,10 +149,10 @@ public class UserListener
             {
                 _logger.Log(
                     $"{member.Username}#{member.Discriminator} ({member.Id}) had role which I would have reapplied on join but no longer exists: role id {roleId}");
-                _users[member.Id].RolesToReapplyOnRejoin.Remove(roleId);
+                user.RolesToReapplyOnRejoin.Remove(roleId);
                 _config.RolesToReapplyOnRejoin.Remove(roleId);
                 await FileHelper.SaveConfigAsync(_config);
-                await FileHelper.SaveUsersAsync(_users);
+                await _users.ModifyUser(user);
                 shouldAdd = false;
             }
             else
@@ -159,8 +162,8 @@ public class UserListener
                 {
                     _logger.Log(
                         $"{member.Username}#{member.Discriminator} ({member.Id}) has role which will no longer reapply on join, role {member.Guild.Roles.Single(role => role.Id == roleId).Name} ({roleId})");
-                    _users[member.Id].RolesToReapplyOnRejoin.Remove(roleId);
-                    await FileHelper.SaveUsersAsync(_users);
+                    user.RolesToReapplyOnRejoin.Remove(roleId);
+                    await _users.ModifyUser(user);
                     shouldAdd = false;
                 }
             }
@@ -168,8 +171,8 @@ public class UserListener
             if(shouldAdd) rolesAutoapplied.Add($"<@&{roleId}>");
         }
 
-        if(_users[member.Id].RolesToReapplyOnRejoin.Count != 0) 
-            await _mod.AddRoles(member, _users[member.Id].RolesToReapplyOnRejoin,
+        if(user.RolesToReapplyOnRejoin.Count != 0) 
+            await _mod.AddRoles(member, user.RolesToReapplyOnRejoin,
                 "Roles reapplied due to having them before leaving.");
 
         var rolesAutoappliedString = $", Reapplied roles (from `RolesToReapplyOnRejoin`): {string.Join(", ", rolesAutoapplied)}";
@@ -188,12 +191,14 @@ public class UserListener
     private async Task MemberLeaveEvent(SocketGuild guild, SocketUser user)
     {
         if (guild.Id != DiscordHelper.DefaultGuild()) return;
+
+        var userData = await _users.GetUser(user) ?? throw new NullReferenceException("User is null!");
         
         _logger.Log($"Member leaving: {user.Username}#{user.Discriminator} ({user.Id}), getting last nickname", level: LogLevel.Debug);
         var lastNickname = "";
         try
         {
-            lastNickname = _users[user.Id].Aliases.Last();
+            lastNickname = userData.Aliases.Last();
         }
         catch (InvalidOperationException)
         {
@@ -228,18 +233,18 @@ public class UserListener
 
         _logger.Log($"Constructing moderation log content", level: LogLevel.Debug);
         var output = 
-            $"Leave: {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined <t:{_users[user.Id].Joins.Last().ToUnixTimeSeconds()}:R>";
+            $"Leave: {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined <t:{userData.Joins.Last().ToUnixTimeSeconds()}:R>";
         var fileOutput = 
-            $"Leave: {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined {_users[user.Id].Joins.Last():O}";
+            $"Leave: {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined {userData.Joins.Last():O}";
 
         if (banAuditLog != null)
         {
             _logger.Log($"User was banned, fetching the reason and moderator", level: LogLevel.Debug);
             _logger.Log($"Fetched, user was banned by {banAuditLog.User.Username}#{banAuditLog.User.Discriminator} ({banAuditLog.User.Id}) for \"{banAuditLog.Reason}\"", level: LogLevel.Debug);
             output =
-                $"Leave (Ban): {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined <t:{_users[user.Id].Joins.Last().ToUnixTimeSeconds()}:R>, \"{banAuditLog.Reason}\" by {banAuditLog.User.Username}#{banAuditLog.User.Discriminator} ({guild.GetUser((ulong)banAuditLog.User.Id).DisplayName})";
+                $"Leave (Ban): {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined <t:{userData.Joins.Last().ToUnixTimeSeconds()}:R>, \"{banAuditLog.Reason}\" by {banAuditLog.User.Username}#{banAuditLog.User.Discriminator} ({guild.GetUser((ulong)banAuditLog.User.Id).DisplayName})";
             fileOutput =
-                $"Leave (Ban): {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined {_users[user.Id].Joins.Last():O}, \"{banAuditLog.Reason}\" by {banAuditLog.User.Username}#{banAuditLog.User.Discriminator} ({guild.GetUser((ulong)banAuditLog.User.Id).DisplayName})";
+                $"Leave (Ban): {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined {userData.Joins.Last():O}, \"{banAuditLog.Reason}\" by {banAuditLog.User.Username}#{banAuditLog.User.Discriminator} ({guild.GetUser((ulong)banAuditLog.User.Id).DisplayName})";
         }
 
         if (kickAuditLog != null)
@@ -247,9 +252,9 @@ public class UserListener
             _logger.Log($"User was kicked, fetching the reason and moderator", level: LogLevel.Debug);
             _logger.Log($"Fetched, user was kicked by {kickAuditLog.User.Username}#{kickAuditLog.User.Discriminator} ({kickAuditLog.User.Id}) for \"{kickAuditLog.Reason}\"", level: LogLevel.Debug);
             output =
-                $"Leave (Kick): {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined <t:{_users[user.Id].Joins.Last().ToUnixTimeSeconds()}:R>, \"{kickAuditLog.Reason}\" by {kickAuditLog.User.Username}#{kickAuditLog.User.Discriminator} ({guild.GetUser((ulong)kickAuditLog.User.Id).DisplayName})";
+                $"Leave (Kick): {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined <t:{userData.Joins.Last().ToUnixTimeSeconds()}:R>, \"{kickAuditLog.Reason}\" by {kickAuditLog.User.Username}#{kickAuditLog.User.Discriminator} ({guild.GetUser((ulong)kickAuditLog.User.Id).DisplayName})";
             fileOutput =
-                $"Leave (Kick): {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined {_users[user.Id].Joins.Last():O}, \"{kickAuditLog.Reason}\" by {kickAuditLog.User.Username}#{kickAuditLog.User.Discriminator} ({guild.GetUser((ulong)kickAuditLog.User.Id).DisplayName})";
+                $"Leave (Kick): {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined {userData.Joins.Last():O}, \"{kickAuditLog.Reason}\" by {kickAuditLog.User.Username}#{kickAuditLog.User.Discriminator} ({guild.GetUser((ulong)kickAuditLog.User.Id).DisplayName})";
         }
         _logger.Log($"Finished constructing moderation log content", level: LogLevel.Debug);
 
@@ -284,7 +289,7 @@ public class UserListener
         
         var changed = false;
         
-        if (!_users.ContainsKey(newUser.Id))
+        if (!await _users.Exists(newUser.Id))
         {
             changed = true;
             _logger.Log($"{newUser.Username}#{newUser.Discriminator} ({newUser.Id}) has no metadata, creating now...", level: LogLevel.Debug);
@@ -292,77 +297,81 @@ public class UserListener
             newUserData.Username = $"{newUser.Username}#{newUser.Discriminator}";
             newUserData.Aliases.Add(newUser.Username);
             if(newUser.JoinedAt.HasValue) newUserData.Joins.Add(newUser.JoinedAt.Value);
-            _users.Add(newUser.Id, newUserData);
+            await _users.CreateUser(newUserData);
         }
         else
         {
-            if (_users[newUser.Id].Username != $"{newUser.Username}#{newUser.Discriminator}")
+            var userData = await _users.GetUser(newUser) ?? throw new NullReferenceException("User is null!");
+            
+            if (userData.Username != $"{newUser.Username}#{newUser.Discriminator}")
             {
-                _logger.Log($"User name/discriminator changed from {_users[newUser.Id].Username} to {newUser.Username}#{newUser.Discriminator}, updating...", level: LogLevel.Debug);
-                _users[newUser.Id].Username =
+                _logger.Log($"User name/discriminator changed from {userData.Username} to {newUser.Username}#{newUser.Discriminator}, updating...", level: LogLevel.Debug);
+                userData.Username =
                     $"{newUser.Username}#{newUser.Discriminator}";
                 changed = true;
             }
 
-            if (!_users[newUser.Id].Aliases.Contains(newUser.DisplayName))
+            if (!userData.Aliases.Contains(newUser.DisplayName))
             {
                 _logger.Log($"{newUser.Username}#{newUser.Discriminator} ({newUser.Id}) has new displayname, updating...", level: LogLevel.Debug);
-                _users[newUser.Id].Aliases.Add(newUser.DisplayName);
+                userData.Aliases.Add(newUser.DisplayName);
                 changed = true;
             }
         }
         
+        var user = await _users.GetUser(newUser) ?? throw new NullReferenceException("User is null!");
+        
         if (_config.MemberRole != null)
         {
-            if (_users[newUser.Id].Silenced &&
+            if (user.Silenced &&
                 newUser.Roles.Select(role => role.Id).Contains((ulong)_config.MemberRole))
             {
                 // Unsilenced, Remove the flag.
                 _logger.Log(
                     $"{newUser.Username}#{newUser.Discriminator} ({newUser.Id}) unsilenced, removing silence flag...");
-                _users[newUser.Id].Silenced = false;
+                user.Silenced = false;
                 changed = true;
             }
 
-            if (!_users[newUser.Id].Silenced &&
+            if (!user.Silenced &&
                 !newUser.Roles.Select(role => role.Id).Contains((ulong)_config.MemberRole))
             {
                 // Silenced, add the flag
                 _logger.Log(
                     $"{newUser.Username}#{newUser.Discriminator} ({newUser.Id}) silenced, adding silence flag...");
-                _users[newUser.Id].Silenced = true;
+                user.Silenced = true;
                 changed = true;
             }
         }
 
         foreach (var roleId in _config.RolesToReapplyOnRejoin)
         {
-            if (!_users[newUser.Id].RolesToReapplyOnRejoin.Contains(roleId) &&
+            if (!user.RolesToReapplyOnRejoin.Contains(roleId) &&
                 newUser.Roles.Select(role => role.Id).Contains(roleId))
             {
                 _logger.Log(
                     $"{newUser.Username}#{newUser.Discriminator} ({newUser.Id}) gained role which will reapply on join, role {newUser.Roles.Single(role => role.Id == roleId).Name} ({roleId})");
-                _users[newUser.Id].RolesToReapplyOnRejoin.Add(roleId);
+                user.RolesToReapplyOnRejoin.Add(roleId);
                 changed = true;
             }
 
-            if (_users[newUser.Id].RolesToReapplyOnRejoin.Contains(roleId) &&
+            if (user.RolesToReapplyOnRejoin.Contains(roleId) &&
                 !newUser.Roles.Select(role => role.Id).Contains(roleId))
             {
                 _logger.Log(
                     $"{newUser.Username}#{newUser.Discriminator} ({newUser.Id}) lost role which would reapply on join, role {newUser.Guild.Roles.Single(role => role.Id == roleId).Name} ({roleId})");
-                _users[newUser.Id].RolesToReapplyOnRejoin.Remove(roleId);
+                user.RolesToReapplyOnRejoin.Remove(roleId);
                 changed = true;
             }
         }
         
-        foreach (var roleId in _users[newUser.Id].RolesToReapplyOnRejoin)
+        foreach (var roleId in user.RolesToReapplyOnRejoin)
         {
             if (!newUser.Guild.Roles.Select(role => role.Id).Contains(roleId))
             {
                 _logger.Log(
                     $"{newUser.Username}#{newUser.Discriminator} ({newUser.Id}) had role which I would have reapplied on join but no longer exists: role id {roleId}");
-                _users[newUser.Id].RolesToReapplyOnRejoin.Remove(roleId);
+                user.RolesToReapplyOnRejoin.Remove(roleId);
                 _config.RolesToReapplyOnRejoin.Remove(roleId);
                 await FileHelper.SaveConfigAsync(_config);
                 changed = true;       
@@ -374,12 +383,12 @@ public class UserListener
                 {
                     _logger.Log(
                         $"{newUser.Username}#{newUser.Discriminator} ({newUser.Id}) has role which will no longer reapply on join, role {newUser.Guild.Roles.Single(role => role.Id == roleId).Name} ({roleId})");
-                    _users[newUser.Id].RolesToReapplyOnRejoin.Remove(roleId);
+                    user.RolesToReapplyOnRejoin.Remove(roleId);
                     changed = true;
                 }
             }
         }
 
-        if(changed) await FileHelper.SaveUsersAsync(_users);
+        if (changed) await _users.ModifyUser(user);
     }
 }
