@@ -173,15 +173,7 @@ namespace Izzy_Moonbot
 
         public async Task ReadyEvent()
         {
-            _logger.LogTrace("Ready event called");
-            _scheduleService.BeginUnicycleLoop(new DiscordSocketClientAdapter(_client));
-            
-            foreach (var clientGuild in _client.Guilds)
-            {
-                await clientGuild.DownloadUsersAsync();
-            }
-
-            ResyncUsers();
+            _logger.LogInformation("ReadyEvent() called");
 
             TaskScheduler.UnobservedTaskException += (object? sender, UnobservedTaskExceptionEventArgs eventArgs) =>
             {
@@ -191,6 +183,19 @@ namespace Izzy_Moonbot
                                  $"Unobserved Exception Message: {unobservedException?.Message}\n" +
                                  $"Unobserved Exception Stack: {unobservedException?.StackTrace}");
             };
+
+            _scheduleService.BeginUnicycleLoop(new DiscordSocketClientAdapter(_client));
+
+            foreach (var clientGuild in _client.Guilds)
+            {
+                _logger.LogDebug($"ReadyEvent() downloading users for guild {clientGuild.Name} ({clientGuild.Id})");
+                await clientGuild.DownloadUsersAsync();
+            }
+
+            _logger.LogDebug("ReadyEvent() resyncing users");
+            ResyncUsers();
+
+            _logger.LogDebug("ReadyEvent() completed");
         }
 
         private void ResyncUsers()
