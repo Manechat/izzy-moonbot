@@ -224,6 +224,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
 
     [Command("echo")]
     [Summary("Posts a message (and/or sticker) to a specified channel")]
+    [Remarks("See .remind for sending a message in the future, or .remindme for sending a direct message to yourself in the future.")]
     [ModCommand(Group = "Permission")]
     [DevCommand(Group = "Permission")]
     [Parameter("channel", ParameterType.Channel, "The channel to send the message to.", true)]
@@ -713,6 +714,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
 
     [Command("remind")]
     [Summary("Ask Izzy to send a message to a channel in the future.")]
+    [Remarks("See .echo for sending a message immediately, or .remindme for sending a direct message to yourself.")]
     [ModCommand(Group = "Permissions")]
     [DevCommand(Group = "Permissions")]
     [Parameter("channel", ParameterType.Channel, "The channel to send the message to.", true)]
