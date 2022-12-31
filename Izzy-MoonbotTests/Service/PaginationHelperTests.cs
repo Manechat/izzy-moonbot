@@ -22,10 +22,12 @@ public class PaginationHelperTests
 
         var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, "make some pages");
 
-        var ph = new PaginationHelper(
-            context,
+        PaginationHelper.PaginateIfNeededAndSendMessage(context,
+            "Once upon a time...",
             new string[] { "Twilight became Twilicorn", "Everypony lived happily ever after", "Then Opaline ruined it" },
-            new string[] { "Once upon a time...", "...the end!" }
+            "...the end!",
+            pageSize: 1,
+            codeblock: true
         );
 
         var paginatedMessage = generalChannel.Messages.Last();
