@@ -81,7 +81,7 @@ public class ModMiscModuleTests
         await mmm.TestableScheduleCommandAsync(context, "list");
 
         description = generalChannel.Messages.Last().Content;
-        StringAssert.Contains(description, "Here's a list of all the scheduled jobs!");
+        StringAssert.Contains(description, "Here's a list of all the scheduled jobs");
         StringAssert.Contains(description, "\n\n\n"); // a blank list because nothing is scheduled
         StringAssert.Contains(description, "If you need a raw text file");
         Assert.AreEqual(0, ss.GetScheduledJobs().Count());
@@ -96,7 +96,7 @@ public class ModMiscModuleTests
         await mmm.TestableScheduleCommandAsync(context, "list");
 
         description = generalChannel.Messages.Last().Content;
-        StringAssert.Contains(description, "Here's a list of all the scheduled jobs!");
+        StringAssert.Contains(description, "Here's a list of all the scheduled jobs");
         StringAssert.Contains(description, $": Send \"this is a test\" to (<#{sunny.Id}>/<@{sunny.Id}>) (`{sunny.Id}`) <t:1286669400:R>.");
         StringAssert.Contains(description, "If you need a raw text file");
         Assert.AreEqual(1, ss.GetScheduledJobs().Count());

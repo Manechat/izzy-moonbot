@@ -386,12 +386,14 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
             if (args.Arguments.Length == 1)
             {
                 // All
-                var jobs = _schedule.GetScheduledJobs().Select(job => job.ToDiscordString()).ToList();
+                var jobs = _schedule.GetScheduledJobs()
+                    .OrderBy(job => job.ExecuteAt)
+                    .Select(job => job.ToDiscordString()).ToList();
 
                 PaginationHelper.PaginateIfNeededAndSendMessage(
                     context,
-                    "Heya! Here's a list of all the scheduled jobs!",
-                    jobs.Select(j => j.ToString()).ToList(),
+                    "Heya! Here's a list of all the scheduled jobs sorted by next execution time!\n",
+                    jobs,
                     "\nIf you need a raw text file, run `.schedule list-file`.",
                     pageSize: 5,
                     codeblock: false,
@@ -410,12 +412,15 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                     return;
                 }
 
-                var jobs = _schedule.GetScheduledJobs().Where(job => job.Action.GetType().FullName == type.FullName).Select(job => job.ToDiscordString()).ToList();
+                var jobs = _schedule.GetScheduledJobs()
+                    .Where(job => job.Action.GetType().FullName == type.FullName)
+                    .OrderBy(job => job.ExecuteAt)
+                    .Select(job => job.ToDiscordString()).ToList();
 
                 PaginationHelper.PaginateIfNeededAndSendMessage(
                     context,
-                    $"Heya! Here's a list of all the scheduled {jobType} jobs!",
-                    jobs.Select(j => j.ToString()).ToList(),
+                    $"Heya! Here's a list of all the scheduled {jobType} jobs sorted by next execution time!\n",
+                    jobs,
                     $"\nIf you need a raw text file, run `.schedule list-file {jobType}`.",
                     pageSize: 5,
                     codeblock: false,
