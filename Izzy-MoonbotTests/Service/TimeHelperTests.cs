@@ -268,6 +268,13 @@ public class TimeHelperTests
         Assert.IsNotNull(err);
         StringAssert.Contains(err, "\"1 jan 2020 12:00\"");
         StringAssert.Contains(err, "missing a UTC offset");
+
+        // we support "st"/"nd"/"rd"/"th" suffixes without advertising them
+        AssertTryParseDateTime(
+            TimeHelper.TryParseDateTime("1st jan 2020 12:00 UTC+0", out err),
+            new DateTimeOffset(2020, 1, 1, 12, 0, 0, 0, TimeSpan.Zero), null, ""
+        );
+        Assert.AreEqual(err, null);
     }
 
     [TestMethod()]

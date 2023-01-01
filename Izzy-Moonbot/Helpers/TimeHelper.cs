@@ -142,7 +142,7 @@ public static class TimeHelper
         if (TryParseTimeToken(argTokens[0], out _) is not null)
             return timeError + "\n\n" + footer;
 
-        if (int.TryParse(argTokens[0], out _) || int.TryParse(argTokens[0].Substring(argTokens[0].Length - 2), out _))
+        if (int.TryParse(argTokens[0], out _) || int.TryParse(argTokens[0].Substring(0, argTokens[0].Length - 2), out _))
         {
             if (argTokens.Length == 1)
                 return timestampError + "\n\n" + footer;
@@ -406,8 +406,12 @@ public static class TimeHelper
 
     public static int? TryParseDateToken(string dateToken, out string? errorString)
     {
-        if (!int.TryParse(dateToken, out int dateInt))
-        {
+        int dateInt;
+        bool isInt = int.TryParse(dateToken, out dateInt);
+        // support "st"/"nd"/"rd"/"th" suffixes without advertising them
+        bool isIntWithSuffix = dateToken.Length >= 2 && int.TryParse(dateToken.Substring(0, dateToken.Length - 2), out dateInt);
+
+        if (!isInt && !isIntWithSuffix) {
             errorString = $"\"{dateToken}\" is not a positive integer";
             return null;
         }
