@@ -127,7 +127,7 @@ public class ConfigCommandTests
         StringAssert.Contains(description, "ModChannel");
         StringAssert.Contains(description, "Channel");
         StringAssert.Contains(description, "Moderation category");
-        StringAssert.Contains(description, "The channel I will post");
+        StringAssert.Contains(description, "The channel where I'll post");
         StringAssert.Contains(description, "Current value: <#42>"); // this is the difference
         StringAssert.Contains(description, "Run `.config ModChannel <value>`");
     }
@@ -215,7 +215,7 @@ public class ConfigCommandTests
         StringAssert.Contains(description, "FilteredWords");
         StringAssert.Contains(description, "Map of Lists of Strings");
         StringAssert.Contains(description, "Filter category");
-        StringAssert.Contains(description, "words I will filter");
+        StringAssert.Contains(description, "I'll delete any message containing one of these words");
         StringAssert.Contains(description, "Run `.config FilteredWords list` to");
         StringAssert.Contains(description, "Run `.config FilteredWords get <key>` to");
         StringAssert.Contains(description, "Run `.config FilteredWords add <key> <value>` to");
