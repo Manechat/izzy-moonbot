@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Izzy_Moonbot.Helpers;
-using Izzy_Moonbot.Service;
 
 namespace Izzy_Moonbot.Settings;
 

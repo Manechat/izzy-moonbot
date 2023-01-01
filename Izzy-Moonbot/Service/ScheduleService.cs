@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord;
-using Discord.WebSocket;
 using Flurl.Http;
 using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.EventListeners;

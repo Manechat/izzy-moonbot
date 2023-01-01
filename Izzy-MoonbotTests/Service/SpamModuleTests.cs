@@ -1,5 +1,4 @@
 ﻿using Izzy_Moonbot;
-using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Modules;
 using Izzy_Moonbot.Service;

@@ -5,7 +5,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
-using Discord.WebSocket;
 using Izzy_Moonbot.Adapters;
 using static Izzy_Moonbot.Adapters.IIzzyClient;
 

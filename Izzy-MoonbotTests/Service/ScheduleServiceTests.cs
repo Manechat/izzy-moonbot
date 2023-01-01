@@ -1,16 +1,8 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Settings;
 using Izzy_Moonbot.Service;
-using static Izzy_Moonbot.Modules.MiscModule;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot;
-using System.Reflection.Metadata;
 
 namespace Izzy_Moonbot_Tests.Services;
 

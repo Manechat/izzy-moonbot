@@ -1,8 +1,5 @@
 ﻿using Discord;
-using Izzy_Moonbot.Settings;
-using Microsoft.AspNetCore.SignalR.Protocol;
 using System.Text.RegularExpressions;
-using System.Xml.Linq;
 using static Izzy_Moonbot.Adapters.IIzzyClient;
 
 namespace Izzy_Moonbot.Adapters;

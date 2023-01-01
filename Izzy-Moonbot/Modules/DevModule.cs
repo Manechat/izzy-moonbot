@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-using Flurl;
 using Flurl.Http;
 using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Attributes;
