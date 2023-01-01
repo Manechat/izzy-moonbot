@@ -1,0 +1,49 @@
+# To get started with Dependabot version updates, you'll need to specify which
+# package ecosystems to update and where the package manifests are located.
+# Please see the documentation for all configuration options:
+# https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
+
+version: 2
+updates:
+
+  #Maintain dependencies for Main NuGet / .NET
+  - package-ecosystem: "nuget" # See documentation for possible values
+    directory: "/Izzy-Moonbot" # Location of package manifests
+    schedule:
+      interval: "weekly"
+    # Prefix all commit messages with "NuGet"
+    # include a list of updated dependencies
+    commit-message:
+      prefix: "NuGet"
+      include: "scope"
+
+  #Maintain dependencies for Tests NuGet / .NET
+  - package-ecosystem: "nuget"
+    directory: "/Izzy-MoonbotTests"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "NuGet"
+      include: "scope"
+
+  #Maintain dependencies for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "actions"
+      include: "scope"
+
+  #Maintain dependencies for Docker
+  - package-ecosystem: "docker"
+    directory: "/Izzy-Moonbot"
+    schedule:
+      interval: "weekly"
+    assignees:
+      - "LunarNightShade"
+    reviewers:
+      - "LunarNightShade"
+    commit-message:
+      prefix: "docker"
+      include: "scope"
