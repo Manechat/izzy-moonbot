@@ -153,10 +153,6 @@ public class DiscordNetUserMessageAdapter : IIzzyUserMessage
     public IReadOnlyCollection<IEmbed> Embeds => _message.Embeds;
     public IReadOnlyCollection<IStickerItem> Stickers => _message.Stickers;
 
-    public async Task ReplyAsync(string message)
-    {
-        await _message.ReplyAsync(message);
-    }
     public async Task ModifyAsync(Action<IIzzyMessageProperties> action)
     {
         await _message.ModifyAsync(msg => {
