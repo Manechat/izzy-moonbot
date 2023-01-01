@@ -263,8 +263,6 @@ public class ConfigDescriber
                 return ConfigItemCategory.Misc;
             case "banner":
                 return ConfigItemCategory.Banner;
-            case "debug":
-                return ConfigItemCategory.Debug;
             case "managedroles":
                 return ConfigItemCategory.ManagedRoles;
             case "filter":
@@ -288,8 +286,6 @@ public class ConfigDescriber
                 return "Misc";
             case ConfigItemCategory.Banner:
                 return "Banner";
-            case ConfigItemCategory.Debug:
-                return "Debug";
             case ConfigItemCategory.ManagedRoles:
                 return "ManagedRoles";
             case ConfigItemCategory.Filter:

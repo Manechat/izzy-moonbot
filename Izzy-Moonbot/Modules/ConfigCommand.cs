@@ -29,7 +29,6 @@ public class ConfigCommand
                 $"setup - Config items that must be set for Izzy to work at all.{Environment.NewLine}" +
                 $"misc - Miscellaneous, often unique items that don't have a clear category.{Environment.NewLine}" +
                 $"banner - Config items related to the Manechat banner image.{Environment.NewLine}" +
-                $"debug - Debug config items used to debug Izzy.{Environment.NewLine}" +
                 $"managedroles - Config items regarding the automated management of member and new member roles.{Environment.NewLine}" +
                 $"filter - Config items regarding the filter.{Environment.NewLine}" +
                 $"spam - Config items regarding spam pressure.{Environment.NewLine}" +

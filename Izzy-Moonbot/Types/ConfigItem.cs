@@ -22,7 +22,6 @@ public enum ConfigItemCategory
     Setup,
     Misc,
     Banner,
-    Debug,
     ManagedRoles,
     Filter,
     Spam,
