@@ -340,7 +340,8 @@ public class ConfigDescriber
 
     public bool TypeIsValue(ConfigItemType type)
     {
-        if (type == ConfigItemType.String ||
+        return
+            type == ConfigItemType.String ||
             type == ConfigItemType.Char ||
             type == ConfigItemType.Boolean ||
             type == ConfigItemType.Integer ||
@@ -348,23 +349,21 @@ public class ConfigDescriber
             type == ConfigItemType.Double ||
             type == ConfigItemType.Enum ||
             type == ConfigItemType.Role ||
-            type == ConfigItemType.Channel) return true;
-        return false;
+            type == ConfigItemType.Channel;
     }
 
     public bool TypeIsSet(ConfigItemType type)
     {
-        if (type == ConfigItemType.StringSet ||
+        return
+            type == ConfigItemType.StringSet ||
             type == ConfigItemType.RoleSet ||
-            type == ConfigItemType.ChannelSet) return true;
-        return false;
+            type == ConfigItemType.ChannelSet;
     }
 
     public bool TypeIsDictionaryValue(ConfigItemType type) => type == ConfigItemType.StringDictionary;
 
     public bool TypeIsDictionarySet(ConfigItemType type)
     {
-        if (type == ConfigItemType.StringSetDictionary) return true;
-        return false;
+        return type == ConfigItemType.StringSetDictionary;
     }
 }
