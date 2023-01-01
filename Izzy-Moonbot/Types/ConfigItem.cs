@@ -19,11 +19,11 @@ public class ConfigItem
 
 public enum ConfigItemCategory
 {
-    Core,
-    Server,
-    Moderation,
+    Setup,
+    Misc,
+    Banner,
     Debug,
-    User,
+    ManagedRoles,
     Filter,
     Spam,
     Raid

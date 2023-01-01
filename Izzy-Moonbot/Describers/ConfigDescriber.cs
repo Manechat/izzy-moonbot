@@ -10,93 +10,93 @@ public class ConfigDescriber
 
     public ConfigDescriber()
     {
-        // Core settings
+        // Setup settings
         _config.Add("Prefix",
             new ConfigItem(ConfigItemType.Char, "The prefix I will listen to for commands.",
-                ConfigItemCategory.Core));
+                ConfigItemCategory.Setup));
+        _config.Add("ModRole",
+            new ConfigItem(ConfigItemType.Role, "The role that I allow to execute sensitive commands.",
+                ConfigItemCategory.Setup));
+        _config.Add("ModChannel",
+            new ConfigItem(ConfigItemType.Channel,
+                "The channel where I'll post messages about possible raids, spam trips, filter violations, users joining or leaving, automated role changes, automated unbans, and so on.",
+                ConfigItemCategory.Setup));
+        _config.Add("LogChannel",
+            new ConfigItem(ConfigItemType.Channel, "The channel where I will post verbose message edit/deletion logs, including bulk deletion logs created by spam trips or the `wipe` command.",
+                ConfigItemCategory.Setup));
+
+        // Misc settings
         _config.Add("UnicycleInterval",
             new ConfigItem(ConfigItemType.Integer,
                 "How often, in milliseconds, I'll check scheduled jobs for execution.",
-                ConfigItemCategory.Core));
+                ConfigItemCategory.Misc));
         _config.Add("MentionResponseEnabled",
             new ConfigItem(ConfigItemType.Boolean, "Whether I will respond to someone mentioning me.",
-                ConfigItemCategory.Core));
+                ConfigItemCategory.Misc));
         _config.Add("MentionResponses",
             new ConfigItem(ConfigItemType.StringSet,
-                "A list of responses I will send whenever someone mentions me.", ConfigItemCategory.Core));
+                "A list of responses I will send whenever someone mentions me.", ConfigItemCategory.Misc));
         _config.Add("MentionResponseCooldown",
             new ConfigItem(ConfigItemType.Double,
-                "How many seconds I should wait between responding to a mention", ConfigItemCategory.Core));
+                "How many seconds I should wait between responding to a mention", ConfigItemCategory.Misc));
         _config.Add("DiscordActivityName",
             new ConfigItem(ConfigItemType.String,
                 "The content of my Discord status. Note: This takes time to set.",
-                ConfigItemCategory.Core, true));
+                ConfigItemCategory.Misc, true));
         _config.Add("DiscordActivityWatching",
             new ConfigItem(ConfigItemType.Boolean,
                 "Whether my Discord status says 'Playing' (`false`) or 'Watching' (`true`). Note: This takes time to set.",
-                ConfigItemCategory.Core));
+                ConfigItemCategory.Misc));
         _config.Add("Aliases",
             new ConfigItem(ConfigItemType.StringDictionary,
                 "Shorthand commands which can be used as an alternative to executing a different, often longer, command.",
-                ConfigItemCategory.Core));
+                ConfigItemCategory.Misc));
         _config.Add("FirstRuleMessageId",
             new ConfigItem(ConfigItemType.UnsignedInteger,
                 "Id of the message in our rules channel that `.rule 1` should print.",
-                ConfigItemCategory.Core));
+                ConfigItemCategory.Misc));
         _config.Add("HiddenRules",
             new ConfigItem(ConfigItemType.StringDictionary,
                 "Rules that we want `.rule` to display but aren't or can't be messages in the rules channel.",
-                ConfigItemCategory.Core));
+                ConfigItemCategory.Misc));
 
-        // Server settings
+        // Banner settings
         _config.Add("BannerMode",
             new ConfigItem(ConfigItemType.Enum,
                 "The mode I will use when setting banners.",
-                ConfigItemCategory.Server));
+                ConfigItemCategory.Banner));
         _config.Add("BannerInterval",
             new ConfigItem(ConfigItemType.Double,
                 "How often I'll change the banner in minutes. If `BannerMode` is `None`, this has no effect. " +
                 "In `CustomRotation` mode, this is how often I'll randomly select a new image from `BannerImages`. " +
                 "In `ManebooruFeatured` mode, this is how often I'll poll Manebooru's featured image.",
-                ConfigItemCategory.Server));
+                ConfigItemCategory.Banner));
         _config.Add("BannerImages",
             new ConfigItem(ConfigItemType.StringSet,
                 "The list of banners I'll rotate through (if `BannerMode` is set to `CustomRotation`).",
-                ConfigItemCategory.Server));
+                ConfigItemCategory.Banner));
 
-        // Mod settings
-        _config.Add("ModRole",
-            new ConfigItem(ConfigItemType.Role, "The role that I allow to execute sensitive commands.",
-                ConfigItemCategory.Moderation));
-        _config.Add("ModChannel",
-            new ConfigItem(ConfigItemType.Channel,
-                "The channel where I'll post messages about possible raids, spam trips, filter violations, users joining or leaving, automated role changes, automated unbans, and so on.",
-                ConfigItemCategory.Moderation));
-        _config.Add("LogChannel",
-            new ConfigItem(ConfigItemType.Channel, "The channel where I will post verbose message edit/deletion logs, including bulk deletion logs created by spam trips or the `wipe` command.",
-                ConfigItemCategory.Moderation));
-
-        // User based settings
+        // ManagedRoles settings
         _config.Add("ManageNewUserRoles",
             new ConfigItem(ConfigItemType.Boolean,
                 "Whether I'll give roles to users on join.",
-                ConfigItemCategory.User));
+                ConfigItemCategory.ManagedRoles));
         _config.Add("MemberRole",
             new ConfigItem(ConfigItemType.Role,
                 "The role I apply to users when they join the server. This is also the role I remove when I silence a user. Set to nothing to disable.",
-                ConfigItemCategory.User, true));
+                ConfigItemCategory.ManagedRoles, true));
         _config.Add("NewMemberRole",
             new ConfigItem(ConfigItemType.Role,
                 "The role used to limit user permissions when they join the server. This is removed after `NewMemberRoleDecay` minutes. Set to nothing to disable.",
-                ConfigItemCategory.User, true));
+                ConfigItemCategory.ManagedRoles, true));
         _config.Add("NewMemberRoleDecay",
             new ConfigItem(ConfigItemType.Double,
                 "The number of minutes I'll wait before removing `NewMemberRole` from a user.",
-                ConfigItemCategory.User));
+                ConfigItemCategory.ManagedRoles));
         _config.Add("RolesToReapplyOnRejoin",
             new ConfigItem(ConfigItemType.RoleSet,
                 "The roles I'll reapply to a user when they join **if they had that role when they left**.",
-                ConfigItemCategory.User));
+                ConfigItemCategory.ManagedRoles));
 
 
         // Filter settings
@@ -131,7 +131,7 @@ public class ConfigDescriber
                 "The list of filter categories that will cause me to silence a user on a filter violation.",
                 ConfigItemCategory.Filter));
 
-        // Pressure settings
+        // Spam settings
         _config.Add("SpamEnabled",
             new ConfigItem(ConfigItemType.Boolean,
                 "Whether I will process messages and apply pressure to users.", ConfigItemCategory.Spam));
@@ -257,16 +257,16 @@ public class ConfigDescriber
     {
         switch (category.ToLower())
         {
-            case "core":
-                return ConfigItemCategory.Core;
-            case "server":
-                return ConfigItemCategory.Server;
-            case "moderation":
-                return ConfigItemCategory.Moderation;
+            case "setup":
+                return ConfigItemCategory.Setup;
+            case "misc":
+                return ConfigItemCategory.Misc;
+            case "banner":
+                return ConfigItemCategory.Banner;
             case "debug":
                 return ConfigItemCategory.Debug;
-            case "user":
-                return ConfigItemCategory.User;
+            case "managedroles":
+                return ConfigItemCategory.ManagedRoles;
             case "filter":
                 return ConfigItemCategory.Filter;
             case "spam":
@@ -282,16 +282,16 @@ public class ConfigDescriber
     {
         switch (category)
         {
-            case ConfigItemCategory.Core:
-                return "Core";
-            case ConfigItemCategory.Server:
-                return "Server";
-            case ConfigItemCategory.Moderation:
-                return "Moderation";
+            case ConfigItemCategory.Setup:
+                return "Setup";
+            case ConfigItemCategory.Misc:
+                return "Misc";
+            case ConfigItemCategory.Banner:
+                return "Banner";
             case ConfigItemCategory.Debug:
                 return "Debug";
-            case ConfigItemCategory.User:
-                return "User";
+            case ConfigItemCategory.ManagedRoles:
+                return "ManagedRoles";
             case ConfigItemCategory.Filter:
                 return "Filter";
             case ConfigItemCategory.Spam:
