@@ -232,7 +232,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
     }
     
     [Command("help")]
-    [Summary("Lists all commands")]
+    [Summary("Lists all commands or command categories you can use, or describes how to use a certain command or alias.")]
     [Parameter("search", ParameterType.String, "The command, category, or alias you want to get information about.")]
     [ExternalUsageAllowed]
     public async Task HelpCommandAsync(

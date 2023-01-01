@@ -38,7 +38,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
     }
 
     [Command("config")]
-    [Summary("Config management")]
+    [Summary("Inspect or modify one of Izzy's configuration items")]
     [RequireContext(ContextType.Guild)]
     [ModCommand(Group = "Permissions")]
     [DevCommand(Group = "Permissions")]

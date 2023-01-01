@@ -36,7 +36,8 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
     }
 
     [Command("panic")]
-    [Summary("Immediately disconnects the client.")]
+    [Summary("Immediately disconnects the client in case of emergency.")]
+    [Remarks("This should only be used if Izzy starts doing something terrible to Manechat and we can't afford to wait for proper debugging.")]
     [RequireContext(ContextType.Guild)]
     [ModCommand(Group = "Permissions")]
     [DevCommand(Group = "Permissions")]
@@ -93,7 +94,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
     }
 
     [Command("scan")]
-    [Summary("Refresh the stored userlist")]
+    [Summary("Refresh all the user information tracked by Izzy")]
     [RequireContext(ContextType.Guild)]
     [ModCommand(Group = "Permissions")]
     [DevCommand(Group = "Permissions")]
@@ -289,7 +290,8 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
     }
 
     [Command("stowaways")]
-    [Summary("List users who do not have the member role.")]
+    [Summary("List non-bot, non-mod users who do not have the member role.")]
+    [Remarks("These are most likely users that Izzy or a human moderator silenced or banished, but no one ever got around to kicking, banning, unsilencing or unbanishing them.")]
     [RequireContext(ContextType.Guild)]
     [ModCommand(Group = "Permissions")]
     [DevCommand(Group = "Permissions")]
@@ -716,7 +718,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
     [Remarks("See .echo for sending a message immediately, or .remindme for sending a direct message to yourself.")]
     [ModCommand(Group = "Permissions")]
     [DevCommand(Group = "Permissions")]
-    [Parameter("channel", ParameterType.Channel, "The channel to send the message to.", true)]
+    [Parameter("channel", ParameterType.Channel, "The channel to send the message to.")]
     [Parameter("time", ParameterType.DateTime, "When to send the message, whether it repeats, etc. See `.help remindme` for supported formats.")]
     [Parameter("message", ParameterType.String, "The reminder message to send.")]
     [Example(".remind #manechat in 2 hours join stream")]
