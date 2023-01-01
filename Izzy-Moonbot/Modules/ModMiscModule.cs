@@ -661,15 +661,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                 default: throw new InvalidCastException($"{typeArg} is not a valid job type");
             };
 
-            var repeatType = timeHelperResponse.RepeatType switch
-            {
-                "relative" => ScheduledJobRepeatType.Relative,
-                "daily" => ScheduledJobRepeatType.Daily,
-                "weekly" => ScheduledJobRepeatType.Weekly,
-                "yearly" => ScheduledJobRepeatType.Yearly,
-                _ => ScheduledJobRepeatType.None
-            };
-            var job = new ScheduledJob(DateTimeHelper.UtcNow, timeHelperResponse.Time, action, repeatType);
+            var job = new ScheduledJob(DateTimeHelper.UtcNow, timeHelperResponse.Time, action, timeHelperResponse.RepeatType);
             await _schedule.CreateScheduledJob(job);
             await context.Channel.SendMessageAsync($"Created scheduled job: {job.ToDiscordString()}", allowedMentions: AllowedMentions.None);
         }
@@ -771,18 +763,10 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
             return;
         }
 
-        var repeatType = timeHelperResponse.RepeatType switch
-        {
-            "relative" => ScheduledJobRepeatType.Relative,
-            "daily" => ScheduledJobRepeatType.Daily,
-            "weekly" => ScheduledJobRepeatType.Weekly,
-            "yearly" => ScheduledJobRepeatType.Yearly,
-            _ => ScheduledJobRepeatType.None
-        };
-        _logger.Log($"Adding scheduled job to post \"{content}\" in channel {channelId} at {timeHelperResponse.Time:F}{(repeatType == ScheduledJobRepeatType.None ? "" : $" repeating {timeHelperResponse.RepeatType}")}",
+        _logger.Log($"Adding scheduled job to post \"{content}\" in channel {channelId} at {timeHelperResponse.Time:F}{(timeHelperResponse.RepeatType == ScheduledJobRepeatType.None ? "" : $" repeating {timeHelperResponse.RepeatType}")}",
             context: context, level: LogLevel.Debug);
         var action = new ScheduledEchoJob(channelId, content);
-        var task = new ScheduledJob(DateTimeHelper.UtcNow, timeHelperResponse.Time, action, repeatType);
+        var task = new ScheduledJob(DateTimeHelper.UtcNow, timeHelperResponse.Time, action, timeHelperResponse.RepeatType);
         await _schedule.CreateScheduledJob(task);
         _logger.Log($"Added scheduled job for reminder", context: context, level: LogLevel.Debug);
 

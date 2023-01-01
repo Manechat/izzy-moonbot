@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Izzy_Moonbot.Helpers;
+using Izzy_Moonbot.Settings;
 
 namespace Izzy_Moonbot.Helpers;
 
@@ -23,7 +24,7 @@ public static class TimeHelper
         {
             var intervalArgsString = string.Join("", argsString.Skip(args.Indices[0]));
             if (TryParseInterval(intervalArgsString, out var intervalError) is var (dto, remainingArgs))
-                return (new TimeHelperResponse(dto, null), remainingArgs);
+                return (new TimeHelperResponse(dto, ScheduledJobRepeatType.None), remainingArgs);
 
             errorString = $"Failed to extract a date/time from the start of \"{argsString}\":\n" +
                 $"Not a valid interval because: {intervalError}\n" +
@@ -34,7 +35,7 @@ public static class TimeHelper
         {
             var timeArgsString = string.Join("", argsString.Skip(args.Indices[0]));
             if (TryParseTimeInput(timeArgsString, out var timeError) is var (dto, remainingArgs))
-                return (new TimeHelperResponse(dto, null), remainingArgs);
+                return (new TimeHelperResponse(dto, ScheduledJobRepeatType.None), remainingArgs);
 
             errorString = $"Failed to extract a date/time from the start of \"{argsString}\":\n" +
                 $"Not a valid time because: {timeError}\n" +
@@ -45,9 +46,9 @@ public static class TimeHelper
         {
             var subArgsString = string.Join("", argsString.Skip(args.Indices[0]));
             if (TryParseWeekdayTime(subArgsString, out var weekdayError) is var (weekdayDto, weekdayRemainingArgs))
-                return (new TimeHelperResponse(weekdayDto, null), weekdayRemainingArgs);
+                return (new TimeHelperResponse(weekdayDto, ScheduledJobRepeatType.None), weekdayRemainingArgs);
             if (TryParseAbsoluteDateTime(subArgsString, out var dateError) is var (dateDto, dateRemainingArgs))
-                return (new TimeHelperResponse(dateDto, null), dateRemainingArgs);
+                return (new TimeHelperResponse(dateDto, ScheduledJobRepeatType.None), dateRemainingArgs);
 
             errorString = $"Failed to extract a date/time from the start of \"{argsString}\". Using \"on\" means either weekday + time or date + time, but:\n" +
                 $"Not a valid weekday + time because: {weekdayError}\n" +
@@ -62,13 +63,13 @@ public static class TimeHelper
             // no timestamps and AbsoluteDateTime are replaced by DayMonthTime
             var subArgsString = string.Join("", argsString.Skip(args.Indices[0]));
             if (TryParseInterval(subArgsString, out var intervalError) is var (intervalDto, intervalRemainingArgs))
-                return (new TimeHelperResponse(intervalDto, "relative"), intervalRemainingArgs);
+                return (new TimeHelperResponse(intervalDto, ScheduledJobRepeatType.Relative), intervalRemainingArgs);
             if (TryParseTimeInput(subArgsString, out var timeError) is var (timeDto, timeRemainingArgs))
-                return (new TimeHelperResponse(timeDto, "daily"), timeRemainingArgs);
+                return (new TimeHelperResponse(timeDto, ScheduledJobRepeatType.Daily), timeRemainingArgs);
             if (TryParseWeekdayTime(subArgsString, out var weekdayError) is var (weekdayDto, weekdayRemainingArgs))
-                return (new TimeHelperResponse(weekdayDto, "weekly"), weekdayRemainingArgs);
+                return (new TimeHelperResponse(weekdayDto, ScheduledJobRepeatType.Weekly), weekdayRemainingArgs);
             if (TryParseDayMonthTime(subArgsString, out var dateError) is var (dateDto, dateRemainingArgs))
-                return (new TimeHelperResponse(dateDto, "yearly"), dateRemainingArgs);
+                return (new TimeHelperResponse(dateDto, ScheduledJobRepeatType.Yearly), dateRemainingArgs);
 
             if (args.Arguments.Length == 1)
             {
@@ -100,15 +101,15 @@ public static class TimeHelper
         {
             // no disambiguation word, so we have to try every valid format
             if (TryParseDiscordTimestamp(argsString, out var timestampError) is var (timestampDto, timestampRemainingArgs))
-                return (new TimeHelperResponse(timestampDto, null), timestampRemainingArgs);
+                return (new TimeHelperResponse(timestampDto, ScheduledJobRepeatType.None), timestampRemainingArgs);
             if (TryParseInterval(argsString, out var intervalError) is var (intervalDto, intervalRemainingArgs))
-                return (new TimeHelperResponse(intervalDto, null), intervalRemainingArgs);
+                return (new TimeHelperResponse(intervalDto, ScheduledJobRepeatType.None), intervalRemainingArgs);
             if (TryParseTimeInput(argsString, out var timeError) is var (timeDto, timeRemainingArgs))
-                return (new TimeHelperResponse(timeDto, null), timeRemainingArgs);
+                return (new TimeHelperResponse(timeDto, ScheduledJobRepeatType.None), timeRemainingArgs);
             if (TryParseWeekdayTime(argsString, out var weekdayError) is var (weekdayDto, weekdayRemainingArgs))
-                return (new TimeHelperResponse(weekdayDto, null), weekdayRemainingArgs);
+                return (new TimeHelperResponse(weekdayDto, ScheduledJobRepeatType.None), weekdayRemainingArgs);
             if (TryParseAbsoluteDateTime(argsString, out var dateError) is var (dateDto, dateRemainingArgs))
-                return (new TimeHelperResponse(dateDto, null), dateRemainingArgs);
+                return (new TimeHelperResponse(dateDto, ScheduledJobRepeatType.None), dateRemainingArgs);
 
             errorString = ErrorBasedOnIntendedFormat(args.Arguments,
                 timestampError ?? "<unreachable>",
@@ -586,10 +587,10 @@ public static class TimeHelper
 
 public class TimeHelperResponse
 {
-    public string? RepeatType;
+    public ScheduledJobRepeatType RepeatType;
     public DateTimeOffset Time;
 
-    public TimeHelperResponse(DateTimeOffset time, string? repeatType)
+    public TimeHelperResponse(DateTimeOffset time, ScheduledJobRepeatType repeatType)
     {
         Time = time;
         RepeatType = repeatType;

@@ -139,18 +139,10 @@ public class MiscModule : ModuleBase<SocketCommandContext>
             return;
         }
 
-        var repeatType = timeHelperResponse.RepeatType switch
-        {
-            "relative" => ScheduledJobRepeatType.Relative,
-            "daily" => ScheduledJobRepeatType.Daily,
-            "weekly" => ScheduledJobRepeatType.Weekly,
-            "yearly" => ScheduledJobRepeatType.Yearly,
-            _ => ScheduledJobRepeatType.None
-        };
-        _logger.Log($"Adding scheduled job to remind user to \"{content}\" at {timeHelperResponse.Time:F}{(repeatType == ScheduledJobRepeatType.None ? "" : $" repeating {timeHelperResponse.RepeatType}")}",
+        _logger.Log($"Adding scheduled job to remind user to \"{content}\" at {timeHelperResponse.Time:F}{(timeHelperResponse.RepeatType == ScheduledJobRepeatType.None ? "" : $" repeating {timeHelperResponse.RepeatType}")}",
             context: context, level: LogLevel.Debug);
         var action = new ScheduledEchoJob(context.User, content);
-        var task = new ScheduledJob(DateTimeHelper.UtcNow, timeHelperResponse.Time, action, repeatType);
+        var task = new ScheduledJob(DateTimeHelper.UtcNow, timeHelperResponse.Time, action, timeHelperResponse.RepeatType);
         await _schedule.CreateScheduledJob(task);
         _logger.Log($"Added scheduled job for user", context: context, level: LogLevel.Debug);
 

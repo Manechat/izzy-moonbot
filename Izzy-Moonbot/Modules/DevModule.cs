@@ -290,7 +290,7 @@ public class DevModule : ModuleBase<SocketCommandContext>
 
                 await ReplyAsync(
                     $"TryParseDateTime converted \"{argString}\" to a DateTimeOffset of {time.Time}" +
-                        $"{(time.RepeatType is null ? "" : $" repeating {time.RepeatType}")}\n" +
+                        $"{(time.RepeatType is ScheduledJobRepeatType.None ? "" : $" repeating {time.RepeatType}")}\n" +
                     $"with remainingArgsString: \"{remainingArgsString}\"");
                 break;
             case "getuser":
