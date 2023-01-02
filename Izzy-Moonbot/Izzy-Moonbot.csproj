@@ -28,7 +28,7 @@
     <ItemGroup>
         <PackageReference Include="Discord.Net" Version="3.7.2" />
         <PackageReference Include="Flurl.Http" Version="3.2.4" />
-        <PackageReference Include="HtmlAgilityPack" Version="1.11.43" />
+        <PackageReference Include="HtmlAgilityPack" Version="1.11.46" />
         <PackageReference Include="Microsoft.Extensions.Hosting" Version="7.0.0-preview.5.22301.12" />
         <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="7.0.0-preview.5.22301.12" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.2-beta1" />
