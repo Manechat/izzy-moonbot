@@ -19,7 +19,7 @@ jobs:
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         organization: manechat
-        container: izzymoonbot
+        container: izzy-moonbot
         dry-run: false
         keep-tags: latest
         untagged: true
