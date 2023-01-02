@@ -29,8 +29,12 @@ jobs:
     - name: Build the Docker image
       run: docker buildx build . --file ./Izzy-Moonbot/Dockerfile --tag ghcr.io/manechat/izzy-moonbot:latest --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ') --build-arg BUILD_COMMIT=$GITHUB_SHA --platform linux/arm64
 
-    - name: Log in to Container registry
-      run: echo "${GITHUB_TOKEN}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v2
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Push image to registry
       run: docker push ghcr.io/manechat/izzy-moonbot:latest
