@@ -184,8 +184,6 @@ namespace Izzy_Moonbot
                                  $"Unobserved Exception Stack: {unobservedException?.StackTrace}");
             };
 
-            _scheduleService.BeginUnicycleLoop(new DiscordSocketClientAdapter(_client));
-
             foreach (var clientGuild in _client.Guilds)
             {
                 _logger.LogDebug($"ReadyEvent() downloading users for guild {clientGuild.Name} ({clientGuild.Id})");
@@ -195,7 +193,8 @@ namespace Izzy_Moonbot
             _logger.LogDebug("ReadyEvent() resyncing users");
             ResyncUsers();
 
-            _logger.LogDebug("ReadyEvent() completed");
+            _logger.LogDebug("ReadyEvent() starting unicycle loop");
+            _scheduleService.BeginUnicycleLoop(new DiscordSocketClientAdapter(_client));
         }
 
         private void ResyncUsers()
