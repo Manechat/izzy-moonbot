@@ -33,12 +33,12 @@ public class ModMiscModuleTests
         var (cfg, _, (_, sunny), _, (generalChannel, modChat, _), guild, client) = TestUtils.DefaultStubs();
         DiscordHelper.DefaultGuildId = guild.Id;
         cfg.ModChannel = modChat.Id;
-        var (ss, am) = SetupModMiscModule(cfg);
+        var (ss, mmm) = SetupModMiscModule(cfg);
 
         // .echo with no channel argument
 
         var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".echo test");
-        await am.TestableEchoCommandAsync(context, "test");
+        await mmm.TestableEchoCommandAsync(context, "test");
 
         Assert.AreEqual(2, generalChannel.Messages.Count);
         Assert.AreEqual("test", generalChannel.Messages.Last().Content);
@@ -47,7 +47,7 @@ public class ModMiscModuleTests
         // .echo'ing to another channel
 
         context = await client.AddMessageAsync(guild.Id, modChat.Id, sunny.Id, $".echo <#{generalChannel.Id}> hello from mod chat");
-        await am.TestableEchoCommandAsync(context, $"<#{generalChannel.Id}> hello from mod chat");
+        await mmm.TestableEchoCommandAsync(context, $"<#{generalChannel.Id}> hello from mod chat");
 
         Assert.AreEqual(3, generalChannel.Messages.Count);
         Assert.AreEqual("hello from mod chat", generalChannel.Messages.Last().Content);
@@ -60,7 +60,7 @@ public class ModMiscModuleTests
         var (cfg, _, (_, sunny), roles, (generalChannel, modChat, _), guild, client) = TestUtils.DefaultStubs();
         DiscordHelper.DefaultGuildId = guild.Id;
         cfg.ModChannel = modChat.Id;
-        var (ss, am) = SetupModMiscModule(cfg);
+        var (ss, mmm) = SetupModMiscModule(cfg);
 
         var logger = new LoggingService(new TestLogger<Worker>());
         var cfgDescriber = new ConfigDescriber();
@@ -68,7 +68,7 @@ public class ModMiscModuleTests
 
 
         var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".schedule");
-        await am.TestableScheduleCommandAsync(context, "");
+        await mmm.TestableScheduleCommandAsync(context, "");
 
         var description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "Here's a list of subcommands");
@@ -78,10 +78,10 @@ public class ModMiscModuleTests
 
 
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".schedule list");
-        await am.TestableScheduleCommandAsync(context, "list");
+        await mmm.TestableScheduleCommandAsync(context, "list");
 
         description = generalChannel.Messages.Last().Content;
-        StringAssert.Contains(description, "Here's a list of all the scheduled jobs!");
+        StringAssert.Contains(description, "Here's a list of all the scheduled jobs");
         StringAssert.Contains(description, "\n\n\n"); // a blank list because nothing is scheduled
         StringAssert.Contains(description, "If you need a raw text file");
         Assert.AreEqual(0, ss.GetScheduledJobs().Count());
@@ -93,10 +93,10 @@ public class ModMiscModuleTests
         await mm.TestableRemindMeCommandAsync(context, "10 minutes this is a test");
 
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".schedule list");
-        await am.TestableScheduleCommandAsync(context, "list");
+        await mmm.TestableScheduleCommandAsync(context, "list");
 
         description = generalChannel.Messages.Last().Content;
-        StringAssert.Contains(description, "Here's a list of all the scheduled jobs!");
+        StringAssert.Contains(description, "Here's a list of all the scheduled jobs");
         StringAssert.Contains(description, $": Send \"this is a test\" to (<#{sunny.Id}>/<@{sunny.Id}>) (`{sunny.Id}`) <t:1286669400:R>.");
         StringAssert.Contains(description, "If you need a raw text file");
         Assert.AreEqual(1, ss.GetScheduledJobs().Count());
@@ -110,7 +110,7 @@ public class ModMiscModuleTests
 
 
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, $".schedule add echo 1 hour {generalChannel.Id} this is another test");
-        await am.TestableScheduleCommandAsync(context, $"add echo 1 hour {generalChannel.Id} this is another test");
+        await mmm.TestableScheduleCommandAsync(context, $"add echo 1 hour {generalChannel.Id} this is another test");
 
         description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "Created scheduled job:");
@@ -131,13 +131,13 @@ public class ModMiscModuleTests
         var (cfg, _, (_, sunny), roles, (generalChannel, modChat, _), guild, client) = TestUtils.DefaultStubs();
         DiscordHelper.DefaultGuildId = guild.Id;
         cfg.ModChannel = modChat.Id;
-        var (ss, am) = SetupModMiscModule(cfg);
+        var (ss, mmm) = SetupModMiscModule(cfg);
 
         DateTimeHelper.FakeUtcNow = TestUtils.FiMEpoch;
         var alicornId = roles[0].Id;
 
         var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, $".schedule add banner 30 minutes");
-        await am.TestableScheduleCommandAsync(context, $"add banner 30 minutes");
+        await mmm.TestableScheduleCommandAsync(context, $"add banner 30 minutes");
 
         var description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "Created scheduled job:");
@@ -147,7 +147,7 @@ public class ModMiscModuleTests
         Assert.AreEqual(ScheduledJobActionType.BannerRotation, job.Action.Type);
 
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, $".schedule add unban 6 months {sunny.Id}");
-        await am.TestableScheduleCommandAsync(context, $"add unban 6 months {sunny.Id}");
+        await mmm.TestableScheduleCommandAsync(context, $"add unban 6 months {sunny.Id}");
 
         description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "Created scheduled job:");
@@ -158,7 +158,7 @@ public class ModMiscModuleTests
         Assert.AreEqual(sunny.Id, (job.Action as ScheduledUnbanJob)?.User);
 
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, $".schedule add add-role 1 hour {alicornId} {sunny.Id}");
-        await am.TestableScheduleCommandAsync(context, $"add add-role 1 hour {alicornId} {sunny.Id}");
+        await mmm.TestableScheduleCommandAsync(context, $"add add-role 1 hour {alicornId} {sunny.Id}");
 
         description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "Created scheduled job:");
@@ -170,7 +170,7 @@ public class ModMiscModuleTests
         Assert.AreEqual(sunny.Id, (job.Action as ScheduledRoleAdditionJob)?.User);
 
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, $".schedule add remove-role 25 hours {alicornId} {sunny.Id}");
-        await am.TestableScheduleCommandAsync(context, $"add remove-role 25 hours {alicornId} {sunny.Id}");
+        await mmm.TestableScheduleCommandAsync(context, $"add remove-role 25 hours {alicornId} {sunny.Id}");
 
         description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "Created scheduled job:");
@@ -182,7 +182,7 @@ public class ModMiscModuleTests
         Assert.AreEqual(sunny.Id, (job.Action as ScheduledRoleRemovalJob)?.User);
 
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, $".schedule add echo 1 hour {generalChannel.Id} hello there");
-        await am.TestableScheduleCommandAsync(context, $"add echo 1 hour {generalChannel.Id} hello there");
+        await mmm.TestableScheduleCommandAsync(context, $"add echo 1 hour {generalChannel.Id} hello there");
 
         description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "Created scheduled job:");
@@ -200,13 +200,13 @@ public class ModMiscModuleTests
         var (cfg, _, (_, sunny), roles, (generalChannel, modChat, _), guild, client) = TestUtils.DefaultStubs();
         DiscordHelper.DefaultGuildId = guild.Id;
         cfg.ModChannel = modChat.Id;
-        var (ss, am) = SetupModMiscModule(cfg);
+        var (ss, mmm) = SetupModMiscModule(cfg);
 
         DateTimeHelper.FakeUtcNow = TestUtils.FiMEpoch;
         await ss.Unicycle(client);
 
         var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, $".schedule add echo every 10 seconds {generalChannel.Id} do the pony ony ony");
-        await am.TestableScheduleCommandAsync(context, $"add echo every 10 seconds {generalChannel.Id} do the pony ony ony");
+        await mmm.TestableScheduleCommandAsync(context, $"add echo every 10 seconds {generalChannel.Id} do the pony ony ony");
 
         var description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "Created scheduled job:");
@@ -231,7 +231,7 @@ public class ModMiscModuleTests
         var jobId = ss.GetScheduledJobs().Single().Id;
 
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, $".schedule remove {jobId}");
-        await am.TestableScheduleCommandAsync(context, $"remove {jobId}");
+        await mmm.TestableScheduleCommandAsync(context, $"remove {jobId}");
 
         Assert.AreEqual("Successfully deleted scheduled job.", generalChannel.Messages.Last().Content);
         Assert.AreEqual(0, ss.GetScheduledJobs().Count());

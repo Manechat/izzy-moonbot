@@ -64,7 +64,6 @@ public interface IIzzyMessage
 
 public interface IIzzyUserMessage : IIzzyMessage
 {
-    Task ReplyAsync(string message);
     Task ModifyAsync(Action<IIzzyMessageProperties> action);
 }
 

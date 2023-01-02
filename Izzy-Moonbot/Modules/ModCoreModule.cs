@@ -38,7 +38,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
     }
 
     [Command("config")]
-    [Summary("Config management")]
+    [Summary("Inspect or modify one of Izzy's configuration items")]
     [RequireContext(ContextType.Guild)]
     [ModCommand(Group = "Permissions")]
     [DevCommand(Group = "Permissions")]
@@ -173,7 +173,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
                 await Context.Channel.SendMessageAsync($"Failed to comprehend time: {parseError}");
                 return;
             }
-            if (time.RepeatType is not null)
+            if (time.RepeatType is not ScheduledJobRepeatType.None)
             {
                 await Context.Channel.SendMessageAsync("I can't ban a user repeatedly! Please give me a time that isn't repeating.");
                 return;
@@ -376,7 +376,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
                 await Context.Channel.SendMessageAsync($"Failed to comprehend time: {parseError}");
                 return;
             }
-            if (time.RepeatType is not null)
+            if (time.RepeatType is not ScheduledJobRepeatType.None)
             {
                 await context.Channel.SendMessageAsync("I can't assign a role repeatedly! Please give me a time that isn't repeating.");
                 return;

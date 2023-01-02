@@ -1,4 +1,5 @@
 ﻿using Izzy_Moonbot.Helpers;
+using Izzy_Moonbot.Settings;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
@@ -21,7 +22,7 @@ public class TimeHelperTests
     public static void AssertTryParseDateTime(
         (TimeHelperResponse, string)? actualResponse,
         DateTimeOffset expectedTime,
-        string? expectedRepeatType,
+        ScheduledJobRepeatType expectedRepeatType,
         string expectedRemainingArgsString)
     {
         Assert.IsNotNull(actualResponse);
@@ -43,44 +44,44 @@ public class TimeHelperTests
 
         AssertTryParseDateTime(
             TimeHelper.TryParseDateTime("in 10 minutes", out err),
-            DateTimeHelper.UtcNow.AddMinutes(10), null, ""
+            DateTimeHelper.UtcNow.AddMinutes(10), ScheduledJobRepeatType.None, ""
         );
         Assert.AreEqual(err, null);
 
         AssertTryParseDateTime(
             TimeHelper.TryParseDateTime("in 1 hour", out err),
-            DateTimeHelper.UtcNow.AddHours(1), null, ""
+            DateTimeHelper.UtcNow.AddHours(1), ScheduledJobRepeatType.None, ""
         );
         Assert.AreEqual(err, null);
 
         AssertTryParseDateTime(
             TimeHelper.TryParseDateTime("in 37 seconds", out err),
-            DateTimeHelper.UtcNow.AddSeconds(37), null, ""
+            DateTimeHelper.UtcNow.AddSeconds(37), ScheduledJobRepeatType.None, ""
         );
         Assert.AreEqual(err, null);
 
         AssertTryParseDateTime(
             TimeHelper.TryParseDateTime("in 7 days", out err),
-            DateTimeHelper.UtcNow.AddDays(7), null, ""
+            DateTimeHelper.UtcNow.AddDays(7), ScheduledJobRepeatType.None, ""
         );
         Assert.AreEqual(err, null);
 
         AssertTryParseDateTime(
             TimeHelper.TryParseDateTime("in 6 months", out err),
-            DateTimeHelper.UtcNow.AddMonths(6), null, ""
+            DateTimeHelper.UtcNow.AddMonths(6), ScheduledJobRepeatType.None, ""
         );
         Assert.AreEqual(err, null);
 
 
         AssertTryParseDateTime(
             TimeHelper.TryParseDateTime("in 1 hour here's some text", out err),
-            DateTimeHelper.UtcNow.AddHours(1), null, "here's some text"
+            DateTimeHelper.UtcNow.AddHours(1), ScheduledJobRepeatType.None, "here's some text"
         );
         Assert.AreEqual(err, null);
 
         AssertTryParseDateTime(
             TimeHelper.TryParseDateTime("1 hour here's some text", out err),
-            DateTimeHelper.UtcNow.AddHours(1), null, "here's some text"
+            DateTimeHelper.UtcNow.AddHours(1), ScheduledJobRepeatType.None, "here's some text"
         );
         Assert.AreEqual(err, null);
 
@@ -125,19 +126,19 @@ public class TimeHelperTests
 
         AssertTryParseDateTime(
             TimeHelper.TryParseDateTime("in 123 seconds", out err),
-            DateTimeHelper.UtcNow.AddSeconds(123), null, ""
+            DateTimeHelper.UtcNow.AddSeconds(123), ScheduledJobRepeatType.None, ""
         );
         Assert.AreEqual(err, null);
 
         AssertTryParseDateTime(
             TimeHelper.TryParseDateTime("in 1234 seconds", out err),
-            DateTimeHelper.UtcNow.AddSeconds(1234), null, ""
+            DateTimeHelper.UtcNow.AddSeconds(1234), ScheduledJobRepeatType.None, ""
         );
         Assert.AreEqual(err, null);
 
         AssertTryParseDateTime(
             TimeHelper.TryParseDateTime("in 12345 seconds", out err),
-            DateTimeHelper.UtcNow.AddSeconds(12345), null, ""
+            DateTimeHelper.UtcNow.AddSeconds(12345), ScheduledJobRepeatType.None, ""
         );
         Assert.AreEqual(err, null);
     }
@@ -150,19 +151,19 @@ public class TimeHelperTests
 
         AssertTryParseDateTime(
             TimeHelper.TryParseDateTime("<t:123456789>", out err),
-            DateTimeOffset.FromUnixTimeSeconds(123456789), null, ""
+            DateTimeOffset.FromUnixTimeSeconds(123456789), ScheduledJobRepeatType.None, ""
         );
         Assert.AreEqual(err, null);
 
         AssertTryParseDateTime(
             TimeHelper.TryParseDateTime("<t:123456789:R>", out err),
-            DateTimeOffset.FromUnixTimeSeconds(123456789), null, ""
+            DateTimeOffset.FromUnixTimeSeconds(123456789), ScheduledJobRepeatType.None, ""
         );
         Assert.AreEqual(err, null);
 
         AssertTryParseDateTime(
             TimeHelper.TryParseDateTime("<t:0:x>", out err),
-            DateTimeOffset.FromUnixTimeSeconds(0), null, ""
+            DateTimeOffset.FromUnixTimeSeconds(0), ScheduledJobRepeatType.None, ""
         );
         Assert.AreEqual(err, null);
 
@@ -180,13 +181,13 @@ public class TimeHelperTests
 
         AssertTryParseDateTime(
             TimeHelper.TryParseDateTime("at 03:15 UTC+0", out err),
-            new DateTimeOffset(2010, 10, 10, 3, 15, 0, TimeSpan.Zero), null, ""
+            new DateTimeOffset(2010, 10, 10, 3, 15, 0, TimeSpan.Zero), ScheduledJobRepeatType.None, ""
         );
         Assert.AreEqual(err, null);
 
         AssertTryParseDateTime(
             TimeHelper.TryParseDateTime("03:15 UTC+0", out err),
-            new DateTimeOffset(2010, 10, 10, 3, 15, 0, TimeSpan.Zero), null, ""
+            new DateTimeOffset(2010, 10, 10, 3, 15, 0, TimeSpan.Zero), ScheduledJobRepeatType.None, ""
         );
         Assert.AreEqual(err, null);
 
@@ -210,13 +211,13 @@ public class TimeHelperTests
         // Oct 10th 2010 was a Sunday, so "next Monday" is the 11th
         AssertTryParseDateTime(
             TimeHelper.TryParseDateTime("on monday 03:15 UTC+0", out err),
-            new DateTimeOffset(2010, 10, 11, 3, 15, 0, TimeSpan.Zero), null, ""
+            new DateTimeOffset(2010, 10, 11, 3, 15, 0, TimeSpan.Zero), ScheduledJobRepeatType.None, ""
         );
         Assert.AreEqual(err, null);
 
         AssertTryParseDateTime(
             TimeHelper.TryParseDateTime("monday 03:15 UTC+0", out err),
-            new DateTimeOffset(2010, 10, 11, 3, 15, 0, TimeSpan.Zero), null, ""
+            new DateTimeOffset(2010, 10, 11, 3, 15, 0, TimeSpan.Zero), ScheduledJobRepeatType.None, ""
         );
         Assert.AreEqual(err, null);
 
@@ -249,13 +250,13 @@ public class TimeHelperTests
 
         AssertTryParseDateTime(
             TimeHelper.TryParseDateTime("on 1 jan 2020 12:00 UTC+0", out err),
-            new DateTimeOffset(2020, 1, 1, 12, 0, 0, 0, TimeSpan.Zero), null, ""
+            new DateTimeOffset(2020, 1, 1, 12, 0, 0, 0, TimeSpan.Zero), ScheduledJobRepeatType.None, ""
         );
         Assert.AreEqual(err, null);
 
         AssertTryParseDateTime(
             TimeHelper.TryParseDateTime("1 jan 2020 12:00 UTC+0", out err),
-            new DateTimeOffset(2020, 1, 1, 12, 0, 0, 0, TimeSpan.Zero), null, ""
+            new DateTimeOffset(2020, 1, 1, 12, 0, 0, 0, TimeSpan.Zero), ScheduledJobRepeatType.None, ""
         );
         Assert.AreEqual(err, null);
 
@@ -268,6 +269,13 @@ public class TimeHelperTests
         Assert.IsNotNull(err);
         StringAssert.Contains(err, "\"1 jan 2020 12:00\"");
         StringAssert.Contains(err, "missing a UTC offset");
+
+        // we support "st"/"nd"/"rd"/"th" suffixes without advertising them
+        AssertTryParseDateTime(
+            TimeHelper.TryParseDateTime("1st jan 2020 12:00 UTC+0", out err),
+            new DateTimeOffset(2020, 1, 1, 12, 0, 0, 0, TimeSpan.Zero), ScheduledJobRepeatType.None, ""
+        );
+        Assert.AreEqual(err, null);
     }
 
     [TestMethod()]
@@ -278,7 +286,7 @@ public class TimeHelperTests
 
         AssertTryParseDateTime(
             TimeHelper.TryParseDateTime("every 1 hour", out err),
-            DateTimeHelper.UtcNow.AddHours(1), "relative", ""
+            DateTimeHelper.UtcNow.AddHours(1), ScheduledJobRepeatType.Relative, ""
         );
         Assert.AreEqual(err, null);
     }
@@ -291,7 +299,7 @@ public class TimeHelperTests
 
         AssertTryParseDateTime(
             TimeHelper.TryParseDateTime("every 12:30 UTC+0", out err),
-            new DateTimeOffset(2010, 10, 10, 12, 30, 0, TimeSpan.Zero), "daily", ""
+            new DateTimeOffset(2010, 10, 10, 12, 30, 0, TimeSpan.Zero), ScheduledJobRepeatType.Daily, ""
         );
         Assert.AreEqual(err, null);
     }
@@ -305,7 +313,7 @@ public class TimeHelperTests
         // Oct 10th 2010 was a Sunday, so "next Monday" is the 11th
         AssertTryParseDateTime(
             TimeHelper.TryParseDateTime("every monday 12:30 UTC+0", out err),
-            new DateTimeOffset(2010, 10, 11, 12, 30, 0, TimeSpan.Zero), "weekly", ""
+            new DateTimeOffset(2010, 10, 11, 12, 30, 0, TimeSpan.Zero), ScheduledJobRepeatType.Weekly, ""
         );
         Assert.AreEqual(err, null);
     }
@@ -318,7 +326,7 @@ public class TimeHelperTests
 
         AssertTryParseDateTime(
             TimeHelper.TryParseDateTime("every 1 jan 12:00 UTC+0", out err),
-            new DateTimeOffset(2011, 1, 1, 12, 0, 0, TimeSpan.Zero), "yearly", ""
+            new DateTimeOffset(2011, 1, 1, 12, 0, 0, TimeSpan.Zero), ScheduledJobRepeatType.Yearly, ""
         );
         Assert.AreEqual(err, null);
 

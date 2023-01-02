@@ -36,7 +36,8 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
     }
 
     [Command("panic")]
-    [Summary("Immediately disconnects the client.")]
+    [Summary("Immediately disconnects the client in case of emergency.")]
+    [Remarks("This should only be used if Izzy starts doing something terrible to Manechat and we can't afford to wait for proper debugging.")]
     [RequireContext(ContextType.Guild)]
     [ModCommand(Group = "Permissions")]
     [DevCommand(Group = "Permissions")]
@@ -93,7 +94,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
     }
 
     [Command("scan")]
-    [Summary("Refresh the stored userlist")]
+    [Summary("Refresh all the user information tracked by Izzy")]
     [RequireContext(ContextType.Guild)]
     [ModCommand(Group = "Permissions")]
     [DevCommand(Group = "Permissions")]
@@ -289,7 +290,8 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
     }
 
     [Command("stowaways")]
-    [Summary("List users who do not have the member role.")]
+    [Summary("List non-bot, non-mod users who do not have the member role.")]
+    [Remarks("These are most likely users that Izzy or a human moderator silenced or banished, but no one ever got around to kicking, banning, unsilencing or unbanishing them.")]
     [RequireContext(ContextType.Guild)]
     [ModCommand(Group = "Permissions")]
     [DevCommand(Group = "Permissions")]
@@ -386,12 +388,14 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
             if (args.Arguments.Length == 1)
             {
                 // All
-                var jobs = _schedule.GetScheduledJobs().Select(job => job.ToDiscordString()).ToList();
+                var jobs = _schedule.GetScheduledJobs()
+                    .OrderBy(job => job.ExecuteAt)
+                    .Select(job => job.ToDiscordString()).ToList();
 
                 PaginationHelper.PaginateIfNeededAndSendMessage(
                     context,
-                    "Heya! Here's a list of all the scheduled jobs!\n",
-                    jobs.Select(j => j.ToString()).ToList(),
+                    "Heya! Here's a list of all the scheduled jobs sorted by next execution time!\n",
+                    jobs,
                     "\nIf you need a raw text file, run `.schedule list-file`.",
                     pageSize: 5,
                     codeblock: false,
@@ -410,12 +414,15 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                     return;
                 }
 
-                var jobs = _schedule.GetScheduledJobs().Where(job => job.Action.GetType().FullName == type.FullName).Select(job => job.ToDiscordString()).ToList();
+                var jobs = _schedule.GetScheduledJobs()
+                    .Where(job => job.Action.GetType().FullName == type.FullName)
+                    .OrderBy(job => job.ExecuteAt)
+                    .Select(job => job.ToDiscordString()).ToList();
 
                 PaginationHelper.PaginateIfNeededAndSendMessage(
                     context,
-                    $"Heya! Here's a list of all the scheduled {jobType} jobs!\n",
-                    jobs.Select(j => j.ToString()).ToList(),
+                    $"Heya! Here's a list of all the scheduled {jobType} jobs sorted by next execution time!\n",
+                    jobs,
                     $"\nIf you need a raw text file, run `.schedule list-file {jobType}`.",
                     pageSize: 5,
                     codeblock: false,
@@ -656,15 +663,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                 default: throw new InvalidCastException($"{typeArg} is not a valid job type");
             };
 
-            var repeatType = timeHelperResponse.RepeatType switch
-            {
-                "relative" => ScheduledJobRepeatType.Relative,
-                "daily" => ScheduledJobRepeatType.Daily,
-                "weekly" => ScheduledJobRepeatType.Weekly,
-                "yearly" => ScheduledJobRepeatType.Yearly,
-                _ => ScheduledJobRepeatType.None
-            };
-            var job = new ScheduledJob(DateTimeHelper.UtcNow, timeHelperResponse.Time, action, repeatType);
+            var job = new ScheduledJob(DateTimeHelper.UtcNow, timeHelperResponse.Time, action, timeHelperResponse.RepeatType);
             await _schedule.CreateScheduledJob(job);
             await context.Channel.SendMessageAsync($"Created scheduled job: {job.ToDiscordString()}", allowedMentions: AllowedMentions.None);
         }
@@ -719,9 +718,9 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
     [Remarks("See .echo for sending a message immediately, or .remindme for sending a direct message to yourself.")]
     [ModCommand(Group = "Permissions")]
     [DevCommand(Group = "Permissions")]
-    [Parameter("channel", ParameterType.Channel, "The channel to send the message to.", true)]
+    [Parameter("channel", ParameterType.Channel, "The channel to send the message to.")]
     [Parameter("time", ParameterType.DateTime, "When to send the message, whether it repeats, etc. See `.help remindme` for supported formats.")]
-    [Parameter("message", ParameterType.String, "The reminder message to DM.")]
+    [Parameter("message", ParameterType.String, "The reminder message to send.")]
     [Example(".remind #manechat in 2 hours join stream")]
     [Example(".remind #tailchat at 4:30pm go shopping")]
     [Example(".remind #modchat on 1 jan 2020 12:00 UTC+0 rethink life")]
@@ -766,18 +765,10 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
             return;
         }
 
-        var repeatType = timeHelperResponse.RepeatType switch
-        {
-            "relative" => ScheduledJobRepeatType.Relative,
-            "daily" => ScheduledJobRepeatType.Daily,
-            "weekly" => ScheduledJobRepeatType.Weekly,
-            "yearly" => ScheduledJobRepeatType.Yearly,
-            _ => ScheduledJobRepeatType.None
-        };
-        _logger.Log($"Adding scheduled job to post \"{content}\" in channel {channelId} at {timeHelperResponse.Time:F}{(repeatType == ScheduledJobRepeatType.None ? "" : $" repeating {timeHelperResponse.RepeatType}")}",
+        _logger.Log($"Adding scheduled job to post \"{content}\" in channel {channelId} at {timeHelperResponse.Time:F}{(timeHelperResponse.RepeatType == ScheduledJobRepeatType.None ? "" : $" repeating {timeHelperResponse.RepeatType}")}",
             context: context, level: LogLevel.Debug);
         var action = new ScheduledEchoJob(channelId, content);
-        var task = new ScheduledJob(DateTimeHelper.UtcNow, timeHelperResponse.Time, action, repeatType);
+        var task = new ScheduledJob(DateTimeHelper.UtcNow, timeHelperResponse.Time, action, timeHelperResponse.RepeatType);
         await _schedule.CreateScheduledJob(task);
         _logger.Log($"Added scheduled job for reminder", context: context, level: LogLevel.Debug);
 
