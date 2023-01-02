@@ -90,28 +90,40 @@ public class UserListener
         List<ulong> roles = new List<ulong>();
         string expiresString = "";
 
-        _logger.Log($"Processing roles for new user join", level: LogLevel.Debug);
-        if (_config.ManageNewUserRoles && _config.MemberRole != null && !(_config.AutoSilenceNewJoins || _users[member.Id].Silenced))
+        if (!_config.ManageNewUserRoles)
         {
-            _logger.Log($"Adding Config.MemberRole ({_config.MemberRole}) to new user", level: LogLevel.Debug);
-            roles.Add((ulong)_config.MemberRole);
+            _logger.Log($"Skipping role management for new user join because ManageNewUserRoles is false", level: LogLevel.Debug);
+        }
+        else
+        {
+            _logger.Log($"Processing roles for new user join", level: LogLevel.Debug);
+
+            if (_config.MemberRole == null || _config.MemberRole <= 0)
+                _logger.Log($"ManageNewUserRoles is true but MemberRole is {_config.MemberRole}", level: LogLevel.Warning);
+            else if (!(_config.AutoSilenceNewJoins || _users[member.Id].Silenced))
+            {
+                _logger.Log($"Adding Config.MemberRole ({_config.MemberRole}) to new user", level: LogLevel.Debug);
+                roles.Add((ulong)_config.MemberRole);
+            }
+
+            if (_config.NewMemberRole == null || _config.NewMemberRole <= 0)
+                _logger.Log($"ManageNewUserRoles is true but NewMemberRole is {_config.NewMemberRole}", level: LogLevel.Warning);
+            else if ((!_config.AutoSilenceNewJoins || !_users[member.Id].Silenced))
+            {
+                _logger.Log($"Adding Config.NewMemberRole ({_config.NewMemberRole}) to new user", level: LogLevel.Debug);
+                roles.Add((ulong)_config.NewMemberRole);
+                expiresString = $"{Environment.NewLine}New Member role expires in <t:{(DateTimeOffset.UtcNow + TimeSpan.FromMinutes(_config.NewMemberRoleDecay)).ToUnixTimeSeconds()}:R>";
+
+                _logger.Log($"Adding scheduled job to remove Config.NewMemberRole from new user in {_config.NewMemberRoleDecay} minutes", level: LogLevel.Debug);
+                var action = new ScheduledRoleRemovalJob(_config.NewMemberRole.Value, member.Id,
+                    $"New member role removal, {_config.NewMemberRoleDecay} minutes (`NewMemberRoleDecay`) passed.");
+                var task = new ScheduledJob(DateTimeOffset.UtcNow,
+                    (DateTimeOffset.UtcNow + TimeSpan.FromMinutes(_config.NewMemberRoleDecay)), action);
+                await _schedule.CreateScheduledJob(task);
+                _logger.Log($"Added scheduled job for new user", level: LogLevel.Debug);
+            }
         }
 
-        if (_config.ManageNewUserRoles && _config.NewMemberRole != null && (!_config.AutoSilenceNewJoins || !_users[member.Id].Silenced))
-        {
-            _logger.Log($"Adding Config.NewMemberRole ({_config.NewMemberRole}) to new user", level: LogLevel.Debug);
-            roles.Add((ulong)_config.NewMemberRole);
-            expiresString = $"{Environment.NewLine}New Member role expires in <t:{(DateTimeOffset.UtcNow + TimeSpan.FromMinutes(_config.NewMemberRoleDecay)).ToUnixTimeSeconds()}:R>";
-
-            _logger.Log($"Adding scheduled job to remove Config.NewMemberRole from new user in {_config.NewMemberRoleDecay} minutes", level: LogLevel.Debug);
-            var action = new ScheduledRoleRemovalJob(_config.NewMemberRole.Value, member.Id,
-                $"New member role removal, {_config.NewMemberRoleDecay} minutes (`NewMemberRoleDecay`) passed.");
-            var task = new ScheduledJob(DateTimeOffset.UtcNow, 
-                (DateTimeOffset.UtcNow + TimeSpan.FromMinutes(_config.NewMemberRoleDecay)), action);
-            await _schedule.CreateScheduledJob(task);
-            _logger.Log($"Added scheduled job for new user", level: LogLevel.Debug);
-        }
-        
         _logger.Log($"Generating action reason", level: LogLevel.Debug);
         
         string autoSilence = $" (User autosilenced, `AutoSilenceNewJoins` is true.)";

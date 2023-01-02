@@ -36,7 +36,7 @@ public class Config
         LogChannel = 0;
 
         // User based settings
-        ManageNewUserRoles = true;
+        ManageNewUserRoles = false;
         MemberRole = 0;
         NewMemberRole = 0;
         NewMemberRoleDecay = 0;
