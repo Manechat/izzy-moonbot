@@ -33,6 +33,12 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
+    - name: Set up ENV
+      id: env
+      run: |
+        echo "BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_ENV
+        echo "BUILD_COMMIT=$GITHUB_SHA" >> $GITHUB_ENV
+
     - name: Build and push
       uses: docker/build-push-action@v3.2.0
       with:
@@ -41,6 +47,6 @@ jobs:
         push: true
         tags: ghcr.io/manechat/izzy-moonbot:latest
         build-args: |
-          BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
-          BUILD_COMMIT=$GITHUB_SHA
+          BUILD_DATE=${{ env.BUILD_DATE }}
+          BUILD_COMMIT=${{ env.BUILD_COMMIT }}
         platforms: linux/arm64
