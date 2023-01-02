@@ -4,6 +4,10 @@ Created November 27, 2021 by Dr. Romulus
 
 Bot for Manechat Management
 
+### Manechat Moderator Onboarding
+
+Get started by posting `.help` and/or `.config` in one of the private bots-* channels. From there you can explore Izzy's self-documentation for all commands and configuration items. You don't need to read all of them, but browsing them should give you a pretty good idea what she can do.
+
 ### Developer Onboarding
 
 - Install Visual Studio and .NET 6. See also [Discord.Net's documentation](https://discordnet.dev/guides/getting_started/installing.html?tabs=vs-install%2Ccore2-1).
