@@ -8,20 +8,11 @@ updates:
 
   #Maintain dependencies for Main NuGet / .NET
   - package-ecosystem: "nuget" # See documentation for possible values
-    directory: "/Izzy-Moonbot" # Location of package manifests
+    directory: "/Izzy-MoonbotTests" # Location of package manifests
     schedule:
       interval: "weekly"
     # Prefix all commit messages with "NuGet"
     # include a list of updated dependencies
-    commit-message:
-      prefix: "NuGet"
-      include: "scope"
-
-  #Maintain dependencies for Tests NuGet / .NET
-  - package-ecosystem: "nuget"
-    directory: "/Izzy-MoonbotTests"
-    schedule:
-      interval: "weekly"
     commit-message:
       prefix: "NuGet"
       include: "scope"
