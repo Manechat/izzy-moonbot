@@ -438,7 +438,7 @@ public class MiscModuleTests
         await mm.TestableHelpCommandAsync(context, "reminder");
 
         Assert.AreEqual("Sorry, I was unable to find any command, category, or alias named \"reminder\" that you have access to." +
-            "\nDid you mean `.remindme` or `.remind`?", generalChannel.Messages.Last().Content);
+            "\nDid you mean `.remindme`?", generalChannel.Messages.Last().Content);
     }
 
     [TestMethod()]

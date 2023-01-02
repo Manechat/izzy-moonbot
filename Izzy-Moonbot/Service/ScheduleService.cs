@@ -12,6 +12,7 @@ using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Settings;
 using Microsoft.Extensions.Logging;
 using static Izzy_Moonbot.Settings.ScheduledJobRepeatType;
+using static Izzy_Moonbot.Adapters.IIzzyClient;
 
 namespace Izzy_Moonbot.Service;
 
@@ -39,6 +40,11 @@ public class ScheduleService
         _modLogging = modLogging;
         _generalStorage = generalStorage;
         _scheduledJobs = scheduledJobs;
+    }
+
+    public void RegisterEvents(IIzzyClient client)
+    {
+        client.ButtonExecuted += async (component) => await DiscordHelper.LeakOrAwaitTask(ButtonEvent(component));
     }
 
     public void BeginUnicycleLoop(IIzzyClient client)
@@ -104,7 +110,7 @@ public class ScheduleService
                         await Unicycle_Unban(unbanJob, defaultGuild, client);
                         break;
                     case ScheduledEchoJob echoJob:
-                        await Unicycle_Echo(echoJob, defaultGuild, client);
+                        await Unicycle_Echo(echoJob, defaultGuild, client, job.RepeatType, job.Id);
                         break;
                     case ScheduledBannerRotationJob bannerRotationJob:
                         await Unicycle_BannerRotation(bannerRotationJob, defaultGuild, client);
@@ -291,13 +297,22 @@ public class ScheduleService
             .Send();
     }
 
-    private async Task Unicycle_Echo(ScheduledEchoJob job, IIzzyGuild guild, IIzzyClient client)
+    private async Task Unicycle_Echo(ScheduledEchoJob job, IIzzyGuild guild, IIzzyClient client, ScheduledJobRepeatType repeatType, string jobId)
     {
         if (job.Content == "") return;
+
         var channel = guild.GetTextChannel(job.ChannelOrUser);
         if (channel == null)
         {
-            await client.SendDirectMessageAsync(job.ChannelOrUser, job.Content);
+            MessageComponent? components = null;
+            if (repeatType != None)
+                components = new ComponentBuilder().WithButton(
+                    customId: $"cancel-echo-job:{jobId}",
+                    label: "Unsubscribe",
+                    style: ButtonStyle.Primary
+                ).Build();
+
+            await client.SendDirectMessageAsync(job.ChannelOrUser, job.Content, components: components);
             return;
         }
 
@@ -492,5 +507,38 @@ public class ScheduleService
                     $"Encountered exception when trying to change banner: {ex.Message}{Environment.NewLine}{ex.StackTrace}");
             }
         }
+    }
+
+    private async Task ButtonEvent(IIzzySocketMessageComponent component)
+    {
+        var buttonId = component.Data.CustomId;
+
+        _logger.Log($"Received ButtonExecuted event with button id {buttonId}");
+        var idParts = buttonId.Split(':');
+        if (idParts.Length == 2 && idParts[0] == "cancel-echo-job")
+        {
+            var jobId = idParts[1];
+            var job = GetScheduledJob(jobId);
+            if (job is null)
+            {
+                _logger.Log($"Ignoring unsubscribe button click for job {jobId} because that job no longer exists");
+                return;
+            }
+
+            _logger.Log($"Cancelling job {jobId} due to unsubscribe button click");
+            await DeleteScheduledJob(job);
+
+            await component.UpdateAsync(msg =>
+            {
+                msg.Components = new ComponentBuilder().WithButton(
+                    customId: "successfully-unsubscribed",
+                    label: "Successfully Unsubscribed",
+                    disabled: true,
+                    style: ButtonStyle.Success
+                ).Build();
+            });
+        }
+
+        await component.DeferAsync();
     }
 }
