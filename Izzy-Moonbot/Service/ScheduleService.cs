@@ -64,7 +64,7 @@ public class ScheduleService
             }
             catch (Exception exception)
             {
-                _logger.Log($"{exception.Message}{Environment.NewLine}{exception.StackTrace}", level: LogLevel.Error);
+                _logger.Log($"{exception.Message}\n{exception.StackTrace}", level: LogLevel.Error);
             }
 
             // Call self
@@ -118,10 +118,10 @@ public class ScheduleService
             catch (Exception ex)
             {
                 _logger.Log(
-                    $"Scheduled job threw an exception when trying to execute!{Environment.NewLine}" +
-                    $"Type: {ex.GetType().Name}{Environment.NewLine}" +
-                    $"Message: {ex.Message}{Environment.NewLine}" +
-                    $"Job: {job}{Environment.NewLine}" +
+                    $"Scheduled job threw an exception when trying to execute!\n" +
+                    $"Type: {ex.GetType().Name}\n" +
+                    $"Message: {ex.Message}\n" +
+                    $"Job: {job}\n" +
                     $"Stack Trace: {ex.StackTrace}");
             }
 
@@ -369,7 +369,7 @@ public class ScheduleService
                         $"Tried to change banner but the host server didn't respond fast enough, is it down? If so please run `.config BannerMode None` to avoid unnecessarily pinging Manebooru.")
                     .Send();
                 _logger.Log(
-                    $"Encountered HTTP timeout exception when trying to change banner: {ex.Message}{Environment.NewLine}{ex.StackTrace}");
+                    $"Encountered HTTP timeout exception when trying to change banner: {ex.Message}\n{ex.StackTrace}");
             }
             catch (FlurlHttpException ex)
             {
@@ -381,7 +381,7 @@ public class ScheduleService
                         $"Tried to change banner and received a {ex.StatusCode} status code when attempting to ask the host server for the image. Doing nothing.")
                     .Send();
                 _logger.Log(
-                    $"Encountered HTTP exception when trying to change banner: {ex.Message}{Environment.NewLine}{ex.StackTrace}");
+                    $"Encountered HTTP exception when trying to change banner: {ex.Message}\n{ex.StackTrace}");
             }
             catch (Exception ex)
             {
@@ -392,7 +392,7 @@ public class ScheduleService
                         $"Tried to change banner and received a general error when attempting to ask the host server for the image. Doing nothing.")
                     .Send();
                 _logger.Log(
-                    $"Encountered exception when trying to change banner: {ex.Message}{Environment.NewLine}{ex.StackTrace}");
+                    $"Encountered exception when trying to change banner: {ex.Message}\n{ex.StackTrace}");
             }
         }
         else if (_config.BannerMode == ConfigListener.BannerMode.ManebooruFeatured)
@@ -451,7 +451,7 @@ public class ScheduleService
                         $"Tried to change banner but Manebooru didn't respond fast enough, is it down? If so please run `.config BannerMode None` to avoid unnecessarily pinging Manebooru.")
                     .Send();
                 _logger.Log(
-                    $"Encountered HTTP timeout exception when trying to change banner: {ex.Message}{Environment.NewLine}{ex.StackTrace}");
+                    $"Encountered HTTP timeout exception when trying to change banner: {ex.Message}\n{ex.StackTrace}");
             }
             catch (FlurlHttpException ex)
             {
@@ -471,7 +471,7 @@ public class ScheduleService
                         $"  - Manebooru is down and Cloudflare is giving me a error page.")
                     .Send();
                 _logger.Log(
-                    $"Encountered HTTP exception when trying to change banner: {ex.Message}{Environment.NewLine}{ex.StackTrace}");
+                    $"Encountered HTTP exception when trying to change banner: {ex.Message}\n{ex.StackTrace}");
             }
             catch (Exception ex)
             {
@@ -490,7 +490,7 @@ public class ScheduleService
                         $"  - The banner rotation job is an unexpected state.")
                     .Send();
                 _logger.Log(
-                    $"Encountered exception when trying to change banner: {ex.Message}{Environment.NewLine}{ex.StackTrace}");
+                    $"Encountered exception when trying to change banner: {ex.Message}\n{ex.StackTrace}");
             }
         }
     }

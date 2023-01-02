@@ -78,7 +78,7 @@ public class LoggingService
             logMessage += message;
         }
 
-        if (header) logMessage += Environment.NewLine;
+        if (header) logMessage += '\n';
 
         return logMessage;
     }

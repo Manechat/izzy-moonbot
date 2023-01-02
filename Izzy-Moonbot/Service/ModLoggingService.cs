@@ -92,7 +92,7 @@ public class ModLogBuilder
             var filepath = FileHelper.SetUpFilepath(FilePathType.Root, "moderation", "log");
 
             if (!File.Exists(filepath))
-                await File.WriteAllTextAsync(filepath, $"----------= {DateTimeOffset.UtcNow:F} =----------{Environment.NewLine}");
+                await File.WriteAllTextAsync(filepath, $"----------= {DateTimeOffset.UtcNow:F} =----------\n");
 
             await File.AppendAllTextAsync(filepath, modLogFileContent);
         }
@@ -140,7 +140,7 @@ public class BatchLogger
             }
 
             if (modLogChannel != null)
-                await modLogChannel.SendMessageAsync(string.Join($"{Environment.NewLine}", modLogContent),
+                await modLogChannel.SendMessageAsync(string.Join($"\n", modLogContent),
                     embeds: modLogEmbeds.ToArray());
             
             _modLogs.Clear();

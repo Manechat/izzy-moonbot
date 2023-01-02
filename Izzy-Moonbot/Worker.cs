@@ -88,9 +88,9 @@ namespace Izzy_Moonbot
                 var filepath = FileHelper.SetUpFilepath(FilePathType.Root, "moderation", "log");
                 
                 if (!File.Exists(filepath))
-                    await File.WriteAllTextAsync(filepath, $"----------= {DateTimeOffset.UtcNow:F} =----------{Environment.NewLine}", stoppingToken);
+                    await File.WriteAllTextAsync(filepath, $"----------= {DateTimeOffset.UtcNow:F} =----------\n", stoppingToken);
                 
-                await File.AppendAllTextAsync(filepath, $"----------= {DateTimeOffset.UtcNow:F} =----------{Environment.NewLine}", stoppingToken);
+                await File.AppendAllTextAsync(filepath, $"----------= {DateTimeOffset.UtcNow:F} =----------\n", stoppingToken);
 
                 if (_config.DiscordActivityName != null)
                 {
@@ -344,9 +344,9 @@ namespace Izzy_Moonbot
                     var stowawayStringFileList = stowawaySet.Select(user => $"{user.Username}#{user.Discriminator}");
                     
                     await _modLog.CreateModLog(guild)
-                        .SetContent($"I found these stowaways after I rebooted, cannot tell if they're new users:{Environment.NewLine}" +
+                        .SetContent($"I found these stowaways after I rebooted, cannot tell if they're new users:\n" +
                                     string.Join(", ", stowawayStringList))
-                        .SetFileLogContent($"I found these stowaways after I rebooted, cannot tell if they're new users:{Environment.NewLine}" +
+                        .SetFileLogContent($"I found these stowaways after I rebooted, cannot tell if they're new users:\n" +
                                            string.Join(", ", stowawayStringFileList))
                         .Send();
                 }
@@ -414,14 +414,14 @@ namespace Izzy_Moonbot
                         if (_config.Aliases.Any(alias => alias.Key.ToLower() == commandAlias.ToLower()))
                         {
                             await context.Channel.SendMessageAsync(
-                                $"**Warning!** This alias directs to another alias!{Environment.NewLine}Izzy doesn't support aliases feeding into aliases. Please remove this alias or redirect it to an existing command.");
+                                $"**Warning!** This alias directs to another alias!\nIzzy doesn't support aliases feeding into aliases. Please remove this alias or redirect it to an existing command.");
                             return;
                         }
 
                         if (_commands.Commands.All(cmd => cmd.Name.ToLower() != commandAlias.ToLower()))
                         {
                             await context.Channel.SendMessageAsync(
-                                $"**Warning!** This alias directs to a non-existent command!{Environment.NewLine}Please remove this alias or redirect it to an existing command.");
+                                $"**Warning!** This alias directs to a non-existent command!\nPlease remove this alias or redirect it to an existing command.");
                             return;
                         }
 

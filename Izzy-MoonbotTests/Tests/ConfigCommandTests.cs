@@ -268,7 +268,7 @@ public class ConfigCommandTests
         var description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "MentionResponses");
         StringAssert.Contains(description, "I added the following");
-        StringAssert.Contains(description, $"```{Environment.NewLine}got something I can unicycle?{Environment.NewLine}```");
+        StringAssert.Contains(description, $"```\ngot something I can unicycle?\n```");
 
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config MentionResponses remove hello new friend!");
         await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "MentionResponses", "remove hello new friend!");
@@ -277,7 +277,7 @@ public class ConfigCommandTests
         description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "MentionResponses");
         StringAssert.Contains(description, "I removed the following");
-        StringAssert.Contains(description, $"```{Environment.NewLine}hello new friend!{Environment.NewLine}```");
+        StringAssert.Contains(description, $"```\nhello new friend!\n```");
 
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config MentionResponses clear");
         await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "MentionResponses", "clear");
@@ -304,7 +304,7 @@ public class ConfigCommandTests
         var description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "SpamBypassRoles");
         StringAssert.Contains(description, "I added the following");
-        StringAssert.Contains(description, $"{Environment.NewLine}Alicorn");
+        StringAssert.Contains(description, $"\nAlicorn");
 
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config SpamBypassRoles remove <@&2>");
         await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "SpamBypassRoles", "remove <@&2>");
@@ -313,7 +313,7 @@ public class ConfigCommandTests
         description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "SpamBypassRoles");
         StringAssert.Contains(description, "I removed the following");
-        StringAssert.Contains(description, $"{Environment.NewLine}Pegasus");
+        StringAssert.Contains(description, $"\nPegasus");
     }
 
     [TestMethod()]
@@ -329,7 +329,7 @@ public class ConfigCommandTests
         var description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "SpamIgnoredChannels");
         StringAssert.Contains(description, "I added the following");
-        StringAssert.Contains(description, $"{Environment.NewLine}general");
+        StringAssert.Contains(description, $"\ngeneral");
 
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, $".config SpamIgnoredChannels remove <#{modChat.Id}>");
         await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "SpamIgnoredChannels", $"remove <#{modChat.Id}>");
@@ -338,7 +338,7 @@ public class ConfigCommandTests
         description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "SpamIgnoredChannels");
         StringAssert.Contains(description, "I removed the following");
-        StringAssert.Contains(description, $"{Environment.NewLine}modchat");
+        StringAssert.Contains(description, $"\nmodchat");
     }
 
     [TestMethod()]
@@ -469,9 +469,9 @@ public class ConfigCommandTests
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config MentionResponses add yes i am bot");
         await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "MentionResponses", "add yes i am bot");
         TestUtils.AssertSetsAreEqual(new HashSet<string> { "yes i am bot" }, cfg.MentionResponses);
-        Assert.AreEqual($"I added the following content to the `MentionResponses` string list:{Environment.NewLine}" +
-            $"```{Environment.NewLine}" +
-            $"yes i am bot{Environment.NewLine}" +
+        Assert.AreEqual($"I added the following content to the `MentionResponses` string list:\n" +
+            $"```\n" +
+            $"yes i am bot\n" +
             $"```",
             generalChannel.Messages.Last().Content);
 
@@ -536,9 +536,9 @@ public class ConfigCommandTests
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config BannerImages add https://static.manebooru.art/img/2022/11/23/4025857/large.png");
         await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "BannerImages", "add https://static.manebooru.art/img/2022/11/23/4025857/large.png");
         TestUtils.AssertSetsAreEqual(new HashSet<string> { "https://static.manebooru.art/img/2022/11/23/4025857/large.png" }, cfg.BannerImages);
-        Assert.AreEqual($"I added the following content to the `BannerImages` string list:{Environment.NewLine}" +
-            $"```{Environment.NewLine}" +
-            $"https://static.manebooru.art/img/2022/11/23/4025857/large.png{Environment.NewLine}" +
+        Assert.AreEqual($"I added the following content to the `BannerImages` string list:\n" +
+            $"```\n" +
+            $"https://static.manebooru.art/img/2022/11/23/4025857/large.png\n" +
             $"```",
             generalChannel.Messages.Last().Content);
 
@@ -596,7 +596,7 @@ public class ConfigCommandTests
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config RolesToReapplyOnRejoin add <@&3>");
         await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "RolesToReapplyOnRejoin", "add <@&3>");
         TestUtils.AssertSetsAreEqual(new HashSet<ulong> { 3ul }, cfg.RolesToReapplyOnRejoin);
-        Assert.AreEqual($"I added the following content to the `RolesToReapplyOnRejoin` role list:{Environment.NewLine}" +
+        Assert.AreEqual($"I added the following content to the `RolesToReapplyOnRejoin` role list:\n" +
             $"New Pony",
             generalChannel.Messages.Last().Content);
 
@@ -612,7 +612,7 @@ public class ConfigCommandTests
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config FilterIgnoredChannels add <#2>");
         await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "FilterIgnoredChannels", "add <#2>");
         TestUtils.AssertSetsAreEqual(new HashSet<ulong> { 2ul }, cfg.FilterIgnoredChannels);
-        Assert.AreEqual($"I added the following content to the `FilterIgnoredChannels` channel list:{Environment.NewLine}" +
+        Assert.AreEqual($"I added the following content to the `FilterIgnoredChannels` channel list:\n" +
             $"modchat",
             generalChannel.Messages.Last().Content);
 
@@ -621,7 +621,7 @@ public class ConfigCommandTests
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config FilterBypassRoles add <@&1>");
         await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "FilterBypassRoles", "add <@&1>");
         TestUtils.AssertSetsAreEqual(new HashSet<ulong> { 1ul }, cfg.FilterBypassRoles);
-        Assert.AreEqual($"I added the following content to the `FilterBypassRoles` role list:{Environment.NewLine}" +
+        Assert.AreEqual($"I added the following content to the `FilterBypassRoles` role list:\n" +
             $"Alicorn",
             generalChannel.Messages.Last().Content);
 
@@ -651,9 +651,9 @@ public class ConfigCommandTests
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config FilterResponseSilence add slurs");
         await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "FilterResponseSilence", "add slurs");
         TestUtils.AssertSetsAreEqual(new HashSet<string> { "slurs" }, cfg.FilterResponseSilence);
-        Assert.AreEqual($"I added the following content to the `FilterResponseSilence` string list:{Environment.NewLine}" +
-            $"```{Environment.NewLine}" +
-            $"slurs{Environment.NewLine}" +
+        Assert.AreEqual($"I added the following content to the `FilterResponseSilence` string list:\n" +
+            $"```\n" +
+            $"slurs\n" +
             $"```",
             generalChannel.Messages.Last().Content);
 
@@ -669,7 +669,7 @@ public class ConfigCommandTests
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config SpamBypassRoles add <@&1>");
         await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "SpamBypassRoles", "add <@&1>");
         TestUtils.AssertSetsAreEqual(new HashSet<ulong> { 1ul }, cfg.SpamBypassRoles);
-        Assert.AreEqual($"I added the following content to the `SpamBypassRoles` role list:{Environment.NewLine}" +
+        Assert.AreEqual($"I added the following content to the `SpamBypassRoles` role list:\n" +
             $"Alicorn",
             generalChannel.Messages.Last().Content);
 
@@ -678,7 +678,7 @@ public class ConfigCommandTests
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config SpamIgnoredChannels add <#2>");
         await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "SpamIgnoredChannels", "add <#2>");
         TestUtils.AssertSetsAreEqual(new HashSet<ulong> { 2ul }, cfg.SpamIgnoredChannels);
-        Assert.AreEqual($"I added the following content to the `SpamIgnoredChannels` channel list:{Environment.NewLine}" +
+        Assert.AreEqual($"I added the following content to the `SpamIgnoredChannels` channel list:\n" +
             $"modchat",
             generalChannel.Messages.Last().Content);
 
@@ -827,10 +827,10 @@ public class ConfigCommandTests
         var configPropsCount = typeof(Config).GetProperties().Length;
 
         Assert.AreEqual(51, configPropsCount,
-            $"{Environment.NewLine}If you just added or removed a config item, then this test is probably out of date");
+            $"\nIf you just added or removed a config item, then this test is probably out of date");
 
         Assert.AreEqual(configPropsCount * 2, generalChannel.Messages.Count(),
-            $"{Environment.NewLine}If you just added or removed a config item, then this test is probably out of date");
+            $"\nIf you just added or removed a config item, then this test is probably out of date");
     }
 
     [TestMethod()]
