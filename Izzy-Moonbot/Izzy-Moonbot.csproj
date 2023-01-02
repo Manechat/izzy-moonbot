@@ -32,6 +32,6 @@
         <PackageReference Include="Microsoft.Extensions.Hosting" Version="7.0.0-preview.5.22301.12" />
         <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="7.0.0-preview.5.22301.12" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.2-beta1" />
-        <PackageReference Include="Serilog.AspNetCore" Version="6.0.0-dev-00265" />
+        <PackageReference Include="Serilog.AspNetCore" Version="6.1.0" />
     </ItemGroup>
 </Project>
