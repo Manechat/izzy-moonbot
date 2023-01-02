@@ -199,28 +199,35 @@ public class UserListener
         {
             lastNickname = "<UNKNOWN>";
         }
+
         _logger.Log($"Last nickname was {lastNickname}, checking whether user was kicked or banned", level: LogLevel.Debug);
-        var kickAuditLog = guild.GetAuditLogsAsync(2, actionType: ActionType.Kick).FirstAsync()
+
+        // Unfortunately Discord(.NET) doesn't tell us anything about why or how a user left a server, merely that they did.
+        // To infer that they left *because* of a kick/ban, we arbitrarily assume that whenever a user is kicked/banned,
+        // Discord will send the UserLeft event within 100 seconds, before 5 other kicks/bans take place, *and*
+        // that the user will not be unbannned, re-join and re-leave all within 100 seconds.
+
+        var kickAuditLog = guild.GetAuditLogsAsync(5, actionType: ActionType.Kick).FirstAsync()
             .GetAwaiter().GetResult()
             .Select(audit =>
             {
                 var data = audit.Data as KickAuditLogData;
                 if (data?.Target.Id == user.Id)
                 {
-                    if ((audit.CreatedAt.ToUnixTimeSeconds() - DateTimeOffset.UtcNow.ToUnixTimeSeconds()) <= 2)
+                    if ((DateTimeOffset.UtcNow.ToUnixTimeSeconds() - audit.CreatedAt.ToUnixTimeSeconds()) <= 100)
                         return audit;
                 }
                 return null;
             }).Where(audit => audit != null).FirstOrDefault();
 
-        var banAuditLog = guild.GetAuditLogsAsync(2, actionType: ActionType.Ban).FirstAsync()
+        var banAuditLog = guild.GetAuditLogsAsync(5, actionType: ActionType.Ban).FirstAsync()
             .GetAwaiter().GetResult()
             .Select(audit =>
             {
                 var data = audit.Data as BanAuditLogData;
                 if (data?.Target.Id == user.Id)
                 {
-                    if ((audit.CreatedAt.ToUnixTimeSeconds() - DateTimeOffset.UtcNow.ToUnixTimeSeconds()) <= 2)
+                    if ((DateTimeOffset.UtcNow.ToUnixTimeSeconds() - audit.CreatedAt.ToUnixTimeSeconds()) <= 100)
                         return audit;
                 }
                 return null;
