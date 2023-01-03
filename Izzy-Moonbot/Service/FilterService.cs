@@ -42,7 +42,7 @@ public class FilterService
     public void RegisterEvents(IIzzyClient client)
     {
         client.MessageReceived += async (message) => await DiscordHelper.LeakOrAwaitTask(ProcessMessage(message, client));
-        client.MessageUpdated += async (newMessage, channel) => await DiscordHelper.LeakOrAwaitTask(ProcessMessageUpdate(newMessage, channel, client));
+        client.MessageUpdated += async (_oldMessage, newMessage, channel) => await DiscordHelper.LeakOrAwaitTask(ProcessMessageUpdate(newMessage, channel, client));
     }
 
     private async Task LogFilterTrip(IIzzyContext context, string word, string category,

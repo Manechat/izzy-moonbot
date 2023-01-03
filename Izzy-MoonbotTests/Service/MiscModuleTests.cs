@@ -48,6 +48,7 @@ public class MiscModuleTests
         services.AddSingleton(services);
         services.AddSingleton<ConfigListener>();
         services.AddSingleton<UserListener>();
+        services.AddSingleton<MessageListener>();
         services.AddHostedService<Worker>();
 
         var commands = new CommandService();

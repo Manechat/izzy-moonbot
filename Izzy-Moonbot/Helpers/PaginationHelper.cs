@@ -233,9 +233,9 @@ public class PaginationHelper
         await component.DeferAsync();
     }
 
-    private async Task MessageDeletedEvent(IIzzyHasId message, IIzzyHasId channel)
+    private async Task MessageDeletedEvent(ulong messageId, IIzzyMessage? _message, ulong _channelId, IIzzyMessageChannel? _channel)
     {
-        if (_message?.Id == message.Id)
+        if (_message?.Id == messageId)
         {
             _client.ButtonExecuted -= ButtonEvent;
             _client.MessageDeleted -= MessageDeletedEvent;
