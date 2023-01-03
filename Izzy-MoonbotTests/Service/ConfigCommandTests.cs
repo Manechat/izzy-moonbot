@@ -553,12 +553,12 @@ public class ConfigCommandTests
         Assert.AreEqual(cfg.LogChannel, 3ul);
         Assert.AreEqual("I've set `LogChannel` to the following content: <#3>", generalChannel.Messages.Last().Content);
 
-        // post ".config ManageNewUserRoles false"
-        Assert.AreEqual(cfg.ManageNewUserRoles, true);
-        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config ManageNewUserRoles false");
-        await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "ManageNewUserRoles", "false");
+        // post ".config ManageNewUserRoles true"
         Assert.AreEqual(cfg.ManageNewUserRoles, false);
-        Assert.AreEqual("I've set `ManageNewUserRoles` to the following content: False", generalChannel.Messages.Last().Content);
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config ManageNewUserRoles true");
+        await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "ManageNewUserRoles", "true");
+        Assert.AreEqual(cfg.ManageNewUserRoles, true);
+        Assert.AreEqual("I've set `ManageNewUserRoles` to the following content: True", generalChannel.Messages.Last().Content);
 
         // post ".config MemberRole <@&2>"
         Assert.AreEqual(cfg.MemberRole, 0ul);
