@@ -1,5 +1,9 @@
 # Izzy Moonbot
 
+![dotnet](https://github.com/Manechat/izzy-moonbot/actions/workflows/dotnet.yml/badge.svg)
+![docker-build-deploy](https://github.com/Manechat/izzy-moonbot/actions/workflows/docker-build-deploy.yml/badge.svg)
+![package-prune](https://github.com/Manechat/izzy-moonbot/actions/workflows/package-prune.yml/badge.svg)
+
 Created November 27, 2021 by Dr. Romulus
 
 Bot for Manechat Management
