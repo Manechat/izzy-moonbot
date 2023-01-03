@@ -67,7 +67,7 @@ namespace Izzy_Moonbot
             _configListener = configListener;
 
             var discordConfig = new DiscordSocketConfig {
-                GatewayIntents = GatewayIntents.Guilds | GatewayIntents.GuildMembers | GatewayIntents.GuildMessages | GatewayIntents.DirectMessages,
+                GatewayIntents = GatewayIntents.Guilds | GatewayIntents.GuildMembers | GatewayIntents.GuildMessages | GatewayIntents.DirectMessages | GatewayIntents.MessageContent,
                 MessageCacheSize = 50
             };
             _client = new DiscordSocketClient(discordConfig);
