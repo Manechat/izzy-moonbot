@@ -42,7 +42,7 @@ public class FilterService
     public void RegisterEvents(IIzzyClient client)
     {
         client.MessageReceived += async (message) => await DiscordHelper.LeakOrAwaitTask(ProcessMessage(message, client));
-        client.MessageUpdated += async (_oldMessage, newMessage, channel) => await DiscordHelper.LeakOrAwaitTask(ProcessMessageUpdate(newMessage, channel, client));
+        client.MessageUpdated += async (oldContent, newMessage, channel) => await DiscordHelper.LeakOrAwaitTask(ProcessMessageUpdate(oldContent, newMessage, channel, client));
     }
 
     private async Task LogFilterTrip(IIzzyContext context, string word, string category,
@@ -153,9 +153,12 @@ public class FilterService
         }
     }
 
-    public async Task ProcessMessageUpdate(IIzzyMessage newMessage,
+    public async Task ProcessMessageUpdate(
+        string? oldContent, IIzzyMessage newMessage,
         IIzzyMessageChannel channel, IIzzyClient client)
     {
+        if (newMessage.Content == oldContent) return; // Ignore non-content edits
+
         if (newMessage.Author.Id == client.CurrentUser.Id) return; // Don't process self.
         
         if (!_config.FilterEnabled) return;

@@ -51,6 +51,13 @@ public class MessageListener
             return;
         }
 
+        if (newMessage.Content == oldContent)
+        {
+            _logger.Log($"Skipping LogChannel post for MessageUpdated event because the message's .Content did not change. " +
+                $"This means some other property was edited, e.g. Discord auto-unfurled a link, or the message was pinned.");
+            return;
+        }
+
         var author = newMessage.Author;
         if (author.Id == client.CurrentUser.Id) return; // Don't process self.
         if (author.IsBot) return; // Don't listen to bots
