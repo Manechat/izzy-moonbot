@@ -13,8 +13,13 @@ public class Config
     
     public Config()
     {
-        // Core settings
+        // Setup settings
         Prefix = '.';
+        ModRole = 0;
+        ModChannel = 0;
+        LogChannel = 0;
+
+        // Misc settings
         UnicycleInterval = 100;
         MentionResponseEnabled = false;
         MentionResponses = new HashSet<string>();
@@ -25,17 +30,12 @@ public class Config
         FirstRuleMessageId = 0;
         HiddenRules = new Dictionary<string, string>();
 
-        // Server settings
+        // Banner settings
         _bannerMode = ConfigListener.BannerMode.None;
         _bannerInterval = 60;
         BannerImages = new HashSet<string>();
 
-        // Mod settings
-        ModRole = 0;
-        ModChannel = 0;
-        LogChannel = 0;
-
-        // User based settings
+        // ManagedRoles settings
         ManageNewUserRoles = false;
         MemberRole = 0;
         NewMemberRole = 0;
@@ -51,7 +51,7 @@ public class Config
         FilterResponseMessages = new Dictionary<string, string?>();
         FilterResponseSilence = new HashSet<string>();
 
-        // Pressure settings
+        // Spam settings
         SpamEnabled = true;
         SpamBypassRoles = new HashSet<ulong>();
         SpamIgnoredChannels = new HashSet<ulong>();
