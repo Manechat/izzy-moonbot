@@ -323,6 +323,19 @@ public class TestTextChannel : IIzzySocketTextChannel
             };
         }
     }
+    public async IAsyncEnumerable<IReadOnlyCollection<IIzzyMessage>> GetMessagesAsync(int messageCount)
+    {
+        var stubMessages = _channel.Messages.TakeLast(messageCount);
+
+        foreach (var m in stubMessages)
+        {
+            var user = _guildBackref.Users.Find(u => u.Id == m.AuthorId);
+            if (user is null) continue;
+            yield return new List<IIzzyMessage>{
+                new TestMessage(m, user, _channel, _guildBackref, _clientBackref)
+            };
+        }
+    }
 }
 
 public class TestMessageChannel : IIzzyMessageChannel
