@@ -77,6 +77,11 @@ public class Config
         RecentJoinDecay = 300;
         SmallRaidDecay = 5;
         LargeRaidDecay = 30;
+
+        // Bored settings
+        _boredChannel = 0;
+        _boredCooldown = 300;
+        BoredCommands = new HashSet<string>();
     }
 
     // Core settings
@@ -163,4 +168,29 @@ public class Config
     public double RecentJoinDecay { get; set; }
     public double? SmallRaidDecay { get; set; }
     public double? LargeRaidDecay { get; set; }
+
+    // Bored settings
+    private ulong _boredChannel { get; set; }
+    public ulong BoredChannel
+    {
+        get => _boredChannel;
+        set
+        {
+            var eventData = new ConfigValueChangeEvent("BoredChannel", _boredChannel, value);
+            Changed?.Invoke(this, eventData);
+            _boredChannel = value;
+        }
+    }
+    private double _boredCooldown { get; set; }
+    public double BoredCooldown
+    {
+        get => _boredCooldown;
+        set
+        {
+            var eventData = new ConfigValueChangeEvent("BoredCooldown", _boredCooldown, value);
+            Changed?.Invoke(this, eventData);
+            _boredCooldown = value;
+        }
+    }
+    public HashSet<string> BoredCommands { get; set; }
 }

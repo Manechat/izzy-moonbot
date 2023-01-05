@@ -224,6 +224,18 @@ public class ConfigDescriber
             new ConfigItem(ConfigItemType.Double,
                 "How many minutes do I wait before automatically downgrading a Large raid to a Small raid.",
                 ConfigItemCategory.Raid, true));
+
+        // Bored settings
+        _config.Add("BoredChannel",
+            new ConfigItem(ConfigItemType.Channel,
+                "The channel where I'll execute a randomly selected command from BoredCommands after BoredCooldown seconds of inactivity.\n" +
+                "Set to nothing to disabled bored commands.", ConfigItemCategory.Bored));
+        _config.Add("BoredCooldown",
+            new ConfigItem(ConfigItemType.Double,
+                "How many seconds I'll wait before executing a randomly selected command from BoredCommands in BoredChannel.", ConfigItemCategory.Bored));
+        _config.Add("BoredCommands",
+            new ConfigItem(ConfigItemType.StringSet,
+                "The commands I'll randomly execute in BoredChannel after BoredCooldown seconds of inactivity.", ConfigItemCategory.Bored));
     }
 
     public List<string> GetSettableConfigItems()

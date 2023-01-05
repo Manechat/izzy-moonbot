@@ -42,6 +42,12 @@ public class ConfigListener
             case "BannerInterval":
                 await Handle_BannerInterval(e);
                 break;
+            case "BoredChannel":
+                await Handle_BoredChannel(e, client);
+                break;
+            case "BoredCooldown":
+                await Handle_BoredCooldown(e);
+                break;
             default:
                 throw new NotImplementedException("This config value doesn't have a method to fire on change.");
         }
@@ -122,5 +128,13 @@ public class ConfigListener
         None,
         CustomRotation,
         ManebooruFeatured
+    }
+
+    private async Task Handle_BoredChannel(ConfigValueChangeEvent e, DiscordSocketClient client)
+    {
+    }
+
+    private async Task Handle_BoredCooldown(ConfigValueChangeEvent e)
+    {
     }
 }
