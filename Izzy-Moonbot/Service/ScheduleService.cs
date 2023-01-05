@@ -12,6 +12,7 @@ using Izzy_Moonbot.Settings;
 using Microsoft.Extensions.Logging;
 using static Izzy_Moonbot.Settings.ScheduledJobRepeatType;
 using static Izzy_Moonbot.Adapters.IIzzyClient;
+using static System.Collections.Specialized.BitVector32;
 
 namespace Izzy_Moonbot.Service;
 
@@ -110,6 +111,9 @@ public class ScheduleService
                         break;
                     case ScheduledBannerRotationJob bannerRotationJob:
                         await Unicycle_BannerRotation(bannerRotationJob, defaultGuild, client);
+                        break;
+                    case ScheduledBoredCommandsJob boredCommandsJob:
+                        await Unicycle_BoredCommands(boredCommandsJob, defaultGuild, client);
                         break;
                     default:
                         throw new NotSupportedException($"{job.Action.GetType().Name} is currently not supported.");
@@ -552,5 +556,42 @@ public class ScheduleService
         });
 
         await component.DeferAsync();
+    }
+
+    public async Task Unicycle_BoredCommands(ScheduledBoredCommandsJob _job, IIzzyGuild guild, IIzzyClient _client)
+    {
+        var boredChannel = guild.GetTextChannel(_config.BoredChannel);
+        if (boredChannel is null)
+        {
+            _logger.Log($"Could not get a text channel with id {_config.BoredChannel} from the default guild. " +
+                "Will not reschedule bored task");
+            return;
+        }
+
+        DateTimeOffset lastMessage = DateTimeOffset.UnixEpoch;
+        await foreach (var messageBatch in boredChannel.GetMessagesAsync(1))
+            foreach (var message in messageBatch)
+                lastMessage = message.Timestamp;
+
+        DateTimeOffset nextExecuteTime;
+        if ((DateTimeHelper.UtcNow - lastMessage).TotalSeconds > _config.BoredCooldown)
+        {
+            // TODO: actually implement bored command selection and execution
+            _logger.Log($"last BoredChannel message was posted {lastMessage} which was over {_config.BoredCooldown} seconds ago. Executing randomly selected command: ???");
+            await boredChannel.SendMessageAsync("I'm booooooored");
+
+            // Then reschedule ourselves
+            nextExecuteTime = DateTimeHelper.UtcNow.AddSeconds(_config.BoredCooldown);
+        }
+        else
+        {
+            _logger.Log($"BoredChannel has recent activity at {lastMessage}, not executing anything.");
+            nextExecuteTime = lastMessage.AddSeconds(_config.BoredCooldown);
+        }
+
+        _logger.Log($"Scheduling next BoredCommands job for {nextExecuteTime}");
+        var nextJob = new ScheduledJob(DateTimeHelper.UtcNow, nextExecuteTime, new ScheduledBoredCommandsJob(), ScheduledJobRepeatType.None);
+        await CreateScheduledJob(nextJob);
+
     }
 }

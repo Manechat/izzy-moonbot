@@ -119,6 +119,7 @@ public class DiscordNetMessageAdapter : IIzzyMessage
     public IReadOnlyCollection<IAttachment> Attachments => _message.Attachments;
     public IReadOnlyCollection<IEmbed> Embeds => _message.Embeds;
     public IReadOnlyCollection<IStickerItem> Stickers => _message.Stickers;
+    public DateTimeOffset Timestamp => _message.Timestamp;
     public async Task DeleteAsync() => await _message.DeleteAsync();
     public string GetJumpUrl() => _message.GetJumpUrl();
 }
@@ -203,6 +204,11 @@ public class SocketTextChannelAdapter : IIzzySocketTextChannel
     public async IAsyncEnumerable<IReadOnlyCollection<IIzzyMessage>> GetMessagesAsync(ulong firstMessageId, Direction dir, int limit)
     {
         await foreach (var syncEnumerable in _channel.GetMessagesAsync(firstMessageId, dir, limit))
+            yield return syncEnumerable.Select(m => new DiscordNetMessageAdapter(m)).ToList();
+    }
+    public async IAsyncEnumerable<IReadOnlyCollection<IIzzyMessage>> GetMessagesAsync(int count)
+    {
+        await foreach (var syncEnumerable in _channel.GetMessagesAsync(count))
             yield return syncEnumerable.Select(m => new DiscordNetMessageAdapter(m)).ToList();
     }
 

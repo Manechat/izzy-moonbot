@@ -169,6 +169,7 @@ public static class FileHelper
                 3 => new ScheduledEchoJob(fileJson[i]["Action"]!["ChannelOrUser"]!.Value<ulong>(),
                     fileJson[i]["Action"]!["Content"]!.Value<string>()!),
                 4 => new ScheduledBannerRotationJob(),
+                5 => new ScheduledBoredCommandsJob(),
                 _ => throw new NotImplementedException("This scheduled job type is not implemented.")
             };
         }

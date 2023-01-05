@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Discord.WebSocket;
 using Izzy_Moonbot.Adapters;
@@ -133,9 +134,39 @@ public class ConfigListener
 
     private async Task Handle_BoredChannel(ConfigValueChangeEvent e, DiscordSocketClient client)
     {
+        if (e.Original == e.Current) return;
+
+        var original = e.Original is ulong originalValue ? originalValue : 0;
+        var current = e.Current is ulong currentValue ? currentValue : 0;
+
+        var scheduledJobs = _schedule.GetScheduledJobs(job => job.Action is ScheduledBoredCommandsJob);
+
+        if (current == 0 && scheduledJobs.Any())
+        {
+            foreach (var scheduledJob in scheduledJobs)
+                await _schedule.DeleteScheduledJob(scheduledJob);
+        }
+        else if (current != 0 && !scheduledJobs.Any())
+        {
+            var nextJob = new ScheduledJob(DateTimeHelper.UtcNow, DateTimeHelper.UtcNow, new ScheduledBoredCommandsJob(), ScheduledJobRepeatType.None);
+            await _schedule.CreateScheduledJob(nextJob);
+        }
     }
 
     private async Task Handle_BoredCooldown(ConfigValueChangeEvent e)
     {
+        if (e.Original == e.Current) return;
+
+        var original = e.Original is double originalValue ? originalValue : 0;
+        var current = e.Current is double currentValue ? currentValue : 0;
+
+        var scheduledJobs = _schedule.GetScheduledJobs(job => job.Action is ScheduledBoredCommandsJob);
+
+        _logger.Log($"Updating all scheduled jobs for bored commands to occur {current} seconds after creation instead of after {original} seconds.", level: LogLevel.Debug);
+        foreach (var scheduledJob in scheduledJobs)
+        {
+            scheduledJob.ExecuteAt = scheduledJob.CreatedAt.AddSeconds(current);
+            await _schedule.ModifyScheduledJob(scheduledJob.Id, scheduledJob);
+        }
     }
 }
