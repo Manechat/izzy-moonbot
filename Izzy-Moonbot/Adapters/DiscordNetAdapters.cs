@@ -131,7 +131,7 @@ public class DiscordNetMessageAdapter : IIzzyMessage
 public class DiscordNetUserMessageAdapter : IIzzyUserMessage
 {
 
-    private readonly IUserMessage _message;
+    public readonly IUserMessage _message;
 
     public DiscordNetUserMessageAdapter(IUserMessage message)
     {
@@ -362,7 +362,7 @@ public class SocketMessageComponentAdapter : IIzzySocketMessageComponent
 
 public class DiscordSocketClientAdapter : IIzzyClient
 {
-    private readonly DiscordSocketClient _client;
+    public readonly DiscordSocketClient _client;
 
     public DiscordSocketClientAdapter(DiscordSocketClient client)
     {

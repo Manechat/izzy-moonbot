@@ -14,6 +14,8 @@ using Microsoft.Extensions.Logging;
 using static Izzy_Moonbot.Settings.ScheduledJobRepeatType;
 using static Izzy_Moonbot.Adapters.IIzzyClient;
 using static System.Collections.Specialized.BitVector32;
+using System.Windows.Input;
+using Discord.Commands;
 
 namespace Izzy_Moonbot.Service;
 
@@ -565,8 +567,20 @@ public class ScheduleService
         if ((DateTimeHelper.UtcNow - lastMessage).TotalSeconds > _config.BoredCooldown)
         {
             // TODO: actually implement bored command selection and execution
+
+            // make Worker do _schedule.SetExecuteCommandCallback() ? but then where would Worker get a context from?
+
             _logger.Log($"last BoredChannel message was posted {lastMessage} which was over {_config.BoredCooldown} seconds ago. Executing randomly selected command: ???");
             await boredChannel.SendMessageAsync("I'm booooooored");
+            // var result = await _commands.ExecuteAsync(context, parsedMessage, _services.BuildServiceProvider());
+
+            ICommandContext context;
+
+            SocketUserMessage sumsg;
+
+            var realContext = new SocketCommandContext(
+                ((DiscordSocketClientAdapter)_client)._client,
+                (SocketUserMessage)((DiscordNetUserMessageAdapter)_message)._message);
 
             // Then reschedule ourselves
             nextExecuteTime = DateTimeHelper.UtcNow.AddSeconds(_config.BoredCooldown);
