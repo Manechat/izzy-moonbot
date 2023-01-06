@@ -12,11 +12,19 @@ namespace Izzy_Moonbot.Service;
 
 public class UserService
 {
-    private readonly IMongoCollection<User> _users;
+    private readonly List<User>? _testUsers;
+    private readonly IMongoCollection<User>? _users;
 
-    public UserService(DatabaseHelper database)
+    public UserService(DatabaseHelper database, bool test = false)
     {
-        _users = database.GetCollection<User>("users");
+        if (test)
+        {
+            _testUsers = new List<User>();
+        }
+        else
+        {
+            _users = database.GetCollection<User>("users");
+        }
     }
 
     /// <summary>
@@ -80,9 +88,19 @@ public class UserService
     /// <returns>A user object, or null if no user is found.</returns>
     public async Task<User?> GetUser(ulong id)
     {
-        var userData = await _users.FindAsync(userCompare => userCompare.Id == id);
+        if (_users != null)
+        {
+            var userData = await _users.FindAsync(userCompare => userCompare.Id == id);
 
-        return userData.FirstOrDefault();
+            return userData.FirstOrDefault();
+        }
+        else
+        {
+            if (_testUsers == null) throw new InvalidOperationException("Both _users and _testUsers is null!");
+            var userData = _testUsers.FindAll(userCompare => userCompare.Id == id);
+
+            return userData.FirstOrDefault();
+        }
     }
     
     /// <summary>
@@ -92,10 +110,21 @@ public class UserService
     /// <returns>A user object, or null if no user is found.</returns>
     public async Task<User?> GetUser(string search)
     {
-        var userData = await _users.FindAsync(userCompare =>
-            userCompare.Aliases.Any(aliases => aliases.Contains(search)));
-        
-        return userData.FirstOrDefault();
+        if (_users != null)
+        {
+            var usersData = await _users.FindAsync(userCompare =>
+                userCompare.Aliases.Any(aliases => aliases.Contains(search)));
+
+            return usersData.FirstOrDefault();
+        }
+        else
+        {
+            if (_testUsers == null) throw new InvalidOperationException("Both _users and _testUsers is null!");
+            var usersData = _testUsers.FindAll(userCompare =>
+                userCompare.Aliases.Any(aliases => aliases.Contains(search)));
+
+            return usersData.FirstOrDefault();
+        }
     }
     
     /// <summary>
@@ -128,9 +157,19 @@ public class UserService
     /// <returns>An array of users.</returns>
     public async Task<User[]> GetUsers(IEnumerable<ulong> ids)
     {
-        var userData = await _users.FindAsync(userCompare => ids.Contains(userCompare.Id));
+        if (_users != null)
+        {
+            var userData = await _users.FindAsync(userCompare => ids.Contains(userCompare.Id));
 
-        return userData.ToEnumerable().ToArray();
+            return userData.ToEnumerable().ToArray();
+        }
+        else
+        {
+            if (_testUsers == null) throw new InvalidOperationException("Both _users and _testUsers is null!");
+            var userData = _testUsers.FindAll(userCompare => ids.Contains(userCompare.Id));
+
+            return userData.ToArray();
+        }
     }
 
     /// <summary>
@@ -140,10 +179,21 @@ public class UserService
     /// <returns>An array of users.</returns>
     public async Task<User[]> GetUsers(string search)
     {
-        var usersData =
-            await _users.FindAsync(userCompare => userCompare.Aliases.Any(aliases => aliases.Contains(search)));
+        if (_users != null)
+        {
+            var usersData =
+                await _users.FindAsync(userCompare => userCompare.Aliases.Any(aliases => aliases.Contains(search)));
 
-        return usersData.ToEnumerable().ToArray();
+            return usersData.ToEnumerable().ToArray();
+        }
+        else
+        {
+            if (_testUsers == null) throw new InvalidOperationException("Both _users and _testUsers is null!");
+            var usersData =
+                _testUsers.FindAll(userCompare => userCompare.Aliases.Any(aliases => aliases.Contains(search)));
+
+            return usersData.ToArray();
+        }
     }
 
     /// <summary>
@@ -152,7 +202,15 @@ public class UserService
     /// <param name="user">The User object to add to the database.</param>
     public async Task CreateUser(User user)
     {
-        await _users.InsertOneAsync(user);
+        if (_users != null)
+        {
+            await _users.InsertOneAsync(user);
+        }
+        else
+        {
+            if (_testUsers == null) throw new InvalidOperationException("Both _users and _testUsers is null!");
+            _testUsers.Add(user);
+        }
     }
 
     /// <summary>
@@ -161,7 +219,15 @@ public class UserService
     /// <param name="users">The User objects to add to the database.</param>
     public async Task CreateUsers(IEnumerable<User> users)
     {
-        await _users.InsertManyAsync(users);
+        if (_users != null)
+        {
+            await _users.InsertManyAsync(users);
+        }
+        else
+        {
+            if (_testUsers == null) throw new InvalidOperationException("Both _users and _testUsers is null!");
+            _testUsers.AddRange(users);
+        }
     }
 
     private (UpdateDefinition<User>, FilterDefinition<User>) _processUserUpdate(User user)
@@ -188,18 +254,31 @@ public class UserService
     /// <exception cref="MongoException">The modification wasn't acknowledged by the database.</exception>
     public async Task<bool> ModifyUser(User user)
     {
-        var builtUpdate = _processUserUpdate(user);
-        var update = builtUpdate.Item1;
-        var filter = builtUpdate.Item2;
-        
         var oldUser = await GetUser(user.Id);
-        if (oldUser == null) throw new NullReferenceException($"User with id {user.Id} does not exist, cannot modify.");
+        if (oldUser == null)
+            throw new NullReferenceException($"User with id {user.Id} does not exist, cannot modify.");
+        
+        if (_users != null)
+        {
+            var builtUpdate = _processUserUpdate(user);
+            var update = builtUpdate.Item1;
+            var filter = builtUpdate.Item2;
 
-        var result = await _users.UpdateOneAsync(filter, update);
+            var result = await _users.UpdateOneAsync(filter, update);
 
-        if (!result.IsAcknowledged)
-            throw new MongoException("The backend server did not acknowledge the update.");
+            if (!result.IsAcknowledged)
+                throw new MongoException("The backend server did not acknowledge the update.");
 
-        return result.MatchedCount != 0;
+            return result.MatchedCount != 0;
+        }
+        else
+        {
+            if (_testUsers == null) throw new InvalidOperationException("Both _users and _testUsers is null!");
+            var userIndex = _testUsers.FindIndex(userCompare => userCompare.Id == user.Id);
+
+            _testUsers[userIndex] = user;
+
+            return true;
+        }
     }
 }
