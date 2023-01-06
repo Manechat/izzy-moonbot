@@ -15,9 +15,9 @@ public class UserService
     private readonly List<User>? _testUsers;
     private readonly IMongoCollection<User>? _users;
 
-    public UserService(DatabaseHelper database, bool test = false)
+    public UserService(DatabaseHelper? database)
     {
-        if (test)
+        if (database == null)
         {
             _testUsers = new List<User>();
         }
