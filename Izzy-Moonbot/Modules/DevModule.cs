@@ -32,12 +32,11 @@ public class DevModule : ModuleBase<SocketCommandContext>
     private readonly Config _config;
     private readonly State _state;
     private readonly Dictionary<ulong, User> _users;
-    private readonly DatabaseHelper _database;
     private readonly UserService _userService;
 
     public DevModule(Config config, Dictionary<ulong, User> users, FilterService filterService,
         LoggingService loggingService, ModLoggingService modLoggingService, ModService modService,
-        SpamService pressureService, RaidService raidService, ScheduleService scheduleService, State state, DatabaseHelper database, UserService userService)
+        SpamService pressureService, RaidService raidService, ScheduleService scheduleService, State state, UserService userService)
     {
         _config = config;
         _users = users;
@@ -49,7 +48,6 @@ public class DevModule : ModuleBase<SocketCommandContext>
         _raidService = raidService;
         _scheduleService = scheduleService;
         _state = state;
-        _database = database;
         _userService = userService;
     }
 
@@ -345,41 +343,6 @@ public class DevModule : ModuleBase<SocketCommandContext>
                 var attachment = new FileAttachment(args[0].GetStreamAsync().Result, "test.png");
 
                 await Context.Channel.SendFileAsync(attachment, "Test Success");
-                break;
-            case "db-collection":
-                var collectionDbCollection = _database.GetCollection("test");
-                await ReplyAsync(collectionDbCollection.CollectionNamespace.FullName);
-                break;
-            case "db-document":
-                var collectionDbDocument = _database.GetCollection("test");
-                var documentDbDocument = new BsonDocument
-                {
-                    { "name", "MongoDB" },
-                    { "type", "Database" },
-                    { "count", 1 },
-                    { "info", new BsonDocument
-                    {
-                        { "x", 203 },
-                        { "y", 102 }
-                    }}
-                };
-                try
-                {
-                    await collectionDbDocument.InsertOneAsync(documentDbDocument);
-                    var gottenDocumentDbDocument =
-                        await collectionDbDocument.Find(new BsonDocument()).FirstOrDefaultAsync();
-                    await ReplyAsync(
-                        $"```json{Environment.NewLine}{gottenDocumentDbDocument.ToString()}{Environment.NewLine}```");
-                }
-                catch (Exception ex)
-                {
-                    _loggingService.Log(ex.Message, level: LogLevel.Critical);
-                    _loggingService.Log(ex.Source ?? "None", level: LogLevel.Critical);
-                    _loggingService.Log(ex.HelpLink ?? "None", level: LogLevel.Critical);
-                    _loggingService.Log(ex.StackTrace ?? "None", level: LogLevel.Critical);
-                    _loggingService.Log(ex.InnerException?.Message ?? "None", level: LogLevel.Critical);
-                }
-
                 break;
             case "try-migrate-users":
 
