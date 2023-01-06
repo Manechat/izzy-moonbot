@@ -64,7 +64,6 @@ public interface IIzzyMessage
 
 public interface IIzzyUserMessage : IIzzyMessage
 {
-    Task ReplyAsync(string message);
     Task ModifyAsync(Action<IIzzyMessageProperties> action);
 }
 
@@ -149,7 +148,7 @@ public interface IIzzyClient
 
     event Func<IIzzyMessage, Task> MessageReceived;
 
-    event Func<IIzzyMessage, IIzzyMessageChannel, Task> MessageUpdated;
+    event Func<string?, IIzzyMessage, IIzzyMessageChannel, Task> MessageUpdated;
 
     public interface IIzzySocketMessageComponent {
         IIzzyHasId User { get; }
@@ -160,7 +159,7 @@ public interface IIzzyClient
     }
     event Func<IIzzySocketMessageComponent, Task> ButtonExecuted;
 
-    event Func<IIzzyHasId, IIzzyHasId, Task> MessageDeleted;
+    event Func<ulong, IIzzyMessage?, ulong, IIzzyMessageChannel?, Task>? MessageDeleted;
 
     IIzzyContext MakeContext(IIzzyUserMessage message);
     Task<IIzzyUser?> GetUserAsync(ulong userId);

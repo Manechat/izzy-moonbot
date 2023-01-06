@@ -495,9 +495,9 @@ public class StubClient : IIzzyClient
     public IReadOnlyCollection<IIzzyGuild> Guilds { get => _guilds.Select(g => new TestGuild(g, this)).ToList(); }
 
     public event Func<IIzzySocketMessageComponent, Task>? ButtonExecuted;
-    public event Func<IIzzyHasId, IIzzyHasId, Task>? MessageDeleted;
+    public event Func<ulong, IIzzyMessage?, ulong, IIzzyMessageChannel?, Task>? MessageDeleted;
     public event Func<IIzzyMessage, Task>? MessageReceived;
-    public event Func<IIzzyMessage, IIzzyMessageChannel, Task>? MessageUpdated;
+    public event Func<string?, IIzzyMessage, IIzzyMessageChannel, Task>? MessageUpdated;
 
     public StubClient(TestUser user, List<StubGuild> guilds)
     {
@@ -557,6 +557,7 @@ public class StubClient : IIzzyClient
                 var maybeMessage = channel.Messages.Find(m => m.Id == messageId);
                 if (maybeMessage is StubMessage message)
                 {
+                    var oldContent = message.Content;
                     message.Content = newContent;
 
                     var maybeUser = guild.Users.Find(u => u.Id == message.AuthorId);
@@ -564,7 +565,7 @@ public class StubClient : IIzzyClient
 
                     var testMessageChannel = new TestMessageChannel(channel.Name, channelId, guild, this);
 
-                    var t = MessageUpdated?.Invoke(testMessage, testMessageChannel);
+                    var t = MessageUpdated?.Invoke(oldContent, testMessage, testMessageChannel);
                     if (t is not null) await t;
                 }
                 else throw new KeyNotFoundException($"No message with id {messageId}");
@@ -603,9 +604,9 @@ public class StubClient : IIzzyClient
         ButtonExecuted?.Invoke(new TestSocketMessageComponent(userId, messageId, customId));
     }
 
-    public void FireMessageDeleted(ulong messageId, ulong channelId)
+    private void MessageDeletedExecute(ulong messageId, IIzzyMessage? content, ulong channelId, IIzzyMessageChannel? channel)
     {
-        MessageDeleted?.Invoke(new IdHaver(messageId), new IdHaver(channelId));
+        MessageDeleted?.Invoke(messageId, content, channelId, channel);
     }
 
     public IIzzyContext MakeContext(IIzzyUserMessage message)

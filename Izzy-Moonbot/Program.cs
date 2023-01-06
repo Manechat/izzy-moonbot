@@ -94,6 +94,7 @@ public class Program
             // EventListeners
             services.AddSingleton<ConfigListener>();
             services.AddSingleton<UserListener>();
+            services.AddSingleton<MessageListener>();
 
             services.AddHostedService<Worker>();
         });

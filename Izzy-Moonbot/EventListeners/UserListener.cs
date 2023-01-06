@@ -93,28 +93,40 @@ public class UserListener
         
         var user = await _users.GetUser(member) ?? throw new NullReferenceException("User is null!");
 
-        _logger.Log($"Processing roles for new user join", level: LogLevel.Debug);
-        if (_config.ManageNewUserRoles && _config.MemberRole != null && !(_config.AutoSilenceNewJoins || user.Silenced))
+        if (!_config.ManageNewUserRoles)
         {
-            _logger.Log($"Adding Config.MemberRole ({_config.MemberRole}) to new user", level: LogLevel.Debug);
-            roles.Add((ulong)_config.MemberRole);
+            _logger.Log($"Skipping role management for new user join because ManageNewUserRoles is false", level: LogLevel.Debug);
+        }
+        else
+        {
+            _logger.Log($"Processing roles for new user join", level: LogLevel.Debug);
+
+            if (_config.MemberRole == null || _config.MemberRole <= 0)
+                _logger.Log($"ManageNewUserRoles is true but MemberRole is {_config.MemberRole}", level: LogLevel.Warning);
+            else if (!(_config.AutoSilenceNewJoins || _users[member.Id].Silenced))
+            {
+                _logger.Log($"Adding Config.MemberRole ({_config.MemberRole}) to new user", level: LogLevel.Debug);
+                roles.Add((ulong)_config.MemberRole);
+            }
+
+            if (_config.NewMemberRole == null || _config.NewMemberRole <= 0)
+                _logger.Log($"ManageNewUserRoles is true but NewMemberRole is {_config.NewMemberRole}", level: LogLevel.Warning);
+            else if ((!_config.AutoSilenceNewJoins || !_users[member.Id].Silenced))
+            {
+                _logger.Log($"Adding Config.NewMemberRole ({_config.NewMemberRole}) to new user", level: LogLevel.Debug);
+                roles.Add((ulong)_config.NewMemberRole);
+                expiresString = $"{Environment.NewLine}New Member role expires in <t:{(DateTimeOffset.UtcNow + TimeSpan.FromMinutes(_config.NewMemberRoleDecay)).ToUnixTimeSeconds()}:R>";
+
+                _logger.Log($"Adding scheduled job to remove Config.NewMemberRole from new user in {_config.NewMemberRoleDecay} minutes", level: LogLevel.Debug);
+                var action = new ScheduledRoleRemovalJob(_config.NewMemberRole.Value, member.Id,
+                    $"New member role removal, {_config.NewMemberRoleDecay} minutes (`NewMemberRoleDecay`) passed.");
+                var task = new ScheduledJob(DateTimeOffset.UtcNow,
+                    (DateTimeOffset.UtcNow + TimeSpan.FromMinutes(_config.NewMemberRoleDecay)), action);
+                await _schedule.CreateScheduledJob(task);
+                _logger.Log($"Added scheduled job for new user", level: LogLevel.Debug);
+            }
         }
 
-        if (_config.ManageNewUserRoles && _config.NewMemberRole != null && (!_config.AutoSilenceNewJoins || !user.Silenced))
-        {
-            _logger.Log($"Adding Config.NewMemberRole ({_config.NewMemberRole}) to new user", level: LogLevel.Debug);
-            roles.Add((ulong)_config.NewMemberRole);
-            expiresString = $"{Environment.NewLine}New Member role expires in <t:{(DateTimeOffset.UtcNow + TimeSpan.FromMinutes(_config.NewMemberRoleDecay)).ToUnixTimeSeconds()}:R>";
-
-            _logger.Log($"Adding scheduled job to remove Config.NewMemberRole from new user in {_config.NewMemberRoleDecay} minutes", level: LogLevel.Debug);
-            var action = new ScheduledRoleRemovalJob(_config.NewMemberRole.Value, member.Id,
-                $"New member role removal, {_config.NewMemberRoleDecay} minutes (`NewMemberRoleDecay`) passed.");
-            var task = new ScheduledJob(DateTimeOffset.UtcNow, 
-                (DateTimeOffset.UtcNow + TimeSpan.FromMinutes(_config.NewMemberRoleDecay)), action);
-            await _schedule.CreateScheduledJob(task);
-            _logger.Log($"Added scheduled job for new user", level: LogLevel.Debug);
-        }
-        
         _logger.Log($"Generating action reason", level: LogLevel.Debug);
         
         string autoSilence = $" (User autosilenced, `AutoSilenceNewJoins` is true.)";
@@ -204,28 +216,35 @@ public class UserListener
         {
             lastNickname = "<UNKNOWN>";
         }
+
         _logger.Log($"Last nickname was {lastNickname}, checking whether user was kicked or banned", level: LogLevel.Debug);
-        var kickAuditLog = guild.GetAuditLogsAsync(2, actionType: ActionType.Kick).FirstAsync()
+
+        // Unfortunately Discord(.NET) doesn't tell us anything about why or how a user left a server, merely that they did.
+        // To infer that they left *because* of a kick/ban, we arbitrarily assume that whenever a user is kicked/banned,
+        // Discord will send the UserLeft event within 100 seconds, before 5 other kicks/bans take place, *and*
+        // that the user will not be unbannned, re-join and re-leave all within 100 seconds.
+
+        var kickAuditLog = guild.GetAuditLogsAsync(5, actionType: ActionType.Kick).FirstAsync()
             .GetAwaiter().GetResult()
             .Select(audit =>
             {
                 var data = audit.Data as KickAuditLogData;
                 if (data?.Target.Id == user.Id)
                 {
-                    if ((audit.CreatedAt.ToUnixTimeSeconds() - DateTimeOffset.UtcNow.ToUnixTimeSeconds()) <= 2)
+                    if ((DateTimeOffset.UtcNow.ToUnixTimeSeconds() - audit.CreatedAt.ToUnixTimeSeconds()) <= 100)
                         return audit;
                 }
                 return null;
             }).Where(audit => audit != null).FirstOrDefault();
 
-        var banAuditLog = guild.GetAuditLogsAsync(2, actionType: ActionType.Ban).FirstAsync()
+        var banAuditLog = guild.GetAuditLogsAsync(5, actionType: ActionType.Ban).FirstAsync()
             .GetAwaiter().GetResult()
             .Select(audit =>
             {
                 var data = audit.Data as BanAuditLogData;
                 if (data?.Target.Id == user.Id)
                 {
-                    if ((audit.CreatedAt.ToUnixTimeSeconds() - DateTimeOffset.UtcNow.ToUnixTimeSeconds()) <= 2)
+                    if ((DateTimeOffset.UtcNow.ToUnixTimeSeconds() - audit.CreatedAt.ToUnixTimeSeconds()) <= 100)
                         return audit;
                 }
                 return null;

@@ -153,10 +153,6 @@ public class DiscordNetUserMessageAdapter : IIzzyUserMessage
     public IReadOnlyCollection<IEmbed> Embeds => _message.Embeds;
     public IReadOnlyCollection<IStickerItem> Stickers => _message.Stickers;
 
-    public async Task ReplyAsync(string message)
-    {
-        await _message.ReplyAsync(message);
-    }
     public async Task ModifyAsync(Action<IIzzyMessageProperties> action)
     {
         await _message.ModifyAsync(msg => {
@@ -370,15 +366,21 @@ public class DiscordSocketClientAdapter : IIzzyClient
             MessageReceived?.Invoke(
                 msg is SocketUserMessage sumsg ? new DiscordNetUserMessageAdapter(sumsg) : new DiscordNetMessageAdapter(msg)
             );
-        _client.MessageUpdated += async (_oldMessage, newMessage, channel) =>
+        _client.MessageUpdated += async (oldMessage, newMessage, channel) =>
             MessageUpdated?.Invoke(
+                oldMessage.Value?.Content,
                 newMessage is SocketUserMessage sumsg ? new DiscordNetUserMessageAdapter(sumsg) : new DiscordNetMessageAdapter(newMessage),
                 new DiscordNetMessageChannelAdapter(channel)
             );
         _client.ButtonExecuted += async (arg) =>
             ButtonExecuted?.Invoke(new SocketMessageComponentAdapter(arg));
         _client.MessageDeleted += async (message, channel) =>
-            MessageDeleted?.Invoke(new IdHaver(message.Id), new IdHaver(channel.Id));
+            MessageDeleted?.Invoke(
+                message.Id,
+                message.Value is null ? null : new DiscordNetMessageAdapter(message.Value),
+                channel.Id,
+                channel.Value is null ? null : new DiscordNetMessageChannelAdapter(channel.Value)
+            );
     }
 
     public IIzzyUser CurrentUser { get => new DiscordNetUserAdapter(_client.CurrentUser); }
@@ -388,9 +390,9 @@ public class DiscordSocketClientAdapter : IIzzyClient
     }
 
     public event Func<IIzzyMessage, Task>? MessageReceived;
-    public event Func<IIzzyMessage, IIzzyMessageChannel, Task>? MessageUpdated;
+    public event Func<string?, IIzzyMessage, IIzzyMessageChannel, Task>? MessageUpdated;
     public event Func<IIzzySocketMessageComponent, Task>? ButtonExecuted;
-    public event Func<IIzzyHasId, IIzzyHasId, Task>? MessageDeleted;
+    public event Func<ulong, IIzzyMessage?, ulong, IIzzyMessageChannel?, Task>? MessageDeleted;
 
     public IIzzyContext MakeContext(IIzzyUserMessage message) =>
         new ClientAndMessageContextAdapter(this, message);

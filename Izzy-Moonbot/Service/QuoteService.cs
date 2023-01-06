@@ -201,7 +201,7 @@ public class QuoteService
     /// <param name="id">The quote id to get.</param>
     /// <returns>A Quote containing the quote information.</returns>
     /// <exception cref="NullReferenceException">If the user doesn't have any quotes.</exception>
-    /// <exception cref="IndexOutOfRangeException">If the id provided is larger than the amount of quotes the user has.</exception>
+    /// <exception cref="IndexOutOfRangeException">If the id provided is larger than the number of quotes the user has.</exception>
     public Quote GetQuote(IIzzyUser user, int id)
     {
         if (!_quoteStorage.Quotes.ContainsKey(user.Id.ToString()))
@@ -225,7 +225,7 @@ public class QuoteService
     /// <param name="id">The quote id to get.</param>
     /// <returns>A Quote containing the quote information.</returns>
     /// <exception cref="NullReferenceException">If the category doesn't have any quotes.</exception>
-    /// <exception cref="IndexOutOfRangeException">If the id provided is larger than the amount of quotes the category contains.</exception>
+    /// <exception cref="IndexOutOfRangeException">If the id provided is larger than the number of quotes the category contains.</exception>
     public Quote GetQuote(string name, int id)
     {
         if (_quoteStorage.Quotes.Keys.All(key => key.ToLower() != name.ToLower()))

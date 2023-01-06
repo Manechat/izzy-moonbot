@@ -48,6 +48,7 @@ public class MiscModuleTests
         services.AddSingleton(services);
         services.AddSingleton<ConfigListener>();
         services.AddSingleton<UserListener>();
+        services.AddSingleton<MessageListener>();
         services.AddHostedService<Worker>();
 
         var commands = new CommandService();
@@ -499,7 +500,8 @@ public class MiscModuleTests
         await mm.TestableHelpCommandAsync(context, "core");
 
         Assert.AreEqual("Sorry, I was unable to find any command, category, or alias named \"core\" that you have access to." +
-            "\nDid you mean `.modcore`?", generalChannel.Messages.Last().Content);
+            "\nDid you mean `.modcore`?" +
+            "\nI do see \"core\" in the output of: `.help config` and `.help userinfo` and `.help ban` and `.help assignrole` and `.help wipe`", generalChannel.Messages.Last().Content);
 
         // regular user does not
 

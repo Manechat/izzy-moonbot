@@ -14,7 +14,7 @@ public class ConfigHelperTests
         var cfg = new Config();
         Assert.AreEqual("you all soon", ConfigHelper.GetValue(cfg, "DiscordActivityName"));
         Assert.AreEqual('.', ConfigHelper.GetValue(cfg, "Prefix"));
-        Assert.AreEqual(true, ConfigHelper.GetValue(cfg, "ManageNewUserRoles"));
+        Assert.AreEqual(false, ConfigHelper.GetValue(cfg, "ManageNewUserRoles"));
         Assert.AreEqual(100, ConfigHelper.GetValue(cfg, "UnicycleInterval"));
         Assert.IsTrue(ConfigHelper.GetValue(cfg, "FilterIgnoredChannels") is HashSet<ulong>);
         Assert.IsTrue(ConfigHelper.GetValue(cfg, "Aliases") is Dictionary<string, string>);
@@ -35,15 +35,15 @@ public class ConfigHelperTests
         await ConfigHelper.SetSimpleValue(cfg, "Prefix", '!');
         Assert.AreEqual('!', cfg.Prefix);
 
-        Assert.AreEqual(true, cfg.ManageNewUserRoles);
-        await ConfigHelper.SetBooleanValue(cfg, "ManageNewUserRoles", "false");
         Assert.AreEqual(false, cfg.ManageNewUserRoles);
         await ConfigHelper.SetBooleanValue(cfg, "ManageNewUserRoles", "y");
         Assert.AreEqual(true, cfg.ManageNewUserRoles);
-        await ConfigHelper.SetBooleanValue(cfg, "ManageNewUserRoles", "deactivate");
+        await ConfigHelper.SetBooleanValue(cfg, "ManageNewUserRoles", "false");
         Assert.AreEqual(false, cfg.ManageNewUserRoles);
         await ConfigHelper.SetBooleanValue(cfg, "ManageNewUserRoles", "enable");
         Assert.AreEqual(true, cfg.ManageNewUserRoles);
+        await ConfigHelper.SetBooleanValue(cfg, "ManageNewUserRoles", "deactivate");
+        Assert.AreEqual(false, cfg.ManageNewUserRoles);
 
         Assert.AreEqual(100, cfg.UnicycleInterval);
         await ConfigHelper.SetSimpleValue(cfg, "UnicycleInterval", 42);

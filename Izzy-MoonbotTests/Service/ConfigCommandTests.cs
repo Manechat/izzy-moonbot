@@ -59,10 +59,10 @@ public class ConfigCommandTests
     {
         var (cfg, cd, (_, sunny), _, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
 
-        var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config core");
-        await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "core", "");
+        var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config misc");
+        await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "misc", "");
 
-        Assert.IsTrue(generalChannel.Messages.Last().Content.Contains("Here's a list of all the config items I could find in the Core category!"));
+        Assert.IsTrue(generalChannel.Messages.Last().Content.Contains("Here's a list of all the config items I could find in the Misc category!"));
 
         // TODO: pagination testing
     }
@@ -82,7 +82,7 @@ public class ConfigCommandTests
         var description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "UnicycleInterval");
         StringAssert.Contains(description, "Integer");
-        StringAssert.Contains(description, "Core category");
+        StringAssert.Contains(description, "Misc category");
         StringAssert.Contains(description, "How often, in milliseconds");
         StringAssert.Contains(description, "Current value: `100`");
         StringAssert.Contains(description, "Run `.config UnicycleInterval <value>`");
@@ -97,7 +97,7 @@ public class ConfigCommandTests
         description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "BannerMode");
         StringAssert.Contains(description, "Enum");
-        StringAssert.Contains(description, "Server category");
+        StringAssert.Contains(description, "Banner category");
         StringAssert.Contains(description, "The mode I will use");
         StringAssert.Contains(description, "`None`, `CustomRotation`, `ManebooruFeatured`");
         StringAssert.Contains(description, "Current value: `None`");
@@ -113,7 +113,7 @@ public class ConfigCommandTests
         description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "ModRole");
         StringAssert.Contains(description, "Role");
-        StringAssert.Contains(description, "Moderation category");
+        StringAssert.Contains(description, "Setup category");
         StringAssert.Contains(description, "The role that I allow");
         StringAssert.Contains(description, "Current value: <@&1234>"); // this is the difference
         StringAssert.Contains(description, "Run `.config ModRole <value>`");
@@ -126,8 +126,8 @@ public class ConfigCommandTests
         description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "ModChannel");
         StringAssert.Contains(description, "Channel");
-        StringAssert.Contains(description, "Moderation category");
-        StringAssert.Contains(description, "The channel I will post");
+        StringAssert.Contains(description, "Setup category");
+        StringAssert.Contains(description, "The channel where I'll post");
         StringAssert.Contains(description, "Current value: <#42>"); // this is the difference
         StringAssert.Contains(description, "Run `.config ModChannel <value>`");
     }
@@ -147,7 +147,7 @@ public class ConfigCommandTests
         var description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "MentionResponses");
         StringAssert.Contains(description, "List of Strings");
-        StringAssert.Contains(description, "Core category");
+        StringAssert.Contains(description, "Misc category");
         StringAssert.Contains(description, "A list of responses I will");
         StringAssert.Contains(description, "Run `.config MentionResponses list` to");
         StringAssert.Contains(description, "Run `.config MentionResponses add <value>` to");
@@ -173,7 +173,7 @@ public class ConfigCommandTests
         description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "Aliases");
         StringAssert.Contains(description, "Map of String");
-        StringAssert.Contains(description, "Core category");
+        StringAssert.Contains(description, "Misc category");
         StringAssert.Contains(description, "Shorthand commands which");
         StringAssert.Contains(description, "Run `.config Aliases list` to");
         StringAssert.Contains(description, "Run `.config Aliases get <key>` to");
@@ -215,7 +215,7 @@ public class ConfigCommandTests
         StringAssert.Contains(description, "FilteredWords");
         StringAssert.Contains(description, "Map of Lists of Strings");
         StringAssert.Contains(description, "Filter category");
-        StringAssert.Contains(description, "words I will filter");
+        StringAssert.Contains(description, "I'll delete any message containing one of these words");
         StringAssert.Contains(description, "Run `.config FilteredWords list` to");
         StringAssert.Contains(description, "Run `.config FilteredWords get <key>` to");
         StringAssert.Contains(description, "Run `.config FilteredWords add <key> <value>` to");
@@ -553,12 +553,12 @@ public class ConfigCommandTests
         Assert.AreEqual(cfg.LogChannel, 3ul);
         Assert.AreEqual("I've set `LogChannel` to the following content: <#3>", generalChannel.Messages.Last().Content);
 
-        // post ".config ManageNewUserRoles false"
-        Assert.AreEqual(cfg.ManageNewUserRoles, true);
-        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config ManageNewUserRoles false");
-        await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "ManageNewUserRoles", "false");
+        // post ".config ManageNewUserRoles true"
         Assert.AreEqual(cfg.ManageNewUserRoles, false);
-        Assert.AreEqual("I've set `ManageNewUserRoles` to the following content: False", generalChannel.Messages.Last().Content);
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config ManageNewUserRoles true");
+        await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "ManageNewUserRoles", "true");
+        Assert.AreEqual(cfg.ManageNewUserRoles, true);
+        Assert.AreEqual("I've set `ManageNewUserRoles` to the following content: True", generalChannel.Messages.Last().Content);
 
         // post ".config MemberRole <@&2>"
         Assert.AreEqual(cfg.MemberRole, 0ul);
@@ -857,7 +857,7 @@ public class ConfigCommandTests
         await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "Pre", "");
 
         Assert.AreEqual("Sorry, I couldn't find a config value or category called `Pre`!" +
-            "\nDid you mean `Prefix` or `core`?",
+            "\nDid you mean `Prefix`?",
             generalChannel.Messages.Last().Content);
 
         // extra letters

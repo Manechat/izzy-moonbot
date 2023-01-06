@@ -43,13 +43,14 @@ namespace Izzy_Moonbot
         private readonly UserService _users;
         private readonly ConfigListener _configListener;
         private readonly UserListener _userListener;
+        private readonly MessageListener _messageListener;
         private DiscordSocketClient _client;
         public bool hasProgrammingSocks = true;
         public int LaserCount = 10;
 
         public Worker(ILogger<Worker> logger, ModLoggingService modLog, IServiceCollection services, ModService modService, RaidService raidService,
             FilterService filterService, ScheduleService scheduleService, IOptions<DiscordSettings> discordSettings,
-            Config config, State state, Dictionary<ulong, User> usersFile, UserService users, UserListener userListener, SpamService spamService, ConfigListener configListener)
+            Config config, State state, Dictionary<ulong, User> usersFile, UserService users, UserListener userListener, SpamService spamService, ConfigListener configListener, MessageListener messageListener)
         {
             _logger = logger;
             _modLog = modLog;
@@ -67,9 +68,10 @@ namespace Izzy_Moonbot
             _userListener = userListener;
             _spamService = spamService;
             _configListener = configListener;
+            _messageListener = messageListener;
 
             var discordConfig = new DiscordSocketConfig {
-                GatewayIntents = GatewayIntents.Guilds | GatewayIntents.GuildMembers | GatewayIntents.GuildMessages | GatewayIntents.DirectMessages,
+                GatewayIntents = GatewayIntents.Guilds | GatewayIntents.GuildMembers | GatewayIntents.GuildMessages | GatewayIntents.DirectMessages | GatewayIntents.MessageContent,
                 MessageCacheSize = 50
             };
             _client = new DiscordSocketClient(discordConfig);
@@ -105,7 +107,8 @@ namespace Izzy_Moonbot
 
                 _configListener.RegisterEvents(_client);
                 _userListener.RegisterEvents(_client);
-                
+                _messageListener.RegisterEvents(clientAdapter);
+
                 _spamService.RegisterEvents(clientAdapter);
                 _raidService.RegisterEvents(_client);
                 _filterService.RegisterEvents(clientAdapter);
@@ -175,15 +178,7 @@ namespace Izzy_Moonbot
 
         public async Task ReadyEvent()
         {
-            _logger.LogTrace("Ready event called");
-            _scheduleService.BeginUnicycleLoop(new DiscordSocketClientAdapter(_client));
-            
-            foreach (var clientGuild in _client.Guilds)
-            {
-                await clientGuild.DownloadUsersAsync();
-            }
-
-            ResyncUsers();
+            _logger.LogInformation("ReadyEvent() called");
 
             TaskScheduler.UnobservedTaskException += (object? sender, UnobservedTaskExceptionEventArgs eventArgs) =>
             {
@@ -193,6 +188,18 @@ namespace Izzy_Moonbot
                                  $"Unobserved Exception Message: {unobservedException?.Message}\n" +
                                  $"Unobserved Exception Stack: {unobservedException?.StackTrace}");
             };
+
+            foreach (var clientGuild in _client.Guilds)
+            {
+                _logger.LogDebug($"ReadyEvent() downloading users for guild {clientGuild.Name} ({clientGuild.Id})");
+                await clientGuild.DownloadUsersAsync();
+            }
+
+            _logger.LogDebug("ReadyEvent() resyncing users");
+            ResyncUsers();
+
+            _logger.LogDebug("ReadyEvent() starting unicycle loop");
+            _scheduleService.BeginUnicycleLoop(new DiscordSocketClientAdapter(_client));
         }
 
         private async Task<List<User>> _getUnmigratedUsers()

@@ -21,18 +21,19 @@ public class ConfigCommand
     {
         if (configItemKey == "")
         {
-            await context.Message.ReplyAsync($"Hii!! Here's now to use the config command!{Environment.NewLine}" +
-                                             $"Run `{config.Prefix}config <category>` to list the config items in a category.{Environment.NewLine}" +
-                                             $"Run `{config.Prefix}config <item>` to view information about an item.{Environment.NewLine}{Environment.NewLine}" +
-                                             $"Here's a list of all possible categories.{Environment.NewLine}```{Environment.NewLine}" +
-                                             $"core - Config items which dictate core settings (often global).{Environment.NewLine}" +
-                                             $"moderation - Config items which dictate moderation settings.{Environment.NewLine}" +
-                                             $"debug - Debug config items used to debug Izzy.{Environment.NewLine}" +
-                                             $"user - Config items regarding users.{Environment.NewLine}" +
-                                             $"filter - Config items regarding the filter.{Environment.NewLine}" +
-                                             $"spam - Config items regarding spam pressure.{Environment.NewLine}" +
-                                             $"raid - Config items regarding antiraid.{Environment.NewLine}```{Environment.NewLine}{Environment.NewLine}" +
-                                             $"ℹ  **See also: `{config.Prefix}help`. Run `{config.Prefix}help` for more information.**");
+            await context.Channel.SendMessageAsync(
+                $"Hii!! Here's now to use the config command!{Environment.NewLine}" +
+                $"Run `{config.Prefix}config <category>` to list the config items in a category.{Environment.NewLine}" +
+                $"Run `{config.Prefix}config <item>` to view information about an item.{Environment.NewLine}{Environment.NewLine}" +
+                $"Here's a list of all possible categories.{Environment.NewLine}```{Environment.NewLine}" +
+                $"setup - Config items that must be set for Izzy to work at all.{Environment.NewLine}" +
+                $"misc - Miscellaneous, often unique items that don't have a clear category.{Environment.NewLine}" +
+                $"banner - Config items related to the Manechat banner image.{Environment.NewLine}" +
+                $"managedroles - Config items regarding the automated management of member and new member roles.{Environment.NewLine}" +
+                $"filter - Config items regarding the filter.{Environment.NewLine}" +
+                $"spam - Config items regarding spam pressure.{Environment.NewLine}" +
+                $"raid - Config items regarding raid detection.{Environment.NewLine}```{Environment.NewLine}{Environment.NewLine}" +
+                $"ℹ  **See also: `{config.Prefix}help`. Run `{config.Prefix}help` for more information.**");
 
             return;
         }
@@ -893,7 +894,7 @@ public class ConfigCommand
             }
             else
             {
-                await context.Message.ReplyAsync($"I couldn't determine what type {configItem.Type} is.");
+                await context.Channel.SendMessageAsync($"I couldn't determine what type {configItem.Type} is.");
             }
         }
     }

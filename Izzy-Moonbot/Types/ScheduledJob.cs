@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Discord;
 using Discord.WebSocket;
 using Izzy_Moonbot.Adapters;
+using Izzy_Moonbot.Helpers;
 
 namespace Izzy_Moonbot.Settings;
 
