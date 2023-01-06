@@ -21,10 +21,9 @@ public class SpamModuleTests
         DateTimeHelper.FakeUtcNow = TestUtils.FiMEpoch;
 
         // SpamService assumes that every MessageReceived event it receives is for
-        // a user who is already in the users Dictionary and has a timestamp
-        var users = new Dictionary<ulong, User>();
-        users[sunny.Id] = new User();
-        users[sunny.Id].Timestamp = DateTimeHelper.UtcNow;
+        // a user who is already in the users database and has a timestamp
+        var users = new UserService(null);
+        var s = new User(); s.Id = sunny.Id; s.Timestamp = DateTimeHelper.UtcNow; await users.CreateUser(s);
 
         var mod = new ModService(cfg, users);
         var modLog = new ModLoggingService(cfg);
@@ -87,10 +86,9 @@ public class SpamModuleTests
         DateTimeHelper.FakeUtcNow = TestUtils.FiMEpoch;
 
         // SpamService assumes that every MessageReceived event it receives is for
-        // a user who is already in the users Dictionary and has a timestamp
-        var users = new Dictionary<ulong, User>();
-        users[sunny.Id] = new User();
-        users[sunny.Id].Timestamp = DateTimeHelper.UtcNow;
+        // a user who is already in the users database and has a timestamp
+        var users = new UserService(null);
+        var s = new User(); s.Id = sunny.Id; s.Timestamp = DateTimeHelper.UtcNow; await users.CreateUser(s);
 
         var mod = new ModService(cfg, users);
         var modLog = new ModLoggingService(cfg);
@@ -165,11 +163,9 @@ public class SpamModuleTests
 
         var regularUserId = guild.Users[2].Id;
 
-        var users = new Dictionary<ulong, User>();
-        users[sunny.Id] = new User();
-        users[sunny.Id].Timestamp = DateTimeHelper.UtcNow;
-        users[regularUserId] = new User();
-        users[regularUserId].Timestamp = DateTimeHelper.UtcNow;
+        var users = new UserService(null);
+        var s = new User(); s.Id = sunny.Id; s.Timestamp = DateTimeHelper.UtcNow; await users.CreateUser(s);
+        var r = new User(); r.Id = regularUserId; r.Timestamp = DateTimeOffset.UtcNow; await users.CreateUser(r);
 
         var mod = new ModService(cfg, users);
         var modLog = new ModLoggingService(cfg);

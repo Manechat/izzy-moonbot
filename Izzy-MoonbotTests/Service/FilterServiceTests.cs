@@ -17,7 +17,7 @@ public class FilterServiceTests
         DiscordHelper.DevUserIds = new List<ulong>();
         DiscordHelper.PleaseAwaitEvents = true;
 
-        var users = new Dictionary<ulong, User>();
+        var users = new UserService(null);
         var mod = new ModService(cfg, users);
         var modLog = new ModLoggingService(cfg);
         var logger = new LoggingService(new TestLogger<Worker>());

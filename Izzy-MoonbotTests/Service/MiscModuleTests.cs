@@ -31,6 +31,7 @@ public class MiscModuleTests
         services.AddTransient<ILogger<Worker>, TestLogger<Worker>>();
         services.AddSingleton(new Config());
         services.AddSingleton(new Dictionary<ulong, User>());
+        services.AddSingleton(new UserService(null));
         services.AddSingleton(new List<ScheduledJob>());
         services.AddSingleton(new GeneralStorage());
         services.AddSingleton(new State());
@@ -64,7 +65,8 @@ public class MiscModuleTests
     {
         var generalStorage = new GeneralStorage();
         var scheduledJobs = new List<ScheduledJob>();
-        var mod = new ModService(cfg, new Dictionary<ulong, User>());
+        var users = new UserService(null);
+        var mod = new ModService(cfg, users);
         var modLog = new ModLoggingService(cfg);
         var logger = new LoggingService(new TestLogger<Worker>());
         var ss = new ScheduleService(cfg, mod, modLog, logger, generalStorage, scheduledJobs);

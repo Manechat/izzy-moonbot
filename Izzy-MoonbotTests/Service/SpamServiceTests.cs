@@ -12,7 +12,7 @@ namespace Izzy_Moonbot_Tests.Services;
 [TestClass()]
 public class SpamServiceTests
 {
-    public void SpamSetup(Config cfg, TestUser spammer, StubChannel modChat, StubGuild guild, StubClient client)
+    public async Task SpamSetup(Config cfg, TestUser spammer, StubChannel modChat, StubGuild guild, StubClient client)
     {
         DiscordHelper.DefaultGuildId = guild.Id;
         DiscordHelper.DevUserIds = new List<ulong>();
@@ -22,9 +22,8 @@ public class SpamServiceTests
 
         // SpamService assumes that every MessageReceived event it receives is for
         // a user who is already in the users Dictionary and has a timestamp
-        var users = new Dictionary<ulong, User>();
-        users[spammer.Id] = new User();
-        users[spammer.Id].Timestamp = DateTimeHelper.UtcNow;
+        var users = new UserService(null);
+        var s = new User(); s.Id = spammer.Id; s.Timestamp = DateTimeHelper.UtcNow; await users.CreateUser(s);
 
         var mod = new ModService(cfg, users);
         var modLog = new ModLoggingService(cfg);
@@ -38,7 +37,7 @@ public class SpamServiceTests
     public async Task Breathing_Tests()
     {
         var (cfg, _, (_, sunny), _, (generalChannel, modChat, _), guild, client) = TestUtils.DefaultStubs();
-        SpamSetup(cfg, sunny, modChat, guild, client);
+        await SpamSetup(cfg, sunny, modChat, guild, client);
 
         Assert.AreEqual(0, generalChannel.Messages.Count);
         Assert.AreEqual(0, modChat.Messages.Count);
@@ -63,7 +62,7 @@ public class SpamServiceTests
     public async Task EachTypeOfSpam_Tests()
     {
         var (cfg, _, (_, sunny), _, (generalChannel, modChat, _), guild, client) = TestUtils.DefaultStubs();
-        SpamSetup(cfg, sunny, modChat, guild, client);
+        await SpamSetup(cfg, sunny, modChat, guild, client);
 
         cfg.SpamBasePressure = 10; // can't zero this or decay stops working
         cfg.SpamMaxPressure = 60;
@@ -266,7 +265,7 @@ public class SpamServiceTests
     public async Task EveryTypeOfSpamAtOnce_Tests()
     {
         var (cfg, _, (_, sunny), _, (generalChannel, modChat, _), guild, client) = TestUtils.DefaultStubs();
-        SpamSetup(cfg, sunny, modChat, guild, client);
+        await SpamSetup(cfg, sunny, modChat, guild, client);
 
         cfg.SpamBasePressure = 10;
         cfg.SpamMaxPressure = 60;
@@ -305,7 +304,7 @@ public class SpamServiceTests
     public async Task TheBobTest()
     {
         var (cfg, _, (_, sunny), _, (generalChannel, modChat, _), guild, client) = TestUtils.DefaultStubs();
-        SpamSetup(cfg, sunny, modChat, guild, client);
+        await SpamSetup(cfg, sunny, modChat, guild, client);
 
         cfg.SpamBasePressure = 10;
         cfg.SpamMaxPressure = 60;

@@ -24,9 +24,9 @@ public class QuoteServiceTests
         var quotes = new QuoteStorage();
         quotes.Quotes.Add(sunny.Id.ToString(), new List<string> { "gonna be my day" });
 
-        var users = new Dictionary<ulong, User>();
-        var s = new User(); s.Username = "Sunny Starscout"; users.Add(1, s);
-        var p = new User(); p.Username = "Pipp Petals"; users.Add(2, p);
+        var users = new UserService(null);
+        var s = new User(); s.Id = 1; s.Username = "Sunny Starscout"; await users.CreateUser(s);
+        var p = new User(); p.Id = 2; p.Username = "Pipp Petals"; await users.CreateUser(p);
 
         var qs = new QuoteService(quotes, users);
 
@@ -62,7 +62,7 @@ public class QuoteServiceTests
         var quotes = new QuoteStorage();
         quotes.Aliases.Add("short", "pipp");
 
-        var users = new Dictionary<ulong, User>();
+        var users = new UserService(null);
 
         var qs = new QuoteService(quotes, users);
 

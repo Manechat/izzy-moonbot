@@ -18,12 +18,12 @@ public class ModCoreModuleTests
     {
         var generalStorage = new GeneralStorage();
         var scheduledJobs = new List<ScheduledJob>();
-        var mod = new ModService(cfg, new Dictionary<ulong, User>());
+        var users = new UserService(null);
+        var mod = new ModService(cfg, users);
         var modLog = new ModLoggingService(cfg);
         var logger = new LoggingService(new TestLogger<Worker>());
         var ss = new ScheduleService(cfg, mod, modLog, logger, generalStorage, scheduledJobs);
 
-        var users = new Dictionary<ulong, User>();
         var cfgDescriber = new ConfigDescriber();
         return (ss, new ModCoreModule(logger, cfg, users, ss, mod, cfgDescriber));
     }

@@ -17,7 +17,7 @@ namespace Izzy_Moonbot_Tests.Services;
 [TestClass()]
 public class ScheduleServiceTests
 {
-    public static ScheduleService SetupScheduleService(Config cfg, Dictionary<ulong, User> users)
+    public static ScheduleService SetupScheduleService(Config cfg, UserService users)
     {
         var generalStorage = new GeneralStorage();
 
@@ -38,8 +38,8 @@ public class ScheduleServiceTests
         cfg.ModChannel = modChat.Id;
 
         // ModService assumes that every user it's asked to silence is already in the users Dictionary
-        var users = new Dictionary<ulong, User>();
-        users[sunny.Id] = new User();
+        var users = new UserService(null);
+        var s = new User(); s.Id = sunny.Id; await users.CreateUser(s);
 
         var ss = SetupScheduleService(cfg, users);
 
@@ -78,9 +78,14 @@ public class ScheduleServiceTests
         ulong sproutId = 10;
         guild.BannedUserIds.Add(sproutId);
 
-        var users = new Dictionary<ulong, User>();
-        guild.Users.ForEach(u => users[u.Id] = new User());
-        users[sproutId] = new User();
+        var users = new UserService(null);
+        guild.Users.ForEach(async u =>
+        {
+            var ur = new User();
+            ur.Id = u.Id;
+            await users.CreateUser(ur);
+        });
+        var spr = new User(); spr.Id = sproutId; await users.CreateUser(spr);
 
         var ss = SetupScheduleService(cfg, users);
 
@@ -155,7 +160,7 @@ public class ScheduleServiceTests
         var (cfg, _, (_, sunny), _, (generalChannel, modChat, _), guild, client) = TestUtils.DefaultStubs();
         DiscordHelper.DefaultGuildId = guild.Id;
         cfg.ModChannel = modChat.Id;
-        var ss = SetupScheduleService(cfg, new Dictionary<ulong, User>());
+        var ss = SetupScheduleService(cfg, new UserService(null));
 
         DateTimeHelper.FakeUtcNow = new DateTimeOffset(2010, 10, 10, 0, 0, 0, TimeSpan.Zero);
         await ss.Unicycle(client);
@@ -184,7 +189,7 @@ public class ScheduleServiceTests
         var (cfg, _, (_, sunny), _, (generalChannel, modChat, _), guild, client) = TestUtils.DefaultStubs();
         DiscordHelper.DefaultGuildId = guild.Id;
         cfg.ModChannel = modChat.Id;
-        var ss = SetupScheduleService(cfg, new Dictionary<ulong, User>());
+        var ss = SetupScheduleService(cfg, new UserService(null));
 
         DateTimeHelper.FakeUtcNow = new DateTimeOffset(2010, 10, 10, 0, 0, 0, TimeSpan.Zero);
         await ss.Unicycle(client);
@@ -213,7 +218,7 @@ public class ScheduleServiceTests
         var (cfg, _, (_, sunny), _, (generalChannel, modChat, _), guild, client) = TestUtils.DefaultStubs();
         DiscordHelper.DefaultGuildId = guild.Id;
         cfg.ModChannel = modChat.Id;
-        var ss = SetupScheduleService(cfg, new Dictionary<ulong, User>());
+        var ss = SetupScheduleService(cfg, new UserService(null));
 
         // start the yearly echo on Oct 10th 2011
         DateTimeHelper.FakeUtcNow = new DateTimeOffset(2011, 10, 10, 0, 0, 0, TimeSpan.Zero);

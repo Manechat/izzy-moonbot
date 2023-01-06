@@ -19,7 +19,7 @@ public class QuoteModuleTests
         var quotes = new QuoteStorage();
         quotes.Quotes.Add(sunny.Id.ToString(), new List<string> { "gonna be my day" });
 
-        var userinfo = new Dictionary<ulong, User>();
+        var userinfo = new UserService(null);
         var qs = new QuoteService(quotes, userinfo);
         var qm = new QuotesModule(cfg, qs);
 
@@ -64,7 +64,7 @@ public class QuoteModuleTests
         quotes.Quotes.Add(sunny.Id.ToString(), new List<string> { "gonna be my day", "eat more vegetables" });
         quotes.Quotes.Add(izzy.Id.ToString(), new List<string> { "let's unicycle it" });
 
-        var userinfo = new Dictionary<ulong, User>();
+        var userinfo = new UserService(null);
         var qs = new QuoteService(quotes, userinfo);
         var qm = new QuotesModule(cfg, qs);
 
@@ -128,7 +128,7 @@ public class QuoteModuleTests
         var quotes = new QuoteStorage();
         quotes.Quotes.Add("1234", new List<string> { "minty was here" });
 
-        var userinfo = new Dictionary<ulong, User>();
+        var userinfo = new UserService(null);
         var qs = new QuoteService(quotes, userinfo);
         var qm = new QuotesModule(cfg, qs);
 
@@ -154,7 +154,7 @@ public class QuoteModuleTests
         var quotes = new QuoteStorage();
         quotes.Quotes.Add(sunny.Id.ToString(), new List<string> { "gonna be my day", "gonna be my day" });
 
-        var userinfo = new Dictionary<ulong, User>();
+        var userinfo = new UserService(null);
         var qs = new QuoteService(quotes, userinfo);
         var qm = new QuotesModule(cfg, qs);
 
@@ -182,7 +182,7 @@ public class QuoteModuleTests
         var quotes = new QuoteStorage();
         quotes.Quotes.Add(sunny.Id.ToString(), new List<string> { "gonna be my day" });
 
-        var userinfo = new Dictionary<ulong, User>();
+        var userinfo = new UserService(null);
         var qs = new QuoteService(quotes, userinfo);
         var qm = new QuotesModule(cfg, qs);
 
