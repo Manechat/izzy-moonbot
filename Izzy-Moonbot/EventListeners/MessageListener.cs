@@ -67,7 +67,7 @@ public class MessageListener
             $"__Before__:\n{oldContent}\n" +
             $"__After__:\n{newMessage.Content}";
 
-        await logChannel.SendMessageAsync(logMessage);
+        await logChannel.SendMessageAsync(logMessage, allowedMentions: AllowedMentions.None);
     }
 
     private async Task ProcessMessageDelete(
@@ -108,7 +108,7 @@ public class MessageListener
         else
             logMessage += $"{message.Content}";
 
-        await logChannel.SendMessageAsync(logMessage);
+        await logChannel.SendMessageAsync(logMessage, allowedMentions: AllowedMentions.None);
     }
 
     private IIzzySocketTextChannel? GetLogChannel(IIzzyClient client)
