@@ -63,7 +63,7 @@ public class MessageListener
         if (author.IsBot) return; // Don't listen to bots
 
         var logMessage =
-            $"Message by {author.Username}#{author.Discriminator} ({author.Id}) **edited** in {channel.Name}:\n" +
+            $"Message {newMessage.Id} by {author.Username}#{author.Discriminator} ({author.Id}) **edited** in {channel.Name}:\n" +
             $"__Before__:\n{oldContent}\n" +
             $"__After__:\n{newMessage.Content}";
 
