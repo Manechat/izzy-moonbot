@@ -103,7 +103,7 @@ public class UserListener
 
             if (_config.MemberRole == null || _config.MemberRole <= 0)
                 _logger.Log($"ManageNewUserRoles is true but MemberRole is {_config.MemberRole}", level: LogLevel.Warning);
-            else if (!(_config.AutoSilenceNewJoins || _users[member.Id].Silenced))
+            else if (!(_config.AutoSilenceNewJoins || user.Silenced))
             {
                 _logger.Log($"Adding Config.MemberRole ({_config.MemberRole}) to new user", level: LogLevel.Debug);
                 roles.Add((ulong)_config.MemberRole);
@@ -111,7 +111,7 @@ public class UserListener
 
             if (_config.NewMemberRole == null || _config.NewMemberRole <= 0)
                 _logger.Log($"ManageNewUserRoles is true but NewMemberRole is {_config.NewMemberRole}", level: LogLevel.Warning);
-            else if ((!_config.AutoSilenceNewJoins || !_users[member.Id].Silenced))
+            else if ((!_config.AutoSilenceNewJoins || !user.Silenced))
             {
                 _logger.Log($"Adding Config.NewMemberRole ({_config.NewMemberRole}) to new user", level: LogLevel.Debug);
                 roles.Add((ulong)_config.NewMemberRole);

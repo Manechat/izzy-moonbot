@@ -421,10 +421,10 @@ public class DevModule : ModuleBase<SocketCommandContext>
                                  $"Last talk time: <t:{userFromFile.Timestamp.ToUnixTimeSeconds()}:F>\n" +
                                  $"Last pressure: {userFromFile.Pressure}\n```\n\n" +
                                  $"Database:\n```\n" +
-                                 $"Username: {userFromDB.Username}\n" +
-                                 $"Aliases: {string.Join(",", userFromDB.Aliases)}\n" +
-                                 $"Last talk time: <t:{userFromDB.Timestamp.ToUnixTimeSeconds()}:F>\n" +
-                                 $"Last pressure: {userFromDB.Pressure}\n```\n\n");
+                                 $"Username: {userFromDB?.Username ?? "NOT FOUND"}\n" +
+                                 $"Aliases: {(userFromDB != null ? string.Join(",", userFromDB.Aliases) : "NOT FOUND")}\n" +
+                                 $"Last talk time: {(userFromDB != null ? $"<t:{userFromDB.Timestamp.ToUnixTimeSeconds()}:F>" : "NOT FOUND")}\n" +
+                                 $"Last pressure: {(userFromDB != null ? userFromDB.Pressure : "NOT FOUND")}\n```\n\n");
                 
                 break;
             default:
