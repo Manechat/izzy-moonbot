@@ -40,18 +40,6 @@ public class UserService
     /// <param name="user">The IIzzyGuildUser instance to check.</param>
     /// <returns>`true` if the user exists, `false` if not.</returns>
     public async Task<bool> Exists(IIzzyGuildUser user) => await GetUser(user) != null;
-
-    // /!\ THE CODE BELOW IS TERRIBLY CURSED. /!\
-    // ONLY ENABLE IF YOU KNOW WHAT YOU'RE DOING.
-    /*public User? this[ulong id]
-    {
-        get => GetUser(id).Result;
-        set
-        {
-            if (value == null) throw new NullReferenceException("User cannot be null.");
-            ModifyUser(value);
-        }
-    }*/
     
     /// <summary>
     /// Check if the user exists in the database.

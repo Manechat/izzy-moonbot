@@ -87,7 +87,7 @@ public class SpamService
         var pressure = user.Pressure;
         var difference = now - user.Timestamp;
         var pressureLoss = difference.TotalSeconds * pressureLossPerSecond;
-        
+
         // Execute pressure loss
         pressure -= pressureLoss;
         if (pressure <= 0) pressure = 0; // Pressure cannot be negative
@@ -95,11 +95,11 @@ public class SpamService
         // Save pressure loss
         user.Pressure = pressure;
         user.Timestamp = now;
-        
+
         // Remove out of date message cache.
         // TODO: Move to it's own method. Not sure how to without saving the users file again...
         var messages = user.PreviousMessages.ToArray().ToList(); // .NET gets angry if we modify the iterator while iterating
-        
+
         foreach (var previousMessageItem in messages)
         {
             if ((previousMessageItem.Timestamp.ToUniversalTime().ToUnixTimeMilliseconds() + (_config.SpamMessageDeleteLookback * 1000)) <=
@@ -111,7 +111,6 @@ public class SpamService
         }
 
         await _users.ModifyUser(user);
-        //await FileHelper.SaveUsersAsync(_users);
 
         // Return pressure
         return pressure;
@@ -127,7 +126,6 @@ public class SpamService
         // Save user
         user.Timestamp = DateTimeHelper.UtcNow;
         await _users.ModifyUser(user);
-        //await FileHelper.SaveUsersAsync(_users);
 
         // Return new pressure
         return user.Pressure;
@@ -269,7 +267,6 @@ public class SpamService
         userData.PreviousMessages.Add(messageItem);
 
         await _users.ModifyUser(userData);
-        //await FileHelper.SaveUsersAsync(_users);
 
         var oldPressureBeforeDecay = userData.Pressure * 1; // seperate it from the thingy
 
