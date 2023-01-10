@@ -71,6 +71,8 @@ public class QuoteService
     /// <exception cref="NullReferenceException">If the alias doesn't exist.</exception>
     public IIzzyUser ProcessAlias(string alias, IIzzyGuild? guild)
     {
+        alias = alias.ToLower();
+        
         if (_quoteStorage.Aliases.ContainsKey(alias))
         {
             var value = _quoteStorage.Aliases[alias];
@@ -130,6 +132,8 @@ public class QuoteService
     /// <exception cref="DuplicateNameException">If the alias already exists.</exception>
     public async Task AddAlias(string alias, string category)
     {
+        alias = alias.ToLower();
+        
         if (_quoteStorage.Aliases.ContainsKey(alias)) throw new DuplicateNameException("This alias already exists.");
         
         _quoteStorage.Aliases.Add(alias, category);
@@ -139,6 +143,8 @@ public class QuoteService
     
     public async Task RemoveAlias(string alias)
     {
+        alias = alias.ToLower();
+        
         if (!CategoryExists(alias)) throw new NullReferenceException("This alias doesn't exist.");
 
         var toDelete = _quoteStorage.Aliases.Keys.Single(key => key.ToLower() == alias.ToLower());
