@@ -57,7 +57,9 @@ namespace Izzy_Moonbot
             _raidService = raidService;
             _filterService = filterService;
             _scheduleService = scheduleService;
-            _commands = new CommandService();
+            var commandServiceConfig = new CommandServiceConfig();
+            commandServiceConfig.CaseSensitiveCommands = false;
+            _commands = new CommandService(commandServiceConfig);
             _discordSettings = discordSettings.Value;
             _services = services;
             _config = config;
@@ -406,21 +408,21 @@ namespace Izzy_Moonbot
                         
                     foreach (var keyValuePair in _config.Aliases)
                     {
-                        if (command[0] != keyValuePair.Key) continue;
+                        if (command[0].ToLower() != keyValuePair.Key.ToLower()) continue;
                         // Alias match
                             
                         var commandAlias = keyValuePair.Value.StartsWith(_config.Prefix)
                             ? keyValuePair.Value[1..].TrimStart().Split(" ")[0]
                             : keyValuePair.Value.TrimStart().Split(" ")[0];
                             
-                        if (_config.Aliases.Any(alias => alias.Key == commandAlias))
+                        if (_config.Aliases.Any(alias => alias.Key.ToLower() == commandAlias.ToLower()))
                         {
                             await context.Channel.SendMessageAsync(
                                 $"**Warning!** This alias directs to another alias!{Environment.NewLine}Izzy doesn't support aliases feeding into aliases. Please remove this alias or redirect it to an existing command.");
                             return;
                         }
 
-                        if (_commands.Commands.All(cmd => cmd.Name != commandAlias))
+                        if (_commands.Commands.All(cmd => cmd.Name.ToLower() != commandAlias.ToLower()))
                         {
                             await context.Channel.SendMessageAsync(
                                 $"**Warning!** This alias directs to a non-existent command!{Environment.NewLine}Please remove this alias or redirect it to an existing command.");
@@ -437,7 +439,7 @@ namespace Izzy_Moonbot
                 
                 var inputCommandName = parsedMessage.Split(" ")[0];
                 var validCommand = _commands.Commands.Any(command => 
-                    command.Name == inputCommandName || command.Aliases.Contains(inputCommandName));
+                    command.Name.ToLower() == inputCommandName.ToLower() || command.Aliases.Select(alias => alias.ToLower()).Contains(inputCommandName.ToLower()));
 
                 if (!validCommand)
                 {
