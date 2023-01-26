@@ -276,6 +276,19 @@ public class TimeHelperTests
             new DateTimeOffset(2020, 1, 1, 12, 0, 0, 0, TimeSpan.Zero), ScheduledJobRepeatType.None, ""
         );
         Assert.AreEqual(err, null);
+
+        // regression test that two-digit days also work
+        AssertTryParseDateTime(
+            TimeHelper.TryParseDateTime("on 15 jan 2020 12:00 UTC+0", out err),
+            new DateTimeOffset(2020, 1, 15, 12, 0, 0, 0, TimeSpan.Zero), ScheduledJobRepeatType.None, ""
+        );
+        Assert.AreEqual(err, null);
+
+        AssertTryParseDateTime(
+            TimeHelper.TryParseDateTime("on 15th jan 2020 12:00 UTC+0", out err),
+            new DateTimeOffset(2020, 1, 15, 12, 0, 0, 0, TimeSpan.Zero), ScheduledJobRepeatType.None, ""
+        );
+        Assert.AreEqual(err, null);
     }
 
     [TestMethod()]
