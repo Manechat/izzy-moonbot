@@ -409,8 +409,11 @@ public static class TimeHelper
     {
         int dateInt;
         bool isInt = int.TryParse(dateToken, out dateInt);
+
         // support "st"/"nd"/"rd"/"th" suffixes without advertising them
-        bool isIntWithSuffix = dateToken.Length >= 2 && int.TryParse(dateToken.Substring(0, dateToken.Length - 2), out dateInt);
+        bool isIntWithSuffix = false;
+        if (!isInt)
+            isIntWithSuffix = dateToken.Length >= 2 && int.TryParse(dateToken.Substring(0, dateToken.Length - 2), out dateInt);
 
         if (!isInt && !isIntWithSuffix) {
             errorString = $"\"{dateToken}\" is not a positive integer";
