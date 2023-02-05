@@ -75,7 +75,7 @@ services:
                 condition: service_started
 
     mongo_express:
-        image: mongo-express:6.0.3
+        image: mongo-express:1.0.0-alpha.4
         networks:
             - izzy
         restart: on-failure
