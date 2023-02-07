@@ -31,6 +31,9 @@ services:
             - type: volume
               source: db_data
               target: /data/db
+            - type: volume
+              source: db_config
+              target: /data/configdb
         restart: on-failure
         env_file: mongo.env
 
@@ -75,7 +78,7 @@ services:
                 condition: service_started
 
     mongo_express:
-        image: mongo-express:1.0.0-alpha.4
+        image: ghcr.io/blackthornyugen/mongo-express-docker:v1.0.0
         networks:
             - izzy
         restart: on-failure
@@ -90,8 +93,12 @@ services:
 volumes:
     izzy_data:
         name: izzy_data
+        external: true
     db_data:
         name: db_data
+    db_config:
+        name: db_config
 
 networks:
     izzy:
+        name: izzy
