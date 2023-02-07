@@ -93,7 +93,6 @@ services:
 volumes:
     izzy_data:
         name: izzy_data
-        external: true
     db_data:
         name: db_data
     db_config:
