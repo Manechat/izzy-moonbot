@@ -14,7 +14,7 @@ RUN dotnet build "Izzy-Moonbot.csproj" -c Release -o /app/build
 FROM build AS publish
 ARG TARGETARCH
 COPY ./Izzy-Moonbot/publish.sh .
-RUN ./publish.sh $TARGETARCH
+RUN chmod u+x ./publish.sh && ./publish.sh $TARGETARCH
 
 FROM base AS final
 ARG BUILD_DATE=null
