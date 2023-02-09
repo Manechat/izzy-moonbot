@@ -3,7 +3,7 @@
 FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS base
 WORKDIR /app
 
-FROM mcr.microsoft.com/dotnet/sdk:6.0 --platform=$BUILDPLATFORM AS build
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 WORKDIR /src
 COPY ["Izzy-Moonbot/Izzy-Moonbot.csproj", "Izzy-Moonbot/"]
 RUN dotnet restore "Izzy-Moonbot/Izzy-Moonbot.csproj"
