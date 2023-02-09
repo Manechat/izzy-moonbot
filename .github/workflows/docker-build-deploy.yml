@@ -49,5 +49,5 @@ jobs:
         build-args: |
           BUILD_DATE=${{ env.BUILD_DATE }}
           BUILD_COMMIT=${{ env.BUILD_COMMIT }}
-        platforms: linux/arm64
+        platforms: linux/arm64,linux/amd64
         provenance: false

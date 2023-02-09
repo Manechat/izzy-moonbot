@@ -22,4 +22,5 @@ jobs:
         container: izzy-moonbot
         dry-run: false
         keep-tags: latest
+        keep-last: 3
         prune-untagged: true

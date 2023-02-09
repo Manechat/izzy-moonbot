@@ -3,7 +3,7 @@
 FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS base
 WORKDIR /app
 
-FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:6.0 --platform=$BUILDPLATFORM AS build
 WORKDIR /src
 COPY ["Izzy-Moonbot/Izzy-Moonbot.csproj", "Izzy-Moonbot/"]
 RUN dotnet restore "Izzy-Moonbot/Izzy-Moonbot.csproj"
@@ -12,7 +12,9 @@ WORKDIR "/src/Izzy-Moonbot"
 RUN dotnet build "Izzy-Moonbot.csproj" -c Release -o /app/build
 
 FROM build AS publish
-RUN dotnet publish "Izzy-Moonbot.csproj" -c Release -o /app/publish /p:UseAppHost=false --runtime linux-arm64 --self-contained false
+ARG TARGETARCH
+COPY ./Izzy-Moonbot/publish.sh .
+RUN publish.sh $TARGETARCH
 
 FROM base AS final
 ARG BUILD_DATE=null
