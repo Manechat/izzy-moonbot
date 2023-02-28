@@ -38,8 +38,8 @@ then run `ssh izzy`.
 Once all the changes you want to release have been merged onto the `mane` branch, and you've done `git pull origin mane` or whatever your preferred command is to update your local repo:
 
 - Open two terminals (I use git bash). Run `ssh izzy` on one of them, and `cd` to your local clone of this `izzy-moonbot` repo on the other.
-- On the prod host: run `cp -r ~/izzy-moonbot/botsettings/* ~/izzy-backup/config` to back up all of Izzy's configuration files (optionally use `ls -l ~/izzy-backup/config` to double-check the last modified timestamps of those backups)
-- In your local clone: run `dotnet build Izzy-Moonbot/Izzy-Moonbot.csproj -c Release -r linux-x64 --self-contained` to build Izzy
-- On the prod host: run `sudo service izzy-moonbot stop` to disable Izzy
-- In your local clone: run `scp -r Izzy-Moonbot/bin/Release/net6.0/linux-x64/* izzy:~/izzy-moonbot` to copy the build artifacts to the production host
-- On the prod host: run `sudo service izzy-moonbot start && journalctl -u izzy-moonbot.service -f` to start Izzy and monitor her startup logs
+- To back up all of Izzy's configuration files: on the prod host: run `cp -r ~/izzy-moonbot/botsettings/* ~/izzy-backup/config` (optionally use `ls -l ~/izzy-backup/config` to double-check the last modified timestamps of those backups)
+- To build Izzy: in your local clone: run `dotnet build Izzy-Moonbot/Izzy-Moonbot.csproj -c Release -r linux-x64 --self-contained`
+- To disable Izzy: on the prod host: run `sudo service izzy-moonbot stop`
+- To copy the build artifacts to the production host: in your local clone: run `scp -r Izzy-Moonbot/bin/Release/net6.0/linux-x64/* izzy:~/izzy-moonbot`
+- To start Izzy and monitor her startup logs: on the prod host: run `sudo service izzy-moonbot start && journalctl -u izzy-moonbot.service -f`
