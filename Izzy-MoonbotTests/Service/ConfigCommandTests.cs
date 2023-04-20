@@ -152,6 +152,7 @@ public class ConfigCommandTests
         StringAssert.Contains(description, "Run `.config MentionResponses list` to");
         StringAssert.Contains(description, "Run `.config MentionResponses add <value>` to");
         StringAssert.Contains(description, "Run `.config MentionResponses remove <value>` to");
+        StringAssert.Contains(description, "Run `.config MentionResponses clear` to");
 
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config MentionResponses list");
         await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "MentionResponses", "list");
@@ -277,6 +278,15 @@ public class ConfigCommandTests
         StringAssert.Contains(description, "MentionResponses");
         StringAssert.Contains(description, "I removed the following");
         StringAssert.Contains(description, $"```{Environment.NewLine}hello new friend!{Environment.NewLine}```");
+
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config MentionResponses clear");
+        await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "MentionResponses", "clear");
+        TestUtils.AssertSetsAreEqual(cfg.MentionResponses, new HashSet<string>{});
+
+        description = generalChannel.Messages.Last().Content;
+        StringAssert.Contains(description, "MentionResponses");
+        StringAssert.Contains(description, "I've cleared");
+        StringAssert.Contains(description, $"```\ngot something I can unicycle?\n```");
     }
 
     [TestMethod()]
