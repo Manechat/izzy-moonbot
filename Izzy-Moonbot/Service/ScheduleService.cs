@@ -25,20 +25,17 @@ public class ScheduleService
     private readonly LoggingService _logger;
     private readonly ModService _mod;
     private readonly ModLoggingService _modLogging;
-    private GeneralStorage _generalStorage;
 
     private readonly List<ScheduledJob> _scheduledJobs;
 
     private bool _alreadyInitiated;
 
-    public ScheduleService(Config config, ModService mod, ModLoggingService modLogging, LoggingService logger, GeneralStorage generalStorage,
-        List<ScheduledJob> scheduledJobs)
+    public ScheduleService(Config config, ModService mod, ModLoggingService modLogging, LoggingService logger, List<ScheduledJob> scheduledJobs)
     {
         _config = config;
         _logger = logger;
         _mod = mod;
         _modLogging = modLogging;
-        _generalStorage = generalStorage;
         _scheduledJobs = scheduledJobs;
     }
 
@@ -359,9 +356,9 @@ public class ScheduleService
 
                 await _modLogging.CreateModLog(guild)
                     .SetContent(
-                        $"Changed banner to <{url}> for banner rotation.")
+                        $"Set banner to <{url}> for banner rotation.")
                     .SetFileLogContent(
-                        $"Changed banner to {url} for banner rotation.")
+                        $"Set banner to {url} for banner rotation.")
                     .Send();
             }
             catch (FlurlHttpTimeoutException ex)
@@ -406,17 +403,6 @@ public class ScheduleService
             {
                 var image = await BooruHelper.GetFeaturedImage();
 
-                if (_generalStorage.CurrentBooruFeaturedImage != null)
-                {
-                    if (image.Id == _generalStorage.CurrentBooruFeaturedImage.Id)
-                    {
-                        _logger.Log($"Manebooru featured image is still {image.Id}. Nothing to do but update non-ID properties in the cache.", level: LogLevel.Debug);
-                        _generalStorage.CurrentBooruFeaturedImage = image;
-                        await FileHelper.SaveGeneralStorageAsync(_generalStorage);
-                        return;
-                    }
-                }
-
                 // Don't check the images if they're not ready yet!
                 if (!image.ThumbnailsGenerated || image.Representations == null)
                 {
@@ -444,16 +430,12 @@ public class ScheduleService
                 var imageStream = await image.Representations.Thumbnail.GetStreamAsync();
 
                 await guild.SetBanner(new Image(imageStream));
-                
-                _generalStorage.CurrentBooruFeaturedImage =
-                    image;
-                await FileHelper.SaveGeneralStorageAsync(_generalStorage);
-                
+
                 await _modLogging.CreateModLog(guild)
                     .SetContent(
-                        $"Changed banner to <https://manebooru.art/images/{image.Id}> for Manebooru featured image.")
+                        $"Set banner to <https://manebooru.art/images/{image.Id}> for Manebooru featured image.")
                     .SetFileLogContent(
-                        $"Changed banner to https://manebooru.art/images/{image.Id} for Manebooru featured image.")
+                        $"Set banner to https://manebooru.art/images/{image.Id} for Manebooru featured image.")
                     .Send();
             }
             catch (FlurlHttpTimeoutException ex)
