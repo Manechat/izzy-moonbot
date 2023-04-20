@@ -337,6 +337,7 @@ public class ConfigCommand
                                 $"**{configItemKey}** contains the following values:",
                                 roleMentionList,
                                 "",
+                                codeblock: false,
                                 allowedMentions: AllowedMentions.None
                             );
                             break;
@@ -352,6 +353,7 @@ public class ConfigCommand
                                 $"**{configItemKey}** contains the following values:",
                                 channelMentionList,
                                 "",
+                                codeblock: false,
                                 allowedMentions: AllowedMentions.None
                             );
                             break;
