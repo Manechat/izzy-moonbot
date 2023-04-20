@@ -62,12 +62,11 @@ public class MiscModuleTests
 
     public async Task<(ScheduleService, MiscModule)> SetupMiscModule(Config cfg)
     {
-        var generalStorage = new GeneralStorage();
         var scheduledJobs = new List<ScheduledJob>();
         var mod = new ModService(cfg, new Dictionary<ulong, User>());
         var modLog = new ModLoggingService(cfg);
         var logger = new LoggingService(new TestLogger<Worker>());
-        var ss = new ScheduleService(cfg, mod, modLog, logger, generalStorage, scheduledJobs);
+        var ss = new ScheduleService(cfg, mod, modLog, logger, scheduledJobs);
 
         var cfgDescriber = new ConfigDescriber();
         return (ss, new MiscModule(cfg, cfgDescriber, ss, logger, await SetupCommandService()));

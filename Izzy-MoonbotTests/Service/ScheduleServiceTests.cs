@@ -19,15 +19,13 @@ public class ScheduleServiceTests
 {
     public static ScheduleService SetupScheduleService(Config cfg, Dictionary<ulong, User> users)
     {
-        var generalStorage = new GeneralStorage();
-
         var scheduledJobs = new List<ScheduledJob>();
 
         var mod = new ModService(cfg, users);
         var modLog = new ModLoggingService(cfg);
         var logger = new LoggingService(new TestLogger<Worker>());
 
-        return new ScheduleService(cfg, mod, modLog, logger, generalStorage, scheduledJobs);
+        return new ScheduleService(cfg, mod, modLog, logger, scheduledJobs);
     }
 
     [TestMethod()]

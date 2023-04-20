@@ -16,12 +16,11 @@ public class ModCoreModuleTests
 {
     public (ScheduleService, ModCoreModule) SetupModCoreModule(Config cfg)
     {
-        var generalStorage = new GeneralStorage();
         var scheduledJobs = new List<ScheduledJob>();
         var mod = new ModService(cfg, new Dictionary<ulong, User>());
         var modLog = new ModLoggingService(cfg);
         var logger = new LoggingService(new TestLogger<Worker>());
-        var ss = new ScheduleService(cfg, mod, modLog, logger, generalStorage, scheduledJobs);
+        var ss = new ScheduleService(cfg, mod, modLog, logger, scheduledJobs);
 
         var users = new Dictionary<ulong, User>();
         var cfgDescriber = new ConfigDescriber();
