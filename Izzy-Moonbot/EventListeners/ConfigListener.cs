@@ -73,8 +73,7 @@ public class ConfigListener
             var action = new ScheduledBannerRotationJob();
             var job = new ScheduledJob(currentTime, executeTime, action, ScheduledJobRepeatType.Relative);
             await _schedule.CreateScheduledJob(job);
-            _logger.Log($"Added scheduled job.", level: LogLevel.Debug);
-            await _schedule.Unicycle_BannerRotation(action, new SocketGuildAdapter(client.GetGuild(DiscordHelper.DefaultGuild())), new DiscordSocketClientAdapter(client));
+            _logger.Log($"Added scheduled job {job.Id} for banner rotation.");
         }
         else if (original != BannerMode.None && current == BannerMode.None)
         {
