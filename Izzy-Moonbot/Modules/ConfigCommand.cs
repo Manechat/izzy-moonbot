@@ -337,6 +337,7 @@ public class ConfigCommand
                                 $"**{configItemKey}** contains the following values:",
                                 roleMentionList,
                                 "",
+                                codeblock: false,
                                 allowedMentions: AllowedMentions.None
                             );
                             break;
@@ -352,6 +353,7 @@ public class ConfigCommand
                                 $"**{configItemKey}** contains the following values:",
                                 channelMentionList,
                                 "",
+                                codeblock: false,
                                 allowedMentions: AllowedMentions.None
                             );
                             break;
@@ -518,6 +520,60 @@ public class ConfigCommand
                             {
                                 await context.Channel.SendMessageAsync(
                                     $"I couldn't remove the content you provided from the `{configItemKey}` list because the `{configItemKey}` config item isn't a list. There is likely a misconfiguration in the config item describer.");
+                            }
+
+                            break;
+                        default:
+                            await context.Channel.SendMessageAsync("I seem to have encountered a setting type that I do not know about.");
+                            break;
+                    }
+                else if (action == "clear")
+                    switch (configItem.Type)
+                    {
+                        case ConfigItemType.StringSet:
+                            try
+                            {
+                                var output = await ConfigHelper.ClearStringSet(config, configItemKey);
+
+                                await context.Channel.SendMessageAsync(
+                                    $"I've cleared the `{configItemKey}` string list, so it's now empty.\n\nIt used to contain:```\n{string.Join('\n', output)}\n```",
+                                    allowedMentions: AllowedMentions.None);
+                            }
+                            catch (ArgumentException)
+                            {
+                                await context.Channel.SendMessageAsync(
+                                    $"I couldn't clear the `{configItemKey}` list because the `{configItemKey}` config item isn't a list. There is likely a misconfiguration in the config item describer.");
+                            }
+
+                            break;
+                        case ConfigItemType.RoleSet:
+                            try
+                            {
+                                var output = await ConfigHelper.ClearRoleSet(config, configItemKey);
+
+                                await context.Channel.SendMessageAsync(
+                                    $"I've cleared the `{configItemKey}` role list, so it's now empty.\n\nIt used to contain:\n{string.Join('\n', output.Select(r => $"<@&{r}>"))}",
+                                    allowedMentions: AllowedMentions.None);
+                            }
+                            catch (ArgumentException)
+                            {
+                                await context.Channel.SendMessageAsync(
+                                    $"I couldn't clear the `{configItemKey}` list because the `{configItemKey}` config item isn't a list. There is likely a misconfiguration in the config item describer.");
+                            }
+
+                            break;
+                        case ConfigItemType.ChannelSet:
+                            try
+                            {
+                                var output = await ConfigHelper.ClearChannelSet(config, configItemKey);
+
+                                await context.Channel.SendMessageAsync(
+                                    $"I've cleared the `{configItemKey}` channel list, so it's now empty.\n\nIt used to contain:\n{string.Join('\n', output.Select(c => $"<#{c}>"))}");
+                            }
+                            catch (ArgumentException)
+                            {
+                                await context.Channel.SendMessageAsync(
+                                    $"I couldn't clear the `{configItemKey}` list because the `{configItemKey}` config item isn't a list. There is likely a misconfiguration in the config item describer.");
                             }
 
                             break;
@@ -950,9 +1006,10 @@ public class ConfigCommand
             case ConfigItemType.ChannelSet:
                 return $"**{configItemKey}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
                        $"*{configItem.Description}*{Environment.NewLine}" +
-                       $"Run `{config.Prefix}config {configItemKey} list` to view the contents of this list.{Environment.NewLine}" +
-                       $"Run `{config.Prefix}config {configItemKey} add <value>` to add a value to this list. {nullableString}{Environment.NewLine}" +
-                       $"Run `{config.Prefix}config {configItemKey} remove <value>` to remove a value from this list. {nullableString}";
+                       $"Run `{config.Prefix}config {configItemKey} list` to view the contents of this list.\n" +
+                       $"Run `{config.Prefix}config {configItemKey} add <value>` to add a value to this list. {nullableString}\n" +
+                       $"Run `{config.Prefix}config {configItemKey} remove <value>` to remove a value from this list. {nullableString}" +
+                       $"Run `{config.Prefix}config {configItemKey} clear` to clear this list of all values. {nullableString}";
             case ConfigItemType.StringDictionary:
                 return $"**{configItemKey}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
                        $"*{configItem.Description}*{Environment.NewLine}" +

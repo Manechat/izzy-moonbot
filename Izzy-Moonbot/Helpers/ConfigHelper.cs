@@ -208,6 +208,28 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
     }
 
+    public static async Task<ISet<string>> ClearStringSet(Config settings, string key)
+    {
+        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        {
+            var configValue = pinfo.GetValue(settings);
+            if (configValue is ISet<string> set
+                && set.GetType().IsGenericType
+                && set.GetType().GetGenericTypeDefinition().IsAssignableFrom(typeof(HashSet<>)))
+            {
+                var value = new HashSet<string>(set);
+                set.Clear();
+
+                pinfo.SetValue(settings, set);
+                await FileHelper.SaveConfigAsync(settings);
+                return value;
+            }
+            throw new ArgumentException($"'{key}' is not a Set.");
+        }
+
+        throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
+    }
+
     private static HashSet<IIzzyUser> UserIdToUser(HashSet<ulong> set, IIzzyContext context)
     {
         HashSet<IIzzyUser> finalSet = new();
@@ -377,6 +399,28 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
+    public static async Task<ISet<ulong>> ClearRoleSet(Config settings, string key)
+    {
+        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        {
+            var configValue = pinfo.GetValue(settings);
+            if (configValue is ISet<ulong> set
+                && set.GetType().IsGenericType
+                && set.GetType().GetGenericTypeDefinition().IsAssignableFrom(typeof(HashSet<>)))
+            {
+                var value = new HashSet<ulong>(set);
+                set.Clear();
+
+                pinfo.SetValue(settings, set);
+                await FileHelper.SaveConfigAsync(settings);
+                return value;
+            }
+            throw new ArgumentException($"'{key}' is not a Set.");
+        }
+
+        throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
+    }
+
     private static HashSet<IIzzySocketGuildChannel> ChannelIdToChannel(HashSet<ulong> set, IIzzyContext context)
     {
         HashSet<IIzzySocketGuildChannel> finalSet = new();
@@ -460,6 +504,28 @@ public static class ConfigHelper
         }
 
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
+    }
+
+    public static async Task<ISet<ulong>> ClearChannelSet(Config settings, string key)
+    {
+        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        {
+            var configValue = pinfo.GetValue(settings);
+            if (configValue is ISet<ulong> set
+                && set.GetType().IsGenericType
+                && set.GetType().GetGenericTypeDefinition().IsAssignableFrom(typeof(HashSet<>)))
+            {
+                var value = new HashSet<ulong>(set);
+                set.Clear();
+
+                pinfo.SetValue(settings, set);
+                await FileHelper.SaveConfigAsync(settings);
+                return value;
+            }
+            throw new ArgumentException($"'{key}' is not a Set.");
+        }
+
+        throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
     }
 
     public static IDictionary<string, VALUE> GetDictionary<VALUE>(Config settings, string key)
