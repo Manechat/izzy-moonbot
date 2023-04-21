@@ -87,14 +87,15 @@ public class ConfigListener
                 await _schedule.DeleteScheduledJob(scheduledJob);
             }
         }
-         // If we're managing the banner, make sure the banner is immediately updated to match the new mode
-        if ((original == BannerMode.ManebooruFeatured && current == BannerMode.CustomRotation) ||
-            (original == BannerMode.CustomRotation && current == BannerMode.ManebooruFeatured))
+
+        // If we're managing the banner, make sure the banner is immediately updated to match the new mode
+        if (current != BannerMode.None)
         {
             var scheduledJobs = _schedule.GetScheduledJobs(job => job.Action is ScheduledBannerRotationJob);
 
             foreach (var scheduledJob in scheduledJobs)
             {
+                _logger.Log($"Immediately invoking banner rotation job {scheduledJob.Id} due to config change.");
                 await _schedule.Unicycle_BannerRotation((ScheduledBannerRotationJob)scheduledJob.Action, new SocketGuildAdapter(client.GetGuild(DiscordHelper.DefaultGuild())), new DiscordSocketClientAdapter(client));
             }
         }
@@ -109,7 +110,7 @@ public class ConfigListener
         
         var scheduledJobs = _schedule.GetScheduledJobs(job => job.Action is ScheduledBannerRotationJob);
 
-        _logger.Log($"Updating all scheduled jobs for banner rotation to occur {current} minutes after enabling rotation instead of after {original} minutes.", level: LogLevel.Debug);
+        _logger.Log($"Updating all scheduled jobs for banner rotation to occur {current} minutes after enabling rotation instead of after {original} minutes.");
         foreach (var scheduledJob in scheduledJobs)
         {
             scheduledJob.ExecuteAt = (scheduledJob.LastExecutedAt ?? scheduledJob.CreatedAt).AddMinutes(current);
