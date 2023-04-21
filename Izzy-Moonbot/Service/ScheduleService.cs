@@ -431,12 +431,17 @@ public class ScheduleService
 
                 await guild.SetBanner(new Image(imageStream));
 
-                await _modLogging.CreateModLog(guild)
-                    .SetContent(
-                        $"Set banner to <https://manebooru.art/images/{image.Id}> for Manebooru featured image.")
-                    .SetFileLogContent(
-                        $"Set banner to https://manebooru.art/images/{image.Id} for Manebooru featured image.")
-                    .Send();
+                var defaultGuild = client.GetGuild(DiscordHelper.DefaultGuild());
+                if (_config.LogChannel != 0)
+                {
+                    var logChannel = defaultGuild?.GetTextChannel(_config.LogChannel);
+                    if (logChannel != null)
+                        await logChannel.SendMessageAsync($"Set banner to <https://manebooru.art/images/{image.Id}> for Manebooru featured image.", allowedMentions: AllowedMentions.None);
+                    else
+                        _logger.Log("Something went wrong trying to access LogChannel.");
+                }
+                else
+                    _logger.Log("Can't post logs because .config LogChannel hasn't been set.");
             }
             catch (FlurlHttpTimeoutException ex)
             {

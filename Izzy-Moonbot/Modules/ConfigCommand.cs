@@ -1008,7 +1008,7 @@ public class ConfigCommand
                        $"*{configItem.Description}*{Environment.NewLine}" +
                        $"Run `{config.Prefix}config {configItemKey} list` to view the contents of this list.\n" +
                        $"Run `{config.Prefix}config {configItemKey} add <value>` to add a value to this list. {nullableString}\n" +
-                       $"Run `{config.Prefix}config {configItemKey} remove <value>` to remove a value from this list. {nullableString}" +
+                       $"Run `{config.Prefix}config {configItemKey} remove <value>` to remove a value from this list. {nullableString}\n" +
                        $"Run `{config.Prefix}config {configItemKey} clear` to clear this list of all values. {nullableString}";
             case ConfigItemType.StringDictionary:
                 return $"**{configItemKey}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
