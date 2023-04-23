@@ -135,7 +135,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
     [RequireContext(ContextType.Guild)]
     [ModCommand(Group = "Permissions")]
     [DevCommand(Group = "Permissions")]
-    [Parameter("user", ParameterType.User, "The user to ban.")]
+    [Parameter("user", ParameterType.UnambiguousUser, "The user to ban.")]
     [Parameter("duration", ParameterType.DateTime, "How long the ban should last, e.g. \"2 weeks\" or \"6 months\". Omit for an indefinite ban.", true)]
     [Example(".ban 123456789012345678 1 month")]
     public async Task BanCommandAsync(
@@ -323,7 +323,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
     [ModCommand(Group = "Permissions")]
     [DevCommand(Group = "Permissions")]
     [Parameter("role", ParameterType.Role, "The role to assign.")]
-    [Parameter("user", ParameterType.User, "The user to assign the role.")]
+    [Parameter("user", ParameterType.UnambiguousUser, "The user to assign the role.")]
     [Parameter("duration", ParameterType.DateTime, "How long the role should last, e.g. \"2 weeks\" or \"6 months\". Omit for an indefinite role assignment.", true)]
     [Example(".assignrole @Best Pony @Izzy Moonbot 24 hours")]
     public async Task AssignRoleCommandAsync(

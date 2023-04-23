@@ -556,7 +556,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
     [ModCommand(Group = "Permission")]
     [DevCommand(Group = "Permission")]
     [Alias("deletequote", "rmquote", "delquote")]
-    [Parameter("user", ParameterType.User, "The user to remove the quote from.")]
+    [Parameter("user", ParameterType.UnambiguousUser, "The user to remove the quote from.")]
     [Parameter("id", ParameterType.Integer, "The quote number to remove.")]
     public async Task RemoveQuoteCommandAsync(
         [Remainder] string argsString = "")
@@ -656,7 +656,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
     [DevCommand(Group = "Permission")]
     [Parameter("operation", ParameterType.String, "The operation to complete (get/list/set/delete)")]
     [Parameter("alias", ParameterType.String, "The alias name.")]
-    [Parameter("target", ParameterType.User, "The user to set the alias to, if applicable.", true)]
+    [Parameter("target", ParameterType.UnambiguousUser, "The user to set the alias to, if applicable.", true)]
     public async Task QuoteAliasCommandAsync(
         [Remainder] string argsString = "")
     {

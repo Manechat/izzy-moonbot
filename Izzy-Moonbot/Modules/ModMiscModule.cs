@@ -53,7 +53,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
     [RequireContext(ContextType.Guild)]
     [ModCommand(Group = "Permissions")]
     [DevCommand(Group = "Permissions")]
-    [Parameter("user", ParameterType.User, "The user to remove the scheduled removal from.")]
+    [Parameter("user", ParameterType.UnambiguousUser, "The user to remove the scheduled removal from.")]
     public async Task PermaNpCommandAsync(
         [Remainder]string user = "")
     {
