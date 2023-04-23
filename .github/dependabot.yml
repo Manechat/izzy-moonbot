@@ -23,7 +23,7 @@ updates:
     schedule:
       interval: "weekly"
     commit-message:
-      prefix: "actions"
+      prefix: "Actions"
       include: "scope"
 
   #Maintain dependencies for Docker
@@ -36,5 +36,5 @@ updates:
     reviewers:
       - "LunarNightShade"
     commit-message:
-      prefix: "docker"
+      prefix: "Docker"
       include: "scope"

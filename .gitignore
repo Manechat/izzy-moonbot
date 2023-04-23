@@ -356,3 +356,5 @@ devsettings/
 # User Secrets
 **/appsettings*.json*
 !appsettings*sample.json
+**/*.env*
+!*example.env

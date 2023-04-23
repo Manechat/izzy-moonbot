@@ -1,0 +1,63 @@
+version: '3.9'
+name: izzymoonbot
+services:
+    izzy:
+        image: ghcr.io/manechat/izzy-moonbot:latest
+        networks:
+            - izzy
+        volumes:
+            - type: bind
+              source: ./appsettings.json
+              target: /app/appsettings.json
+              read_only: true
+            - type: volume
+              source: izzy_data
+              target: /app/botsettings
+        restart: on-failure
+        pull_policy: always
+        depends_on:
+            db:
+                condition: service_started
+
+    db:
+        image: mongo:6.0.3
+        networks:
+            izzy:
+                aliases:
+                    - mongo
+        expose:
+            - 27017
+        volumes:
+            - type: volume
+              source: db_data
+              target: /data/db
+            - type: volume
+              source: db_config
+              target: /data/configdb
+        restart: on-failure
+        env_file: mongo.env
+
+    mongo_express:
+        image: ghcr.io/blackthornyugen/mongo-express-docker:v1.0.0
+        networks:
+            - izzy
+        restart: on-failure
+        ports:
+          - target: 8081
+            published: 8081
+        env_file: mongo_express.env
+        depends_on:
+            db:
+                condition: service_started
+
+volumes:
+    izzy_data:
+        name: izzy_data
+    db_data:
+        name: db_data
+    db_config:
+        name: db_config
+
+networks:
+    izzy:
+        name: izzy
