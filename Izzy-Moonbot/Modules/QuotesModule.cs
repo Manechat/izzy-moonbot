@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
@@ -502,7 +501,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
                 var newAliasUserQuote = await _quoteService.AddQuote(quoteUser, content);
 
                 await context.Channel.SendMessageAsync(
-                    $"Added the quote to **{quoteUser.Username}#{quoteUser.Discriminator}** as quote number {newAliasUserQuote.Id + 1}.{Environment.NewLine}" +
+                    $"Added the quote to **{quoteUser.Username}#{quoteUser.Discriminator}** as quote number {newAliasUserQuote.Id + 1}.\n" +
                     $">>> {newAliasUserQuote.Content}", allowedMentions: AllowedMentions.None);
                 return;
             }
@@ -511,7 +510,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
             var newAliasCategoryQuote = await _quoteService.AddQuote(quoteCategory, content);
 
             await context.Channel.SendMessageAsync(
-                $"Added the quote to **{newAliasCategoryQuote.Name}** as quote number {newAliasCategoryQuote.Id + 1}.{Environment.NewLine}" +
+                $"Added the quote to **{newAliasCategoryQuote.Name}** as quote number {newAliasCategoryQuote.Id + 1}.\n" +
                 $">>> {newAliasCategoryQuote.Content}", allowedMentions: AllowedMentions.None);
             return;
         }
@@ -523,7 +522,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
             var newCategoryQuote = await _quoteService.AddQuote(user, content);
 
             await context.Channel.SendMessageAsync(
-                $"Added the quote to **{user}** as quote number {newCategoryQuote.Id + 1}.{Environment.NewLine}" +
+                $"Added the quote to **{user}** as quote number {newCategoryQuote.Id + 1}.\n" +
                 $">>> {newCategoryQuote.Content}", allowedMentions: AllowedMentions.None);
             return;
         }
@@ -538,7 +537,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
             var newCategoryNewQuote = await _quoteService.AddQuote(user, content);
 
             await context.Channel.SendMessageAsync(
-                $"Added the quote to **{user}** as quote number {newCategoryNewQuote.Id + 1}.{Environment.NewLine}" +
+                $"Added the quote to **{user}** as quote number {newCategoryNewQuote.Id + 1}.\n" +
                 $">>> {newCategoryNewQuote.Content}", allowedMentions: AllowedMentions.None);
             return;
         }
@@ -546,7 +545,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
         var newUserQuote = await _quoteService.AddQuote(member, content);
 
         await context.Channel.SendMessageAsync(
-            $"Added the quote to **{newUserQuote.Name}** as quote number {newUserQuote.Id + 1}.{Environment.NewLine}" +
+            $"Added the quote to **{newUserQuote.Name}** as quote number {newUserQuote.Id + 1}.\n" +
             $">>> {newUserQuote.Content}", allowedMentions: AllowedMentions.None);
         return;
     }
@@ -673,10 +672,10 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
     {
         if (argsString == "")
         {
-            await context.Channel.SendMessageAsync($"Hiya! This is how to use the quote alias command!{Environment.NewLine}" +
-                             $"`{_config.Prefix}quotealias get <alias>` - Work out what an alias maps to.{Environment.NewLine}" +
-                             $"`{_config.Prefix}quotealias list` - List all aliases.{Environment.NewLine}" +
-                             $"`{_config.Prefix}quotealias set/add <alias> <user/category>` - Creates an alias.{Environment.NewLine}" +
+            await context.Channel.SendMessageAsync($"Hiya! This is how to use the quote alias command!\n" +
+                             $"`{_config.Prefix}quotealias get <alias>` - Work out what an alias maps to.\n" +
+                             $"`{_config.Prefix}quotealias list` - List all aliases.\n" +
+                             $"`{_config.Prefix}quotealias set/add <alias> <user/category>` - Creates an alias.\n" +
                              $"`{_config.Prefix}quotealias delete/remove <alias>` - Deletes an alias.");
             return;
         }
@@ -692,10 +691,10 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
             var aliases = _quoteService.GetAliasKeyList();
 
             await context.Channel.SendMessageAsync(
-                $"Here's all the aliases I could find.{Environment.NewLine}```{Environment.NewLine}" +
-                $"{string.Join(", ", aliases)}{Environment.NewLine}```{Environment.NewLine}" +
-                $"Run `{_config.Prefix}quotealias get <alias>` to find out what an alias maps to.{Environment.NewLine}" +
-                $"Run `{_config.Prefix}quotealias set/add <alias> <user/category>` to create a new alias.{Environment.NewLine}" +
+                $"Here's all the aliases I could find.\n```\n" +
+                $"{string.Join(", ", aliases)}\n```\n" +
+                $"Run `{_config.Prefix}quotealias get <alias>` to find out what an alias maps to.\n" +
+                $"Run `{_config.Prefix}quotealias set/add <alias> <user/category>` to create a new alias.\n" +
                 $"Run `{_config.Prefix}quotealias delete/remove <alias>` to delete an alias.", allowedMentions: AllowedMentions.None);
         }
         else if (operation.ToLower() == "get")

@@ -1,6 +1,4 @@
-﻿using Izzy_Moonbot.Adapters;
-using Izzy_Moonbot.Helpers;
-using Izzy_Moonbot_Tests;
+﻿using Izzy_Moonbot.Helpers;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using static Izzy_Moonbot.Helpers.DiscordHelper;
 

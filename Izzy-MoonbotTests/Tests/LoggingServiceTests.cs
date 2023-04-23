@@ -1,11 +1,7 @@
 ﻿using Izzy_Moonbot;
-using Izzy_Moonbot.Adapters;
-using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Service;
-using Izzy_Moonbot_Tests;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using static Izzy_Moonbot.Helpers.DiscordHelper;
 
 namespace Izzy_Moonbot_Tests.Services;
 
@@ -32,15 +28,15 @@ public class LoggingServiceTests
         var logService = new LoggingService(logger);
 
         logService.Log("test");
-        TestUtils.AssertListsAreEqual(new List<string> { "[LoggingServiceTests.cs:BasicTests:34] test" }, logger.Logs);
+        TestUtils.AssertListsAreEqual(new List<string> { "[LoggingServiceTests.cs:BasicTests:30] test" }, logger.Logs);
 
         var (_, _, (_, sunny), _, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
         var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, "good morning everypony");
 
         logService.Log("sunny said something", context);
         TestUtils.AssertListsAreEqual(new List<string> {
-            $"[LoggingServiceTests.cs:BasicTests:34] test",
-            $"[LoggingServiceTests.cs:BasicTests:40] server: Maretime Bay ({guild.Id}) #general ({generalChannel.Id}) @Sunny#1234 ({sunny.Id}), sunny said something"
+            $"[LoggingServiceTests.cs:BasicTests:30] test",
+            $"[LoggingServiceTests.cs:BasicTests:36] server: Maretime Bay ({guild.Id}) #general ({generalChannel.Id}) @Sunny#1234 ({sunny.Id}), sunny said something"
         }, logger.Logs);
     }
 }

@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.RegularExpressions;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
-using Discord;
 using Discord.Commands;
-using Discord.WebSocket;
 using Izzy_Moonbot.Attributes;
 using Izzy_Moonbot.Service;
 using Izzy_Moonbot.Settings;
@@ -90,6 +85,6 @@ public class RaidModule : ModuleBase<SocketCommandContext>
         });
 
         await ReplyAsync(
-            $"I consider the following users as part of the current raid.{Environment.NewLine}```{Environment.NewLine}{string.Join(", ", potentialRaiders)}{Environment.NewLine}```");
+            $"I consider the following users as part of the current raid.\n```\n{string.Join(", ", potentialRaiders)}\n```");
     }
 }

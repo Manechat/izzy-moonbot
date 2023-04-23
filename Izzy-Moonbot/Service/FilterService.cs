@@ -3,13 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord;
-using Discord.Commands;
-using Discord.Rest;
-using Discord.WebSocket;
 using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Settings;
-using Microsoft.Extensions.Logging;
 
 namespace Izzy_Moonbot.Service;
 
@@ -83,7 +79,7 @@ public class FilterService
                 ":information_source: - **I've done nothing as this is one of my developers and `FilterDevBypass` is true.**");
         }
 
-        embedBuilder.AddField("What have I done in response?", string.Join(Environment.NewLine, actions));
+        embedBuilder.AddField("What have I done in response?", string.Join('\n', actions));
 
         var fileLogResponse = "Delete";
         if (actionsTaken.Contains("message")) fileLogResponse += ", Send Message";
@@ -98,9 +94,9 @@ public class FilterService
         await _modLog.CreateModLog(context.Guild)
             .SetContent($"{(actionsTaken.Contains("silence") ? $"<@&{_config.ModRole}>" : "")} Filter Violation for <@{context.User.Id}>")
             .SetEmbed(embedBuilder.Build())
-            .SetFileLogContent($"Filter violation by {context.User.Username}#{context.User.Discriminator} ({context.Guild.GetUser(context.User.Id)?.DisplayName}) (`{context.User.Id}`) in #{context.Channel.Name} (`{context.Channel.Id}`){Environment.NewLine}" +
-                               $"Category: {category}{Environment.NewLine}" +
-                               $"Trigger: {context.Message.CleanContent.Replace(word, $"[[{word}]]")}{Environment.NewLine}" +
+            .SetFileLogContent($"Filter violation by {context.User.Username}#{context.User.Discriminator} ({context.Guild.GetUser(context.User.Id)?.DisplayName}) (`{context.User.Id}`) in #{context.Channel.Name} (`{context.Channel.Id}`)\n" +
+                               $"Category: {category}\n" +
+                               $"Trigger: {context.Message.CleanContent.Replace(word, $"[[{word}]]")}\n" +
                                $"Response: {fileLogResponse}")
             .Send();
     }

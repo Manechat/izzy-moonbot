@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-using Flurl;
 using Flurl.Http;
 using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Attributes;
@@ -92,8 +91,8 @@ public class DevModule : ModuleBase<SocketCommandContext>
 
         var resultToPrint = testsCompleted.Select(pair => $"{pair.Key}: {pair.Value}");
         
-        await ReplyAsync($"Type testing results: {Environment.NewLine}" +
-                         $"{String.Join(Environment.NewLine, resultToPrint)}");
+        await ReplyAsync($"Type testing results: \n" +
+                         $"{String.Join('\n', resultToPrint)}");
     }
 
     public enum TestEnum
@@ -118,14 +117,14 @@ public class DevModule : ModuleBase<SocketCommandContext>
                     "Hello!||This is a test of pagination!||If this works, you're able to see this.||The paginated message will expire in 5 minutes.||Hopefully my code isn't broken..."
                         .Split("||");
                 var staticParts =
-                    $"**Test utility** - Pagination test{Environment.NewLine}*This is a simple test for the pagination utility!*{Environment.NewLine}*This is a header which will remain regardless of the current page.*{Environment.NewLine}Below is the paginated content.||This is the footer of the pagination message which will remain regardless of the current page{Environment.NewLine}There is a countdown below as well as buttons to change the page."
+                    $"**Test utility** - Pagination test\n*This is a simple test for the pagination utility!*\n*This is a header which will remain regardless of the current page.*\nBelow is the paginated content.||This is the footer of the pagination message which will remain regardless of the current page\nThere is a countdown below as well as buttons to change the page."
                         .Split("||");
 
                 var paginationHelper = new PaginationHelper(Context, pages, staticParts);
                 break;
             case "pressure-hook":
                 await Context.Message.ReplyAsync(
-                    $"**Test utility** - Pressure hookin test.{Environment.NewLine}*Other services or modules can hook into the pressure service to do specific things.*{Environment.NewLine}*An example of this is getting pressure for a user.*{Environment.NewLine}*Like, your current pressure is `{_pressureService.GetPressure(Context.User.Id)}`*");
+                    $"**Test utility** - Pressure hookin test.\n*Other services or modules can hook into the pressure service to do specific things.*\n*An example of this is getting pressure for a user.*\n*Like, your current pressure is `{_pressureService.GetPressure(Context.User.Id)}`*");
                 break;
             case "dump-users-size":
                 await Context.Message.ReplyAsync($"UserStore size: {_users.Count}");
@@ -140,28 +139,28 @@ public class DevModule : ModuleBase<SocketCommandContext>
                 break;
             case "test-twilight":
                 await Context.Channel.SendMessageAsync(
-                    $"Dear Princess Twilight,{Environment.NewLine}```{Environment.NewLine}" +
-                    $"[2022-07-30 00:19:07 ERR] Izzy Moonbot has encountered an error. Logging information...{Environment.NewLine}" +
-                    $"[2022-07-30 00:19:07 ERR] Message: Server requested a reconnect{Environment.NewLine}" +
-                    $"[2022-07-30 00:19:07 ERR] Source: System.Private.CoreLib{Environment.NewLine}" +
-                    $"[2022-07-30 00:19:07 ERR] HResult: -2146233088{Environment.NewLine}" +
+                    $"Dear Princess Twilight,\n```\n" +
+                    $"[2022-07-30 00:19:07 ERR] Izzy Moonbot has encountered an error. Logging information...\n" +
+                    $"[2022-07-30 00:19:07 ERR] Message: Server requested a reconnect\n" +
+                    $"[2022-07-30 00:19:07 ERR] Source: System.Private.CoreLib\n" +
+                    $"[2022-07-30 00:19:07 ERR] HResult: -2146233088\n" +
                     "[2022-07-30 00:19:07 ERR] Stack trace:    at Discord.ConnectionManager.<>c__DisplayClass29_0.<<StartAsync>b__0>d.MoveNext()" +
-                    $"{Environment.NewLine}```Your faithful Bot,{Environment.NewLine}Izzy Moonbot");
+                    $"\n```Your faithful Bot,\nIzzy Moonbot");
                 break;
             case "twilight":
                 await Context.Guild.GetTextChannel(1002687344199094292).SendMessageAsync(
-                    $"Dear Princess Twilight,{Environment.NewLine}```{Environment.NewLine}" +
-                    $"[2022-07-30 00:19:07 ERR] Izzy Moonbot has encountered an error. Logging information...{Environment.NewLine}" +
-                    $"[2022-07-30 00:19:07 ERR] Message: Server requested a reconnect{Environment.NewLine}" +
-                    $"[2022-07-30 00:19:07 ERR] Source: System.Private.CoreLib{Environment.NewLine}" +
-                    $"[2022-07-30 00:19:07 ERR] HResult: -2146233088{Environment.NewLine}" +
+                    $"Dear Princess Twilight,\n```\n" +
+                    $"[2022-07-30 00:19:07 ERR] Izzy Moonbot has encountered an error. Logging information...\n" +
+                    $"[2022-07-30 00:19:07 ERR] Message: Server requested a reconnect\n" +
+                    $"[2022-07-30 00:19:07 ERR] Source: System.Private.CoreLib\n" +
+                    $"[2022-07-30 00:19:07 ERR] HResult: -2146233088\n" +
                     "[2022-07-30 00:19:07 ERR] Stack trace:    at Discord.ConnectionManager.<>c__DisplayClass29_0.<<StartAsync>b__0>d.MoveNext()" +
-                    $"{Environment.NewLine}```Your faithful Bot,{Environment.NewLine}Izzy Moonbot");
+                    $"\n```Your faithful Bot,\nIzzy Moonbot");
 
                 break;
             case "import-filter":
                 {
-                    var toFilter = Context.Message.ReferencedMessage.CleanContent.Split(Environment.NewLine).AsEnumerable();
+                    var toFilter = Context.Message.ReferencedMessage.CleanContent.Split('\n').AsEnumerable();
                     if (args[1] == "no") toFilter = toFilter.Skip(1);
                     else toFilter = toFilter.Skip(2);
 
@@ -275,7 +274,7 @@ public class DevModule : ModuleBase<SocketCommandContext>
                 }
             case "logTest":
                 var pressureTracer = new Dictionary<string, double>{ {"Base", _config.SpamBasePressure} };
-                _loggingService.Log($"Pressure increase by 0 to 0/{_config.SpamMaxPressure}.{Environment.NewLine}                          Pressure trace: {string.Join(", ", pressureTracer)}", Context, level: LogLevel.Debug);
+                _loggingService.Log($"Pressure increase by 0 to 0/{_config.SpamMaxPressure}.\n                          Pressure trace: {string.Join(", ", pressureTracer)}", Context, level: LogLevel.Debug);
                 break;
             case "invitesDisabled":
                 await ReplyAsync("Invites disabled: " + Context.Guild.Features.HasFeature("INVITES_DISABLED"));
@@ -304,8 +303,8 @@ public class DevModule : ModuleBase<SocketCommandContext>
                     }
                     else
                     {
-                        await ReplyAsync($"User info:{Environment.NewLine}" +
-                                         $"Id: {id}{Environment.NewLine}" +
+                        await ReplyAsync($"User info:\n" +
+                                         $"Id: {id}\n" +
                                          $"Name: {user.Username}#{user.Discriminator}");
                     }
                 }
@@ -317,14 +316,14 @@ public class DevModule : ModuleBase<SocketCommandContext>
             case "customArgument":
                 var customArgument_Result = DiscordHelper.GetArguments(argString);
 
-                await ReplyAsync($"Processed. Here's what I got:{Environment.NewLine}```{Environment.NewLine}" +
+                await ReplyAsync($"Processed. Here's what I got:\n```\n" +
                                  $"{string.Join(", ", customArgument_Result)}" +
-                                 $"{Environment.NewLine}```");
+                                 $"\n```");
                 break;
             case "listEnum":
                 var enumNames = Enum.GetNames<TestEnum>();
 
-                await ReplyAsync($"```{Environment.NewLine}{string.Join(", ", enumNames)}{Environment.NewLine}```");
+                await ReplyAsync($"```\n{string.Join(", ", enumNames)}\n```");
                 break;
             case "parseEnum":
                 if (!Enum.TryParse<TestEnum>(args[0], out var testEnum))

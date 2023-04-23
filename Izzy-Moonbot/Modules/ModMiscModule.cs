@@ -5,7 +5,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Text;
-using System.Threading.Channels;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
@@ -216,9 +215,9 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
             await FileHelper.SaveUsersAsync(_users);
 
             await Context.Message.ReplyAsync(
-                $"Done! I discovered {Context.Guild.Users.Count} members, of which{Environment.NewLine}" +
-                $"{newUserCount} were unknown to me until now,{Environment.NewLine}" +
-                $"{reloadUserCount} had out of date information,{Environment.NewLine}" +
+                $"Done! I discovered {Context.Guild.Users.Count} members, of which\n" +
+                $"{newUserCount} were unknown to me until now,\n" +
+                $"{reloadUserCount} had out of date information,\n" +
                 $"and {knownUserCount} didn't need to be updated.");
         });
     }
@@ -332,7 +331,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                 var stowawayStringList = stowawaySet.Select(user => $"<@{user.Id}>");
 
                 await ReplyAsync(
-                    $"I found these following stowaways:{Environment.NewLine}{string.Join(", ", stowawayStringList)}");
+                    $"I found these following stowaways:\n{string.Join(", ", stowawayStringList)}");
             }
         });
     }
@@ -437,7 +436,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                 // All
                 var jobs = _schedule.GetScheduledJobs().Select(job => job.ToFileString()).ToList();
                 
-                var s = new MemoryStream(Encoding.UTF8.GetBytes(string.Join(Environment.NewLine, jobs)));
+                var s = new MemoryStream(Encoding.UTF8.GetBytes(string.Join('\n', jobs)));
                 var fa = new FileAttachment(s, $"all_scheduled_jobs_{DateTimeHelper.UtcNow.ToUnixTimeSeconds()}.txt");
 
                 await context.Channel.SendFileAsync(fa, $"Here's the file list of all scheduled jobs!");
@@ -456,7 +455,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                 
                 var jobs = _schedule.GetScheduledJobs().Where(job => job.Action.GetType().FullName == type.FullName).Select(job => job.ToFileString()).ToList();
                 
-                var s = new MemoryStream(Encoding.UTF8.GetBytes(string.Join(Environment.NewLine, jobs)));
+                var s = new MemoryStream(Encoding.UTF8.GetBytes(string.Join('\n', jobs)));
                 var fa = new FileAttachment(s, $"{jobType}_scheduled_jobs_{DateTimeHelper.UtcNow.ToUnixTimeSeconds()}.txt");
 
                 await context.Channel.SendFileAsync(fa, $"Here's the file list of all scheduled {jobType} jobs!");

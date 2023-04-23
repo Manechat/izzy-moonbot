@@ -1,13 +1,9 @@
 ﻿using Discord;
 using Discord.Commands;
-using Discord.Rest;
 using Discord.WebSocket;
-using Izzy_Moonbot.Settings;
-using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Channels;
 using System.Threading.Tasks;
 using static Izzy_Moonbot.Adapters.IIzzyClient;
 

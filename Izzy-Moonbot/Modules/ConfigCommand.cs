@@ -22,17 +22,17 @@ public class ConfigCommand
         if (configItemKey == "")
         {
             await context.Channel.SendMessageAsync(
-                $"Hii!! Here's now to use the config command!{Environment.NewLine}" +
-                $"Run `{config.Prefix}config <category>` to list the config items in a category.{Environment.NewLine}" +
-                $"Run `{config.Prefix}config <item>` to view information about an item.{Environment.NewLine}{Environment.NewLine}" +
-                $"Here's a list of all possible categories.{Environment.NewLine}```{Environment.NewLine}" +
-                $"setup - Config items that must be set for Izzy to work at all.{Environment.NewLine}" +
-                $"misc - Miscellaneous, often unique items that don't have a clear category.{Environment.NewLine}" +
-                $"banner - Config items related to the Manechat banner image.{Environment.NewLine}" +
-                $"managedroles - Config items regarding the automated management of member and new member roles.{Environment.NewLine}" +
-                $"filter - Config items regarding the filter.{Environment.NewLine}" +
-                $"spam - Config items regarding spam pressure.{Environment.NewLine}" +
-                $"raid - Config items regarding raid detection.{Environment.NewLine}```{Environment.NewLine}{Environment.NewLine}" +
+                $"Hii!! Here's now to use the config command!\n" +
+                $"Run `{config.Prefix}config <category>` to list the config items in a category.\n" +
+                $"Run `{config.Prefix}config <item>` to view information about an item.\n\n" +
+                $"Here's a list of all possible categories.\n```\n" +
+                $"setup - Config items that must be set for Izzy to work at all.\n" +
+                $"misc - Miscellaneous, often unique items that don't have a clear category.\n" +
+                $"banner - Config items related to the Manechat banner image.\n" +
+                $"managedroles - Config items regarding the automated management of member and new member roles.\n" +
+                $"filter - Config items regarding the filter.\n" +
+                $"spam - Config items regarding spam pressure.\n" +
+                $"raid - Config items regarding raid detection.\n```\n\n" +
                 $"ℹ  **See also: `{config.Prefix}help`. Run `{config.Prefix}help` for more information.**");
 
             return;
@@ -371,7 +371,7 @@ public class ConfigCommand
                                     await ConfigHelper.AddToStringSet(config, configItemKey, value);
 
                                 await context.Channel.SendMessageAsync(
-                                    $"I added the following content to the `{configItemKey}` string list:{Environment.NewLine}```{Environment.NewLine}{output}{Environment.NewLine}```",
+                                    $"I added the following content to the `{configItemKey}` string list:\n```\n{output}\n```",
                                     allowedMentions: AllowedMentions.None);
                             }
                             catch (ArgumentException)
@@ -389,7 +389,7 @@ public class ConfigCommand
                                         context);
 
                                 await context.Channel.SendMessageAsync(
-                                    $"I added the following content to the `{configItemKey}` role list:{Environment.NewLine}{output}");
+                                    $"I added the following content to the `{configItemKey}` role list:\n{output}");
                             }
                             catch (MemberAccessException)
                             {
@@ -417,7 +417,7 @@ public class ConfigCommand
                                         context);
 
                                 await context.Channel.SendMessageAsync(
-                                    $"I added the following content to the `{configItemKey}` channel list:{Environment.NewLine}{output}");
+                                    $"I added the following content to the `{configItemKey}` channel list:\n{output}");
                             }
                             catch (MemberAccessException)
                             {
@@ -452,7 +452,7 @@ public class ConfigCommand
                                         value);
 
                                 await context.Channel.SendMessageAsync(
-                                    $"I removed the following content from the `{configItemKey}` string list:{Environment.NewLine}```{Environment.NewLine}{output}{Environment.NewLine}```",
+                                    $"I removed the following content from the `{configItemKey}` string list:\n```\n{output}\n```",
                                     allowedMentions: AllowedMentions.None);
                             }
                             catch (ArgumentOutOfRangeException)
@@ -475,7 +475,7 @@ public class ConfigCommand
                                         value, context);
 
                                 await context.Channel.SendMessageAsync(
-                                    $"I removed the following content from the `{configItemKey}` role list:{Environment.NewLine}{output}");
+                                    $"I removed the following content from the `{configItemKey}` role list:\n{output}");
                             }
                             catch (MemberAccessException)
                             {
@@ -503,7 +503,7 @@ public class ConfigCommand
                                         value, context);
 
                                 await context.Channel.SendMessageAsync(
-                                    $"I removed the following content from the `{configItemKey}` channel list:{Environment.NewLine}{output}");
+                                    $"I removed the following content from the `{configItemKey}` channel list:\n{output}");
                             }
                             catch (MemberAccessException)
                             {
@@ -972,9 +972,9 @@ public class ConfigCommand
             case ConfigItemType.Integer:
             case ConfigItemType.UnsignedInteger:
             case ConfigItemType.Double:
-                return $"**{configItemKey}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
-                       $"*{configItem.Description}*{Environment.NewLine}" +
-                       $"Current value: `{ConfigHelper.GetValue(config, configItemKey)}`{Environment.NewLine}" +
+                return $"**{configItemKey}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category\n" +
+                       $"*{configItem.Description}*\n" +
+                       $"Current value: `{ConfigHelper.GetValue(config, configItemKey)}`\n" +
                        $"Run `{config.Prefix}config {configItemKey} <value>` to set this value. {nullableString}";
             case ConfigItemType.Enum:
                 // Figure out what its values are.
@@ -985,45 +985,45 @@ public class ConfigCommand
                 var enumType = enumValue.GetType();
                 var possibleEnumNames = enumType.GetEnumNames().Select(s => $"`{s}`").ToArray();
 
-                return $"**{configItemKey}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
-                       $"*{configItem.Description}*{Environment.NewLine}" +
-                       $"Possible values are: {string.Join(", ", possibleEnumNames)}{Environment.NewLine}" +
-                       $"Current value: `{enumType.GetEnumName(enumValue)}`{Environment.NewLine}" +
+                return $"**{configItemKey}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category\n" +
+                       $"*{configItem.Description}*\n" +
+                       $"Possible values are: {string.Join(", ", possibleEnumNames)}\n" +
+                       $"Current value: `{enumType.GetEnumName(enumValue)}`\n" +
                        $"Run `{config.Prefix}config {configItemKey} <value>` to set this value. {nullableString}";
             case ConfigItemType.Role:
                 return
-                    $"**{configItemKey}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
-                    $"*{configItem.Description}*{Environment.NewLine}" +
-                    $"Current value: <@&{ConfigHelper.GetValue(config, configItemKey)}>{Environment.NewLine}" +
+                    $"**{configItemKey}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category\n" +
+                    $"*{configItem.Description}*\n" +
+                    $"Current value: <@&{ConfigHelper.GetValue(config, configItemKey)}>\n" +
                     $"Run `{config.Prefix}config {configItemKey} <value>` to set this value. {nullableString}";
             case ConfigItemType.Channel:
-                return $"**{configItemKey}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
-                       $"*{configItem.Description}*{Environment.NewLine}" +
-                       $"Current value: <#{ConfigHelper.GetValue(config, configItemKey)}>{Environment.NewLine}" +
+                return $"**{configItemKey}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category\n" +
+                       $"*{configItem.Description}*\n" +
+                       $"Current value: <#{ConfigHelper.GetValue(config, configItemKey)}>\n" +
                        $"Run `{config.Prefix}config {configItemKey} <value>` to set this value. {nullableString}";
             case ConfigItemType.StringSet:
             case ConfigItemType.RoleSet:
             case ConfigItemType.ChannelSet:
-                return $"**{configItemKey}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
-                       $"*{configItem.Description}*{Environment.NewLine}" +
+                return $"**{configItemKey}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category\n" +
+                       $"*{configItem.Description}*\n" +
                        $"Run `{config.Prefix}config {configItemKey} list` to view the contents of this list.\n" +
                        $"Run `{config.Prefix}config {configItemKey} add <value>` to add a value to this list. {nullableString}\n" +
                        $"Run `{config.Prefix}config {configItemKey} remove <value>` to remove a value from this list. {nullableString}\n" +
                        $"Run `{config.Prefix}config {configItemKey} clear` to clear this list of all values. {nullableString}";
             case ConfigItemType.StringDictionary:
-                return $"**{configItemKey}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
-                       $"*{configItem.Description}*{Environment.NewLine}" +
-                       $"Run `{config.Prefix}config {configItemKey} list` to view a list of keys in this map.{Environment.NewLine}" +
-                       $"Run `{config.Prefix}config {configItemKey} get <key>` to get the current value of a key in this map.{Environment.NewLine}" +
-                       $"Run `{config.Prefix}config {configItemKey} set <key> <value>` to set a key to a value in this map, creating the key if need be.{Environment.NewLine}" +
+                return $"**{configItemKey}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category\n" +
+                       $"*{configItem.Description}*\n" +
+                       $"Run `{config.Prefix}config {configItemKey} list` to view a list of keys in this map.\n" +
+                       $"Run `{config.Prefix}config {configItemKey} get <key>` to get the current value of a key in this map.\n" +
+                       $"Run `{config.Prefix}config {configItemKey} set <key> <value>` to set a key to a value in this map, creating the key if need be.\n" +
                        $"Run `{config.Prefix}config {configItemKey} delete <key>` to delete a key from this map.";
             case ConfigItemType.StringSetDictionary:
-                return $"**{configItemKey}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category{Environment.NewLine}" +
-                       $"*{configItem.Description}*{Environment.NewLine}" +
-                       $"Run `{config.Prefix}config {configItemKey} list` to view a list of keys in this map.{Environment.NewLine}" +
-                       $"Run `{config.Prefix}config {configItemKey} get <key>` to get the values of a key in this map.{Environment.NewLine}" +
-                       $"Run `{config.Prefix}config {configItemKey} add <key> <value>` to add a value to a key in this map, creating the key if need be.{Environment.NewLine}" +
-                       $"Run `{config.Prefix}config {configItemKey} deleteitem <key> <value>` to remove a value from a key from this map.{Environment.NewLine}" +
+                return $"**{configItemKey}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category\n" +
+                       $"*{configItem.Description}*\n" +
+                       $"Run `{config.Prefix}config {configItemKey} list` to view a list of keys in this map.\n" +
+                       $"Run `{config.Prefix}config {configItemKey} get <key>` to get the values of a key in this map.\n" +
+                       $"Run `{config.Prefix}config {configItemKey} add <key> <value>` to add a value to a key in this map, creating the key if need be.\n" +
+                       $"Run `{config.Prefix}config {configItemKey} deleteitem <key> <value>` to remove a value from a key from this map.\n" +
                        $"Run `{config.Prefix}config {configItemKey} deletelist <key>` to delete a key from this map.";
             default:
                 return "I seem to have encountered a setting type that I do not know about.";

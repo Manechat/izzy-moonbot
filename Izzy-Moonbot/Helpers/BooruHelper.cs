@@ -1,8 +1,5 @@
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Threading.Tasks;
-using Discord;
 using Flurl.Http;
 using Izzy_Moonbot.Settings;
 using Microsoft.Extensions.Configuration;

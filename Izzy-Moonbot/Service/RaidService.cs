@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using Discord.Commands;
 using Discord.WebSocket;
@@ -214,14 +213,14 @@ public class RaidService
             // Potential raid. Bug the mods
             await _modLog.CreateModLog(guild)
                 .SetContent(
-                    $"<@&{_config.ModRole}> Bing-bong! Possible raid detected! ({_config.SmallRaidSize} (`SmallRaidSize`) users joined within {_config.SmallRaidTime} (`SmallRaidTime`) seconds.){Environment.NewLine}{Environment.NewLine}" +
-                    $"{string.Join($"{Environment.NewLine}", potentialRaiders)}{Environment.NewLine}{Environment.NewLine}" +
-                    $"Possible commands for this scenario are:{Environment.NewLine}" +
-                    $"`{_config.Prefix}ass` - Enable automatically silencing new joins *and* autosilence those considered part of the raid (those who joined within {_config.RecentJoinDecay} (`RecentJoinDecay`) seconds).{Environment.NewLine}" +
-                    $"`{_config.Prefix}assoff` - Disable automatically silencing new joins and resets the raid level back to 'no raid'. This will **not** unsilence those considered part of the raid.{Environment.NewLine}" +
+                    $"<@&{_config.ModRole}> Bing-bong! Possible raid detected! ({_config.SmallRaidSize} (`SmallRaidSize`) users joined within {_config.SmallRaidTime} (`SmallRaidTime`) seconds.)\n\n" +
+                    $"{string.Join($"\n", potentialRaiders)}\n\n" +
+                    $"Possible commands for this scenario are:\n" +
+                    $"`{_config.Prefix}ass` - Enable automatically silencing new joins *and* autosilence those considered part of the raid (those who joined within {_config.RecentJoinDecay} (`RecentJoinDecay`) seconds).\n" +
+                    $"`{_config.Prefix}assoff` - Disable automatically silencing new joins and resets the raid level back to 'no raid'. This will **not** unsilence those considered part of the raid.\n" +
                     $"`{_config.Prefix}getraid` - Returns a list of those who are considered part of the raid by Izzy. (those who joined {_config.RecentJoinDecay} (`RecentJoinDecay`) seconds before the raid began).")
-                .SetFileLogContent($"Bing-bong! Possible raid detected! ({_config.SmallRaidSize} (`SmallRaidSize`) users joined within {_config.SmallRaidTime} (`SmallRaidTime`) seconds.){Environment.NewLine}" +
-                                   $"{string.Join($"{Environment.NewLine}", potentialRaiders)}{Environment.NewLine}")
+                .SetFileLogContent($"Bing-bong! Possible raid detected! ({_config.SmallRaidSize} (`SmallRaidSize`) users joined within {_config.SmallRaidTime} (`SmallRaidTime`) seconds.)\n" +
+                                   $"{string.Join($"\n", potentialRaiders)}\n")
                 .Send();
 
             _generalStorage.CurrentRaidMode = RaidMode.Small;
@@ -273,15 +272,15 @@ public class RaidService
             {
                 await _modLog.CreateModLog(guild)
                     .SetContent(
-                        $"<@&{_config.ModRole}> Bing-bong! Raid detected! ({_config.LargeRaidSize} (`LargeRaidSize`) users joined within {_config.LargeRaidTime} (`LargeRaidTime`) seconds.){Environment.NewLine}" +
-                        $"I have automatically silenced all the members below and enabled autosilencing users on join.{Environment.NewLine}{Environment.NewLine}" +
-                        $"{string.Join($"{Environment.NewLine}", potentialRaiders)}{Environment.NewLine}{Environment.NewLine}" +
-                        $"Possible commands for this scenario are:{Environment.NewLine}" +
-                        $"`{_config.Prefix}assoff` - Disable automatically silencing new joins and resets the raid level back to 'no raid'.. This will **not** unsilence those considered part of the raid.{Environment.NewLine}" +
+                        $"<@&{_config.ModRole}> Bing-bong! Raid detected! ({_config.LargeRaidSize} (`LargeRaidSize`) users joined within {_config.LargeRaidTime} (`LargeRaidTime`) seconds.)\n" +
+                        $"I have automatically silenced all the members below and enabled autosilencing users on join.\n\n" +
+                        $"{string.Join($"\n", potentialRaiders)}\n\n" +
+                        $"Possible commands for this scenario are:\n" +
+                        $"`{_config.Prefix}assoff` - Disable automatically silencing new joins and resets the raid level back to 'no raid'.. This will **not** unsilence those considered part of the raid.\n" +
                         $"`{_config.Prefix}getraid` - Returns a list of those who are considered part of the raid by Izzy. (those who joined within {_config.RecentJoinDecay} (`RecentJoinDecay`) seconds).")
-                    .SetFileLogContent($"Bing-bong! Raid detected! ({_config.LargeRaidSize} (`LargeRaidSize`) users joined within {_config.LargeRaidTime} (`LargeRaidTime`) seconds.){Environment.NewLine}" +
-                                       $"I have automatically silenced all the members below members and enabled autosilencing users on join.{Environment.NewLine}" +
-                                       $"{string.Join($"{Environment.NewLine}", potentialRaiders)}{Environment.NewLine}")
+                    .SetFileLogContent($"Bing-bong! Raid detected! ({_config.LargeRaidSize} (`LargeRaidSize`) users joined within {_config.LargeRaidTime} (`LargeRaidTime`) seconds.)\n" +
+                                       $"I have automatically silenced all the members below members and enabled autosilencing users on join.\n" +
+                                       $"{string.Join($"\n", potentialRaiders)}\n")
                     .Send();
             }
             else

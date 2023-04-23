@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using Izzy_Moonbot.EventListeners;
-using Izzy_Moonbot.Modules;
 using Izzy_Moonbot.Types;
 
 namespace Izzy_Moonbot.Settings;

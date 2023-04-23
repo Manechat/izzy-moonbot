@@ -4,14 +4,11 @@ using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
-using Discord.WebSocket;
 using Izzy_Moonbot.Settings;
 using Izzy_Moonbot.Adapters;
 using Microsoft.Extensions.Configuration;
 using System.IO;
-using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
-using System.Runtime.Intrinsics.Arm;
 
 namespace Izzy_Moonbot.Helpers;
 

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Windows.Input;
 using Discord;
 using Discord.Commands;
 using Izzy_Moonbot.Adapters;
@@ -54,7 +53,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
 
         var message = "";
         if (_config.BannerMode == ConfigListener.BannerMode.None)
-            message += $"I'm not currently managing the banner, but here's the current server's banner.{Environment.NewLine}";
+            message += $"I'm not currently managing the banner, but here's the current server's banner.\n";
 
         message += $"{Context.Guild.BannerUrl}?size=4096";
 
@@ -277,11 +276,11 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                 }
 
                 await context.Channel.SendMessageAsync(
-                    $"Hii! Here's how to use the help command!{Environment.NewLine}" +
-                    $"Run `{prefix}help <category>` to list the commands in a category.{Environment.NewLine}" +
-                    $"Run `{prefix}help <command>` to view information about a command.{Environment.NewLine}{Environment.NewLine}" +
-                    $"Here's a list of all the categories I have!{Environment.NewLine}" +
-                    $"```{Environment.NewLine}{string.Join(Environment.NewLine, moduleList)}{Environment.NewLine}```{Environment.NewLine}" +
+                    $"Hii! Here's how to use the help command!\n" +
+                    $"Run `{prefix}help <category>` to list the commands in a category.\n" +
+                    $"Run `{prefix}help <command>` to view information about a command.\n\n" +
+                    $"Here's a list of all the categories I have!\n" +
+                    $"```\n{string.Join('\n', moduleList)}\n```\n" +
                     $"ℹ  **See also: `{prefix}config`. Run `{prefix}help config` for more information.**");
             }
             else
@@ -297,8 +296,8 @@ public class MiscModule : ModuleBase<SocketCommandContext>
 
                 // Izzy is not expected to get enough non-mod commands to ever need pagination here
                 await context.Channel.SendMessageAsync(
-                    $"Hii! Here's a list of all the commands you can run!{Environment.NewLine}" +
-                    $"```{Environment.NewLine}{string.Join(Environment.NewLine, commandSummaries)}{Environment.NewLine}```{Environment.NewLine}" +
+                    $"Hii! Here's a list of all the commands you can run!\n" +
+                    $"```\n{string.Join('\n', commandSummaries)}\n```\n" +
                     $"Run `{prefix}help <command>` for help regarding a specific command!");
             }
         }
@@ -337,7 +336,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                 $"Hii! Here's a list of all the commands I could find in the {moduleInfo.Name.Replace("Module", "")} category!",
                 commands,
                 $"Run `{prefix}help <command>` for help regarding a specific command!" +
-                $"{(potentialAliases.Length != 0 ? $"{Environment.NewLine}ℹ  This category shares a name with an alias. For information regarding this alias, run `{prefix}help {potentialAliases.First().Name.ToLower()}`." : "")}"
+                $"{(potentialAliases.Length != 0 ? $"\nℹ  This category shares a name with an alias. For information regarding this alias, run `{prefix}help {potentialAliases.First().Name.ToLower()}`." : "")}"
             );
         }
         // Try alternate command names
@@ -360,13 +359,13 @@ public class MiscModule : ModuleBase<SocketCommandContext>
         else if (_config.Aliases.Any(alias => alias.Key.ToLower() == item.ToLower()))
         {
             var alias = _config.Aliases.First(alias => alias.Key.ToLower() == item.ToLower());
-            var ponyReadable = $"**{prefix}{alias.Key}** is an alias for **{prefix}{alias.Value}** (see {prefix}config Aliases){Environment.NewLine}{Environment.NewLine}";
+            var ponyReadable = $"**{prefix}{alias.Key}** is an alias for **{prefix}{alias.Value}** (see {prefix}config Aliases)\n\n";
 
             var commandInfo = _commands.Commands.FirstOrDefault(command => command.Name.ToLower() == alias.Value.Split(" ")[0].ToLower());
 
             if (commandInfo == null)
             {
-                await context.Channel.SendMessageAsync($"**Warning!** This alias directs to a non-existent command!{Environment.NewLine}" +
+                await context.Channel.SendMessageAsync($"**Warning!** This alias directs to a non-existent command!\n" +
                     $"Please remove this alias or redirect it to an existing command.");
                 return;
             }
@@ -434,28 +433,28 @@ public class MiscModule : ModuleBase<SocketCommandContext>
     private string PonyReadableCommandHelp(char prefix, string command, CommandInfo commandInfo, string? alternateName = null)
     {
         var ponyReadable = (alternateName == null ? $"**{prefix}{commandInfo.Name}**" : $"**{prefix}{alternateName}** (alternate name of **{prefix}{commandInfo.Name}**)") +
-            $" - {commandInfo.Module.Name.Replace("Module", "")} category{Environment.NewLine}";
+            $" - {commandInfo.Module.Name.Replace("Module", "")} category\n";
 
         if (commandInfo.Preconditions.Any(attribute => attribute is ModCommandAttribute) &&
             commandInfo.Preconditions.Any(attribute => attribute is DevCommandAttribute))
-            ponyReadable += $"ℹ  *This is a moderator and developer only command.*{Environment.NewLine}";
+            ponyReadable += $"ℹ  *This is a moderator and developer only command.*\n";
         else if (commandInfo.Preconditions.Any(attribute => attribute is ModCommandAttribute))
-            ponyReadable += $"ℹ  *This is a moderator only command.*{Environment.NewLine}";
+            ponyReadable += $"ℹ  *This is a moderator only command.*\n";
         else if (commandInfo.Preconditions.Any(attribute => attribute is DevCommandAttribute))
-            ponyReadable += $"ℹ  *This is a developer only command.*{Environment.NewLine}";
+            ponyReadable += $"ℹ  *This is a developer only command.*\n";
 
-        ponyReadable += $"*{commandInfo.Summary}*{Environment.NewLine}";
-        if (commandInfo.Remarks != null) ponyReadable += $"*{commandInfo.Remarks}*{Environment.NewLine}";
+        ponyReadable += $"*{commandInfo.Summary}*\n";
+        if (commandInfo.Remarks != null) ponyReadable += $"*{commandInfo.Remarks}*\n";
 
         var parameters = commandInfo.Attributes.OfType<ParameterAttribute>();
         if (parameters.Any())
         {
-            ponyReadable += $"{Environment.NewLine}Syntax: `{prefix}{commandInfo.Name}";
+            ponyReadable += $"\nSyntax: `{prefix}{commandInfo.Name}";
             ponyReadable = parameters.Aggregate(ponyReadable, (current, parameter) => current + $" {(parameter.Optional ? $"[{parameter.Name}]" : parameter.Name)}");
-            ponyReadable += $"`{Environment.NewLine}";
+            ponyReadable += $"`\n";
 
-            ponyReadable += $"```{Environment.NewLine}";
-            ponyReadable = parameters.Aggregate(ponyReadable, (current, parameter) => current + $"{parameter}{Environment.NewLine}");
+            ponyReadable += $"```\n";
+            ponyReadable = parameters.Aggregate(ponyReadable, (current, parameter) => current + $"{parameter}\n");
             ponyReadable += $"```";
         }
 
@@ -467,7 +466,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
 
         var remainingAlternates = commandInfo.Aliases.Where(alternate => alternate.ToLower() != commandInfo.Name.ToLower() && alternate.ToLower() != command.ToLower());
         if (remainingAlternates.Any())
-            ponyReadable += $"{Environment.NewLine}" +
+            ponyReadable += $"\n" +
                 $"Alternate names: {string.Join(", ", remainingAlternates.Select(alt => $"{prefix}{alt}"))}";
 
         return ponyReadable;
@@ -481,7 +480,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                 alias.Value.ToLower().StartsWith($"{command} "));
 
         if (relevantAliases.Any())
-            return $"{Environment.NewLine}Relevant aliases: {string.Join(", ", relevantAliases.Select(alias => $"{prefix}{alias.Key}"))}";
+            return $"\nRelevant aliases: {string.Join(", ", relevantAliases.Select(alias => $"{prefix}{alias.Key}"))}";
         else
             return "";
     }
@@ -492,13 +491,13 @@ public class MiscModule : ModuleBase<SocketCommandContext>
     public async Task AboutCommandAsync()
     {
         await Context.Channel.SendMessageAsync(
-            $"Izzy Moonbot{Environment.NewLine}" +
-            $"Programmed in C# with Virtual Studio and JetBrains Rider{Environment.NewLine}" +
-            $"Programmed by Dr. Romulus#4444, Cloudburst#0001 (Twi/Leah) and Ixrec#7992{Environment.NewLine}" +
+            $"Izzy Moonbot\n" +
+            $"Programmed in C# with Virtual Studio and JetBrains Rider\n" +
+            $"Programmed by Dr. Romulus#4444, Cloudburst#0001 (Twi/Leah) and Ixrec#7992\n" +
 
-            $"Supervisor programmed by Raindrops#2245{Environment.NewLine}" +
-            $"{Environment.NewLine}" +
-            $"Profile picture by confetticakez#7352 (Confetti){Environment.NewLine}" +
+            $"Supervisor programmed by Raindrops#2245\n" +
+            $"\n" +
+            $"Profile picture by confetticakez#7352 (Confetti)\n" +
             $"https://manebooru.art/images/4023149",
             allowedMentions: AllowedMentions.None);
     }

@@ -1,12 +1,6 @@
 ﻿using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Settings;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static Izzy_Moonbot.Helpers.DiscordHelper;
 
 namespace Izzy_Moonbot_Tests.Helpers;
 
