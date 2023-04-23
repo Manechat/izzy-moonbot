@@ -27,7 +27,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
     [Command("quote")]
     [Summary("Get a quote, either randomly, from a specific user, or a specific quote.")]
     [Alias("q")]
-    [Parameter("user", ParameterType.User, "The user to get a quote from.", true)]
+    [Parameter("user", ParameterType.UserResolvable, "The user to get a quote from.", true)]
     [Parameter("id", ParameterType.Integer, "The specific quote number from that user to post.", true)]
     [BotsAllowed]
     [ExternalUsageAllowed]
@@ -280,7 +280,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
     [Summary(
         "List all the quotes for a specific user or category, or list all the users and categories that have quotes if one is not provided.")]
     [Alias("lq", "searchquotes", "searchquote", "sq")]
-    [Parameter("user", ParameterType.User, "The user to search for.", true)]
+    [Parameter("user", ParameterType.UserResolvable, "The user to search for.", true)]
     [ExternalUsageAllowed]
     public async Task ListQuotesCommandAsync(
         [Remainder] string search = ""
@@ -439,7 +439,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
         "Adds a quote to a user or category.")]
     [ModCommand(Group = "Permission")]
     [DevCommand(Group = "Permission")]
-    [Parameter("user", ParameterType.User, "The user to add the quote to.")]
+    [Parameter("user", ParameterType.UserResolvable, "The user to add the quote to.")]
     [Parameter("content", ParameterType.String, "The quote content to add.")]
     [Example(".addquote @UserName hello there")]
     [Example(".addquote \"Izzy Moonbot\" belizzle it")]

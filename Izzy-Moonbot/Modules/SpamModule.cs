@@ -22,7 +22,7 @@ public class SpamModule : ModuleBase<SocketCommandContext>
     [Summary("Get a user's pressure")]
     [ModCommand(Group = "Permissions")]
     [DevCommand(Group = "Permissions")]
-    [Parameter("user", ParameterType.User, "The user to get the pressure of, or yourself if no user is provided.", true)]
+    [Parameter("user", ParameterType.UserResolvable, "The user to get the pressure of, or yourself if no user is provided.", true)]
     public async Task GetPressureAsync([Remainder] string userName = "")
     {
         await TestableGetPressureAsync(
@@ -57,7 +57,7 @@ public class SpamModule : ModuleBase<SocketCommandContext>
     [Summary("Get a user's previous messages (the messages which would have been deleted if the user spammed).")]
     [ModCommand(Group = "Permissions")]
     [DevCommand(Group = "Permissions")]
-    [Parameter("user", ParameterType.User, "The user to get the messages of, or yourself if no user is provided.", true)]
+    [Parameter("user", ParameterType.UserResolvable, "The user to get the messages of, or yourself if no user is provided.", true)]
     public async Task GetPreviousMessagesAsync(
         [Remainder] string userName = "")
     {

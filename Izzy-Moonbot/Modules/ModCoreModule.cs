@@ -62,7 +62,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
     [ModCommand(Group = "Permission")]
     [DevCommand(Group = "Permission")]
     [Alias("uinfo")]
-    [Parameter("user", ParameterType.User, "The user to get information about, or yourself if not provided.", true)]
+    [Parameter("user", ParameterType.UserResolvable, "The user to get information about, or yourself if not provided.", true)]
     public async Task UserInfoCommandAsync(
         [Remainder] string user = "")
     {
