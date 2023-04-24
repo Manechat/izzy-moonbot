@@ -210,8 +210,8 @@ public class QuoteModuleTests
             "eat more vegetables"
         });
 
-        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".removequote Sunny 1");
-        await qm.TestableRemoveQuoteCommandAsync(context, "Sunny 1");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, $".removequote <@{sunny.Id}> 1");
+        await qm.TestableRemoveQuoteCommandAsync(context, $"<@{sunny.Id}> 1");
         Assert.AreEqual("Removed quote number 1 from **Sunny**.", generalChannel.Messages.Last().Content);
         TestUtils.AssertListsAreEqual(quotes.Quotes[sunny.Id.ToString()], new List<string> {
             "eat more vegetables"
