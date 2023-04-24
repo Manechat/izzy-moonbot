@@ -632,7 +632,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
         }
 
         // Now check user
-        var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(user, context);
+        var userId = DiscordHelper.ConvertUserPingToId(user);
         var member = context.Guild.GetUser(userId);
 
         if (member == null)
@@ -745,7 +745,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
             }
             else
             {
-                var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(target, context);
+                var userId = DiscordHelper.ConvertUserPingToId(target);
                 var member = context.Guild?.GetUser(userId);
 
                 if (member == null)

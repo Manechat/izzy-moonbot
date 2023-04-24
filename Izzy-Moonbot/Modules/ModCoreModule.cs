@@ -160,7 +160,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
         var args = DiscordHelper.GetArguments(argsString);
 
         var userArg = args.Arguments[0];
-        var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(userArg, Context);
+        var userId = DiscordHelper.ConvertUserPingToId(userArg);
         var member = Context.Guild?.GetUser(userId);
 
         var timeArg = string.Join("", argsString.Skip(args.Indices[0]));
@@ -348,7 +348,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
         var args = DiscordHelper.GetArguments(argsString);
 
         var roleResolvable = args.Arguments[0];
-        var userResolvable = args.Arguments[1];
+        var userArg = args.Arguments[1];
         var timeArg = string.Join("", argsString.Skip(args.Indices[1]));
 
         var roleId = DiscordHelper.GetRoleIdIfAccessAsync(roleResolvable, context);
@@ -359,7 +359,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
         }
         var role = context.Guild?.GetRole(roleId);
 
-        var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(userResolvable, context);
+        var userId = DiscordHelper.ConvertUserPingToId(userArg);
         if (userId == 0)
         {
             await context.Channel.SendMessageAsync("I couldn't find that user, sorry!");

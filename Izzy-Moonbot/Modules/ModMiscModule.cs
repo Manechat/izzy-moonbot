@@ -63,8 +63,8 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                 "Hey uhh... I can't remove the scheduled new pony role removal for a user if you haven't given me the user to remove it from...");
             return;
         }
-        
-        var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(user, Context);
+
+        var userId = DiscordHelper.ConvertUserPingToId(user);
         var member = Context.Guild.GetUser(userId);
 
         if (member == null)
