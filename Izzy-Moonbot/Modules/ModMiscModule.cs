@@ -15,6 +15,7 @@ using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Service;
 using Izzy_Moonbot.Settings;
 using Microsoft.Extensions.Logging;
+using Izzy_Moonbot.Modules;
 
 namespace Izzy_Moonbot.Modules;
 
