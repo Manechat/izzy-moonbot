@@ -149,7 +149,8 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
 
     public async Task TestableBanCommandAsync(
         IIzzyContext Context,
-        string argsString = "")
+        string argsString = "",
+        bool generateUserlogTemplate = true)
     {
         if (argsString == "")
         {
@@ -228,13 +229,17 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
                 await _schedule.CreateScheduledJob(job);
             }
 
-            await Context.Channel.SendMessageAsync(
-                $"<:izzydeletethis:1028964499723661372> I've banned {(member == null ? $"<@{userId}>" : member.DisplayName)} ({userId}).{(time != null ? $" They'll be unbanned <t:{time.Time.ToUnixTimeSeconds()}:R>." : "")}\n\n" +
-                $"Here's a userlog I unicycled that you can use if you want to!\n```\n" +
-                $"Type: Ban ({(timeArg == "" ? "" : $"{timeArg} ")}{(time == null ? "Indefinite" : $"<t:{time.Time.ToUnixTimeSeconds()}:R>")})\n" +
-                $"User: <@{userId}> {(member != null ? $"({member.Username}#{member.Discriminator})" : "")} ({userId})\n" +
-                $"Names: {(_users.ContainsKey(userId) ? string.Join(", ", _users[userId].Aliases) : "None (user isn't known by Izzy)")}\n" +
-                $"```");
+            var msg = $"<:izzydeletethis:1028964499723661372> I've banned {(member == null ? $"<@{userId}>" : member.DisplayName)} ({userId}).{(time != null ? $" They'll be unbanned <t:{time.Time.ToUnixTimeSeconds()}:R>." : "")}";
+            if (generateUserlogTemplate)
+            {
+                msg += "\n\n" +
+                    $"Here's a userlog I unicycled that you can use if you want to!\n```\n" +
+                    $"Type: Ban ({(timeArg == "" ? "" : $"{timeArg} ")}{(time == null ? "Indefinite" : $"<t:{time.Time.ToUnixTimeSeconds()}:R>")})\n" +
+                    $"User: <@{userId}> {(member != null ? $"({member.Username}#{member.Discriminator})" : "")} ({userId})\n" +
+                    $"Names: {(_users.ContainsKey(userId) ? string.Join(", ", _users[userId].Aliases) : "None (user isn't known by Izzy)")}\n" +
+                    $"```";
+            }
+            await Context.Channel.SendMessageAsync(msg);
         }
         else
         {
@@ -252,12 +257,17 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
 
                     await _schedule.DeleteScheduledJob(job);
 
-                    await Context.Channel.SendMessageAsync($"This user is already banned. I have removed an existing unban for them which was scheduled <t:{job.ExecuteAt.ToUnixTimeSeconds()}:R>.\n\n" +
-                                     $"Here's a userlog I unicycled that you can use if you want to!\n```\n" +
-                                     $"Type: Ban (Indefinite)\n" +
-                                     $"User: <@{userId}> {(member != null ? $"({member.Username}#{member.Discriminator})" : "")} ({userId})\n" +
-                                     $"Names: {(_users.ContainsKey(userId) ? string.Join(", ", _users[userId].Aliases) : "None (user isn't known by Izzy)")}\n" +
-                                     $"```");
+                    var msg = $"This user is already banned. I have removed an existing unban for them which was scheduled <t:{job.ExecuteAt.ToUnixTimeSeconds()}:R>.";
+                    if (generateUserlogTemplate)
+                    {
+                        msg += "\n\n" +
+                            $"Here's a userlog I unicycled that you can use if you want to!\n```\n" +
+                            $"Type: Ban (Indefinite)\n" +
+                            $"User: <@{userId}> {(member != null ? $"({member.Username}#{member.Discriminator})" : "")} ({userId})\n" +
+                            $"Names: {(_users.ContainsKey(userId) ? string.Join(", ", _users[userId].Aliases) : "None (user isn't known by Izzy)")}\n" +
+                            $"```";
+                    }
+                    await Context.Channel.SendMessageAsync(msg);
                 }
                 else
                 {
@@ -289,13 +299,18 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
 
                 await _schedule.ModifyScheduledJob(job.Id, job);
 
-                await Context.Channel.SendMessageAsync($"This user is already banned. I have modified an existing scheduled unban for them from <t:{jobOriginalExecution}:R> to <t:{job.ExecuteAt.ToUnixTimeSeconds()}:R>.\n\n" +
-                                 $"Here's a userlog I unicycled that you can use if you want to!\n```\n" +
-                                 $"Type: Ban ({timeArg} <t:{time.Time.ToUnixTimeSeconds()}:R>)\n" +
-                                 $"User: <@{userId}> {(member != null ? $"({member.Username}#{member.Discriminator})" : "")} ({userId})\n" +
-                                 $"Names: {(_users.ContainsKey(userId) ? string.Join(", ", _users[userId].Aliases) : "None (user isn't known by Izzy)")}\n" +
-                                 $"```");
-            }
+                var msg = $"This user is already banned. I have modified an existing scheduled unban for them from <t:{jobOriginalExecution}:R> to <t:{job.ExecuteAt.ToUnixTimeSeconds()}:R>.";
+                if (generateUserlogTemplate)
+                {
+                    msg += "\n\n" +
+                        $"Here's a userlog I unicycled that you can use if you want to!\n```\n" +
+                        $"Type: Ban ({timeArg} <t:{time.Time.ToUnixTimeSeconds()}:R>)\n" +
+                        $"User: <@{userId}> {(member != null ? $"({member.Username}#{member.Discriminator})" : "")} ({userId})\n" +
+                        $"Names: {(_users.ContainsKey(userId) ? string.Join(", ", _users[userId].Aliases) : "None (user isn't known by Izzy)")}\n" +
+                        $"```";
+                }
+                await Context.Channel.SendMessageAsync(msg);
+            } 
             else
             {
                 // Doesn't exist, it needs to exist.
@@ -304,14 +319,51 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
                 var job = new ScheduledJob(DateTimeHelper.UtcNow, time.Time, action);
                 await _schedule.CreateScheduledJob(job);
 
-                await Context.Channel.SendMessageAsync(
-                    $"This user is already banned. I have scheduled an unban for this user. They'll be unbanned <t:{time.Time.ToUnixTimeSeconds()}:R>\n\n" +
-                    $"Here's a userlog I unicycled that you can use if you want to!\n```\n" +
-                    $"Type: Ban ({timeArg} <t:{time.Time.ToUnixTimeSeconds()}:R>)\n" +
-                    $"User: <@{userId}> {(member != null ? $"({member.Username}#{member.Discriminator})" : "")} ({userId})\n" +
-                    $"Names: {(_users.ContainsKey(userId) ? string.Join(", ", _users[userId].Aliases) : "None (user isn't known by Izzy)")}\n" +
-                    $"```");
+                var msg = $"This user is already banned. I have scheduled an unban for this user. They'll be unbanned <t:{time.Time.ToUnixTimeSeconds()}:R>";
+                if (generateUserlogTemplate)
+                {
+                    msg += "\n\n" +
+                        $"Here's a userlog I unicycled that you can use if you want to!\n```\n" +
+                        $"Type: Ban ({timeArg} <t:{time.Time.ToUnixTimeSeconds()}:R>)\n" +
+                        $"User: <@{userId}> {(member != null ? $"({member.Username}#{member.Discriminator})" : "")} ({userId})\n" +
+                        $"Names: {(_users.ContainsKey(userId) ? string.Join(", ", _users[userId].Aliases) : "None (user isn't known by Izzy)")}\n" +
+                        $"```";
+                }
+                await Context.Channel.SendMessageAsync(msg);
             }
+        }
+    }
+
+    [Command("banall")]
+    [Summary("Bans any number of users in a single command without deleting message history.")]
+    [Remarks("This prints a separate message for every user, so it can get spammy. Timed bans are not supported; use the regular .ban if you need those.")]
+    [RequireContext(ContextType.Guild)]
+    [ModCommand(Group = "Permissions")]
+    [DevCommand(Group = "Permissions")]
+    [Parameter("user(s)", ParameterType.UnambiguousUser, "The user(s) to ban.")]
+    [Example(".ban 111 112 113 114 115")]
+    public async Task BanAllCommandAsync([Remainder] string usersString = "")
+    {
+        await TestableBanAllCommandAsync(
+            new SocketCommandContextAdapter(Context),
+            usersString
+        );
+    }
+
+    public async Task TestableBanAllCommandAsync(
+        IIzzyContext context,
+        string usersString = "")
+    {
+        if (usersString == "")
+        {
+            await context.Channel.SendMessageAsync($"Remind you of what now? (see `.help remind`)");
+            return;
+        }
+
+        var userArgs = usersString.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        foreach (var userArg in userArgs)
+        {
+            await TestableBanCommandAsync(context, userArg, false /* generateUserlogTemplate */);
         }
     }
 

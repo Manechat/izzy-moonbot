@@ -95,6 +95,32 @@ public class ModCoreModuleTests
     }
 
     [TestMethod()]
+    public async Task BanAll_Command_Tests()
+    {
+        var (cfg, _, (izzy, sunny), _, (generalChannel, modChat, _), guild, client) = TestUtils.DefaultStubs();
+        DiscordHelper.DefaultGuildId = guild.Id;
+        cfg.ModChannel = modChat.Id;
+        var (ss, mcm) = SetupModCoreModule(cfg);
+
+        var zippId = guild.Users[2].Id;
+        var pippId = guild.Users[3].Id;
+        var hitchId = guild.Users[4].Id;
+
+        DateTimeHelper.FakeUtcNow = TestUtils.FiMEpoch;
+        TestUtils.AssertSetsAreEqual(new HashSet<ulong>(), guild.BannedUserIds);
+
+        var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, $".banall {zippId} {pippId} {hitchId}");
+        await mcm.TestableBanAllCommandAsync(context, $"{zippId} {pippId} {hitchId}");
+
+        Assert.AreEqual(4, generalChannel.Messages.Count);
+        Assert.AreEqual(generalChannel.Messages[1].Content, "<:izzydeletethis:1028964499723661372> I've banned Zipp (3).");
+        Assert.AreEqual(generalChannel.Messages[2].Content, "<:izzydeletethis:1028964499723661372> I've banned Pipp (4).");
+        Assert.AreEqual(generalChannel.Messages[3].Content, "<:izzydeletethis:1028964499723661372> I've banned Hitch (5).");
+        TestUtils.AssertSetsAreEqual(new HashSet<ulong> { zippId, pippId, hitchId }, guild.BannedUserIds);
+        Assert.AreEqual(0, ss.GetScheduledJobs().Count);
+    }
+
+    [TestMethod()]
     public async Task AssignRole_Command_Tests()
     {
         var (cfg, _, (_, sunny), roles, (generalChannel, modChat, _), guild, client) = TestUtils.DefaultStubs();

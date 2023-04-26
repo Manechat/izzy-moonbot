@@ -500,7 +500,7 @@ public class MiscModuleTests
 
         Assert.AreEqual("Sorry, I was unable to find any command, category, or alias named \"core\" that you have access to." +
             "\nDid you mean `.modcore`?" +
-            "\nI do see \"core\" in the output of: `.help config` and `.help userinfo` and `.help ban` and `.help assignrole` and `.help wipe`", generalChannel.Messages.Last().Content);
+            "\nI do see \"core\" in the output of: `.help config` and `.help userinfo` and `.help ban` and `.help banall` and `.help assignrole` and `.help wipe`", generalChannel.Messages.Last().Content);
 
         // regular user does not
 
