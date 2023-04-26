@@ -9,13 +9,14 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using Flurl.Http;
 using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Attributes;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Service;
 using Izzy_Moonbot.Settings;
 using Microsoft.Extensions.Logging;
-using Izzy_Moonbot.Modules;
+using static Izzy_Moonbot.EventListeners.ConfigListener;
 
 namespace Izzy_Moonbot.Modules;
 
@@ -773,5 +774,38 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
         _logger.Log($"Added scheduled job for reminder", context: context, level: LogLevel.Debug);
 
         await context.Channel.SendMessageAsync($"Okay! I'll send that reminder to <#{channelId}> <t:{timeHelperResponse.Time.ToUnixTimeSeconds()}:R>.");
+    }
+
+    [Command("setbanner")]
+    [Summary("Change the server's banner to the image at a given URL, and set BannerMode to None.")]
+    [RequireContext(ContextType.Guild)]
+    [ModCommand(Group = "Permissions")]
+    [DevCommand(Group = "Permissions")]
+    [Parameter("url", ParameterType.String, "URL to an image file")]
+    [Example(".setbanner https://manebooru.art/images/404")]
+    public async Task SetBannnerCommandAsync([Remainder] string url = "")
+    {
+        var cleanUrl = url.Trim();
+        try
+        {
+            await DiscordHelper.SetBannerToUrlImage(cleanUrl, new SocketGuildAdapter(Context.Guild));
+        }
+        catch (FlurlHttpException ex)
+        {
+            var errorMsg = $"Recieved HTTP exception when executing Banner Rotation: {ex.Message}";
+            await ReplyAsync(errorMsg);
+            _logger.Log(errorMsg);
+            return;
+        }
+        var msg = $"Set banner to <{cleanUrl}>";
+
+        if (_config.BannerMode != BannerMode.None)
+        {
+            _config.BannerMode = BannerMode.None;
+            await FileHelper.SaveConfigAsync(_config);
+
+            msg += " and reset BannerMode to None so it won't change back";
+        }
+        await ReplyAsync(msg);
     }
 }

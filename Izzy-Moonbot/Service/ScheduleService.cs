@@ -336,22 +336,15 @@ public class ScheduleService
                 var rand = new Random();
                 var number = rand.Next(_config.BannerImages.Count);
                 var url = _config.BannerImages.ToList()[number];
-                Stream stream;
                 try
                 {
-                    stream = await url
-                        .WithHeader("user-agent", $"Izzy-Moonbot (Linux x86_64) Flurl.Http/3.2.4 DotNET/6.0")
-                        .GetStreamAsync();
+                    await DiscordHelper.SetBannerToUrlImage(url, guild);
                 }
                 catch (FlurlHttpException ex)
                 {
                     _logger.Log($"Recieved HTTP exception when executing Banner Rotation: {ex.Message}");
                     return;
                 }
-
-                var image = new Image(stream);
-
-                await guild.SetBanner(image);
 
                 await _modLogging.CreateModLog(guild)
                     .SetContent(
