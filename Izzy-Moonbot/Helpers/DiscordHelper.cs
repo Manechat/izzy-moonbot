@@ -9,6 +9,7 @@ using Izzy_Moonbot.Adapters;
 using Microsoft.Extensions.Configuration;
 using System.IO;
 using System.Text.RegularExpressions;
+using Flurl.Http;
 
 namespace Izzy_Moonbot.Helpers;
 
@@ -428,5 +429,16 @@ public static class DiscordHelper
 
         var actualLevenshteinDistance = currDists[source.Length];
         return actualLevenshteinDistance <= maxDist;
+    }
+
+    public static async Task SetBannerToUrlImage(string url, IIzzyGuild guild)
+    {
+        Stream stream = await url
+            .WithHeader("user-agent", $"Izzy-Moonbot (Linux x86_64) Flurl.Http/3.2.4 DotNET/6.0")
+            .GetStreamAsync();
+
+        var image = new Image(stream);
+
+        await guild.SetBanner(image);
     }
 }
