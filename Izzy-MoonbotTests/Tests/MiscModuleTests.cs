@@ -233,7 +233,7 @@ public class MiscModuleTests
         StringAssert.Contains(description, "ℹ  *This is a moderator", null, null);
         StringAssert.Contains(description, "*Bans a user", null, null);
         StringAssert.Contains(description, "Syntax: `.ban user [duration]`", null, null);
-        StringAssert.Contains(description, "user [User]", null, null);
+        StringAssert.Contains(description, "user [User ID", null, null);
         StringAssert.Contains(description, "duration [Date/Time] {OPTIONAL}", null, null);
         StringAssert.Contains(description, "Example: ", null, null);
     }
@@ -304,7 +304,7 @@ public class MiscModuleTests
         StringAssert.Contains(description, "ℹ  *This is a moderator", null, null);
         StringAssert.Contains(description, "*Bans a user", null, null);
         StringAssert.Contains(description, "Syntax: `.ban user [duration]`", null, null);
-        StringAssert.Contains(description, "user [User]", null, null);
+        StringAssert.Contains(description, "user [User ID", null, null);
         StringAssert.Contains(description, "duration [Date/Time] {OPTIONAL}", null, null);
         StringAssert.Contains(description, "Example: ", null, null);
     }
@@ -328,7 +328,7 @@ public class MiscModuleTests
         StringAssert.Contains(description, "ℹ  *This is a moderator", null, null);
         StringAssert.Contains(description, "*Bans a user", null, null);
         StringAssert.Contains(description, "Syntax: `.ban user [duration]`", null, null);
-        StringAssert.Contains(description, "user [User]", null, null);
+        StringAssert.Contains(description, "user [User ID", null, null);
         StringAssert.Contains(description, "duration [Date/Time] {OPTIONAL}", null, null);
         StringAssert.Contains(description, "Example: ", null, null);
 
@@ -347,7 +347,7 @@ public class MiscModuleTests
         StringAssert.Contains(description, "ℹ  *This is a moderator", null, null);
         StringAssert.Contains(description, "*Get information about a user", null, null);
         StringAssert.Contains(description, "Syntax: `.userinfo [user]`", null, null);
-        StringAssert.Contains(description, "user [User]", null, null);
+        StringAssert.Contains(description, "user [User ID", null, null);
 
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, pippId, ".help uinfo");
         await mm.TestableHelpCommandAsync(context, "uinfo");

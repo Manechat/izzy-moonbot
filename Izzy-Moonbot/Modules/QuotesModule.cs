@@ -27,7 +27,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
     [Command("quote")]
     [Summary("Get a quote, either randomly, from a specific user, or a specific quote.")]
     [Alias("q")]
-    [Parameter("user", ParameterType.User, "The user to get a quote from.", true)]
+    [Parameter("user", ParameterType.UserResolvable, "The user to get a quote from.", true)]
     [Parameter("id", ParameterType.Integer, "The specific quote number from that user to post.", true)]
     [BotsAllowed]
     [ExternalUsageAllowed]
@@ -280,7 +280,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
     [Summary(
         "List all the quotes for a specific user or category, or list all the users and categories that have quotes if one is not provided.")]
     [Alias("lq", "searchquotes", "searchquote", "sq")]
-    [Parameter("user", ParameterType.User, "The user to search for.", true)]
+    [Parameter("user", ParameterType.UserResolvable, "The user to search for.", true)]
     [ExternalUsageAllowed]
     public async Task ListQuotesCommandAsync(
         [Remainder] string search = ""
@@ -439,7 +439,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
         "Adds a quote to a user or category.")]
     [ModCommand(Group = "Permission")]
     [DevCommand(Group = "Permission")]
-    [Parameter("user", ParameterType.User, "The user to add the quote to.")]
+    [Parameter("user", ParameterType.UserResolvable, "The user to add the quote to.")]
     [Parameter("content", ParameterType.String, "The quote content to add.")]
     [Example(".addquote @UserName hello there")]
     [Example(".addquote \"Izzy Moonbot\" belizzle it")]
@@ -556,7 +556,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
     [ModCommand(Group = "Permission")]
     [DevCommand(Group = "Permission")]
     [Alias("deletequote", "rmquote", "delquote")]
-    [Parameter("user", ParameterType.User, "The user to remove the quote from.")]
+    [Parameter("user", ParameterType.UnambiguousUser, "The user to remove the quote from.")]
     [Parameter("id", ParameterType.Integer, "The quote number to remove.")]
     public async Task RemoveQuoteCommandAsync(
         [Remainder] string argsString = "")
@@ -632,7 +632,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
         }
 
         // Now check user
-        var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(user, context);
+        var userId = DiscordHelper.ConvertUserPingToId(user);
         var member = context.Guild.GetUser(userId);
 
         if (member == null)
@@ -656,7 +656,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
     [DevCommand(Group = "Permission")]
     [Parameter("operation", ParameterType.String, "The operation to complete (get/list/set/delete)")]
     [Parameter("alias", ParameterType.String, "The alias name.")]
-    [Parameter("target", ParameterType.User, "The user to set the alias to, if applicable.", true)]
+    [Parameter("target", ParameterType.UnambiguousUser, "The user to set the alias to, if applicable.", true)]
     public async Task QuoteAliasCommandAsync(
         [Remainder] string argsString = "")
     {
@@ -745,7 +745,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
             }
             else
             {
-                var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(target, context);
+                var userId = DiscordHelper.ConvertUserPingToId(target);
                 var member = context.Guild?.GetUser(userId);
 
                 if (member == null)

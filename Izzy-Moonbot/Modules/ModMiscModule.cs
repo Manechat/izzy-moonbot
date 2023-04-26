@@ -53,7 +53,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
     [RequireContext(ContextType.Guild)]
     [ModCommand(Group = "Permissions")]
     [DevCommand(Group = "Permissions")]
-    [Parameter("user", ParameterType.User, "The user to remove the scheduled removal from.")]
+    [Parameter("user", ParameterType.UnambiguousUser, "The user to remove the scheduled removal from.")]
     public async Task PermaNpCommandAsync(
         [Remainder]string user = "")
     {
@@ -63,8 +63,8 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                 "Hey uhh... I can't remove the scheduled new pony role removal for a user if you haven't given me the user to remove it from...");
             return;
         }
-        
-        var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(user, Context);
+
+        var userId = DiscordHelper.ConvertUserPingToId(user);
         var member = Context.Guild.GetUser(userId);
 
         if (member == null)

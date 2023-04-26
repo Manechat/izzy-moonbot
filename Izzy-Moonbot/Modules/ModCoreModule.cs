@@ -62,7 +62,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
     [ModCommand(Group = "Permission")]
     [DevCommand(Group = "Permission")]
     [Alias("uinfo")]
-    [Parameter("user", ParameterType.User, "The user to get information about, or yourself if not provided.", true)]
+    [Parameter("user", ParameterType.UserResolvable, "The user to get information about, or yourself if not provided.", true)]
     public async Task UserInfoCommandAsync(
         [Remainder] string user = "")
     {
@@ -135,7 +135,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
     [RequireContext(ContextType.Guild)]
     [ModCommand(Group = "Permissions")]
     [DevCommand(Group = "Permissions")]
-    [Parameter("user", ParameterType.User, "The user to ban.")]
+    [Parameter("user", ParameterType.UnambiguousUser, "The user to ban.")]
     [Parameter("duration", ParameterType.DateTime, "How long the ban should last, e.g. \"2 weeks\" or \"6 months\". Omit for an indefinite ban.", true)]
     [Example(".ban 123456789012345678 1 month")]
     public async Task BanCommandAsync(
@@ -160,7 +160,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
         var args = DiscordHelper.GetArguments(argsString);
 
         var userArg = args.Arguments[0];
-        var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(userArg, Context);
+        var userId = DiscordHelper.ConvertUserPingToId(userArg);
         var member = Context.Guild?.GetUser(userId);
 
         var timeArg = string.Join("", argsString.Skip(args.Indices[0]));
@@ -323,7 +323,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
     [ModCommand(Group = "Permissions")]
     [DevCommand(Group = "Permissions")]
     [Parameter("role", ParameterType.Role, "The role to assign.")]
-    [Parameter("user", ParameterType.User, "The user to assign the role.")]
+    [Parameter("user", ParameterType.UnambiguousUser, "The user to assign the role.")]
     [Parameter("duration", ParameterType.DateTime, "How long the role should last, e.g. \"2 weeks\" or \"6 months\". Omit for an indefinite role assignment.", true)]
     [Example(".assignrole @Best Pony @Izzy Moonbot 24 hours")]
     public async Task AssignRoleCommandAsync(
@@ -348,7 +348,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
         var args = DiscordHelper.GetArguments(argsString);
 
         var roleResolvable = args.Arguments[0];
-        var userResolvable = args.Arguments[1];
+        var userArg = args.Arguments[1];
         var timeArg = string.Join("", argsString.Skip(args.Indices[1]));
 
         var roleId = DiscordHelper.GetRoleIdIfAccessAsync(roleResolvable, context);
@@ -359,7 +359,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
         }
         var role = context.Guild?.GetRole(roleId);
 
-        var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(userResolvable, context);
+        var userId = DiscordHelper.ConvertUserPingToId(userArg);
         if (userId == 0)
         {
             await context.Channel.SendMessageAsync("I couldn't find that user, sorry!");
