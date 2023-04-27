@@ -58,17 +58,51 @@ public static class TimeHelper
         }
         else if (args.Arguments[0] == "every")
         {
+            if (args.Arguments[1] == "day")
+            {
+                var dayArgsString = string.Join("", argsString.Skip(args.Indices[1]));
+                if (TryParseTimeInput(dayArgsString, out var timeError) is var (timeDto, timeRemainingArgs))
+                    return (new TimeHelperResponse(timeDto, ScheduledJobRepeatType.Daily), timeRemainingArgs);
+
+                errorString = $"Failed to extract a date/time from the start of \"{argsString}\":\n" +
+                    $"Not a valid repeating time because: {timeError}\n" +
+                    $"    Valid example: \"every day 12:00 UTC+0\"";
+                return null;
+            }
+            else if (args.Arguments[1] == "week")
+            {
+                var weekArgsString = string.Join("", argsString.Skip(args.Indices[1]));
+                if (TryParseWeekdayTime(weekArgsString, out var weekdayError) is var (weekdayDto, weekdayRemainingArgs))
+                    return (new TimeHelperResponse(weekdayDto, ScheduledJobRepeatType.Weekly), weekdayRemainingArgs);
+
+                errorString = $"Failed to extract a date/time from the start of \"{argsString}\":\n" +
+                    $"Not a valid repeating weekday + time because: {weekdayError}\n" +
+                    $"    Valid example: \"every week monday 12:00 UTC+0\"";
+                return null;
+            }
+            else if (args.Arguments[1] == "year")
+            {
+                var yearArgsString = string.Join("", argsString.Skip(args.Indices[1]));
+                if (TryParseDayMonthTime(yearArgsString, out var dateError) is var (dateDto, dateRemainingArgs))
+                    return (new TimeHelperResponse(dateDto, ScheduledJobRepeatType.Yearly), dateRemainingArgs);
+
+                errorString = $"Failed to extract a date/time from the start of \"{argsString}\":\n" +
+                    $"Not a valid repeating date + time because: {dateError}\n" +
+                    $"    Valid example: \"every year 1 jan 12:00 UTC+0\"";
+                return null;
+            }
+
             // no disambiguation word, so we have to try every *repeatable* format, i.e.
             // no timestamps and AbsoluteDateTime are replaced by DayMonthTime
             var subArgsString = string.Join("", argsString.Skip(args.Indices[0]));
             if (TryParseInterval(subArgsString, out var intervalError) is var (intervalDto, intervalRemainingArgs))
                 return (new TimeHelperResponse(intervalDto, ScheduledJobRepeatType.Relative), intervalRemainingArgs);
-            if (TryParseTimeInput(subArgsString, out var timeError) is var (timeDto, timeRemainingArgs))
-                return (new TimeHelperResponse(timeDto, ScheduledJobRepeatType.Daily), timeRemainingArgs);
-            if (TryParseWeekdayTime(subArgsString, out var weekdayError) is var (weekdayDto, weekdayRemainingArgs))
-                return (new TimeHelperResponse(weekdayDto, ScheduledJobRepeatType.Weekly), weekdayRemainingArgs);
-            if (TryParseDayMonthTime(subArgsString, out var dateError) is var (dateDto, dateRemainingArgs))
-                return (new TimeHelperResponse(dateDto, ScheduledJobRepeatType.Yearly), dateRemainingArgs);
+            if (TryParseTimeInput(subArgsString, out var timeError2) is var (timeDto2, timeRemainingArgs2))
+                return (new TimeHelperResponse(timeDto2, ScheduledJobRepeatType.Daily), timeRemainingArgs2);
+            if (TryParseWeekdayTime(subArgsString, out var weekdayError2) is var (weekdayDto2, weekdayRemainingArgs2))
+                return (new TimeHelperResponse(weekdayDto2, ScheduledJobRepeatType.Weekly), weekdayRemainingArgs2);
+            if (TryParseDayMonthTime(subArgsString, out var dateError2) is var (dateDto2, dateRemainingArgs2))
+                return (new TimeHelperResponse(dateDto2, ScheduledJobRepeatType.Yearly), dateRemainingArgs2);
 
             if (args.Arguments.Length == 1)
             {
@@ -84,14 +118,14 @@ public static class TimeHelper
                 $"    {intervalError}\n" +
                 $"    Valid example: \"every 1 hour\"",
                 $"Failed to extract a daily repeating time from the start of \"{argsString}\" because:\n" +
-                $"    {timeError}\n" +
-                $"    Valid example: \"every 12:00 UTC+0\"",
+                $"    {timeError2}\n" +
+                $"    Valid example: \"every day 12:00 UTC+0\"",
                 $"Failed to extract a weekly repeating weekday + time from the start of \"{argsString}\" because:\n" +
-                $"    {weekdayError}\n" +
-                $"    Valid example: \"every monday 12:00 UTC+0\"",
+                $"    {weekdayError2}\n" +
+                $"    Valid example: \"every week monday 12:00 UTC+0\"",
                 $"Failed to extract a yearly repeating date + time from the start of \"{argsString}\" because:\n" +
-                $"    {dateError}\n" +
-                $"    Valid example: \"every 1 jan 12:00 UTC+0\"",
+                $"    {dateError2}\n" +
+                $"    Valid example: \"every year 1 jan 12:00 UTC+0\"",
                 $"If you were trying for a different date/time format, see `.help remindme` for examples of all supported formats."
             );
             return null;

@@ -309,6 +309,12 @@ public class TimeHelperTests
             new DateTimeOffset(2010, 10, 10, 12, 30, 0, TimeSpan.Zero), ScheduledJobRepeatType.Daily, ""
         );
         Assert.AreEqual(err, null);
+
+        AssertTryParseDateTime(
+            TimeHelper.TryParseDateTime("every day 12:30 UTC+0", out err),
+            new DateTimeOffset(2010, 10, 10, 12, 30, 0, TimeSpan.Zero), ScheduledJobRepeatType.Daily, ""
+        );
+        Assert.AreEqual(err, null);
     }
 
     [TestMethod()]
@@ -323,6 +329,12 @@ public class TimeHelperTests
             new DateTimeOffset(2010, 10, 11, 12, 30, 0, TimeSpan.Zero), ScheduledJobRepeatType.Weekly, ""
         );
         Assert.AreEqual(err, null);
+
+        AssertTryParseDateTime(
+            TimeHelper.TryParseDateTime("every week monday 12:30 UTC+0", out err),
+            new DateTimeOffset(2010, 10, 11, 12, 30, 0, TimeSpan.Zero), ScheduledJobRepeatType.Weekly, ""
+        );
+        Assert.AreEqual(err, null);
     }
 
     [TestMethod()]
@@ -333,6 +345,12 @@ public class TimeHelperTests
 
         AssertTryParseDateTime(
             TimeHelper.TryParseDateTime("every 1 jan 12:00 UTC+0", out err),
+            new DateTimeOffset(2011, 1, 1, 12, 0, 0, TimeSpan.Zero), ScheduledJobRepeatType.Yearly, ""
+        );
+        Assert.AreEqual(err, null);
+
+        AssertTryParseDateTime(
+            TimeHelper.TryParseDateTime("every year 1 jan 12:00 UTC+0", out err),
             new DateTimeOffset(2011, 1, 1, 12, 0, 0, TimeSpan.Zero), ScheduledJobRepeatType.Yearly, ""
         );
         Assert.AreEqual(err, null);
