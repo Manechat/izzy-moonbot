@@ -396,8 +396,15 @@ namespace Izzy_Moonbot
                     return;
                 }
 
-                string parsedMessage = message.Content[1..].TrimStart();
-                    
+                string parsedMessage = message.Content[1..];
+                if (!char.IsLetter(parsedMessage[0]))
+                {
+                    _logger.Log(LogLevel.Information, $"Ignoring message {messageParam.CleanContent} because the {_config.Prefix} " +
+                        $"is not followed immediately by a letter.");
+                    return;
+                }
+
+
                 if (_config.Aliases.Count != 0)
                 {
                     var command = parsedMessage.Split(" ");
