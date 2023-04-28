@@ -98,7 +98,7 @@ public class ConfigCommandTests
         StringAssert.Contains(description, "BannerMode");
         StringAssert.Contains(description, "Enum");
         StringAssert.Contains(description, "Banner category");
-        StringAssert.Contains(description, "The mode I will use");
+        StringAssert.Contains(description, "If and how I will manage the server banner");
         StringAssert.Contains(description, "`None`, `Rotate`, `Shuffle`, `ManebooruFeatured`");
         StringAssert.Contains(description, "Current value: `None`");
         StringAssert.Contains(description, "Run `.config BannerMode <value>`");

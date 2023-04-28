@@ -62,17 +62,22 @@ public class ConfigDescriber
         // Banner settings
         _config.Add("BannerMode",
             new ConfigItem(ConfigItemType.Enum,
-                "The mode I will use when setting banners.",
+                "If and how I will manage the server banner.\n" +
+                "`None` means no action at all; I will never change the server banner unless someone runs a banner-related command.\n" +
+                "`Rotate` means starting at the first URL in `BannerImages`, using each one in order, then going back to the first one after all have been used.\n" +
+                "`Shuffle` means randomly selecting any of the URLs in `BannerImages`, no matter which of them have or haven't been used recently.\n" +
+                "`ManebooruFeatured` means syncing the server banner to manebooru.art's featured image. This may fail since Manebooru and Discord don't support all of the same image files.\n" +
+                "In most modes, I will post a message in `ModChannel` every time I change the banner. In `ManebooruFeatured`, I will post success messages in `LogChannel` instead, but errors will still go to `ModChannel`.",
                 ConfigItemCategory.Banner));
         _config.Add("BannerInterval",
             new ConfigItem(ConfigItemType.Double,
                 "How often I'll change the banner in minutes. If `BannerMode` is `None`, this has no effect. " +
-                "In `Shuffle` mode, this is how often I'll randomly select a new image from `BannerImages`. " +
+                "In `Rotate` and `Shuffle` modes, this is how often I'll select a new image from `BannerImages`. " +
                 "In `ManebooruFeatured` mode, this is how often I'll poll Manebooru's featured image.",
                 ConfigItemCategory.Banner));
         _config.Add("BannerImages",
             new ConfigItem(ConfigItemType.StringSet,
-                "The list of banners I'll shuffle through (if `BannerMode` is set to `Shuffle`).",
+                "The list of banner image URLs I'll `Rotate` or `Shuffle` through in those `BannerMode`s.",
                 ConfigItemCategory.Banner));
 
         // ManagedRoles settings
