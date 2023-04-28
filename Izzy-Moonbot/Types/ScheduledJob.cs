@@ -190,15 +190,18 @@ public class ScheduledEchoJob : ScheduledJobAction
     }
 }
 
-// Banner rotation doesn't need it's own data, but this class
-// exists in order for the job to exist.
 public class ScheduledBannerRotationJob : ScheduledJobAction
 {
-    public ScheduledBannerRotationJob()
+    public ScheduledBannerRotationJob(int? lastBannerIndex = null)
     {
         Type = ScheduledJobActionType.BannerRotation;
+
+        LastBannerIndex = lastBannerIndex;
     }
-    
+
+    // Only used in Rotate mode
+    public int? LastBannerIndex { get; set; }
+
     public override string ToDiscordString()
     {
         return $"Run Banner Rotation";

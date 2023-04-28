@@ -328,14 +328,24 @@ public class ScheduleService
             return;
         }
 
-        if (_config.BannerMode == ConfigListener.BannerMode.Shuffle)
+        if (_config.BannerMode == ConfigListener.BannerMode.Shuffle || _config.BannerMode == ConfigListener.BannerMode.Rotate)
         {
             try
             {
-                // Shuffle through banners.
-                var rand = new Random();
-                var number = rand.Next(_config.BannerImages.Count);
-                var url = _config.BannerImages.ToList()[number];
+                int bannerIndex;
+                if (_config.BannerMode == ConfigListener.BannerMode.Shuffle)
+                {
+                    var rand = new Random();
+                    bannerIndex = rand.Next(_config.BannerImages.Count);
+                }
+                else // BannerMode.Rotate
+                {
+                    var lastIndex = job.LastBannerIndex ?? -1;
+                    bannerIndex = (lastIndex + 1) % _config.BannerImages.Count;
+                }
+                job.LastBannerIndex = bannerIndex;
+
+                var url = _config.BannerImages.ToList()[bannerIndex];
                 try
                 {
                     await DiscordHelper.SetBannerToUrlImage(url, guild);
