@@ -322,17 +322,17 @@ public class ScheduleService
             _logger.Log("Unicycle_BannerRotation early returning because BannerMode is None.");
             return;
         }
-        if (_config.BannerMode == ConfigListener.BannerMode.CustomRotation && _config.BannerImages.Count == 0)
+        if (_config.BannerMode == ConfigListener.BannerMode.Shuffle && _config.BannerImages.Count == 0)
         {
-            _logger.Log("Unicycle_BannerRotation early returning because BannerMode is CustomRotation but BannerImages is empty.");
+            _logger.Log("Unicycle_BannerRotation early returning because BannerMode is Shuffle but BannerImages is empty.");
             return;
         }
 
-        if (_config.BannerMode == ConfigListener.BannerMode.CustomRotation)
+        if (_config.BannerMode == ConfigListener.BannerMode.Shuffle)
         {
             try
             {
-                // Rotate through banners.
+                // Shuffle through banners.
                 var rand = new Random();
                 var number = rand.Next(_config.BannerImages.Count);
                 var url = _config.BannerImages.ToList()[number];

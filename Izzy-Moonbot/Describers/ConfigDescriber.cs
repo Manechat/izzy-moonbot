@@ -67,12 +67,12 @@ public class ConfigDescriber
         _config.Add("BannerInterval",
             new ConfigItem(ConfigItemType.Double,
                 "How often I'll change the banner in minutes. If `BannerMode` is `None`, this has no effect. " +
-                "In `CustomRotation` mode, this is how often I'll randomly select a new image from `BannerImages`. " +
+                "In `Shuffle` mode, this is how often I'll randomly select a new image from `BannerImages`. " +
                 "In `ManebooruFeatured` mode, this is how often I'll poll Manebooru's featured image.",
                 ConfigItemCategory.Banner));
         _config.Add("BannerImages",
             new ConfigItem(ConfigItemType.StringSet,
-                "The list of banners I'll rotate through (if `BannerMode` is set to `CustomRotation`).",
+                "The list of banners I'll shuffle through (if `BannerMode` is set to `Shuffle`).",
                 ConfigItemCategory.Banner));
 
         // ManagedRoles settings
