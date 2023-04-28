@@ -536,11 +536,11 @@ public class MiscModuleTests
 
         // config documentation is searched
 
-        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".help rotation");
-        await mm.TestableHelpCommandAsync(context, "rotation");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".help rotate");
+        await mm.TestableHelpCommandAsync(context, "rotate");
 
-        Assert.AreEqual("Sorry, I was unable to find any command, category, or alias named \"rotation\" that you have access to." +
-            "\nI do see \"rotation\" in the output of: `.config BannerMode` and `.config BannerInterval` and `.config BannerImages`", generalChannel.Messages.Last().Content);
+        Assert.AreEqual("Sorry, I was unable to find any command, category, or alias named \"rotate\" that you have access to." +
+            "\nI do see \"rotate\" in the output of: `.config BannerMode` and `.config BannerInterval` and `.config BannerImages`", generalChannel.Messages.Last().Content);
 
         // for simple values, the searched config documentation includes the current value
 

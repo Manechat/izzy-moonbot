@@ -322,20 +322,30 @@ public class ScheduleService
             _logger.Log("Unicycle_BannerRotation early returning because BannerMode is None.");
             return;
         }
-        if (_config.BannerMode == ConfigListener.BannerMode.CustomRotation && _config.BannerImages.Count == 0)
+        if (_config.BannerMode == ConfigListener.BannerMode.Shuffle && _config.BannerImages.Count == 0)
         {
-            _logger.Log("Unicycle_BannerRotation early returning because BannerMode is CustomRotation but BannerImages is empty.");
+            _logger.Log("Unicycle_BannerRotation early returning because BannerMode is Shuffle but BannerImages is empty.");
             return;
         }
 
-        if (_config.BannerMode == ConfigListener.BannerMode.CustomRotation)
+        if (_config.BannerMode == ConfigListener.BannerMode.Shuffle || _config.BannerMode == ConfigListener.BannerMode.Rotate)
         {
             try
             {
-                // Rotate through banners.
-                var rand = new Random();
-                var number = rand.Next(_config.BannerImages.Count);
-                var url = _config.BannerImages.ToList()[number];
+                int bannerIndex;
+                if (_config.BannerMode == ConfigListener.BannerMode.Shuffle)
+                {
+                    var rand = new Random();
+                    bannerIndex = rand.Next(_config.BannerImages.Count);
+                }
+                else // BannerMode.Rotate
+                {
+                    var lastIndex = job.LastBannerIndex ?? -1;
+                    bannerIndex = (lastIndex + 1) % _config.BannerImages.Count;
+                }
+                job.LastBannerIndex = bannerIndex;
+
+                var url = _config.BannerImages.ToList()[bannerIndex];
                 try
                 {
                     await DiscordHelper.SetBannerToUrlImage(url, guild);

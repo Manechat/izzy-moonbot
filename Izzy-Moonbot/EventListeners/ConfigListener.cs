@@ -120,7 +120,8 @@ public class ConfigListener
     public enum BannerMode
     {
         None,
-        CustomRotation,
+        Rotate,
+        Shuffle,
         ManebooruFeatured
     }
 }
