@@ -216,8 +216,8 @@ public class RaidService
                     $"<@&{_config.ModRole}> Bing-bong! Possible raid detected! ({_config.SmallRaidSize} (`SmallRaidSize`) users joined within {_config.SmallRaidTime} (`SmallRaidTime`) seconds.)\n\n" +
                     $"{string.Join($"\n", potentialRaiders)}\n\n" +
                     $"Possible commands for this scenario are:\n" +
-                    $"`{_config.Prefix}ass` - Enable automatically silencing new joins *and* autosilence those considered part of the raid (those who joined within {_config.RecentJoinDecay} (`RecentJoinDecay`) seconds).\n" +
-                    $"`{_config.Prefix}assoff` - Disable automatically silencing new joins and resets the raid level back to 'no raid'. This will **not** unsilence those considered part of the raid.\n" +
+                    $"`{_config.Prefix}ass` - Set `AutoSilenceNewJoins` to `true` and silence recent joins (as defined by `.config RecentJoinDecay`).\n" +
+                    $"`{_config.Prefix}assoff` - Set `AutoSilenceNewJoins` to `false`.\n" +
                     $"`{_config.Prefix}getraid` - Returns a list of those who are considered part of the raid by Izzy. (those who joined {_config.RecentJoinDecay} (`RecentJoinDecay`) seconds before the raid began).")
                 .SetFileLogContent($"Bing-bong! Possible raid detected! ({_config.SmallRaidSize} (`SmallRaidSize`) users joined within {_config.SmallRaidTime} (`SmallRaidTime`) seconds.)\n" +
                                    $"{string.Join($"\n", potentialRaiders)}\n")
@@ -276,7 +276,7 @@ public class RaidService
                         $"I have automatically silenced all the members below and enabled autosilencing users on join.\n\n" +
                         $"{string.Join($"\n", potentialRaiders)}\n\n" +
                         $"Possible commands for this scenario are:\n" +
-                        $"`{_config.Prefix}assoff` - Disable automatically silencing new joins and resets the raid level back to 'no raid'.. This will **not** unsilence those considered part of the raid.\n" +
+                        $"`{_config.Prefix}assoff` - Set `AutoSilenceNewJoins` to `false`.\n" +
                         $"`{_config.Prefix}getraid` - Returns a list of those who are considered part of the raid by Izzy. (those who joined within {_config.RecentJoinDecay} (`RecentJoinDecay`) seconds).")
                     .SetFileLogContent($"Bing-bong! Raid detected! ({_config.LargeRaidSize} (`LargeRaidSize`) users joined within {_config.LargeRaidTime} (`LargeRaidTime`) seconds.)\n" +
                                        $"I have automatically silenced all the members below members and enabled autosilencing users on join.\n" +

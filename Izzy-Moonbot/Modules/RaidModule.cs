@@ -29,7 +29,9 @@ public class RaidModule : ModuleBase<SocketCommandContext>
     }
 
     [Command("ass")]
-    [Summary("Set `AutoSilenceNewJoins` to `true` and silence those I consider recent joins (if there's a raid ongoing).")]
+    [Summary("Set `AutoSilenceNewJoins` to `true` and silence recent joins (as defined by `.config RecentJoinDecay`).")]
+    [Remarks("This is usually used after Izzy detects a spike of recent joins, but it can be used at any time since 'slow trickle raids' occasionally happen too.\n" +
+        "Using this command also ensures Izzy will not change `AutoSilenceNewJoins` to `false` until a moderator runs `.assoff`.")]
     [RequireContext(ContextType.Guild)]
     [ModCommand(Group = "Permissions")]
     [DevCommand(Group = "Permissions")]
@@ -47,7 +49,7 @@ public class RaidModule : ModuleBase<SocketCommandContext>
     }
 
     [Command("assoff")]
-    [Summary("Set `AutoSilenceNewJoins` to `false` and stop me from thinking that a raid is ongoing (if there's a raid ongoing).")]
+    [Summary("Set `AutoSilenceNewJoins` to `false`.")]
     [RequireContext(ContextType.Guild)]
     [ModCommand(Group = "Permissions")]
     [DevCommand(Group = "Permissions")]
@@ -61,7 +63,7 @@ public class RaidModule : ModuleBase<SocketCommandContext>
 
         await _raidService.EndRaid(Context);
 
-        await ReplyAsync($"Jinxie avoided! I'm returning to normal operation.");
+        await ReplyAsync($"Jinxie avoided! I've set `AutoSilenceNewJoins` back to `false`");
     }
 
     [Command("getraid")]
