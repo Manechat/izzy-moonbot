@@ -1,7 +1,9 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Discord.Commands;
 using Izzy_Moonbot.Attributes;
+using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Service;
 using Izzy_Moonbot.Settings;
 
@@ -37,15 +39,16 @@ public class RaidModule : ModuleBase<SocketCommandContext>
     [DevCommand(Group = "Permissions")]
     public async Task AssAsync()
     {
-        if (_generalStorage.CurrentRaidMode == RaidMode.None)
-        {
-            await ReplyAsync("There don't seem to be any raids going on...");
-            return;
-        }
+        _config.AutoSilenceNewJoins = true;
+        await FileHelper.SaveConfigAsync(_config);
 
-        await _raidService.SilenceRecentJoins(Context);
-        await ReplyAsync(
-            $"I've enabled autosilencing new members! I also silenced those who joined earlier than {_config.RecentJoinDecay} seconds ago.");
+        var recentJoins = _raidService.GetRecentJoins(Context.Guild);
+        await _modService.SilenceUsers(recentJoins, "Suspected raider");
+
+        _generalStorage.ManualRaidSilence = true;
+        await FileHelper.SaveGeneralStorageAsync(_generalStorage);
+
+        await ReplyAsync($"I've set `AutoSilenceNewJoins` to `true` and silenced the following recent joins: {string.Join(' ', recentJoins.Select(u => $"<@{u.Id}>"))}");
     }
 
     [Command("assoff")]
@@ -55,13 +58,12 @@ public class RaidModule : ModuleBase<SocketCommandContext>
     [DevCommand(Group = "Permissions")]
     public async Task AssOffAsync()
     {
-        if (_generalStorage.CurrentRaidMode == RaidMode.None)
-        {
-            await ReplyAsync("There doesn't seem to be any raids going on...");
-            return;
-        }
+        _config.AutoSilenceNewJoins = false;
+        await FileHelper.SaveConfigAsync(_config);
 
-        await _raidService.EndRaid(Context);
+        _generalStorage.CurrentRaidMode = RaidMode.None;
+        _generalStorage.ManualRaidSilence = false;
+        await FileHelper.SaveGeneralStorageAsync(_generalStorage);
 
         await ReplyAsync($"Jinxie avoided! I've set `AutoSilenceNewJoins` back to `false`");
     }

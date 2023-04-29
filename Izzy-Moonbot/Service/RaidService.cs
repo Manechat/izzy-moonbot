@@ -72,66 +72,6 @@ public class RaidService
         return recentGuildUsers;
     }
 
-    public async Task SilenceRecentJoins(SocketCommandContext context)
-    {
-        _config.AutoSilenceNewJoins = true;
-
-        var recentJoins = _state.RecentJoins.Select(recentJoin =>
-        {
-            var member = context.Guild.GetUser(recentJoin);
-
-            return member ?? null;
-        }).Where(member => member != null) as IEnumerable<SocketGuildUser>; // cast away nullability
-
-        await _modService.SilenceUsers(recentJoins, "Suspected raider");
-
-        _generalStorage.ManualRaidSilence = true;
-
-        await FileHelper.SaveConfigAsync(_config);
-        await FileHelper.SaveGeneralStorageAsync(_generalStorage);
-    }
-
-    public async Task EndRaid(SocketCommandContext context)
-    {
-        _generalStorage.CurrentRaidMode = RaidMode.None;
-
-        _config.AutoSilenceNewJoins = false;
-
-        await FileHelper.SaveConfigAsync(_config);
-
-        _state.RecentJoins.RemoveAll( userId =>
-        {
-            var member = context.Guild.GetUser(userId);
-
-            if (member is not { JoinedAt: { } }) return true;
-            if (member.JoinedAt.Value.AddSeconds(_config.RecentJoinDecay) < DateTimeOffset.Now) return false;
-            
-            _log.Log(
-                $"{member.DisplayName} ({member.Id}) no longer a recent join (immediate after raid)");
-            return true;
-        });
-        
-        _state.RecentJoins.ForEach(async userId =>
-        {
-            var member = context.Guild.GetUser(userId);
-
-            if (member is not { JoinedAt: { } }) return;
-            if (member.JoinedAt.Value.AddSeconds(_config.RecentJoinDecay) < DateTimeOffset.Now)
-            {
-                var _ = Task.Run(async () =>
-                {
-                    await Task.Delay(Convert.ToInt32((member.JoinedAt.Value.AddSeconds(_config.RecentJoinDecay) - DateTimeOffset.Now) * 1000));
-                    _log.Log(
-                        $"{member.DisplayName} ({member.Id}) no longer a recent join (after raid)");
-                    _state.RecentJoins.Remove(member.Id);
-                });
-            }
-        });
-
-        _generalStorage.ManualRaidSilence = false;
-        await FileHelper.SaveGeneralStorageAsync(_generalStorage);
-    }
-
     private async Task DecaySmallRaid(SocketGuild guild)
     {
         _generalStorage.CurrentRaidMode = RaidMode.None;
