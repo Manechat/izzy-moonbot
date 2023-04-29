@@ -80,35 +80,6 @@ public class RaidService
         
         await FileHelper.SaveConfigAsync(_config);
 
-        _state.RecentJoins.RemoveAll( userId =>
-        {
-            var member = guild.GetUser(userId);
-
-            if (member is not { JoinedAt: { } }) return true;
-            if (member.JoinedAt.Value.AddSeconds(_config.RecentJoinDecay) < DateTimeOffset.Now) return false;
-            
-            _log.Log(
-                $"{member.DisplayName} ({member.Id}) no longer a recent join (immediate after raid)");
-            return true;
-        });
-        
-        _state.RecentJoins.ForEach(async userId =>
-        {
-            var member = guild.GetUser(userId);
-
-            if (member is not { JoinedAt: { } }) return;
-            if (member.JoinedAt.Value.AddSeconds(_config.RecentJoinDecay) < DateTimeOffset.Now)
-            {
-                var _ = Task.Run(async () =>
-                {
-                    await Task.Delay(Convert.ToInt32((member.JoinedAt.Value.AddSeconds(_config.RecentJoinDecay) - DateTimeOffset.Now) * 1000));
-                    _log.Log(
-                        $"{member.DisplayName} ({member.Id}) no longer a recent join (after raid)");
-                    _state.RecentJoins.Remove(member.Id);
-                });
-            }
-        });
-        
         await _modLog.CreateModLog(guild)
             .SetContent(
                 $"The raid has ended. I've disabled raid defences and cleared my internal cache of all recent joins.")
@@ -138,6 +109,8 @@ public class RaidService
 
     public async Task CheckForTrip(SocketGuild guild)
     {
+        var recentJoins = GetRecentJoins(guild);
+
         if (_state.CurrentSmallJoinCount >= _config.SmallRaidSize && _generalStorage.CurrentRaidMode == RaidMode.None)
         {
             var potentialRaiders = new List<string>();
@@ -145,23 +118,11 @@ public class RaidService
             _log.Log(
                 "Small raid detected!");
 
-            _state.RecentJoins.ForEach(userId =>
+            recentJoins.ForEach(member =>
             {
-                var member = guild.GetUser(userId);
-
-                if (member == null)
-                {
-                    // We.. don't know who this user is?
-                    // Well since we don't know who they are we can't silence them anyway
-                    // Just mention that we couldn't find them and provide the id.
-                    potentialRaiders.Add($"Unknown User (`{userId}`)");
-                }
-                else
-                {
-                    var joinDate = "`Couldn't get member join time`";
-                    if (member.JoinedAt.HasValue) joinDate = $"<t:{member.JoinedAt.Value.ToUnixTimeSeconds()}:F>";
-                    potentialRaiders.Add($"{member.Username}#{member.Discriminator} (joined: {joinDate})");
-                }
+                var joinDate = "`Couldn't get member join time`";
+                if (member.JoinedAt.HasValue) joinDate = $"<t:{member.JoinedAt.Value.ToUnixTimeSeconds()}:F>";
+                potentialRaiders.Add($"{member.Username}#{member.Discriminator} (joined: {joinDate})");
             });
 
             // Potential raid. Bug the mods
@@ -188,37 +149,17 @@ public class RaidService
             _log.Log(
                 "Large raid detected!");
 
-            var recentJoins = _state.RecentJoins.Select(recentJoin =>
-            {
-                var member = guild.GetUser(recentJoin);
-
-                if (member == null) return null;
-                return member;
-            }).Where(member => member != null) as IEnumerable<SocketGuildUser>; // cast away nullability
-
             await _modService.SilenceUsers(recentJoins, "Suspected raider");
 
-            _state.RecentJoins.ForEach(async userId =>
+            recentJoins.ForEach(async member =>
             {
-                var member = guild.GetUser(userId);
+                var joinDate = "`Couldn't get member join time`";
+                if (member.JoinedAt.HasValue) joinDate = $"<t:{member.JoinedAt.Value.ToUnixTimeSeconds()}:F>";
+                potentialRaiders.Add($"{member.Username}#{member.Discriminator} (joined: {joinDate})");
 
-                if (member == null)
+                if (member.Roles.Any(role => role.Id == _config.MemberRole))
                 {
-                    // We.. don't know who this user is?
-                    // Well since we don't know who they are we can't silence them anyway
-                    // Just mention that we couldn't find them and provide the id.
-                    potentialRaiders.Add($"Unknown User (`{userId}`)");
-                }
-                else
-                {
-                    var joinDate = "`Couldn't get member join time`";
-                    if (member.JoinedAt.HasValue) joinDate = $"<t:{member.JoinedAt.Value.ToUnixTimeSeconds()}:F>";
-                    potentialRaiders.Add($"{member.Username}#{member.Discriminator} (joined: {joinDate})");
-
-                    if (member.Roles.Any(role => role.Id == _config.MemberRole))
-                    {
-                        await _modService.SilenceUser(member, "Suspected raider");
-                    }
+                    await _modService.SilenceUser(member, "Suspected raider");
                 }
             });
 
