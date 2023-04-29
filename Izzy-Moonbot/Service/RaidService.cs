@@ -134,7 +134,10 @@ public class RaidService
                     $"`{_config.Prefix}ass` - Set `AutoSilenceNewJoins` to `true` and silence recent joins (as defined by `.config RecentJoinDecay`).\n" +
                     $"`{_config.Prefix}assoff` - Set `AutoSilenceNewJoins` to `false`.\n" +
                     $"`{_config.Prefix}stowaways` - List non-bot, non-mod users who do not have the member role.\n" +
-                    $"`{_config.Prefix}getrecentjoins` - Get a list of recent joins (as defined by `.config RecentJoinDecay`).")
+                    $"`{_config.Prefix}getrecentjoins` - Get a list of recent joins (as defined by `.config RecentJoinDecay`).\n" +
+                    $"\n" +
+                    $"If you do not believe this is a raid, simply do nothing. If you do believe this is a raid, typically you should run `.ass`, then manually vet every user who joins " +
+                        $"(ending in a kick, ban, or manually adding the MemberRole) until you believe the raid is over, then run `.assoff`, and finally `.stowaways` to double-check if we missed anyone.")
                 .SetFileLogContent($"Bing-bong! Possible raid detected! ({_config.SmallRaidSize} (`SmallRaidSize`) users joined within {_config.SmallRaidTime} (`SmallRaidTime`) seconds.)\n" +
                                    $"{string.Join($"\n", potentialRaiders)}\n")
                 .Send();
