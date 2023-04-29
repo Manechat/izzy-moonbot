@@ -112,8 +112,10 @@ namespace Izzy_Moonbot
 
                 _client.LatencyUpdated += async (int old, int value) =>
                 {
+                    #if DEBUG
                     _logger.Log(LogLevel.Debug, $"Latency = {value}ms.");
-                    
+                    #endif
+
                     if (_config.DiscordActivityName != null)
                     {
                         if (_client.Activity.Name != _config.DiscordActivityName ||
