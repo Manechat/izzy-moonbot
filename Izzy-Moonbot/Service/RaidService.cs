@@ -133,6 +133,7 @@ public class RaidService
                     $"Possible commands for this scenario are:\n" +
                     $"`{_config.Prefix}ass` - Set `AutoSilenceNewJoins` to `true` and silence recent joins (as defined by `.config RecentJoinDecay`).\n" +
                     $"`{_config.Prefix}assoff` - Set `AutoSilenceNewJoins` to `false`.\n" +
+                    $"`{_config.Prefix}stowaways` - List non-bot, non-mod users who do not have the member role.\n" +
                     $"`{_config.Prefix}getrecentjoins` - Get a list of recent joins (as defined by `.config RecentJoinDecay`).")
                 .SetFileLogContent($"Bing-bong! Possible raid detected! ({_config.SmallRaidSize} (`SmallRaidSize`) users joined within {_config.SmallRaidTime} (`SmallRaidTime`) seconds.)\n" +
                                    $"{string.Join($"\n", potentialRaiders)}\n")
@@ -172,6 +173,7 @@ public class RaidService
                         $"{string.Join($"\n", potentialRaiders)}\n\n" +
                         $"Possible commands for this scenario are:\n" +
                         $"`{_config.Prefix}assoff` - Set `AutoSilenceNewJoins` to `false`.\n" +
+                        $"`{_config.Prefix}stowaways` - List non-bot, non-mod users who do not have the member role.\n" +
                         $"`{_config.Prefix}getrecentjoins` - Get a list of recent joins (as defined by `.config RecentJoinDecay`).")
                     .SetFileLogContent($"Bing-bong! Raid detected! ({_config.LargeRaidSize} (`LargeRaidSize`) users joined within {_config.LargeRaidTime} (`LargeRaidTime`) seconds.)\n" +
                                        $"I have automatically silenced all the members below members and enabled autosilencing users on join.\n" +
