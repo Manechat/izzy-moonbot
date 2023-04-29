@@ -81,7 +81,7 @@ public class RaidModule : ModuleBase<SocketCommandContext>
 
         var potentialRaiders = new List<string>();
 
-        _raidService.GetRecentJoins(Context).ForEach(user =>
+        _raidService.GetRecentJoins(Context.Guild).ForEach(user =>
         {
             potentialRaiders.Add($"{user.Username}#{user.Discriminator}");
         });

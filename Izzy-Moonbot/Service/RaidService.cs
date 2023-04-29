@@ -44,18 +44,32 @@ public class RaidService
         return _state.RecentJoins.Contains(id);
     }
 
-    public List<SocketGuildUser> GetRecentJoins(SocketCommandContext context)
+    // This method proactively checks that the joins still are recent and updates _state if any expired,
+    // so call sites should only call this once and reuse the result as much as possible.
+    public List<SocketGuildUser> GetRecentJoins(SocketGuild guild)
     {
-        var RecentUsers = new List<SocketGuildUser>();
+        var recentGuildUsers = new List<SocketGuildUser>();
+        var expiredUserIds = new List<ulong>();
 
         _state.RecentJoins.ForEach(userId =>
         {
-            var member = context.Guild.GetUser(userId);
+            var member = guild.GetUser(userId);
 
-            if (member != null) RecentUsers.Add(member);
+            if (member is not { JoinedAt: { } })
+                expiredUserIds.Add(userId);
+            else if (member.JoinedAt.Value.AddSeconds(_config.RecentJoinDecay) < DateTimeOffset.Now)
+                expiredUserIds.Add(userId);
+            else
+                recentGuildUsers.Add(member);
         });
 
-        return RecentUsers;
+        if (expiredUserIds.Count > 0)
+        {
+            _log.Log($"Removing id(s) {string.Join(' ', expiredUserIds)} from _state.RecentJoins");
+            expiredUserIds.ForEach(expiredUserId => _state.RecentJoins.Remove(expiredUserId));
+        }
+
+        return recentGuildUsers;
     }
 
     public async Task SilenceRecentJoins(SocketCommandContext context)
