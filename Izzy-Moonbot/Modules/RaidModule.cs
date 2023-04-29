@@ -68,27 +68,19 @@ public class RaidModule : ModuleBase<SocketCommandContext>
         await ReplyAsync($"Jinxie avoided! I've set `AutoSilenceNewJoins` back to `false`");
     }
 
-    [Command("getraid")]
-    [Summary("Get a list of those considered to be part of the current raid.")]
+    [Command("getrecentjoins")]
+    [Summary("Get a list of recent joins (as defined by `.config RecentJoinDecay`).")]
+    [Remarks("These are the users who will be silenced if you run `.ass`")]
     [RequireContext(ContextType.Guild)]
     [ModCommand(Group = "Permissions")]
     [DevCommand(Group = "Permissions")]
-    public async Task GetRaidAsync()
+    public async Task GetRecentJoinsAsync()
     {
-        if (_generalStorage.CurrentRaidMode == RaidMode.None)
-        {
-            await ReplyAsync("There don't seem to be any raids going on...");
-            return;
-        }
+        var recentJoins = _raidService.GetRecentJoins(Context.Guild);
 
-        var potentialRaiders = new List<string>();
-
-        _raidService.GetRecentJoins(Context.Guild).ForEach(user =>
-        {
-            potentialRaiders.Add($"{user.Username}#{user.Discriminator}");
-        });
-
-        await ReplyAsync(
-            $"I consider the following users as part of the current raid.\n```\n{string.Join(", ", potentialRaiders)}\n```");
+        await ReplyAsync($"The following users are recent joins:\n" +
+            "```\n" +
+            string.Join(", ", recentJoins.Select(user => $"{user.Username}#{user.Discriminator}")) + "\n" +
+            "```");
     }
 }

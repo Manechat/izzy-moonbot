@@ -133,7 +133,7 @@ public class RaidService
                     $"Possible commands for this scenario are:\n" +
                     $"`{_config.Prefix}ass` - Set `AutoSilenceNewJoins` to `true` and silence recent joins (as defined by `.config RecentJoinDecay`).\n" +
                     $"`{_config.Prefix}assoff` - Set `AutoSilenceNewJoins` to `false`.\n" +
-                    $"`{_config.Prefix}getraid` - Returns a list of those who are considered part of the raid by Izzy. (those who joined {_config.RecentJoinDecay} (`RecentJoinDecay`) seconds before the raid began).")
+                    $"`{_config.Prefix}getrecentjoins` - Get a list of recent joins (as defined by `.config RecentJoinDecay`).")
                 .SetFileLogContent($"Bing-bong! Possible raid detected! ({_config.SmallRaidSize} (`SmallRaidSize`) users joined within {_config.SmallRaidTime} (`SmallRaidTime`) seconds.)\n" +
                                    $"{string.Join($"\n", potentialRaiders)}\n")
                 .Send();
@@ -172,7 +172,7 @@ public class RaidService
                         $"{string.Join($"\n", potentialRaiders)}\n\n" +
                         $"Possible commands for this scenario are:\n" +
                         $"`{_config.Prefix}assoff` - Set `AutoSilenceNewJoins` to `false`.\n" +
-                        $"`{_config.Prefix}getraid` - Returns a list of those who are considered part of the raid by Izzy. (those who joined within {_config.RecentJoinDecay} (`RecentJoinDecay`) seconds).")
+                        $"`{_config.Prefix}getrecentjoins` - Get a list of recent joins (as defined by `.config RecentJoinDecay`).")
                     .SetFileLogContent($"Bing-bong! Raid detected! ({_config.LargeRaidSize} (`LargeRaidSize`) users joined within {_config.LargeRaidTime} (`LargeRaidTime`) seconds.)\n" +
                                        $"I have automatically silenced all the members below members and enabled autosilencing users on join.\n" +
                                        $"{string.Join($"\n", potentialRaiders)}\n")
