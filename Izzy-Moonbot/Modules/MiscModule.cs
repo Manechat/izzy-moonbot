@@ -553,7 +553,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                     .SetFileLogContent(modMsg)
                     .Send();
 
-                await ReplyAsync($"{Context.User.Mention} rolled a {rollResult}! :izzyooh:\n\nI've sent the mods a glitter bomb :izzyspin:", allowedMentions: AllowedMentions.None);
+                await ReplyAsync($"{Context.User.Mention} rolled a {rollResult}! <:izzyooh:889126310260113449>\n\nI've sent the mods a glitter bomb <a:izzyspin:969209801961771008>", allowedMentions: AllowedMentions.None);
             }
             else
             {
