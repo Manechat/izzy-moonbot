@@ -500,8 +500,11 @@ namespace Izzy_Moonbot
 
                 // Check for BotsAllowed attribute
                 var hasBotsAllowedAttribute = commandToExec.Preconditions.Where(attribute => attribute != null).OfType<BotsAllowedAttribute>().Any();
-
-                if (!hasBotsAllowedAttribute && context.User.IsBot) return;
+                if (!hasBotsAllowedAttribute && context.User.IsBot)
+                {
+                    _logger.LogInformation($"Ignoring command '{messageParam.CleanContent}' because it comes from a bot and {_config.Prefix}{commandToExec} lacks a [BotsAllowed] attribute.");
+                    return;
+                }
 
                 var result = await _commands.ExecuteAsync(context, parsedMessage, _services.BuildServiceProvider());
                 if (result.Error == CommandError.ParseFailed &&
