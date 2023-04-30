@@ -67,9 +67,10 @@ public class MiscModuleTests
         var modLog = new ModLoggingService(cfg);
         var logger = new LoggingService(new TestLogger<Worker>());
         var ss = new ScheduleService(cfg, mod, modLog, logger, scheduledJobs);
+        var gs = new GeneralStorage();
 
         var cfgDescriber = new ConfigDescriber();
-        return (ss, new MiscModule(cfg, cfgDescriber, ss, logger, await SetupCommandService()));
+        return (ss, new MiscModule(cfg, cfgDescriber, ss, logger, modLog, await SetupCommandService(), gs));
     }
 
     [TestMethod()]
@@ -548,6 +549,6 @@ public class MiscModuleTests
         await mm.TestableHelpCommandAsync(context, "100");
 
         Assert.AreEqual("Sorry, I was unable to find any command, category, or alias named \"100\" that you have access to." +
-            "\nI do see \"100\" in the output of: `.config UnicycleInterval`", generalChannel.Messages.Last().Content);
+            "\nI do see \"100\" in the output of: `.help rollforbestpony` and `.config UnicycleInterval`", generalChannel.Messages.Last().Content);
     }
 }
