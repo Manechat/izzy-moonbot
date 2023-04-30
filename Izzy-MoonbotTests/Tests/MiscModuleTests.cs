@@ -339,20 +339,21 @@ public class MiscModuleTests
 
         // Alternate name for a mod-only command
 
-        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".help uinfo");
-        await mm.TestableHelpCommandAsync(context, "uinfo");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".help rmquote");
+        await mm.TestableHelpCommandAsync(context, "rmquote");
 
         description = generalChannel.Messages.Last().Content;
-        StringAssert.Contains(description, "**.uinfo** (alternate name of **.userinfo**) - ModCore category", null, null);
+        StringAssert.Contains(description, "**.rmquote** (alternate name of **.removequote**) - Quotes category", null, null);
         StringAssert.Contains(description, "ℹ  *This is a moderator", null, null);
-        StringAssert.Contains(description, "*Get information about a user", null, null);
-        StringAssert.Contains(description, "Syntax: `.userinfo [user]`", null, null);
+        StringAssert.Contains(description, "*Removes a quote from a user or category", null, null);
+        StringAssert.Contains(description, "Syntax: `.removequote user id`", null, null);
         StringAssert.Contains(description, "user [User ID", null, null);
+        StringAssert.Contains(description, "id [Integer]", null, null);
 
-        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, pippId, ".help uinfo");
-        await mm.TestableHelpCommandAsync(context, "uinfo");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, pippId, ".help rmquote");
+        await mm.TestableHelpCommandAsync(context, "rmquote");
 
-        Assert.AreEqual("Sorry, you don't have permission to use the .uinfo command.", generalChannel.Messages.Last().Content);
+        Assert.AreEqual("Sorry, you don't have permission to use the .rmquote command.", generalChannel.Messages.Last().Content);
 
         // Alias for a mod-only command
 
