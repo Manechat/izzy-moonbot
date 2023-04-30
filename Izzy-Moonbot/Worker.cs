@@ -502,7 +502,7 @@ namespace Izzy_Moonbot
                 var hasBotsAllowedAttribute = commandToExec.Preconditions.Where(attribute => attribute != null).OfType<BotsAllowedAttribute>().Any();
                 if (!hasBotsAllowedAttribute && context.User.IsBot)
                 {
-                    _logger.LogInformation($"Ignoring command '{messageParam.CleanContent}' because it comes from a bot and {_config.Prefix}{commandToExec} lacks a [BotsAllowed] attribute.");
+                    _logger.LogInformation($"Ignoring command '{messageParam.CleanContent}' because it comes from a bot and {_config.Prefix}{commandToExec.Name} lacks a [BotsAllowed] attribute.");
                     return;
                 }
 
