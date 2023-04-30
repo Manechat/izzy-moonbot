@@ -1,5 +1,7 @@
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Service;
+using System;
+using System.Collections.Generic;
 
 namespace Izzy_Moonbot.Settings;
 
@@ -16,6 +18,10 @@ public class GeneralStorage
         
         // Banner management
         CurrentBooruFeaturedImage = null;
+
+        // Best Pony rolls
+        LastRollTime = null;
+        UsersWhoRolledToday = new HashSet<ulong>();
     }
     
     // Antiraid
@@ -24,4 +30,8 @@ public class GeneralStorage
     
     // Banner management
     public BooruImage? CurrentBooruFeaturedImage { get; set; }
+
+    // Best Pony rolls
+    public DateTime? LastRollTime { get; set; }
+    public ISet<ulong> UsersWhoRolledToday { get; set; }
 }
