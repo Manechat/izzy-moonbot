@@ -399,7 +399,7 @@ namespace Izzy_Moonbot
                 }
 
                 string parsedMessage = message.Content[1..];
-                if (!char.IsLetter(parsedMessage[0]))
+                if (parsedMessage.Length == 0 || !char.IsLetter(parsedMessage[0]))
                 {
                     _logger.Log(LogLevel.Information, $"Ignoring message {messageParam.CleanContent} because the {_config.Prefix} " +
                         $"is not followed immediately by a letter.");
