@@ -42,6 +42,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
     [Command("banner")]
     [Summary("Get the current banner of Manechat.")]
     [Alias("getbanner", "currentbanner")]
+    [BotsAllowed]
     public async Task BannerCommandAsync()
     {
         if (_config.BannerMode == ConfigListener.BannerMode.ManebooruFeatured)
@@ -159,6 +160,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
     [Remarks("Takes the text from FirstRuleMessageId or one of the messages after it, depending on the number given. If the number is a key in HiddenRules, the corresponding value is displayed instead.")]
     [Alias("rules")]
     [Parameter("number", ParameterType.Integer, "The rule number to get.")]
+    [BotsAllowed]
     [ExternalUsageAllowed]
     public async Task RuleCommandAsync([Remainder] string argString = "")
     {
@@ -493,6 +495,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
 
     [Command("about")]
     [Summary("About the bot")]
+    [BotsAllowed]
     [ExternalUsageAllowed]
     public async Task AboutCommandAsync()
     {
@@ -512,6 +515,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
     [Alias("roll")]
     [Summary("Roll a random number from 1 to 100 at most once per day (as defined by UTC midnight). A roll of 100 will inform the moderators that you've won Best Pony.")]
     [Remarks("For testing purposes only, moderators may pass a 'cheat' number to be the result of their roll.")]
+    [BotsAllowed]
     public async Task RollCommandAsync([Remainder] string cheatArg = "")
     {
         var lastRollTime = _generalStorage.LastRollTime;
