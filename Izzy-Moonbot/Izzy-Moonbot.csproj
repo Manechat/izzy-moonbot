@@ -1,9 +1,9 @@
-<Project Sdk="Microsoft.NET.Sdk.Worker">
+﻿<Project Sdk="Microsoft.NET.Sdk.Worker">
     <PropertyGroup>
         <UserSecretsId>dotnet-Izzy_Moonbot-C054BD3A-F4E3-4221-81C0-9AE116BDD30F</UserSecretsId>
         <RootNamespace>Izzy_Moonbot</RootNamespace>
         <Nullable>enable</Nullable>
-        <TargetFramework>net6.0</TargetFramework>
+        <TargetFramework>net7.0</TargetFramework>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
