@@ -1,9 +1,13 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Discord.Commands;
 using Izzy_Moonbot.Attributes;
+using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Service;
 using Izzy_Moonbot.Settings;
+using Serilog;
 
 namespace Izzy_Moonbot.Modules;
 
@@ -29,62 +33,64 @@ public class RaidModule : ModuleBase<SocketCommandContext>
     }
 
     [Command("ass")]
-    [Summary("Set `AutoSilenceNewJoins` to `true` and silence those I consider recent joins (if there's a raid ongoing).")]
+    [Summary("Set `AutoSilenceNewJoins` to `true` and silence recent joins (as defined by `.config RecentJoinDecay`).")]
+    [Remarks("This is usually used after Izzy detects a spike of recent joins, but it can be used at any time since 'slow trickle raids' occasionally happen too.\n" +
+        "Using this command also ensures Izzy will not change `AutoSilenceNewJoins` to `false` until a moderator runs `.assoff`.")]
     [RequireContext(ContextType.Guild)]
     [ModCommand(Group = "Permissions")]
     [DevCommand(Group = "Permissions")]
     public async Task AssAsync()
     {
-        if (_generalStorage.CurrentRaidMode == RaidMode.None)
+        var recentJoins = _raidService.GetRecentJoins(Context.Guild);
+        try
         {
-            await ReplyAsync("There don't seem to be any raids going on...");
+            await _modService.SilenceUsers(recentJoins, "Suspected raider");
+        }
+        catch (Exception ex)
+        {
+            await ReplyAsync($"Failed to silence recent joins:\n{ex.Message}");
             return;
         }
 
-        await _raidService.SilenceRecentJoins(Context);
-        await ReplyAsync(
-            $"I've enabled autosilencing new members! I also silenced those who joined earlier than {_config.RecentJoinDecay} seconds ago.");
+        _config.AutoSilenceNewJoins = true;
+        await FileHelper.SaveConfigAsync(_config);
+
+        _generalStorage.ManualRaidSilence = true;
+        await FileHelper.SaveGeneralStorageAsync(_generalStorage);
+
+        await ReplyAsync($"I've set `AutoSilenceNewJoins` to `true` and silenced the following recent joins: {string.Join(' ', recentJoins.Select(u => $"<@{u.Id}>"))}");
     }
 
     [Command("assoff")]
-    [Summary("Set `AutoSilenceNewJoins` to `false` and stop me from thinking that a raid is ongoing (if there's a raid ongoing).")]
+    [Summary("Set `AutoSilenceNewJoins` to `false`.")]
     [RequireContext(ContextType.Guild)]
     [ModCommand(Group = "Permissions")]
     [DevCommand(Group = "Permissions")]
     public async Task AssOffAsync()
     {
-        if (_generalStorage.CurrentRaidMode == RaidMode.None)
-        {
-            await ReplyAsync("There doesn't seem to be any raids going on...");
-            return;
-        }
+        _config.AutoSilenceNewJoins = false;
+        await FileHelper.SaveConfigAsync(_config);
 
-        await _raidService.EndRaid(Context);
+        _generalStorage.CurrentRaidMode = RaidMode.None;
+        _generalStorage.ManualRaidSilence = false;
+        await FileHelper.SaveGeneralStorageAsync(_generalStorage);
 
-        await ReplyAsync($"Jinxie avoided! I'm returning to normal operation.");
+        await ReplyAsync($"Jinxie avoided! I've set `AutoSilenceNewJoins` back to `false`");
     }
 
-    [Command("getraid")]
-    [Summary("Get a list of those considered to be part of the current raid.")]
+    [Command("getrecentjoins")]
+    [Summary("Get a list of recent joins (as defined by `.config RecentJoinDecay`).")]
+    [Remarks("These are the users who will be silenced if you run `.ass`")]
     [RequireContext(ContextType.Guild)]
     [ModCommand(Group = "Permissions")]
     [DevCommand(Group = "Permissions")]
-    public async Task GetRaidAsync()
+    public async Task GetRecentJoinsAsync()
     {
-        if (_generalStorage.CurrentRaidMode == RaidMode.None)
-        {
-            await ReplyAsync("There don't seem to be any raids going on...");
-            return;
-        }
+        var recentJoins = _raidService.GetRecentJoins(Context.Guild);
 
-        var potentialRaiders = new List<string>();
-
-        _raidService.GetRecentJoins(Context).ForEach(user =>
-        {
-            potentialRaiders.Add($"{user.Username}#{user.Discriminator}");
-        });
-
-        await ReplyAsync(
-            $"I consider the following users as part of the current raid.\n```\n{string.Join(", ", potentialRaiders)}\n```");
+        await ReplyAsync($"The following users are recent joins:\n" +
+            "```\n" +
+            string.Join(", ", recentJoins.Select(user => $"{user.Username}#{user.Discriminator}")) + "\n" +
+            "```");
     }
 }

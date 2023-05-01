@@ -44,78 +44,32 @@ public class RaidService
         return _state.RecentJoins.Contains(id);
     }
 
-    public List<SocketGuildUser> GetRecentJoins(SocketCommandContext context)
+    // This method proactively checks that the joins still are recent and updates _state if any expired,
+    // so call sites should only call this once and reuse the result as much as possible.
+    public List<SocketGuildUser> GetRecentJoins(SocketGuild guild)
     {
-        var RecentUsers = new List<SocketGuildUser>();
+        var recentGuildUsers = new List<SocketGuildUser>();
+        var expiredUserIds = new List<ulong>();
 
         _state.RecentJoins.ForEach(userId =>
         {
-            var member = context.Guild.GetUser(userId);
+            var member = guild.GetUser(userId);
 
-            if (member != null) RecentUsers.Add(member);
+            if (member is not { JoinedAt: { } })
+                expiredUserIds.Add(userId);
+            else if (member.JoinedAt.Value.AddSeconds(_config.RecentJoinDecay) < DateTimeOffset.Now)
+                expiredUserIds.Add(userId);
+            else
+                recentGuildUsers.Add(member);
         });
 
-        return RecentUsers;
-    }
-
-    public async Task SilenceRecentJoins(SocketCommandContext context)
-    {
-        _config.AutoSilenceNewJoins = true;
-
-        var recentJoins = _state.RecentJoins.Select(recentJoin =>
+        if (expiredUserIds.Count > 0)
         {
-            var member = context.Guild.GetUser(recentJoin);
+            _log.Log($"Removing id(s) {string.Join(' ', expiredUserIds)} from _state.RecentJoins");
+            expiredUserIds.ForEach(expiredUserId => _state.RecentJoins.Remove(expiredUserId));
+        }
 
-            return member ?? null;
-        }).Where(member => member != null) as IEnumerable<SocketGuildUser>; // cast away nullability
-
-        await _modService.SilenceUsers(recentJoins, "Suspected raider");
-
-        _generalStorage.ManualRaidSilence = true;
-
-        await FileHelper.SaveConfigAsync(_config);
-        await FileHelper.SaveGeneralStorageAsync(_generalStorage);
-    }
-
-    public async Task EndRaid(SocketCommandContext context)
-    {
-        _generalStorage.CurrentRaidMode = RaidMode.None;
-
-        _config.AutoSilenceNewJoins = false;
-
-        await FileHelper.SaveConfigAsync(_config);
-
-        _state.RecentJoins.RemoveAll( userId =>
-        {
-            var member = context.Guild.GetUser(userId);
-
-            if (member is not { JoinedAt: { } }) return true;
-            if (member.JoinedAt.Value.AddSeconds(_config.RecentJoinDecay) < DateTimeOffset.Now) return false;
-            
-            _log.Log(
-                $"{member.DisplayName} ({member.Id}) no longer a recent join (immediate after raid)");
-            return true;
-        });
-        
-        _state.RecentJoins.ForEach(async userId =>
-        {
-            var member = context.Guild.GetUser(userId);
-
-            if (member is not { JoinedAt: { } }) return;
-            if (member.JoinedAt.Value.AddSeconds(_config.RecentJoinDecay) < DateTimeOffset.Now)
-            {
-                var _ = Task.Run(async () =>
-                {
-                    await Task.Delay(Convert.ToInt32((member.JoinedAt.Value.AddSeconds(_config.RecentJoinDecay) - DateTimeOffset.Now) * 1000));
-                    _log.Log(
-                        $"{member.DisplayName} ({member.Id}) no longer a recent join (after raid)");
-                    _state.RecentJoins.Remove(member.Id);
-                });
-            }
-        });
-
-        _generalStorage.ManualRaidSilence = false;
-        await FileHelper.SaveGeneralStorageAsync(_generalStorage);
+        return recentGuildUsers;
     }
 
     private async Task DecaySmallRaid(SocketGuild guild)
@@ -126,35 +80,6 @@ public class RaidService
         
         await FileHelper.SaveConfigAsync(_config);
 
-        _state.RecentJoins.RemoveAll( userId =>
-        {
-            var member = guild.GetUser(userId);
-
-            if (member is not { JoinedAt: { } }) return true;
-            if (member.JoinedAt.Value.AddSeconds(_config.RecentJoinDecay) < DateTimeOffset.Now) return false;
-            
-            _log.Log(
-                $"{member.DisplayName} ({member.Id}) no longer a recent join (immediate after raid)");
-            return true;
-        });
-        
-        _state.RecentJoins.ForEach(async userId =>
-        {
-            var member = guild.GetUser(userId);
-
-            if (member is not { JoinedAt: { } }) return;
-            if (member.JoinedAt.Value.AddSeconds(_config.RecentJoinDecay) < DateTimeOffset.Now)
-            {
-                var _ = Task.Run(async () =>
-                {
-                    await Task.Delay(Convert.ToInt32((member.JoinedAt.Value.AddSeconds(_config.RecentJoinDecay) - DateTimeOffset.Now) * 1000));
-                    _log.Log(
-                        $"{member.DisplayName} ({member.Id}) no longer a recent join (after raid)");
-                    _state.RecentJoins.Remove(member.Id);
-                });
-            }
-        });
-        
         await _modLog.CreateModLog(guild)
             .SetContent(
                 $"The raid has ended. I've disabled raid defences and cleared my internal cache of all recent joins.")
@@ -184,6 +109,8 @@ public class RaidService
 
     public async Task CheckForTrip(SocketGuild guild)
     {
+        var recentJoins = GetRecentJoins(guild);
+
         if (_state.CurrentSmallJoinCount >= _config.SmallRaidSize && _generalStorage.CurrentRaidMode == RaidMode.None)
         {
             var potentialRaiders = new List<string>();
@@ -191,23 +118,11 @@ public class RaidService
             _log.Log(
                 "Small raid detected!");
 
-            _state.RecentJoins.ForEach(userId =>
+            recentJoins.ForEach(member =>
             {
-                var member = guild.GetUser(userId);
-
-                if (member == null)
-                {
-                    // We.. don't know who this user is?
-                    // Well since we don't know who they are we can't silence them anyway
-                    // Just mention that we couldn't find them and provide the id.
-                    potentialRaiders.Add($"Unknown User (`{userId}`)");
-                }
-                else
-                {
-                    var joinDate = "`Couldn't get member join time`";
-                    if (member.JoinedAt.HasValue) joinDate = $"<t:{member.JoinedAt.Value.ToUnixTimeSeconds()}:F>";
-                    potentialRaiders.Add($"{member.Username}#{member.Discriminator} (joined: {joinDate})");
-                }
+                var joinDate = "`Couldn't get member join time`";
+                if (member.JoinedAt.HasValue) joinDate = $"<t:{member.JoinedAt.Value.ToUnixTimeSeconds()}:F>";
+                potentialRaiders.Add($"{member.Username}#{member.Discriminator} (joined: {joinDate})");
             });
 
             // Potential raid. Bug the mods
@@ -216,9 +131,13 @@ public class RaidService
                     $"<@&{_config.ModRole}> Bing-bong! Possible raid detected! ({_config.SmallRaidSize} (`SmallRaidSize`) users joined within {_config.SmallRaidTime} (`SmallRaidTime`) seconds.)\n\n" +
                     $"{string.Join($"\n", potentialRaiders)}\n\n" +
                     $"Possible commands for this scenario are:\n" +
-                    $"`{_config.Prefix}ass` - Enable automatically silencing new joins *and* autosilence those considered part of the raid (those who joined within {_config.RecentJoinDecay} (`RecentJoinDecay`) seconds).\n" +
-                    $"`{_config.Prefix}assoff` - Disable automatically silencing new joins and resets the raid level back to 'no raid'. This will **not** unsilence those considered part of the raid.\n" +
-                    $"`{_config.Prefix}getraid` - Returns a list of those who are considered part of the raid by Izzy. (those who joined {_config.RecentJoinDecay} (`RecentJoinDecay`) seconds before the raid began).")
+                    $"`{_config.Prefix}ass` - Set `AutoSilenceNewJoins` to `true` and silence recent joins (as defined by `.config RecentJoinDecay`).\n" +
+                    $"`{_config.Prefix}assoff` - Set `AutoSilenceNewJoins` to `false`.\n" +
+                    $"`{_config.Prefix}stowaways` - List non-bot, non-mod users who do not have the member role.\n" +
+                    $"`{_config.Prefix}getrecentjoins` - Get a list of recent joins (as defined by `.config RecentJoinDecay`).\n" +
+                    $"\n" +
+                    $"If you do not believe this is a raid, simply do nothing. If you do believe this is a raid, typically you should run `.ass`, then manually vet every user who joins " +
+                        $"(ending in a kick, ban, or manually adding the MemberRole) until you believe the raid is over, then run `.assoff`, and finally `.stowaways` to double-check if we missed anyone.")
                 .SetFileLogContent($"Bing-bong! Possible raid detected! ({_config.SmallRaidSize} (`SmallRaidSize`) users joined within {_config.SmallRaidTime} (`SmallRaidTime`) seconds.)\n" +
                                    $"{string.Join($"\n", potentialRaiders)}\n")
                 .Send();
@@ -234,37 +153,17 @@ public class RaidService
             _log.Log(
                 "Large raid detected!");
 
-            var recentJoins = _state.RecentJoins.Select(recentJoin =>
-            {
-                var member = guild.GetUser(recentJoin);
-
-                if (member == null) return null;
-                return member;
-            }).Where(member => member != null) as IEnumerable<SocketGuildUser>; // cast away nullability
-
             await _modService.SilenceUsers(recentJoins, "Suspected raider");
 
-            _state.RecentJoins.ForEach(async userId =>
+            recentJoins.ForEach(async member =>
             {
-                var member = guild.GetUser(userId);
+                var joinDate = "`Couldn't get member join time`";
+                if (member.JoinedAt.HasValue) joinDate = $"<t:{member.JoinedAt.Value.ToUnixTimeSeconds()}:F>";
+                potentialRaiders.Add($"{member.Username}#{member.Discriminator} (joined: {joinDate})");
 
-                if (member == null)
+                if (member.Roles.Any(role => role.Id == _config.MemberRole))
                 {
-                    // We.. don't know who this user is?
-                    // Well since we don't know who they are we can't silence them anyway
-                    // Just mention that we couldn't find them and provide the id.
-                    potentialRaiders.Add($"Unknown User (`{userId}`)");
-                }
-                else
-                {
-                    var joinDate = "`Couldn't get member join time`";
-                    if (member.JoinedAt.HasValue) joinDate = $"<t:{member.JoinedAt.Value.ToUnixTimeSeconds()}:F>";
-                    potentialRaiders.Add($"{member.Username}#{member.Discriminator} (joined: {joinDate})");
-
-                    if (member.Roles.Any(role => role.Id == _config.MemberRole))
-                    {
-                        await _modService.SilenceUser(member, "Suspected raider");
-                    }
+                    await _modService.SilenceUser(member, "Suspected raider");
                 }
             });
 
@@ -276,8 +175,9 @@ public class RaidService
                         $"I have automatically silenced all the members below and enabled autosilencing users on join.\n\n" +
                         $"{string.Join($"\n", potentialRaiders)}\n\n" +
                         $"Possible commands for this scenario are:\n" +
-                        $"`{_config.Prefix}assoff` - Disable automatically silencing new joins and resets the raid level back to 'no raid'.. This will **not** unsilence those considered part of the raid.\n" +
-                        $"`{_config.Prefix}getraid` - Returns a list of those who are considered part of the raid by Izzy. (those who joined within {_config.RecentJoinDecay} (`RecentJoinDecay`) seconds).")
+                        $"`{_config.Prefix}assoff` - Set `AutoSilenceNewJoins` to `false`.\n" +
+                        $"`{_config.Prefix}stowaways` - List non-bot, non-mod users who do not have the member role.\n" +
+                        $"`{_config.Prefix}getrecentjoins` - Get a list of recent joins (as defined by `.config RecentJoinDecay`).")
                     .SetFileLogContent($"Bing-bong! Raid detected! ({_config.LargeRaidSize} (`LargeRaidSize`) users joined within {_config.LargeRaidTime} (`LargeRaidTime`) seconds.)\n" +
                                        $"I have automatically silenced all the members below members and enabled autosilencing users on join.\n" +
                                        $"{string.Join($"\n", potentialRaiders)}\n")
