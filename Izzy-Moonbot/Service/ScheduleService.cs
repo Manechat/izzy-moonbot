@@ -524,33 +524,32 @@ public class ScheduleService
 
     private async Task ButtonEvent(IIzzySocketMessageComponent component)
     {
+        // Be sure to early return without DeferAsync()ing if this is someone else's button
         var buttonId = component.Data.CustomId;
+        var idParts = buttonId.Split(':');
+        if (idParts.Length != 2 || idParts[0] != "cancel-echo-job") return;
 
         _logger.Log($"Received ButtonExecuted event with button id {buttonId}");
-        var idParts = buttonId.Split(':');
-        if (idParts.Length == 2 && idParts[0] == "cancel-echo-job")
+        var jobId = idParts[1];
+        var job = GetScheduledJob(jobId);
+        if (job is null)
         {
-            var jobId = idParts[1];
-            var job = GetScheduledJob(jobId);
-            if (job is null)
-            {
-                _logger.Log($"Ignoring unsubscribe button click for job {jobId} because that job no longer exists");
-                return;
-            }
-
-            _logger.Log($"Cancelling job {jobId} due to unsubscribe button click");
-            await DeleteScheduledJob(job);
-
-            await component.UpdateAsync(msg =>
-            {
-                msg.Components = new ComponentBuilder().WithButton(
-                    customId: "successfully-unsubscribed",
-                    label: "Successfully Unsubscribed",
-                    disabled: true,
-                    style: ButtonStyle.Success
-                ).Build();
-            });
+            _logger.Log($"Ignoring unsubscribe button click for job {jobId} because that job no longer exists");
+            return;
         }
+
+        _logger.Log($"Cancelling job {jobId} due to unsubscribe button click");
+        await DeleteScheduledJob(job);
+
+        await component.UpdateAsync(msg =>
+        {
+            msg.Components = new ComponentBuilder().WithButton(
+                customId: "successfully-unsubscribed",
+                label: "Successfully Unsubscribed",
+                disabled: true,
+                style: ButtonStyle.Success
+            ).Build();
+        });
 
         await component.DeferAsync();
     }
