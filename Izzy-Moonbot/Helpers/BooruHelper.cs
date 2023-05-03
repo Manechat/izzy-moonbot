@@ -13,7 +13,7 @@ public static class BooruHelper
         var booruSettings = _getBooruSettings();
 
         var results = await $"{booruSettings.Endpoint}/api/{booruSettings.Version}/json/images/featured"
-            .WithHeader("user-agent", $"Izzy-Moonbot (Linux x86_64) Flurl.Http/3.2.4 DotNET/6.0")
+            .WithHeader("user-agent", $"Izzy-Moonbot (Linux x86_64) Flurl.Http/3.2.4 DotNET/7.0")
             .SetQueryParam("key", booruSettings.Token)
             .GetAsync()
             .ReceiveJson();
