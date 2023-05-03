@@ -18,7 +18,7 @@ Get started by posting `.help` and/or `.config` in one of the private bots-* cha
 - Install:
   - Visual Studio Community
     - Include the ASP.NET development workload
-  - .NET 6
+  - .NET 7
   - WSL (Windows Subsystem for Linux)
     - Install Ubuntu as default distro for best ease of use
   - Docker Desktop
