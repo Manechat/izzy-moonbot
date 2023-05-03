@@ -202,6 +202,7 @@ public class PaginationHelper
 
     private async Task ButtonEvent(IIzzySocketMessageComponent component)
     {
+        // Be sure to early return without DeferAsync()ing if this is someone else's button
         if (component.User.Id != _authorId) return;
         if (component.Message.Id != _message?.Id) return;
 
