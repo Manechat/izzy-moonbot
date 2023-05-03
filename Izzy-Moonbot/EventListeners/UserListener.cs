@@ -271,29 +271,30 @@ public class UserListener
         }
         _logger.Log($"Finished constructing moderation log content", level: LogLevel.Debug);
 
-        _logger.Log($"Fetch all scheduled jobs for this user", level: LogLevel.Debug);
-        var scheduledTasks = _schedule.GetScheduledJobs(job => 
-            job.Action switch
+        // Most scheduled jobs for a user we want to leave intact in case the user comes back,
+        // especially mod-related role assgnments, and a few one-off errors are no big deal.
+        // But a repeating job would keep erroring forever, so we need to clean those up.
+        var repeatingJobsForUser = _schedule.GetScheduledJobs(job =>
+            job.RepeatType != ScheduledJobRepeatType.None && job.Action switch
             {
                 ScheduledRoleJob roleJob => roleJob.User == user.Id,
                 ScheduledEchoJob echoJob => echoJob.ChannelOrUser == user.Id,
                 _ => false
             }
         );
-        _logger.Log($"Cancelling all scheduled jobs for this user", level: LogLevel.Debug);
-        foreach (var scheduledTask in scheduledTasks.Where(scheduledTask => 
-                     scheduledTask.Action is not ScheduledUnbanJob))
+        if (repeatingJobsForUser.Any())
+            output += $"\n\nCancelled the following repeating scheduled job(s) for that user:";
+        foreach (var job in repeatingJobsForUser)
         {
-            await _schedule.DeleteScheduledJob(scheduledTask);
+            output += $"\n{job.ToDiscordString()}";
+            await _schedule.DeleteScheduledJob(job);
         }
-        _logger.Log($"Cancelled all scheduled jobs for this user", level: LogLevel.Debug);
 
         _logger.Log($"Sending moderation log", level: LogLevel.Debug);
         await _modLogger.CreateModLog(guild)
             .SetContent(output)
             .SetFileLogContent(fileOutput)
             .Send();
-        _logger.Log($"Moderation log sent", level: LogLevel.Debug);
     }
 
     private async Task MemberUpdateEvent(Cacheable<SocketGuildUser,ulong> oldUser, SocketGuildUser newUser)

@@ -231,8 +231,20 @@ public class ScheduleService
     private async Task Unicycle_AddRole(ScheduledRoleAdditionJob job, IIzzyGuild guild)
     {
         var role = guild.GetRole(job.Role);
+        if (role == null)
+        {
+            var msg = $"Unable to execute scheduled assignment of role {job.Role} to user {job.User} because this server has no role with that id.";
+            await _modLogging.CreateModLog(guild).SetContent(msg).SetFileLogContent(msg).Send();
+            return;
+        }
+
         var user = guild.GetUser(job.User);
-        if (role == null || user == null) return;
+        if (user == null)
+        {
+            var msg = $"Unable to execute scheduled assignment of role {job.Role} to user {job.User} because this server has no user with that id (did they leave?).";
+            await _modLogging.CreateModLog(guild).SetContent(msg).SetFileLogContent(msg).Send();
+            return;
+        }
 
         var reason = job.Reason;
         
@@ -251,8 +263,20 @@ public class ScheduleService
     private async Task Unicycle_RemoveRole(ScheduledRoleRemovalJob job, IIzzyGuild guild)
     {
         var role = guild.GetRole(job.Role);
+        if (role == null)
+        {
+            var msg = $"Unable to execute scheduled removal of role {job.Role} from user {job.User} because this server has no role with that id.";
+            await _modLogging.CreateModLog(guild).SetContent(msg).SetFileLogContent(msg).Send();
+            return;
+        }
+
         var user = guild.GetUser(job.User);
-        if (role == null || user == null) return;
+        if (user == null)
+        {
+            var msg = $"Unable to execute scheduled removal of role {job.Role} from user {job.User} because this server has no user with that id (did they leave?).";
+            await _modLogging.CreateModLog(guild).SetContent(msg).SetFileLogContent(msg).Send();
+            return;
+        }
 
         string? reason = job.Reason;
         
