@@ -271,9 +271,25 @@ public class UserListener
         }
         _logger.Log($"Finished constructing moderation log content", level: LogLevel.Debug);
 
-        // Most scheduled jobs for a user we want to leave intact in case the user comes back,
-        // especially mod-related role assgnments, and a few one-off errors are no big deal.
-        // But a repeating job would keep erroring forever, so we need to clean those up.
+        // Scheduled jobs that require a user to be in the server create a difficult question.
+        // Do we delete them on leave so there's no error later? Or keep them in case the user rejoins?
+        // The rules we've settled on are:
+        // - NewMemberRole removals should be silently deleted, since Izzy will create
+        // a fresh removal job if the user rejoins, and we do want that timer to reset
+        // - All other *non-repeating* jobs should be kept, since they were probably manually created,
+        // possibly for moderation purposes, and will cause at most one error message
+        // - All *repeating* jobs should be deleted and mentioned in the ModChannel leave message,
+        // since keeping them would cause errors forever and this almost never happens
+        var newMemberRoleRemovals = _schedule.GetScheduledJobs(job =>
+            job.Action switch
+            {
+                ScheduledRoleJob roleJob => roleJob.User == user.Id && roleJob.Role == _config.NewMemberRole,
+                _ => false
+            }
+        );
+        foreach (var job in newMemberRoleRemovals)
+            await _schedule.DeleteScheduledJob(job);
+
         var repeatingJobsForUser = _schedule.GetScheduledJobs(job =>
             job.RepeatType != ScheduledJobRepeatType.None && job.Action switch
             {
