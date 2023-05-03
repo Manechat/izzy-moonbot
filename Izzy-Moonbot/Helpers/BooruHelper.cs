@@ -84,7 +84,7 @@ public class BooruImagesRepresentations
     {
         Full =
             $"https://static.manebooru.art/img/view/{createdAt.Year}/{createdAt.Month}/{createdAt.Day}/{id}.{_imageFormatToString(format)}";
-        _rawUrl = $"https://static.manebooru.art/img/view/{createdAt.Year}/{createdAt.Month}/{createdAt.Day}/{id}";
+        _rawUrl = $"https://static.manebooru.art/img/{createdAt.Year}/{createdAt.Month}/{createdAt.Day}/{id}";
         _format = format;
     }
 
