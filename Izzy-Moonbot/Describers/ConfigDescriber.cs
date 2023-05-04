@@ -122,17 +122,9 @@ public class ConfigDescriber
                 ConfigItemCategory.Filter));
         _config.Add("FilteredWords",
             new ConfigItem(ConfigItemType.StringSetDictionary,
-                "The map of filter category names to a list of words in that category. If FilterEnabled is true, I'll delete any message containing one of these words, and post a notification in ModChannel.\n" +
-                "See FilterIgnoredChannels, FilterBypassRoles and FilterDevBypass for exceptions to the previous sentence.\n" +
-                "See FilterResponseSilence and FilterResponseMessages for per-category customization of what I'll do besides deletion.",
-                ConfigItemCategory.Filter));
-        _config.Add("FilterResponseMessages",
-            new ConfigItem(ConfigItemType.StringDictionary,
-                "The map of messages I will send on a filter violation depending on which filter category was violated.",
-                ConfigItemCategory.Filter, true));
-        _config.Add("FilterResponseSilence",
-            new ConfigItem(ConfigItemType.StringSet,
-                "The list of filter categories that will cause me to silence a user on a filter violation.",
+                "The map of filter category names to a list of words in that category.\n" +
+                "If FilterEnabled is true, I'll delete any message containing one of these words, silence the user, and post a notification in ModChannel.\n" +
+                "See FilterIgnoredChannels, FilterBypassRoles and FilterDevBypass for exceptions to the previous sentence.",
                 ConfigItemCategory.Filter));
 
         // Spam settings

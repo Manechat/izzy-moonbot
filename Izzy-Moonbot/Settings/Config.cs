@@ -46,8 +46,6 @@ public class Config
         FilterBypassRoles = new HashSet<ulong>();
         FilterDevBypass = true;
         FilteredWords = new Dictionary<string, HashSet<string>>();
-        FilterResponseMessages = new Dictionary<string, string?>();
-        FilterResponseSilence = new HashSet<string>();
 
         // Pressure settings
         SpamEnabled = true;
@@ -132,8 +130,6 @@ public class Config
     public HashSet<ulong> FilterBypassRoles { get; set; }
     public bool FilterDevBypass { get; set; }
     public Dictionary<string, HashSet<string>> FilteredWords { get; set; }
-    public Dictionary<string, string?> FilterResponseMessages { get; set; }
-    public HashSet<string> FilterResponseSilence { get; set; }
 
     // Pressure settings
     public bool SpamEnabled { get; set; }

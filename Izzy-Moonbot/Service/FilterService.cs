@@ -111,28 +111,11 @@ public class FilterService
         
         try
         {
-            if (!_config.FilterResponseMessages.ContainsKey(category))
-                _config.FilterResponseMessages[category] = null;
-
-            var messageResponse = _config.FilterResponseMessages[category];
-            var shouldSilence = _config.FilterResponseSilence.Contains(category);
-            
-            if (_config.FilterBypassRoles.Overlaps(roleIds) || 
-                (DiscordHelper.IsDev(context.User.Id) && _config.FilterDevBypass))
-            {
-                messageResponse = null;
-                shouldSilence = false;
-            }
-
             var actions = new List<string>();
 
-            if (messageResponse != null)
-            {
-                await context.Channel.SendMessageAsync($"<@{context.User.Id}> {messageResponse}");
-                actions.Add("message");
-            }
-
-            if (shouldSilence && context.Guild?.GetUser(context.User.Id) is IIzzyGuildUser user)
+            var dontSilence = _config.FilterBypassRoles.Overlaps(roleIds) ||
+                (DiscordHelper.IsDev(context.User.Id) && _config.FilterDevBypass);
+            if (!dontSilence && context.Guild?.GetUser(context.User.Id) is IIzzyGuildUser user)
             {
                 await _mod.SilenceUser(user, $"Filter violation ({category} category)");
                 actions.Add("silence");
