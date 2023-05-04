@@ -1,8 +1,8 @@
 name: .NET Tests
 
 on:
-  push:
-    branches: [ "mane" ]
+  #push:
+  #  branches: [ "mane" ]
   pull_request:
     branches: [ "mane" ]
     # Inverse of the ignore paths in dotnet.yml
