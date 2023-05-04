@@ -8,6 +8,15 @@ on:
     branches: [ "mane" ]
   pull_request:
     branches: [ "mane" ]
+    # Don't run checks on things non-code related. Add additional ignores below.
+    paths-ignore:
+      - '**/*.md'
+      - '**/Dockerfile'
+      - '**/Docker Compose/**'
+      - '**/.gitignore'
+      - '**/.dockerignore'
+      - '**/.gitattributes'
+      - '**/.github/**'
 
 jobs:
   build:
