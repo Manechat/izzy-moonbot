@@ -2,7 +2,7 @@ name: Package Prune
 
 on:
   workflow_run:
-    workflows: [Docker Image CI]
+    workflows: [Docker Image Build]
     types: [completed]
   workflow_dispatch:
 
