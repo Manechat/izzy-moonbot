@@ -1,0 +1,23 @@
+name: .NET Tests
+
+on:
+  push:
+    branches: [ "mane" ]
+  pull_request:
+    branches: [ "mane" ]
+    # Inverse of the ignore paths in dotnet.yml
+    paths:
+      - '**/*.md'
+      - '**/Dockerfile'
+      - '**/Docker Compose/**'
+      - '**/.gitignore'
+      - '**/.dockerignore'
+      - '**/.gitattributes'
+      - '**/.github/**'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+    #  Will always return true to support required status checks.
+    - run: 'echo "No build required."'

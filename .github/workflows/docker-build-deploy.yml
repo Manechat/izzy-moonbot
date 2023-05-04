@@ -1,4 +1,4 @@
-name: Docker Image CI
+name: Docker Image Build
 
 on:
   push:
@@ -6,10 +6,8 @@ on:
   workflow_dispatch:
 
 jobs:
-
   build-and-publish:
-
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     if: ${{ github.event_name == 'push' && github.ref_name == 'mane' || github.event_name == 'workflow_dispatch' }}
 
     steps:
