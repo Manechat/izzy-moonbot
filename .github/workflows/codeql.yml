@@ -71,7 +71,8 @@ jobs:
     # Use build commands below instead of autobuild
     - run: |
         echo "Running application build"
-        dotnet build "Izzy-Moonbot.csproj" -c Release
+        dotnet restore "Izzy-Moonbot/Izzy-Moonbot.csproj"
+        dotnet build "Izzy-Moonbot/Izzy-Moonbot.csproj" -c Release
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v2
