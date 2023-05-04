@@ -639,24 +639,6 @@ public class ConfigCommandTests
         TestUtils.AssertDictsOfSetsAreEqual(new Dictionary<string, HashSet<string>> { { "slurs", new HashSet<string> { "mudpony" } } }, cfg.FilteredWords);
         Assert.AreEqual("I added the following string to the `slurs` string list in the `FilteredWords` map: `mudpony`", generalChannel.Messages.Last().Content);
 
-        // post ".config FilterResponseMessages set slurs true"
-        TestUtils.AssertDictionariesAreEqual(new Dictionary<string, string?>(), cfg.FilterResponseMessages);
-        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config FilterResponseMessages set slurs that wasn't very nice");
-        await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "FilterResponseMessages", "set slurs that wasn't very nice");
-        TestUtils.AssertDictionariesAreEqual(new Dictionary<string, string?> { { "slurs", "that wasn't very nice" } }, cfg.FilterResponseMessages);
-        Assert.AreEqual("I added the following string to the `slurs` map key in the `FilterResponseMessages` map: `that wasn't very nice`", generalChannel.Messages.Last().Content);
-
-        // post ".config FilterResponseSilence set slurs true"
-        TestUtils.AssertSetsAreEqual(new HashSet<string>(), cfg.FilterResponseSilence);
-        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config FilterResponseSilence add slurs");
-        await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "FilterResponseSilence", "add slurs");
-        TestUtils.AssertSetsAreEqual(new HashSet<string> { "slurs" }, cfg.FilterResponseSilence);
-        Assert.AreEqual($"I added the following content to the `FilterResponseSilence` string list:\n" +
-            $"```\n" +
-            $"slurs\n" +
-            $"```",
-            generalChannel.Messages.Last().Content);
-
         // post ".config SpamEnabled false"
         Assert.AreEqual(cfg.SpamEnabled, true);
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config SpamEnabled false");
@@ -826,7 +808,7 @@ public class ConfigCommandTests
         // Ensure we can't forget to keep this test up to date
         var configPropsCount = typeof(Config).GetProperties().Length;
 
-        Assert.AreEqual(51, configPropsCount,
+        Assert.AreEqual(49, configPropsCount,
             $"\nIf you just added or removed a config item, then this test is probably out of date");
 
         Assert.AreEqual(configPropsCount * 2, generalChannel.Messages.Count(),
