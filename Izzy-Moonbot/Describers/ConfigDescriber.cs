@@ -120,6 +120,12 @@ public class ConfigDescriber
                 "Whether I will not take action against my developers when I detect a slur. " +
                 "Please note that I __will still check for filter violations for developers__. I just won't try to delete the message or silence the user.",
                 ConfigItemCategory.Filter));
+        _config.Add("FilterWords",
+            new ConfigItem(ConfigItemType.StringSet,
+                "The list of words I filter. If FilterEnabled is true, then anytime I see a message with one of these words, I'll delete the message, silence the user, and post a notification in ModChannel.\n" +
+                "See FilterIgnoredChannels, FilterBypassRoles and FilterDevBypass for exceptions.\n" +
+                "If you want a filter that doesn't silence the user, see Discord's AutoMod.",
+                ConfigItemCategory.Filter));
         _config.Add("FilteredWords",
             new ConfigItem(ConfigItemType.StringSetDictionary,
                 "The map of filter category names to a list of words in that category.\n" +

@@ -158,36 +158,6 @@ public class DevModule : ModuleBase<SocketCommandContext>
                     $"\n```Your faithful Bot,\nIzzy Moonbot");
 
                 break;
-            case "import-filter":
-                {
-                    var toFilter = Context.Message.ReferencedMessage.CleanContent.Split('\n').AsEnumerable();
-                    if (args[1] == "no") toFilter = toFilter.Skip(1);
-                    else toFilter = toFilter.Skip(2);
-
-                    var msg = await ReplyAsync(
-                        $"Confirm: Import the list of words you replied to into the `{args[0]}` list? Checking reactions in 10 seconds.");
-                    await msg.AddReactionAsync(Emoji.Parse("✅"));
-                    var _ = Task.Factory.StartNew(async () =>
-                    {
-                        await Task.Delay(Convert.ToInt32(10000));
-                        var users = msg.GetReactionUsersAsync(Emoji.Parse("✅"), 2);
-                        if (users.AnyAsync(users =>
-                        {
-                            return users.Any(user => user.Id == Context.User.Id) ? true : false;
-                        }).Result)
-                        {
-                            await msg.RemoveAllReactionsAsync();
-                            await msg.ModifyAsync(message => message.Content = "⚠  **Importing. Please wait...**");
-
-                            _config.FilteredWords[args[1]].UnionWith(toFilter);
-
-                            await FileHelper.SaveConfigAsync(_config);
-                            await msg.ModifyAsync(message => message.Content = "⚠  **Done!**");
-                        }
-                    });
-
-                    break;
-                }
             case "raid":
                 {
                     // Simulates a raid.

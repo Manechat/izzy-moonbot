@@ -45,6 +45,7 @@ public class Config
         FilterIgnoredChannels = new HashSet<ulong>();
         FilterBypassRoles = new HashSet<ulong>();
         FilterDevBypass = true;
+        FilterWords = new HashSet<string>();
         FilteredWords = new Dictionary<string, HashSet<string>>();
 
         // Pressure settings
@@ -129,6 +130,7 @@ public class Config
     public HashSet<ulong> FilterIgnoredChannels { get; set; }
     public HashSet<ulong> FilterBypassRoles { get; set; }
     public bool FilterDevBypass { get; set; }
+    public HashSet<string> FilterWords { get; set; }
     public Dictionary<string, HashSet<string>> FilteredWords { get; set; }
 
     // Pressure settings

@@ -21,11 +21,7 @@ public class FilterService
      * is treated as if it is. Anyone who says it will be treated the same as if they
      * actually tripped the filter. This is used for testing the filter.
     */
-    private readonly string[] _testString =
-    {
-        "=+i8F8s+#(-{×nsBIo8~lA:IZZY_FILTER_TEST:G8282!#",
-        "#!"
-    };
+    private readonly string _testString = "=+i8F8s+#(-{×nsBIo8~lA:IZZY_FILTER_TEST:G8282!##!";
 
     public FilterService(Config config, ModService mod, ModLoggingService modLog, LoggingService logger)
     {
@@ -41,14 +37,13 @@ public class FilterService
         client.MessageUpdated += async (oldContent, newMessage, channel) => await DiscordHelper.LeakOrAwaitTask(ProcessMessageUpdate(oldContent, newMessage, channel, client));
     }
 
-    private async Task LogFilterTrip(IIzzyContext context, string word, string category,
+    private async Task LogFilterTrip(IIzzyContext context, string word,
         List<string> actionsTaken, bool onEdit)
     {
         var embedBuilder = new EmbedBuilder()
             .WithTitle(":warning: Filter violation detected" + (onEdit ? " on message edit" : ""))
             .WithColor(16732240)
             .AddField("User", $"<@{context.User.Id}> (`{context.User.Id}`)", true)
-            .AddField("Category", category, true)
             .AddField("Channel", $"<#{context.Channel.Id}>", true)
             .AddField("Trigger Word", $"{word}")
             .AddField("Filtered Message", $"{context.Message.CleanContent}");
@@ -95,13 +90,12 @@ public class FilterService
             .SetContent($"{(actionsTaken.Contains("silence") ? $"<@&{_config.ModRole}>" : "")} Filter Violation for <@{context.User.Id}>")
             .SetEmbed(embedBuilder.Build())
             .SetFileLogContent($"Filter violation by {context.User.Username}#{context.User.Discriminator} ({context.Guild.GetUser(context.User.Id)?.DisplayName}) (`{context.User.Id}`) in #{context.Channel.Name} (`{context.Channel.Id}`)\n" +
-                               $"Category: {category}\n" +
                                $"Trigger: {context.Message.CleanContent.Replace(word, $"[[{word}]]")}\n" +
                                $"Response: {fileLogResponse}")
             .Send();
     }
 
-    private async Task ProcessFilterTrip(IIzzyContext context, string word, string category, bool onEdit)
+    private async Task ProcessFilterTrip(IIzzyContext context, string word, bool onEdit)
     {
         var roleIds = context.Guild?.GetUser(context.User.Id)?.Roles.Select(role => role.Id).ToList() ?? new List<ulong>();
 
@@ -117,16 +111,16 @@ public class FilterService
                 (DiscordHelper.IsDev(context.User.Id) && _config.FilterDevBypass);
             if (!dontSilence && context.Guild?.GetUser(context.User.Id) is IIzzyGuildUser user)
             {
-                await _mod.SilenceUser(user, $"Filter violation ({category} category)");
+                await _mod.SilenceUser(user, $"Filter violation");
                 actions.Add("silence");
             }
 
-            await LogFilterTrip(context, word, category, actions, onEdit);
+            await LogFilterTrip(context, word, actions, onEdit);
         }
         catch (KeyNotFoundException)
         {
             var actions = new List<string>();
-            await LogFilterTrip(context, word, category, actions, onEdit);
+            await LogFilterTrip(context, word, actions, onEdit);
             if (context.Guild?.GetTextChannel(_config.ModChannel) is IIzzySocketTextChannel modChannel)
                 await modChannel.SendMessageAsync(":warning: **I encountered a `KeyNotFoundException` while processing the above filter violation.**");
         }
@@ -150,22 +144,19 @@ public class FilterService
         if (!DiscordHelper.IsDefaultGuild(context)) return;
         
         if (_config.FilterIgnoredChannels.Contains(context.Channel.Id)) return;
-        foreach (var (category, words) in _config.FilteredWords)
-        {
-            var filteredWords = words.ToArray().ToList();
-            var trip = false;
-            
-            filteredWords.Add(_testString[0] + category + _testString[1]);
 
-            foreach (var word in filteredWords)
+        var filteredWords = new HashSet<string>(_config.FilterWords);
+        filteredWords.Add(_testString);
+
+        var trip = false;
+        foreach (var word in filteredWords)
+        {
+            if (trip) continue;
+            if (context.Message.Content.ToLower().Contains(word.ToLower()))
             {
-                if (trip) continue;
-                if (context.Message.Content.ToLower().Contains(word.ToLower()))
-                {
-                    // Filter Trip!
-                    await ProcessFilterTrip(context, word, category, true);
-                    trip = true;
-                }
+                // Filter Trip!
+                await ProcessFilterTrip(context, word, true);
+                trip = true;
             }
         }
     }
@@ -184,23 +175,19 @@ public class FilterService
         if (!DiscordHelper.IsDefaultGuild(context)) return;
         
         if (_config.FilterIgnoredChannels.Contains(context.Channel.Id)) return;
-        foreach (var (category, words) in _config.FilteredWords)
+
+        var filteredWords = new HashSet<string>(_config.FilterWords);
+        filteredWords.Add(_testString);
+
+        var trip = false;
+        foreach (var word in filteredWords)
         {
-            var filteredWords = words.ToArray().ToList();
-            var trip = false;
-            
-            filteredWords.Add(_testString[0] + category + _testString[1]);
-
-
-            foreach (var word in filteredWords)
+            if (trip) continue;
+            if (context.Message.Content.ToLower().Contains(word.ToLower()))
             {
-                if (trip) continue;
-                if (context.Message.Content.ToLower().Contains(word.ToLower()))
-                {
-                    // Filter Trip!
-                    await ProcessFilterTrip(context, word, category, false);
-                    trip = true;
-                }
+                // Filter Trip!
+                await ProcessFilterTrip(context, word, false);
+                trip = true;
             }
         }
     }
