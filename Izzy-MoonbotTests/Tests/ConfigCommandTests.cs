@@ -632,6 +632,13 @@ public class ConfigCommandTests
         Assert.AreEqual(cfg.FilterDevBypass, false);
         Assert.AreEqual("I've set `FilterDevBypass` to the following content: False", generalChannel.Messages.Last().Content);
 
+        // post ".config FilterWords add mudpony"
+        TestUtils.AssertSetsAreEqual(new HashSet<string>(), cfg.FilterWords);
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config FilterWords add mudpony");
+        await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "FilterWords", "add mudpony");
+        TestUtils.AssertSetsAreEqual(new HashSet<string> { "mudpony" }, cfg.FilterWords);
+        Assert.AreEqual("I added the following content to the `FilterWords` string list:\n```\nmudpony\n```", generalChannel.Messages.Last().Content);
+
         // post ".config FilteredWords add slurs mudpony"
         TestUtils.AssertDictsOfSetsAreEqual(new Dictionary<string, HashSet<string>>(), cfg.FilteredWords);
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config FilteredWords add slurs mudpony");
@@ -808,7 +815,7 @@ public class ConfigCommandTests
         // Ensure we can't forget to keep this test up to date
         var configPropsCount = typeof(Config).GetProperties().Length;
 
-        Assert.AreEqual(49, configPropsCount,
+        Assert.AreEqual(50, configPropsCount,
             $"\nIf you just added or removed a config item, then this test is probably out of date");
 
         Assert.AreEqual(configPropsCount * 2, generalChannel.Messages.Count(),

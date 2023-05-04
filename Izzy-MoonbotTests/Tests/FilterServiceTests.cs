@@ -34,7 +34,7 @@ public class FilterServiceTests
     {
         var (cfg, _, (_, sunny), _, (generalChannel, modChat, _), guild, client) = TestUtils.DefaultStubs();
         cfg.ModChannel = modChat.Id;
-        cfg.FilteredWords.Add("jinxies", new HashSet<string> { "magic", "wing", "feather", "mayonnaise" });
+        cfg.FilterWords = new HashSet<string> { "magic", "wing", "feather", "mayonnaise" };
         SetupFilterService(cfg, guild, client, sunny);
 
         await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, "this is a completely ordinary chat message");
@@ -53,7 +53,6 @@ public class FilterServiceTests
         TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, new List<(string, string)>
         {
             ("User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
-            ("Category", "jinxies"),
             ("Channel", $"<#{generalChannel.Id}>"),
             ("Trigger Word", "magic"),
             ("Filtered Message", "magic wings of mayonnaise"),
@@ -68,7 +67,7 @@ public class FilterServiceTests
     {
         var (cfg, _, (_, sunny), _, (generalChannel, modChat, _), guild, client) = TestUtils.DefaultStubs();
         cfg.ModChannel = modChat.Id;
-        cfg.FilteredWords.Add("jinxies", new HashSet<string> { "magic", "wing", "feather", "mayonnaise" });
+        cfg.FilterWords = new HashSet<string> { "magic", "wing", "feather", "mayonnaise" };
         SetupFilterService(cfg, guild, client, sunny);
 
         Assert.AreEqual(0, modChat.Messages.Count);
