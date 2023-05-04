@@ -200,59 +200,6 @@ public class ConfigCommandTests
         description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "**moonlaser** contains");
         StringAssert.Contains(description, $": `addquote moon`");
-
-        // StringSetDictionary
-
-        cfg.FilteredWords.Add("slurs", new HashSet<string> { "mudpony", "screwhead" });
-        cfg.FilteredWords.Add("links", new HashSet<string> { "cliptrot.pony/" });
-        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config FilteredWords");
-        await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "FilteredWords", "");
-        TestUtils.AssertDictsOfSetsAreEqual(new Dictionary<string, HashSet<string>> {
-            { "slurs", new HashSet<string> { "mudpony", "screwhead" } },
-            { "links", new HashSet<string> { "cliptrot.pony/" } }
-        }, cfg.FilteredWords);
-
-        description = generalChannel.Messages.Last().Content;
-        StringAssert.Contains(description, "FilteredWords");
-        StringAssert.Contains(description, "Map of Lists of Strings");
-        StringAssert.Contains(description, "Filter category");
-        StringAssert.Contains(description, "I'll delete any message containing one of these words");
-        StringAssert.Contains(description, "Run `.config FilteredWords list` to");
-        StringAssert.Contains(description, "Run `.config FilteredWords get <key>` to");
-        StringAssert.Contains(description, "Run `.config FilteredWords add <key> <value>` to");
-        StringAssert.Contains(description, "Run `.config FilteredWords deleteitem <key> <value>` to");
-        StringAssert.Contains(description, "Run `.config FilteredWords deletelist <key>` to");
-
-        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config FilteredWords list");
-        await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "FilteredWords", "list");
-        TestUtils.AssertDictsOfSetsAreEqual(new Dictionary<string, HashSet<string>> {
-            { "slurs", new HashSet<string> { "mudpony", "screwhead" } },
-            { "links", new HashSet<string> { "cliptrot.pony/" } }
-        }, cfg.FilteredWords);
-
-        description = generalChannel.Messages.Last().Content;
-        StringAssert.Contains(description, "FilteredWords");
-        StringAssert.Contains(description, "the following keys:");
-        StringAssert.Contains(description, $"```\n" +
-            $"slurs (2 entries)\n" +
-            $"\n" +
-            $"links (1 entries)\n" +
-            $"\n" +
-            $"```");
-
-        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config FilteredWords get slurs");
-        await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "FilteredWords", "get slurs");
-        TestUtils.AssertDictsOfSetsAreEqual(new Dictionary<string, HashSet<string>> {
-            { "slurs", new HashSet<string> { "mudpony", "screwhead" } },
-            { "links", new HashSet<string> { "cliptrot.pony/" } }
-        }, cfg.FilteredWords);
-
-        description = generalChannel.Messages.Last().Content;
-        StringAssert.Contains(description, "**slurs** contains");
-        StringAssert.Contains(description, $"```\n" +
-            $"mudpony\n" +
-            $"screwhead\n" +
-            $"```");
     }
 
     [TestMethod()]
@@ -375,48 +322,6 @@ public class ConfigCommandTests
         StringAssert.Contains(description, "Aliases");
         StringAssert.Contains(description, "I removed the");
         StringAssert.Contains(description, ": `echogeneral`");
-    }
-
-    [TestMethod()]
-    public async Task ConfigCommand_EditStringSetDictionaryTestsAsync()
-    {
-        var (cfg, cd, (_, sunny), _, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
-
-        cfg.FilteredWords.Add("slurs", new HashSet<string> { "mudpony" });
-        cfg.FilteredWords.Add("links", new HashSet<string> { "cliptrot.pony/" });
-        var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config FilteredWords add slurs screwhead");
-        await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "FilteredWords", "add slurs screwhead");
-        TestUtils.AssertDictsOfSetsAreEqual(new Dictionary<string, HashSet<string>> {
-            { "slurs", new HashSet<string> { "mudpony", "screwhead" } },
-            { "links", new HashSet<string> { "cliptrot.pony/" } }
-        }, cfg.FilteredWords);
-
-        var description = generalChannel.Messages.Last().Content;
-        StringAssert.Contains(description, "I added the following");
-        StringAssert.Contains(description, "the `slurs` string list");
-        StringAssert.Contains(description, ": `screwhead`");
-
-        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config FilteredWords deleteitem slurs mudpony");
-        await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "FilteredWords", "deleteitem slurs mudpony");
-        TestUtils.AssertDictsOfSetsAreEqual(new Dictionary<string, HashSet<string>> {
-            { "slurs", new HashSet<string> { "screwhead" } },
-            { "links", new HashSet<string> { "cliptrot.pony/" } }
-        }, cfg.FilteredWords);
-
-        description = generalChannel.Messages.Last().Content;
-        StringAssert.Contains(description, "I removed the");
-        StringAssert.Contains(description, "the `slurs` string list");
-        StringAssert.Contains(description, ": `mudpony`");
-
-        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config FilteredWords deletelist links");
-        await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "FilteredWords", "deletelist links");
-        TestUtils.AssertDictsOfSetsAreEqual(new Dictionary<string, HashSet<string>> {
-            { "slurs", new HashSet<string> { "screwhead" } }
-        }, cfg.FilteredWords);
-
-        description = generalChannel.Messages.Last().Content;
-        StringAssert.Contains(description, "I deleted the string list");
-        StringAssert.Contains(description, ": links");
     }
 
     [TestMethod()]
@@ -639,13 +544,6 @@ public class ConfigCommandTests
         TestUtils.AssertSetsAreEqual(new HashSet<string> { "mudpony" }, cfg.FilterWords);
         Assert.AreEqual("I added the following content to the `FilterWords` string list:\n```\nmudpony\n```", generalChannel.Messages.Last().Content);
 
-        // post ".config FilteredWords add slurs mudpony"
-        TestUtils.AssertDictsOfSetsAreEqual(new Dictionary<string, HashSet<string>>(), cfg.FilteredWords);
-        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config FilteredWords add slurs mudpony");
-        await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "FilteredWords", "add slurs mudpony");
-        TestUtils.AssertDictsOfSetsAreEqual(new Dictionary<string, HashSet<string>> { { "slurs", new HashSet<string> { "mudpony" } } }, cfg.FilteredWords);
-        Assert.AreEqual("I added the following string to the `slurs` string list in the `FilteredWords` map: `mudpony`", generalChannel.Messages.Last().Content);
-
         // post ".config SpamEnabled false"
         Assert.AreEqual(cfg.SpamEnabled, true);
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config SpamEnabled false");
@@ -815,7 +713,7 @@ public class ConfigCommandTests
         // Ensure we can't forget to keep this test up to date
         var configPropsCount = typeof(Config).GetProperties().Length;
 
-        Assert.AreEqual(50, configPropsCount,
+        Assert.AreEqual(49, configPropsCount,
             $"\nIf you just added or removed a config item, then this test is probably out of date");
 
         Assert.AreEqual(configPropsCount * 2, generalChannel.Messages.Count(),

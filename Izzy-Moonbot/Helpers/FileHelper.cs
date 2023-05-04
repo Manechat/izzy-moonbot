@@ -77,13 +77,6 @@ public static class FileHelper
             settings = JsonConvert.DeserializeObject<Config>(fileContents);
             if (settings == null)
                 throw new InvalidDataException($"Failed to deserialize settings at {filepath}");
-            if (settings.FilteredWords.Any() && !settings.FilterWords.Any())
-            {
-                foreach (var (category, words) in settings.FilteredWords)
-                    settings.FilterWords.UnionWith(words);
-                settings.FilteredWords.Clear();
-                await SaveConfigAsync(settings);
-            }
         }
 
         return settings;
