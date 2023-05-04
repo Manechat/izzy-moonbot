@@ -106,7 +106,7 @@ public class ConfigDescriber
         // Filter settings
         _config.Add("FilterEnabled",
             new ConfigItem(ConfigItemType.Boolean,
-                "Whether I will filter messages for words in the `FilteredWords` list.", ConfigItemCategory.Filter));
+                "Whether I will filter messages for words in the `FilterWords` list.", ConfigItemCategory.Filter));
         _config.Add("FilterIgnoredChannels",
             new ConfigItem(ConfigItemType.ChannelSet, "The list of channels I will not filter messages in.",
                 ConfigItemCategory.Filter));
@@ -125,12 +125,6 @@ public class ConfigDescriber
                 "The list of words I filter. If FilterEnabled is true, then anytime I see a message with one of these words, I'll delete the message, silence the user, and post a notification in ModChannel.\n" +
                 "See FilterIgnoredChannels, FilterBypassRoles and FilterDevBypass for exceptions.\n" +
                 "If you want a filter that doesn't silence the user, see Discord's AutoMod.",
-                ConfigItemCategory.Filter));
-        _config.Add("FilteredWords",
-            new ConfigItem(ConfigItemType.StringSetDictionary,
-                "The map of filter category names to a list of words in that category.\n" +
-                "If FilterEnabled is true, I'll delete any message containing one of these words, silence the user, and post a notification in ModChannel.\n" +
-                "See FilterIgnoredChannels, FilterBypassRoles and FilterDevBypass for exceptions to the previous sentence.",
                 ConfigItemCategory.Filter));
 
         // Spam settings
