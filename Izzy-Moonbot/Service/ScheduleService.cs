@@ -302,7 +302,7 @@ public class ScheduleService
             $"Unbanning {(user == null ? job.User : $"")}.",
             level: LogLevel.Debug);
 
-        await guild.RemoveBanAsync(job.User);
+        await guild.RemoveBanAsync(job.User, job.Reason);
 
         var embed = new EmbedBuilder()
             .WithTitle(

@@ -324,8 +324,8 @@ public class SocketGuildAdapter : IIzzyGuild
         await _guild.AddBanAsync(userId, pruneDays: pruneDays, reason: reason);
     public async Task<bool> GetIsBannedAsync(ulong userId) =>
         await _guild.GetBanAsync(userId) != null;
-    public async Task RemoveBanAsync(ulong userId) =>
-        await _guild.RemoveBanAsync(userId);
+    public async Task RemoveBanAsync(ulong userId, string? reason) =>
+        await _guild.RemoveBanAsync(userId, reason is null ? null : new RequestOptions { AuditLogReason = reason });
     public async Task SetBanner(Image image) =>
         await _guild.ModifyAsync(properties => properties.Banner = image);
     public IIzzySocketTextChannel? RulesChannel => new SocketTextChannelAdapter(_guild.RulesChannel);

@@ -122,7 +122,7 @@ public interface IIzzyGuild
     IIzzySocketTextChannel? GetTextChannel(ulong channelId);
     Task AddBanAsync(ulong userId, int pruneDays, string reason);
     Task<bool> GetIsBannedAsync(ulong userId); // replaces the real GetBanAsync method
-    Task RemoveBanAsync(ulong userId);
+    Task RemoveBanAsync(ulong userId, string? reason);
     Task SetBanner(Image image); // replaces the real ModifyAsync(props => ...) method
     IIzzySocketTextChannel? RulesChannel { get; }
 }
