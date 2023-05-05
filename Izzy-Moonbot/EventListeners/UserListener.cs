@@ -200,7 +200,7 @@ public class UserListener
     {
         if (guild.Id != DiscordHelper.DefaultGuild()) return;
         
-        _logger.Log($"Member leaving: {user.Username}#{user.Discriminator} ({user.Id}), getting last nickname", level: LogLevel.Debug);
+        _logger.Log($"Member leaving: {user.Username}#{user.Discriminator} ({user.Id})");
         var lastNickname = "";
         try
         {
@@ -210,8 +210,6 @@ public class UserListener
         {
             lastNickname = "<UNKNOWN>";
         }
-
-        _logger.Log($"Last nickname was {lastNickname}, checking whether user was kicked or banned", level: LogLevel.Debug);
 
         // Unfortunately Discord(.NET) doesn't tell us anything about why or how a user left a server, merely that they did.
         // To infer that they left *because* of a kick/ban, we arbitrarily assume that whenever a user is kicked/banned,
@@ -244,7 +242,6 @@ public class UserListener
                 return null;
             }).Where(audit => audit != null).FirstOrDefault();
 
-        _logger.Log($"Constructing moderation log content", level: LogLevel.Debug);
         var output = 
             $"Leave: {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined <t:{_users[user.Id].Joins.Last().ToUnixTimeSeconds()}:R>";
         var fileOutput = 
@@ -252,7 +249,6 @@ public class UserListener
 
         if (banAuditLog != null)
         {
-            _logger.Log($"User was banned, fetching the reason and moderator", level: LogLevel.Debug);
             _logger.Log($"Fetched, user was banned by {banAuditLog.User.Username}#{banAuditLog.User.Discriminator} ({banAuditLog.User.Id}) for \"{banAuditLog.Reason}\"", level: LogLevel.Debug);
             output =
                 $"Leave (Ban): {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined <t:{_users[user.Id].Joins.Last().ToUnixTimeSeconds()}:R>, \"{banAuditLog.Reason}\" by {banAuditLog.User.Username}#{banAuditLog.User.Discriminator} ({guild.GetUser((ulong)banAuditLog.User.Id).DisplayName})";
@@ -262,14 +258,12 @@ public class UserListener
 
         if (kickAuditLog != null)
         {
-            _logger.Log($"User was kicked, fetching the reason and moderator", level: LogLevel.Debug);
             _logger.Log($"Fetched, user was kicked by {kickAuditLog.User.Username}#{kickAuditLog.User.Discriminator} ({kickAuditLog.User.Id}) for \"{kickAuditLog.Reason}\"", level: LogLevel.Debug);
             output =
                 $"Leave (Kick): {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined <t:{_users[user.Id].Joins.Last().ToUnixTimeSeconds()}:R>, \"{kickAuditLog.Reason}\" by {kickAuditLog.User.Username}#{kickAuditLog.User.Discriminator} ({guild.GetUser((ulong)kickAuditLog.User.Id).DisplayName})";
             fileOutput =
                 $"Leave (Kick): {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined {_users[user.Id].Joins.Last():O}, \"{kickAuditLog.Reason}\" by {kickAuditLog.User.Username}#{kickAuditLog.User.Discriminator} ({guild.GetUser((ulong)kickAuditLog.User.Id).DisplayName})";
         }
-        _logger.Log($"Finished constructing moderation log content", level: LogLevel.Debug);
 
         // Scheduled jobs that require a user to be in the server create a difficult question.
         // Do we delete them on leave so there's no error later? Or keep them in case the user rejoins?
@@ -306,7 +300,7 @@ public class UserListener
             await _schedule.DeleteScheduledJob(job);
         }
 
-        _logger.Log($"Sending moderation log", level: LogLevel.Debug);
+        _logger.Log($"Sending moderation log: ${output}");
         await _modLogger.CreateModLog(guild)
             .SetContent(output)
             .SetFileLogContent(fileOutput)
