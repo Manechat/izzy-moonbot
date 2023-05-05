@@ -46,7 +46,6 @@ public class UserListener
     {
         if (guild.Id != DiscordHelper.DefaultGuild()) return;
         
-        _logger.Log($"User was unbanned: {user.Username}#{user.Discriminator}.", level: LogLevel.Debug);
         var scheduledJobs = _schedule.GetScheduledJobs(job => 
             job.Action switch
             {
@@ -54,12 +53,9 @@ public class UserListener
                 _ => false
             }
         );
-        _logger.Log($"Cancelling all scheduled unban jobs for this user", level: LogLevel.Debug);
+        _logger.Log($"User was unbanned: {user.Username}#{user.Discriminator}.{(scheduledJobs.Any() ? $" Cancelling {scheduledJobs.Count} scheduled unban job(s) for this user." : "")}");
         foreach (var scheduledJob in scheduledJobs)
-        {
             await _schedule.DeleteScheduledJob(scheduledJob);
-        }
-        _logger.Log($"Cancelled all scheduled unban jobs for this user", level: LogLevel.Debug);
     }
 
     public async Task MemberJoinEvent(SocketGuildUser member, bool catchingUp = false)
