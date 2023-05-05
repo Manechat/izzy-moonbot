@@ -61,7 +61,7 @@ public class ScheduledRoleJob : ScheduledJobAction
 
 public class ScheduledRoleRemovalJob : ScheduledRoleJob
 {
-    public ScheduledRoleRemovalJob(ulong role, ulong user, string? reason = null)
+    public ScheduledRoleRemovalJob(ulong role, ulong user, string? reason)
     {
         Type = ScheduledJobActionType.RemoveRole;
         
@@ -70,7 +70,7 @@ public class ScheduledRoleRemovalJob : ScheduledRoleJob
         Reason = reason;
     }
 
-    public ScheduledRoleRemovalJob(IRole role, IGuildUser user, string? reason = null)
+    public ScheduledRoleRemovalJob(IRole role, IGuildUser user, string? reason)
     {
         Type = ScheduledJobActionType.RemoveRole;
         
@@ -92,7 +92,7 @@ public class ScheduledRoleRemovalJob : ScheduledRoleJob
 
 public class ScheduledRoleAdditionJob : ScheduledRoleJob
 {
-    public ScheduledRoleAdditionJob(ulong role, ulong user, string? reason = null)
+    public ScheduledRoleAdditionJob(ulong role, ulong user, string? reason)
     {
         Type = ScheduledJobActionType.AddRole;
         
@@ -101,7 +101,7 @@ public class ScheduledRoleAdditionJob : ScheduledRoleJob
         Reason = reason;
     }
     
-    public ScheduledRoleAdditionJob(IIzzyRole role, IIzzyGuildUser user, string? reason = null)
+    public ScheduledRoleAdditionJob(IIzzyRole role, IIzzyGuildUser user, string? reason)
     {
         Type = ScheduledJobActionType.AddRole;
         

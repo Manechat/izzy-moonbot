@@ -21,11 +21,11 @@ public class ModService
         _users = users;
     }
 
-    public async Task SilenceUser(SocketGuildUser user, string? reason = null)
+    public async Task SilenceUser(SocketGuildUser user, string? reason)
     {
         await SilenceUser(new SocketGuildUserAdapter(user), reason);
     }
-    public async Task SilenceUser(IIzzyGuildUser user, string? reason = null)
+    public async Task SilenceUser(IIzzyGuildUser user, string? reason)
     {
         if (_config.MemberRole == null) throw new TargetException("MemberRole config value is null (not set)");
         
@@ -35,11 +35,11 @@ public class ModService
         await FileHelper.SaveUsersAsync(_users);
     }
 
-    public async Task SilenceUsers(IEnumerable<SocketGuildUser> users, string? reason = null)
+    public async Task SilenceUsers(IEnumerable<SocketGuildUser> users, string? reason)
     {
         await SilenceUsers(users.Select(u => new SocketGuildUserAdapter(u)).ToList(), reason);
     }
-    public async Task SilenceUsers(IEnumerable<IIzzyGuildUser> users, string? reason = null)
+    public async Task SilenceUsers(IEnumerable<IIzzyGuildUser> users, string? reason)
     {
         if (_config.MemberRole == null) throw new TargetException("MemberRole config value is null (not set)");
         
@@ -54,29 +54,29 @@ public class ModService
         }
     }
 
-    public async Task AddRole(SocketGuildUser user, ulong roleId, string? reason = null)
+    public async Task AddRole(SocketGuildUser user, ulong roleId, string? reason)
     {
         await AddRole(new SocketGuildUserAdapter(user), roleId, reason);
     }
-    public async Task AddRole(IIzzyGuildUser user, ulong roleId, string? reason = null)
+    public async Task AddRole(IIzzyGuildUser user, ulong roleId, string? reason)
     {
         await user.AddRoleAsync(roleId, reason is null ? null : new Discord.RequestOptions { AuditLogReason = reason });
     }
 
-    public async Task RemoveRole(SocketGuildUser user, ulong roleId, string? reason = null)
+    public async Task RemoveRole(SocketGuildUser user, ulong roleId, string? reason)
     {
         await RemoveRole(new SocketGuildUserAdapter(user), roleId, reason);
     }
-    public async Task RemoveRole(IIzzyGuildUser user, ulong roleId, string? reason = null)
+    public async Task RemoveRole(IIzzyGuildUser user, ulong roleId, string? reason)
     {
         await user.RemoveRoleAsync(roleId, reason is null ? null : new Discord.RequestOptions { AuditLogReason = reason });
     }
 
-    public async Task AddRoles(SocketGuildUser user, IEnumerable<ulong> roles, string? reason = null)
+    public async Task AddRoles(SocketGuildUser user, IEnumerable<ulong> roles, string? reason)
     {
         await AddRoles(new SocketGuildUserAdapter(user), roles, reason);
     }
-    public async Task AddRoles(IIzzyGuildUser user, IEnumerable<ulong> roles, string? reason = null)
+    public async Task AddRoles(IIzzyGuildUser user, IEnumerable<ulong> roles, string? reason)
     {
         await user.AddRolesAsync(roles, reason is null ? null : new Discord.RequestOptions { AuditLogReason = reason });
     }
