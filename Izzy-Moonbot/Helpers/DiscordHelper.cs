@@ -451,7 +451,12 @@ public static class DiscordHelper
         var user = context.User;
         var channel = context.Channel;
         var now = DateTimeHelper.UtcNow;
-        return $"Command `{context.Message.Content}`\n" +
-            $"was run by {user.Username}#{user.Discriminator} ({user.Id}) in {channel.Name} ({channel.Id}) at {now} (<t:{now.ToUnixTimeMilliseconds()}>)";
+
+        // note that newlines, markdown, mentions, etc. aren't applied in audit log messages,
+        // but some of them are still useful to make the message clearer
+        return $"Command `{context.Message.Content}` " +
+            $"was run by {user.Username}#{user.Discriminator} ({user.Id}) " +
+            $"in #{channel.Name} ({channel.Id}) " +
+            $"at {now} (<t:{now.ToUnixTimeMilliseconds()}>)";
     }
 }

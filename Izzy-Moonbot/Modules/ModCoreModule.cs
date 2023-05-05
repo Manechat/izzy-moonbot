@@ -595,7 +595,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
         // Actually do the deletion
         var messagesToDeleteCount = messageIdsToDelete.Count;
         _logger.Log($"Deleting {messagesToDeleteCount} messages from channel {channelName}");
-        await channel.DeleteMessagesAsync(messageIdsToDelete, new RequestOptions { AuditLogReason = await DiscordHelper.AuditLogForCommand(Context) });
+        await channel.DeleteMessagesAsync(messageIdsToDelete);
 
         // Finally, post a bulk deletion log in LogChannel
         var logChannelId = _config.LogChannel;

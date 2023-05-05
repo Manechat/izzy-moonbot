@@ -58,7 +58,7 @@ public interface IIzzyMessage
     DateTimeOffset Timestamp { get => new DateTimeOffset(2010, 10, 10, 0, 0, 0, TimeSpan.Zero); }
     DateTimeOffset? EditedTimestamp { get => null; }
 
-    Task DeleteAsync(RequestOptions? options = null);
+    Task DeleteAsync();
     string GetJumpUrl();
 }
 
@@ -122,7 +122,7 @@ public interface IIzzyGuild
     IIzzySocketTextChannel? GetTextChannel(ulong channelId);
     Task AddBanAsync(ulong userId, int pruneDays, string reason);
     Task<bool> GetIsBannedAsync(ulong userId); // replaces the real GetBanAsync method
-    Task RemoveBanAsync(ulong userId);
+    Task RemoveBanAsync(ulong userId, string? reason);
     Task SetBanner(Image image); // replaces the real ModifyAsync(props => ...) method
     IIzzySocketTextChannel? RulesChannel { get; }
 }

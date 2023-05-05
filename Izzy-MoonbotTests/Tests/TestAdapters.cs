@@ -175,7 +175,7 @@ public class TestMessage : IIzzyUserMessage
         return Task.CompletedTask;
     }
 
-    public async Task DeleteAsync(RequestOptions? options = null) =>
+    public async Task DeleteAsync() =>
         _channelBackref.Messages.RemoveAll(m => m.Id == Id);
 
     public string GetJumpUrl() => $"https://discord.com/channels/{_guildBackref.Id}/{_channelBackref.Id}/{_message.Id}";
@@ -459,7 +459,7 @@ public class TestGuild : IIzzyGuild
         _stubGuild.BannedUserIds.Add(userId);
     public async Task<bool> GetIsBannedAsync(ulong userId) =>
         _stubGuild.BannedUserIds.Contains(userId);
-    public async Task RemoveBanAsync(ulong userId) =>
+    public async Task RemoveBanAsync(ulong userId, string? _reason) =>
         _stubGuild.BannedUserIds.Remove(userId);
     public async Task SetBanner(Image _image) { }
     public IIzzySocketTextChannel? RulesChannel => _stubGuild.RulesChannel is null ? null :

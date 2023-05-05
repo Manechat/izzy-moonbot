@@ -119,7 +119,7 @@ public class DiscordNetMessageAdapter : IIzzyMessage
     public IReadOnlyCollection<IAttachment> Attachments => _message.Attachments;
     public IReadOnlyCollection<IEmbed> Embeds => _message.Embeds;
     public IReadOnlyCollection<IStickerItem> Stickers => _message.Stickers;
-    public async Task DeleteAsync(RequestOptions? options = null) => await _message.DeleteAsync(options);
+    public async Task DeleteAsync() => await _message.DeleteAsync();
     public string GetJumpUrl() => _message.GetJumpUrl();
 }
 
@@ -155,9 +155,9 @@ public class DiscordNetUserMessageAdapter : IIzzyUserMessage
             action(new MessagePropertiesAdapter(msg));
         });
     }
-    public async Task DeleteAsync(RequestOptions? options = null)
+    public async Task DeleteAsync()
     {
-        await _message.DeleteAsync(options);
+        await _message.DeleteAsync();
     }
     public string GetJumpUrl() => _message.GetJumpUrl();
 }
@@ -324,8 +324,8 @@ public class SocketGuildAdapter : IIzzyGuild
         await _guild.AddBanAsync(userId, pruneDays: pruneDays, reason: reason);
     public async Task<bool> GetIsBannedAsync(ulong userId) =>
         await _guild.GetBanAsync(userId) != null;
-    public async Task RemoveBanAsync(ulong userId) =>
-        await _guild.RemoveBanAsync(userId);
+    public async Task RemoveBanAsync(ulong userId, string? reason) =>
+        await _guild.RemoveBanAsync(userId, reason is null ? null : new RequestOptions { AuditLogReason = reason });
     public async Task SetBanner(Image image) =>
         await _guild.ModifyAsync(properties => properties.Banner = image);
     public IIzzySocketTextChannel? RulesChannel => new SocketTextChannelAdapter(_guild.RulesChannel);

@@ -6,7 +6,6 @@ using Discord;
 using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Settings;
-using Microsoft.Extensions.Options;
 
 namespace Izzy_Moonbot.Service;
 
@@ -102,7 +101,7 @@ public class FilterService
 
         if (!_config.FilterBypassRoles.Overlaps(roleIds) &&
             !(DiscordHelper.IsDev(context.User.Id) && _config.FilterDevBypass))
-            await context.Message.DeleteAsync(new RequestOptions { AuditLogReason = $"Filter violation" });
+            await context.Message.DeleteAsync();
         
         try
         {
