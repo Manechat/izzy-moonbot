@@ -47,8 +47,8 @@ public class MessageListener
 
         if (newMessage.Content == oldContent)
         {
-            _logger.Log($"Skipping LogChannel post for MessageUpdated event because the message's .Content did not change. " +
-                $"This means some other property was edited, e.g. Discord auto-unfurled a link, or the message was pinned.");
+            // Skipping LogChannel post for MessageUpdated event because the message's .Content did not change.
+            // This means some other property was edited, e.g. Discord auto-unfurled a link, or the message was pinned.
             return;
         }
 

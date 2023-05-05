@@ -46,7 +46,6 @@ public class UserListener
     {
         if (guild.Id != DiscordHelper.DefaultGuild()) return;
         
-        _logger.Log($"User was unbanned: {user.Username}#{user.Discriminator}.", level: LogLevel.Debug);
         var scheduledJobs = _schedule.GetScheduledJobs(job => 
             job.Action switch
             {
@@ -54,36 +53,29 @@ public class UserListener
                 _ => false
             }
         );
-        _logger.Log($"Cancelling all scheduled unban jobs for this user", level: LogLevel.Debug);
+        _logger.Log($"User was unbanned: {user.Username}#{user.Discriminator}.{(scheduledJobs.Any() ? $" Cancelling {scheduledJobs.Count} scheduled unban job(s) for this user." : "")}");
         foreach (var scheduledJob in scheduledJobs)
-        {
             await _schedule.DeleteScheduledJob(scheduledJob);
-        }
-        _logger.Log($"Cancelled all scheduled unban jobs for this user", level: LogLevel.Debug);
     }
 
     public async Task MemberJoinEvent(SocketGuildUser member, bool catchingUp = false)
     {
         if (member.Guild.Id != DiscordHelper.DefaultGuild()) return;
         
-        _logger.Log($"New member join{(catchingUp ? " found after reboot" : "")}: {member.Username}#{member.DiscriminatorValue} ({member.Id})", level: LogLevel.Debug);
+        _logger.Log($"New member join{(catchingUp ? " found after reboot" : "")}: {member.Username}#{member.DiscriminatorValue} ({member.Id})");
         if (!_users.ContainsKey(member.Id))
         {
-            _logger.Log($"No user data entry for new user, generating one now...", level: LogLevel.Debug);
             User newUser = new User();
             newUser.Username = $"{member.Username}#{member.Discriminator}";
             newUser.Aliases.Add(member.Username);
             if (member.JoinedAt is DateTimeOffset join) newUser.Joins.Add(join);
             _users.Add(member.Id, newUser);
             await FileHelper.SaveUsersAsync(_users);
-            _logger.Log($"New user data entry generated.", level: LogLevel.Debug);
         }
         else if (!catchingUp)
         {
-            _logger.Log($"Found user data entry for new user, add new join date", level: LogLevel.Debug);
             if (member.JoinedAt is DateTimeOffset join) _users[member.Id].Joins.Add(join);
             await FileHelper.SaveUsersAsync(_users);
-            _logger.Log($"Added new join date for new user", level: LogLevel.Debug);
         }
         
         List<ulong> roles = new List<ulong>();
@@ -91,17 +83,14 @@ public class UserListener
 
         if (!_config.ManageNewUserRoles)
         {
-            _logger.Log($"Skipping role management for new user join because ManageNewUserRoles is false", level: LogLevel.Debug);
+            _logger.Log($"Skipping role management for new user join because ManageNewUserRoles is false");
         }
         else
         {
-            _logger.Log($"Processing roles for new user join", level: LogLevel.Debug);
-
             if (_config.MemberRole == null || _config.MemberRole <= 0)
                 _logger.Log($"ManageNewUserRoles is true but MemberRole is {_config.MemberRole}", level: LogLevel.Warning);
             else if (!(_config.AutoSilenceNewJoins || _users[member.Id].Silenced))
             {
-                _logger.Log($"Adding Config.MemberRole ({_config.MemberRole}) to new user", level: LogLevel.Debug);
                 roles.Add((ulong)_config.MemberRole);
             }
 
@@ -109,41 +98,32 @@ public class UserListener
                 _logger.Log($"ManageNewUserRoles is true but NewMemberRole is {_config.NewMemberRole}", level: LogLevel.Warning);
             else if ((!_config.AutoSilenceNewJoins || !_users[member.Id].Silenced))
             {
-                _logger.Log($"Adding Config.NewMemberRole ({_config.NewMemberRole}) to new user", level: LogLevel.Debug);
                 roles.Add((ulong)_config.NewMemberRole);
                 expiresString = $"\nNew Member role expires in <t:{(DateTimeOffset.UtcNow + TimeSpan.FromMinutes(_config.NewMemberRoleDecay)).ToUnixTimeSeconds()}:R>";
 
-                _logger.Log($"Adding scheduled job to remove Config.NewMemberRole from new user in {_config.NewMemberRoleDecay} minutes", level: LogLevel.Debug);
                 var action = new ScheduledRoleRemovalJob(_config.NewMemberRole.Value, member.Id,
                     $"New member role removal, {_config.NewMemberRoleDecay} minutes (`NewMemberRoleDecay`) passed.");
                 var task = new ScheduledJob(DateTimeOffset.UtcNow,
                     (DateTimeOffset.UtcNow + TimeSpan.FromMinutes(_config.NewMemberRoleDecay)), action);
                 await _schedule.CreateScheduledJob(task);
-                _logger.Log($"Added scheduled job for new user", level: LogLevel.Debug);
             }
         }
 
-        _logger.Log($"Generating action reason", level: LogLevel.Debug);
-        
         string autoSilence = $" (User autosilenced, `AutoSilenceNewJoins` is true.)";
         
         if (roles.Count != 0)
         {
             if (!_config.AutoSilenceNewJoins) autoSilence = "";
             if (_users[member.Id].Silenced)
-                autoSilence = 
-                    ", silenced (attempted silence bypass)";
-            _logger.Log($"Generated action reason, executing action", level: LogLevel.Debug);
+                autoSilence = ", silenced (attempted silence bypass)";
 
-            await _mod.AddRoles(member, roles, $"New user join{autoSilence}.{expiresString}"); 
-            _logger.Log($"Action executed, generating moderation log content", level: LogLevel.Debug);
+            await _mod.AddRoles(member, roles, $"New user join{autoSilence}.{expiresString}");
         }
 
         autoSilence = ", silenced (`AutoSilenceNewJoins` is on)";
         if (!_config.AutoSilenceNewJoins) autoSilence = "";
         if (_users[member.Id].Silenced)
-            autoSilence = 
-                ", silenced (attempted silence bypass)";
+            autoSilence = ", silenced (attempted silence bypass)";
         string joinedBefore = $", Joined {_users[member.Id].Joins.Count - 1} times before";
         if (_users[member.Id].Joins.Count <= 1) joinedBefore = "";
 
@@ -155,8 +135,7 @@ public class UserListener
             
             if (!member.Guild.Roles.Select(role => role.Id).Contains(roleId))
             {
-                _logger.Log(
-                    $"{member.Username}#{member.Discriminator} ({member.Id}) had role which I would have reapplied on join but no longer exists: role id {roleId}");
+                _logger.Log($"{member.Username}#{member.Discriminator} ({member.Id}) had role which I would have reapplied on join but no longer exists: role id {roleId}");
                 _users[member.Id].RolesToReapplyOnRejoin.Remove(roleId);
                 _config.RolesToReapplyOnRejoin.Remove(roleId);
                 await FileHelper.SaveConfigAsync(_config);
@@ -168,8 +147,7 @@ public class UserListener
 
                 if (!_config.RolesToReapplyOnRejoin.Contains(roleId))
                 {
-                    _logger.Log(
-                        $"{member.Username}#{member.Discriminator} ({member.Id}) has role which will no longer reapply on join, role {member.Guild.Roles.Single(role => role.Id == roleId).Name} ({roleId})");
+                    _logger.Log($"{member.Username}#{member.Discriminator} ({member.Id}) has role which will no longer reapply on join, role {member.Guild.Roles.Single(role => role.Id == roleId).Name} ({roleId})");
                     _users[member.Id].RolesToReapplyOnRejoin.Remove(roleId);
                     await FileHelper.SaveUsersAsync(_users);
                     shouldAdd = false;
@@ -187,20 +165,19 @@ public class UserListener
 
         if (rolesAutoapplied.Count == 0) rolesAutoappliedString = "";
         
-        _logger.Log($"Generated moderation log content, posting log", level: LogLevel.Debug);
-        
+        var msg = $"{(catchingUp ? "Catching up on " : "")}Join: <@{member.Id}> (`{member.Id}`), created <t:{member.CreatedAt.ToUnixTimeSeconds()}:R>{autoSilence}{joinedBefore}{rolesAutoappliedString}";
+        _logger.Log($"Generated moderation log for user join: ${msg}");
         await _modLogger.CreateModLog(member.Guild)
-            .SetContent($"{(catchingUp ? "Catching up on ": "")}Join: <@{member.Id}> (`{member.Id}`), created <t:{member.CreatedAt.ToUnixTimeSeconds()}:R>{autoSilence}{joinedBefore}{rolesAutoappliedString}")
-            .SetFileLogContent($"{(catchingUp ? "Catching up on ": "")}Join: {member.Username}#{member.Discriminator} (`{member.Id}`), created {member.CreatedAt:O}{autoSilence}{joinedBefore}{rolesAutoappliedString}")
+            .SetContent(msg)
+            .SetFileLogContent(msg)
             .Send();
-        _logger.Log($"Log posted", level: LogLevel.Debug);
     }
     
     private async Task MemberLeaveEvent(SocketGuild guild, SocketUser user)
     {
         if (guild.Id != DiscordHelper.DefaultGuild()) return;
         
-        _logger.Log($"Member leaving: {user.Username}#{user.Discriminator} ({user.Id}), getting last nickname", level: LogLevel.Debug);
+        _logger.Log($"Member leaving: {user.Username}#{user.Discriminator} ({user.Id})");
         var lastNickname = "";
         try
         {
@@ -210,8 +187,6 @@ public class UserListener
         {
             lastNickname = "<UNKNOWN>";
         }
-
-        _logger.Log($"Last nickname was {lastNickname}, checking whether user was kicked or banned", level: LogLevel.Debug);
 
         // Unfortunately Discord(.NET) doesn't tell us anything about why or how a user left a server, merely that they did.
         // To infer that they left *because* of a kick/ban, we arbitrarily assume that whenever a user is kicked/banned,
@@ -244,7 +219,6 @@ public class UserListener
                 return null;
             }).Where(audit => audit != null).FirstOrDefault();
 
-        _logger.Log($"Constructing moderation log content", level: LogLevel.Debug);
         var output = 
             $"Leave: {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined <t:{_users[user.Id].Joins.Last().ToUnixTimeSeconds()}:R>";
         var fileOutput = 
@@ -252,7 +226,6 @@ public class UserListener
 
         if (banAuditLog != null)
         {
-            _logger.Log($"User was banned, fetching the reason and moderator", level: LogLevel.Debug);
             _logger.Log($"Fetched, user was banned by {banAuditLog.User.Username}#{banAuditLog.User.Discriminator} ({banAuditLog.User.Id}) for \"{banAuditLog.Reason}\"", level: LogLevel.Debug);
             output =
                 $"Leave (Ban): {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined <t:{_users[user.Id].Joins.Last().ToUnixTimeSeconds()}:R>, \"{banAuditLog.Reason}\" by {banAuditLog.User.Username}#{banAuditLog.User.Discriminator} ({guild.GetUser((ulong)banAuditLog.User.Id).DisplayName})";
@@ -262,14 +235,12 @@ public class UserListener
 
         if (kickAuditLog != null)
         {
-            _logger.Log($"User was kicked, fetching the reason and moderator", level: LogLevel.Debug);
             _logger.Log($"Fetched, user was kicked by {kickAuditLog.User.Username}#{kickAuditLog.User.Discriminator} ({kickAuditLog.User.Id}) for \"{kickAuditLog.Reason}\"", level: LogLevel.Debug);
             output =
                 $"Leave (Kick): {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined <t:{_users[user.Id].Joins.Last().ToUnixTimeSeconds()}:R>, \"{kickAuditLog.Reason}\" by {kickAuditLog.User.Username}#{kickAuditLog.User.Discriminator} ({guild.GetUser((ulong)kickAuditLog.User.Id).DisplayName})";
             fileOutput =
                 $"Leave (Kick): {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined {_users[user.Id].Joins.Last():O}, \"{kickAuditLog.Reason}\" by {kickAuditLog.User.Username}#{kickAuditLog.User.Discriminator} ({guild.GetUser((ulong)kickAuditLog.User.Id).DisplayName})";
         }
-        _logger.Log($"Finished constructing moderation log content", level: LogLevel.Debug);
 
         // Scheduled jobs that require a user to be in the server create a difficult question.
         // Do we delete them on leave so there's no error later? Or keep them in case the user rejoins?
@@ -306,7 +277,7 @@ public class UserListener
             await _schedule.DeleteScheduledJob(job);
         }
 
-        _logger.Log($"Sending moderation log", level: LogLevel.Debug);
+        _logger.Log($"Sending moderation log: ${output}");
         await _modLogger.CreateModLog(guild)
             .SetContent(output)
             .SetFileLogContent(fileOutput)
