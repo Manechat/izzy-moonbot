@@ -58,7 +58,14 @@ public class RaidModule : ModuleBase<SocketCommandContext>
         _generalStorage.ManualRaidSilence = true;
         await FileHelper.SaveGeneralStorageAsync(_generalStorage);
 
-        await ReplyAsync($"I've set `AutoSilenceNewJoins` to `true` and silenced the following recent joins: {string.Join(' ', recentJoins.Select(u => $"<@{u.Id}>"))}");
+        var msg = $"I've set `AutoSilenceNewJoins` to `true`";
+        if (recentJoins.Any())
+            msg += $" and silenced the following recent joins: {string.Join(' ', recentJoins.Select(u => $"<@{u.Id}>"))}";
+        else
+            // "users must have users in them" is a poorly chosen error message that this
+            // command once produced, and was so funny we felt the need to keep it around.
+            msg += $" but there are no recent joins to silence. Users must have users in them <:izzysilly:814551113109209138>";
+        await ReplyAsync(msg);
     }
 
     [Command("assoff")]

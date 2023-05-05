@@ -42,8 +42,6 @@ public class ModService
     public async Task SilenceUsers(IEnumerable<IIzzyGuildUser> users, string? reason = null)
     {
         if (_config.MemberRole == null) throw new TargetException("MemberRole config value is null (not set)");
-        
-        if (!users.Any()) throw new NullReferenceException("users must have users in them");
 
         foreach (var user in users)
         {
