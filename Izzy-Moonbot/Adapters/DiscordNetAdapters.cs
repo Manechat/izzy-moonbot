@@ -119,7 +119,7 @@ public class DiscordNetMessageAdapter : IIzzyMessage
     public IReadOnlyCollection<IAttachment> Attachments => _message.Attachments;
     public IReadOnlyCollection<IEmbed> Embeds => _message.Embeds;
     public IReadOnlyCollection<IStickerItem> Stickers => _message.Stickers;
-    public async Task DeleteAsync() => await _message.DeleteAsync();
+    public async Task DeleteAsync(RequestOptions? options = null) => await _message.DeleteAsync(options);
     public string GetJumpUrl() => _message.GetJumpUrl();
 }
 
@@ -155,9 +155,9 @@ public class DiscordNetUserMessageAdapter : IIzzyUserMessage
             action(new MessagePropertiesAdapter(msg));
         });
     }
-    public async Task DeleteAsync()
+    public async Task DeleteAsync(RequestOptions? options = null)
     {
-        await _message.DeleteAsync();
+        await _message.DeleteAsync(options);
     }
     public string GetJumpUrl() => _message.GetJumpUrl();
 }

@@ -311,7 +311,8 @@ public class SpamService
             throw new InvalidOperationException("ProcessTrip was somehow called with a non-guild context");
 
         // Silence user, this also logs the action.
-        await _mod.SilenceUser(user, $"Exceeded pressure max ({pressure}/{_config.SpamMaxPressure}) in <#{message.Channel.Id}>");
+        var reason = $"Exceeded max spam pressure ({pressure}/{_config.SpamMaxPressure}) in <#{message.Channel.Id}>";
+        await _mod.SilenceUser(user, reason);
 
         var bulkDeletionLog = new List<(DateTimeOffset, string)>();
 
@@ -332,7 +333,7 @@ public class SpamService
                     if (previousMessage.Content != "")
                         bulkDeletionLog.Add((previousMessageItem.Timestamp,
                             $"[{previousMessageItem.Timestamp}] in #{channel?.Name}: {previousMessage.Content}"));
-                    await previousMessage.DeleteAsync();
+                    await previousMessage.DeleteAsync(new RequestOptions { AuditLogReason = reason });
                 }
                 else
                     alreadyDeletedMessages++;
