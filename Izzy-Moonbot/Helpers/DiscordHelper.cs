@@ -441,4 +441,17 @@ public static class DiscordHelper
 
         await guild.SetBanner(image);
     }
+
+    public static async Task<string> AuditLogForCommand(SocketCommandContext context)
+    {
+        return await AuditLogForCommand(new SocketCommandContextAdapter(context));
+    }
+    public static async Task<string> AuditLogForCommand(IIzzyContext context)
+    {
+        var user = context.User;
+        var channel = context.Channel;
+        var now = DateTimeHelper.UtcNow;
+        return $"Command `{context.Message.Content}`\n" +
+            $"was run by {user.Username}#{user.Discriminator} ({user.Id}) in {channel.Name} ({channel.Id}) at {now} (<t:{now.ToUnixTimeMilliseconds()}>)";
+    }
 }
