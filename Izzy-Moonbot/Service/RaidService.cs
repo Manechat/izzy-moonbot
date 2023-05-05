@@ -153,7 +153,7 @@ public class RaidService
             _log.Log(
                 "Large raid detected!");
 
-            await _modService.SilenceUsers(recentJoins, "Suspected raider");
+            await _modService.SilenceUsers(recentJoins, "auto-silenced all suspected raiders after a large raid was detected");
 
             recentJoins.ForEach(async member =>
             {
@@ -163,7 +163,7 @@ public class RaidService
 
                 if (member.Roles.Any(role => role.Id == _config.MemberRole))
                 {
-                    await _modService.SilenceUser(member, "Suspected raider");
+                    await _modService.SilenceUser(member, "auto-silenced all suspected raiders after a large raid was detected");
                 }
             });
 

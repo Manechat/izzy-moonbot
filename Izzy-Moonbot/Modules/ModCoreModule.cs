@@ -212,17 +212,18 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
         }
 
         // Okay, enough joking around, serious Izzy time
+        var reason = await DiscordHelper.AuditLogForCommand(Context);
         var hasExistingBan = await Context.Guild!.GetIsBannedAsync(userId);
 
         if (!hasExistingBan)
         {
             // No ban exists, very serious Izzy time.
-            await Context.Guild.AddBanAsync(userId, pruneDays: 0, reason: $"Banned by {Context.User.Username}#{Context.User.Discriminator}{(time == null ? "" : $" for {timeArg}")}.");
+            await Context.Guild.AddBanAsync(userId, pruneDays: 0, reason: reason );
 
             if (time != null)
             {
                 // Create scheduled task!
-                var action = new ScheduledUnbanJob(userId);
+                var action = new ScheduledUnbanJob(userId, reason);
                 var job = new ScheduledJob(DateTimeHelper.UtcNow, time.Time, action);
                 await _schedule.CreateScheduledJob(job);
             }
@@ -313,7 +314,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
             {
                 // Doesn't exist, it needs to exist.
                 // Create scheduled task!
-                var action = new ScheduledUnbanJob(userId);
+                var action = new ScheduledUnbanJob(userId, reason);
                 var job = new ScheduledJob(DateTimeHelper.UtcNow, time.Time, action);
                 await _schedule.CreateScheduledJob(job);
 
@@ -446,7 +447,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
             var alreadyHasRole = member.Roles.Select(role => role.Id).Contains(roleId);
             if (!alreadyHasRole)
             {
-                await _mod.AddRoles(member, new[] { roleId }, "Role applied through .assignrole command.");
+                await _mod.AddRoles(member, new[] { roleId }, await DiscordHelper.AuditLogForCommand(context));
             }
 
             var message = alreadyHasRole ? $"<@{userId}> already has that role." : $"I've given <@&{roleId}> to <@{userId}>.";
@@ -471,8 +472,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
             if (time is not null)
             {
                 _logger.Log($"Adding scheduled job to remove role {roleId} from user {userId} at {time.Time}", level: LogLevel.Debug);
-                var action = new ScheduledRoleRemovalJob(roleId, member.Id,
-                    $".assignrole command for user {member.Id} and role {roleId} with duration {timeArg}.");
+                var action = new ScheduledRoleRemovalJob(roleId, member.Id, await DiscordHelper.AuditLogForCommand(context));
                 var task = new ScheduledJob(DateTimeHelper.UtcNow, time.Time, action);
                 await _schedule.CreateScheduledJob(task);
                 _logger.Log($"Added scheduled job for new user", level: LogLevel.Debug);
@@ -595,7 +595,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
         // Actually do the deletion
         var messagesToDeleteCount = messageIdsToDelete.Count;
         _logger.Log($"Deleting {messagesToDeleteCount} messages from channel {channelName}");
-        await channel.DeleteMessagesAsync(messageIdsToDelete);
+        await channel.DeleteMessagesAsync(messageIdsToDelete, new RequestOptions { AuditLogReason = await DiscordHelper.AuditLogForCommand(Context) });
 
         // Finally, post a bulk deletion log in LogChannel
         var logChannelId = _config.LogChannel;

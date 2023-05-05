@@ -156,7 +156,8 @@ public static class FileHelper
                     1 => new ScheduledRoleAdditionJob(fileJson[i]["Action"]!["Role"]!.Value<ulong>(),
                         fileJson[i]["Action"]!["User"]!.Value<ulong>(),
                         fileJson[i]["Action"]!["Reason"]!.Value<string>()),
-                    2 => new ScheduledUnbanJob(fileJson[i]["Action"]!["User"]!.Value<ulong>()),
+                    2 => new ScheduledUnbanJob(fileJson[i]["Action"]!["User"]!.Value<ulong>(),
+                        fileJson[i]["Action"]?["Reason"]?.Value<string>() ?? ""), // need back-compat with the old reason-less unban jobs
                     3 => new ScheduledEchoJob(fileJson[i]["Action"]!["ChannelOrUser"]!.Value<ulong>(),
                         fileJson[i]["Action"]!["Content"]!.Value<string>()!),
                     4 => new ScheduledBannerRotationJob(),

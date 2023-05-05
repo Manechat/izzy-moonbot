@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord.Commands;
+using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Attributes;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Service;
@@ -44,7 +45,7 @@ public class RaidModule : ModuleBase<SocketCommandContext>
         var recentJoins = _raidService.GetRecentJoins(Context.Guild);
         try
         {
-            await _modService.SilenceUsers(recentJoins, "Suspected raider");
+            await _modService.SilenceUsers(recentJoins, await DiscordHelper.AuditLogForCommand(Context));
         }
         catch (Exception ex)
         {

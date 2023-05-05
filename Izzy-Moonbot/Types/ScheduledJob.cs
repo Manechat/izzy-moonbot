@@ -61,7 +61,7 @@ public class ScheduledRoleJob : ScheduledJobAction
 
 public class ScheduledRoleRemovalJob : ScheduledRoleJob
 {
-    public ScheduledRoleRemovalJob(ulong role, ulong user, string? reason = null)
+    public ScheduledRoleRemovalJob(ulong role, ulong user, string? reason)
     {
         Type = ScheduledJobActionType.RemoveRole;
         
@@ -70,7 +70,7 @@ public class ScheduledRoleRemovalJob : ScheduledRoleJob
         Reason = reason;
     }
 
-    public ScheduledRoleRemovalJob(IRole role, IGuildUser user, string? reason = null)
+    public ScheduledRoleRemovalJob(IRole role, IGuildUser user, string? reason)
     {
         Type = ScheduledJobActionType.RemoveRole;
         
@@ -92,7 +92,7 @@ public class ScheduledRoleRemovalJob : ScheduledRoleJob
 
 public class ScheduledRoleAdditionJob : ScheduledRoleJob
 {
-    public ScheduledRoleAdditionJob(ulong role, ulong user, string? reason = null)
+    public ScheduledRoleAdditionJob(ulong role, ulong user, string? reason)
     {
         Type = ScheduledJobActionType.AddRole;
         
@@ -101,7 +101,7 @@ public class ScheduledRoleAdditionJob : ScheduledRoleJob
         Reason = reason;
     }
     
-    public ScheduledRoleAdditionJob(IIzzyRole role, IIzzyGuildUser user, string? reason = null)
+    public ScheduledRoleAdditionJob(IIzzyRole role, IIzzyGuildUser user, string? reason)
     {
         Type = ScheduledJobActionType.AddRole;
         
@@ -123,22 +123,25 @@ public class ScheduledRoleAdditionJob : ScheduledRoleJob
 
 public class ScheduledUnbanJob : ScheduledJobAction
 {
-    public ScheduledUnbanJob(ulong user)
+    public ScheduledUnbanJob(ulong user, string? reason)
     {
         Type = ScheduledJobActionType.Unban;
         
         User = user;
+        Reason = reason;
     }
 
-    public ScheduledUnbanJob(IIzzyUser user)
+    public ScheduledUnbanJob(IIzzyUser user, string? reason)
     {
         Type = ScheduledJobActionType.Unban;
-        
+
         User = user.Id;
+        Reason = reason;
     }
-    
+
     public ulong User { get; }
-    
+    public string? Reason { get; }
+
     public override string ToDiscordString()
     {
         return $"Unban <@{User}> (`{User}`)";
