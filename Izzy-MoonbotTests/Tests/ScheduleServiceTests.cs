@@ -96,7 +96,7 @@ public class ScheduleServiceTests
         var addRoleAction = new ScheduledRoleAdditionJob(alicorn.Id, sunny.Id, "found the unity crystals");
         await ss.CreateScheduledJob(new ScheduledJob(DateTimeHelper.UtcNow, DateTimeHelper.UtcNow.AddMinutes(3), addRoleAction));
 
-        var unbanAction = new ScheduledUnbanJob(sproutId);
+        var unbanAction = new ScheduledUnbanJob(sproutId, null);
         await ss.CreateScheduledJob(new ScheduledJob(DateTimeHelper.UtcNow, DateTimeHelper.UtcNow.AddMinutes(5), unbanAction));
 
         // still a no-op, no time has passed

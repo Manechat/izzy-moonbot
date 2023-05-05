@@ -212,17 +212,18 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
         }
 
         // Okay, enough joking around, serious Izzy time
+        var reason = await DiscordHelper.AuditLogForCommand(Context);
         var hasExistingBan = await Context.Guild!.GetIsBannedAsync(userId);
 
         if (!hasExistingBan)
         {
             // No ban exists, very serious Izzy time.
-            await Context.Guild.AddBanAsync(userId, pruneDays: 0, reason: await DiscordHelper.AuditLogForCommand(Context) );
+            await Context.Guild.AddBanAsync(userId, pruneDays: 0, reason: reason );
 
             if (time != null)
             {
                 // Create scheduled task!
-                var action = new ScheduledUnbanJob(userId);
+                var action = new ScheduledUnbanJob(userId, reason);
                 var job = new ScheduledJob(DateTimeHelper.UtcNow, time.Time, action);
                 await _schedule.CreateScheduledJob(job);
             }
@@ -313,7 +314,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
             {
                 // Doesn't exist, it needs to exist.
                 // Create scheduled task!
-                var action = new ScheduledUnbanJob(userId);
+                var action = new ScheduledUnbanJob(userId, reason);
                 var job = new ScheduledJob(DateTimeHelper.UtcNow, time.Time, action);
                 await _schedule.CreateScheduledJob(job);
 

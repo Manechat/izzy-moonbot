@@ -123,22 +123,25 @@ public class ScheduledRoleAdditionJob : ScheduledRoleJob
 
 public class ScheduledUnbanJob : ScheduledJobAction
 {
-    public ScheduledUnbanJob(ulong user)
+    public ScheduledUnbanJob(ulong user, string? reason)
     {
         Type = ScheduledJobActionType.Unban;
         
         User = user;
+        Reason = reason;
     }
 
-    public ScheduledUnbanJob(IIzzyUser user)
+    public ScheduledUnbanJob(IIzzyUser user, string? reason)
     {
         Type = ScheduledJobActionType.Unban;
-        
+
         User = user.Id;
+        Reason = reason;
     }
-    
+
     public ulong User { get; }
-    
+    public string? Reason { get; }
+
     public override string ToDiscordString()
     {
         return $"Unban <@{User}> (`{User}`)";

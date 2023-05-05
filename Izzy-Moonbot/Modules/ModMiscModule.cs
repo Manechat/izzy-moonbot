@@ -649,7 +649,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                             await context.Channel.SendMessageAsync($"Failed to parse arguments: \"{actionArgTokens.ElementAt(0)}\" is not a user id");
                             return;
                         }
-                        action = new ScheduledUnbanJob(userId);
+                        action = new ScheduledUnbanJob(userId, await DiscordHelper.AuditLogForCommand(context));
                         break;
                     }
                 case "echo":
