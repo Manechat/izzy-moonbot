@@ -175,7 +175,7 @@ public class TestMessage : IIzzyUserMessage
         return Task.CompletedTask;
     }
 
-    public async Task DeleteAsync(RequestOptions? options = null) =>
+    public async Task DeleteAsync() =>
         _channelBackref.Messages.RemoveAll(m => m.Id == Id);
 
     public string GetJumpUrl() => $"https://discord.com/channels/{_guildBackref.Id}/{_channelBackref.Id}/{_message.Id}";

@@ -58,7 +58,7 @@ public interface IIzzyMessage
     DateTimeOffset Timestamp { get => new DateTimeOffset(2010, 10, 10, 0, 0, 0, TimeSpan.Zero); }
     DateTimeOffset? EditedTimestamp { get => null; }
 
-    Task DeleteAsync(RequestOptions? options = null);
+    Task DeleteAsync();
     string GetJumpUrl();
 }
 
