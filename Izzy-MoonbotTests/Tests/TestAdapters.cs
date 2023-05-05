@@ -459,7 +459,7 @@ public class TestGuild : IIzzyGuild
         _stubGuild.BannedUserIds.Add(userId);
     public async Task<bool> GetIsBannedAsync(ulong userId) =>
         _stubGuild.BannedUserIds.Contains(userId);
-    public async Task RemoveBanAsync(ulong userId) =>
+    public async Task RemoveBanAsync(ulong userId, string? _reason) =>
         _stubGuild.BannedUserIds.Remove(userId);
     public async Task SetBanner(Image _image) { }
     public IIzzySocketTextChannel? RulesChannel => _stubGuild.RulesChannel is null ? null :
