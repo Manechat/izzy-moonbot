@@ -387,7 +387,10 @@ public class MiscModuleTests
         var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, pippId, ".help modcore");
         await mm.TestableHelpCommandAsync(context, "modcore");
 
-        Assert.AreEqual("Sorry, I was unable to find any command, category, or alias named \"modcore\" that you have access to.", generalChannel.Messages.Last().Content);
+        Assert.AreEqual("Sorry, I was unable to find any command, category, or alias named \"modcore\" that you have access to.\n" +
+                        "\n" +
+                        // .userinfo is the only public command in the 'modcore' category
+                        "I also see \"modcore\" in the output of: `.help userinfo`", generalChannel.Messages.Last().Content);
 
         // So just `.help` with no args lists not categories, but the commands regular users can run
 
@@ -502,14 +505,17 @@ public class MiscModuleTests
 
         Assert.AreEqual("Sorry, I was unable to find any command, category, or alias named \"core\" that you have access to." +
             "\nDid you mean `.modcore`?" +
-            "\nI do see \"core\" in the output of: `.help config` and `.help userinfo` and `.help ban` and `.help banall` and `.help assignrole` and `.help wipe`", generalChannel.Messages.Last().Content);
+            "\n" +
+            "\nI also see \"core\" in the output of: `.help config` and `.help userinfo` and `.help ban` and `.help banall` and `.help assignrole` and `.help wipe`", generalChannel.Messages.Last().Content);
 
         // regular user does not
 
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, pippId, ".help core");
         await mm.TestableHelpCommandAsync(context, "core");
 
-        Assert.AreEqual("Sorry, I was unable to find any command, category, or alias named \"core\" that you have access to.", generalChannel.Messages.Last().Content);
+        Assert.AreEqual("Sorry, I was unable to find any command, category, or alias named \"core\" that you have access to." +
+            "\n" +
+            "\nI also see \"core\" in the output of: `.help userinfo`", generalChannel.Messages.Last().Content);
     }
 
     [TestMethod()]
@@ -534,7 +540,8 @@ public class MiscModuleTests
         await mm.TestableHelpCommandAsync(context, "new pony");
 
         Assert.AreEqual("Sorry, I was unable to find any command, category, or alias named \"new pony\" that you have access to." +
-            "\nI do see \"new pony\" in the output of: `.help permanp`", generalChannel.Messages.Last().Content);
+            "\n" +
+            "\nI also see \"new pony\" in the output of: `.help permanp`", generalChannel.Messages.Last().Content);
 
         // config documentation is searched
 
@@ -542,7 +549,8 @@ public class MiscModuleTests
         await mm.TestableHelpCommandAsync(context, "rotate");
 
         Assert.AreEqual("Sorry, I was unable to find any command, category, or alias named \"rotate\" that you have access to." +
-            "\nI do see \"rotate\" in the output of: `.config BannerMode` and `.config BannerInterval` and `.config BannerImages`", generalChannel.Messages.Last().Content);
+            "\n" +
+            "\nI also see \"rotate\" in the output of: `.config BannerMode` and `.config BannerInterval` and `.config BannerImages`", generalChannel.Messages.Last().Content);
 
         // for simple values, the searched config documentation includes the current value
 
@@ -550,6 +558,7 @@ public class MiscModuleTests
         await mm.TestableHelpCommandAsync(context, "100");
 
         Assert.AreEqual("Sorry, I was unable to find any command, category, or alias named \"100\" that you have access to." +
-            "\nI do see \"100\" in the output of: `.help rollforbestpony` and `.config UnicycleInterval`", generalChannel.Messages.Last().Content);
+            "\n" +
+            "\nI also see \"100\" in the output of: `.help rollforbestpony` and `.config UnicycleInterval`", generalChannel.Messages.Last().Content);
     }
 }
