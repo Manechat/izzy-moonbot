@@ -249,8 +249,8 @@ public class DevModule : ModuleBase<SocketCommandContext>
             case "invitesDisabled":
                 await ReplyAsync("Invites disabled: " + Context.Guild.Features.HasFeature("INVITES_DISABLED"));
                 break;
-            case "timehelper":
-                if (TimeHelper.TryParseDateTime(argString, out var err) is not var (time, remainingArgsString))
+            case "parsehelper":
+                if (ParseHelper.TryParseDateTime(argString, out var err) is not var (time, remainingArgsString))
                 {
                     await ReplyAsync($"TryParseDateTime returned null for \"{argString}\"\n" +
                         $"with error message: {err}");
