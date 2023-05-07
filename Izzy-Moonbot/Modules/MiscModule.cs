@@ -260,15 +260,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
         var isDev = DiscordHelper.IsDev(context.User.Id);
         var isMod = (context.User is IIzzyGuildUser guildUser) && (guildUser.Roles.Any(r => r.Id == _config.ModRole));
 
-        Func<CommandInfo, bool> canRunCommand = cinfo =>
-        {
-            var modAttr = cinfo.Preconditions.Any(attribute => attribute is ModCommandAttribute);
-            var devAttr = cinfo.Preconditions.Any(attribute => attribute is DevCommandAttribute);
-            if (modAttr && devAttr) return isMod || isDev;
-            else if (modAttr) return isMod;
-            else if (devAttr) return isDev;
-            else return true;
-        };
+        Func<CommandInfo, bool> canRunCommand = cinfo => CanRunCommand(cinfo, isMod, isDev);
 
         if (item == "")
         {
@@ -317,6 +309,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
             {
                 var ponyReadable = PonyReadableCommandHelp(prefix, item, commandInfo);
                 ponyReadable += PonyReadableRelevantAliases(prefix, item);
+                ponyReadable += PonyReadableSelfSearch(item, isMod, isDev);
                 await context.Channel.SendMessageAsync(ponyReadable);
             }
             else await context.Channel.SendMessageAsync(
@@ -358,6 +351,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
             {
                 var ponyReadable = PonyReadableCommandHelp(prefix, item, commandInfo, alternateName);
                 ponyReadable += PonyReadableRelevantAliases(prefix, item);
+                ponyReadable += PonyReadableSelfSearch(item, isMod, isDev);
                 await context.Channel.SendMessageAsync(ponyReadable);
             }
             else await context.Channel.SendMessageAsync(
@@ -385,6 +379,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
             }
 
             ponyReadable += PonyReadableCommandHelp(prefix, item, commandInfo);
+            ponyReadable += PonyReadableSelfSearch(item, isMod, isDev);
             await context.Channel.SendMessageAsync(ponyReadable);
         }
         else
@@ -409,30 +404,9 @@ public class MiscModule : ModuleBase<SocketCommandContext>
             var message = $"Sorry, I was unable to find any command, category, or alias named \"{item}\" that you have access to.";
             var suggestibles = alternateNamesToSuggest.Concat(aliasesToSuggest).Concat(categoriesToSuggest);
             if (suggestibles.Any())
-            {
                 message += $"\nDid you mean {string.Join(" or ", suggestibles.Select(s => $"`.{s}`"))}?";
-            }
 
-            if (isDev || isMod)
-            {
-                var commandDocHits = _commands.Commands
-                    .Where(c => {
-                        if (c.Aliases.Any(name => suggestibles.Contains(name)))
-                            return false; // this command's already being suggested, so don't repeat it here
-                        return PonyReadableCommandHelp(prefix, c.Name, c).ToLower().Contains(item.ToLower());
-                    })
-                    .Select(c => $"`.help {c.Name}`");
-
-                var configDocHits = _configDescriber.GetSettableConfigItems()
-                    .Where(configItemKey => ConfigCommand.ConfigItemDescription(_config, _configDescriber, configItemKey).ToLower().Contains(item.ToLower()))
-                    .Select(configItemKey => $"`.config {configItemKey}`");
-
-                // if we get more than 10 hits, then it was probably something like " " or "the" or "category" that's part of how we format
-                // the docs rather than useful information we want to dump an exhaustive list of search hits for
-                var documentationSearchHits = commandDocHits.Concat(configDocHits);
-                if (documentationSearchHits.Any() && documentationSearchHits.Count() < 10)
-                    message += $"\nI do see \"{item}\" in the output of: {string.Join(" and ", commandDocHits.Concat(configDocHits))}";
-            }
+            message += PonyReadableSelfSearch(item, isMod, isDev, suggestibles);
 
             await context.Channel.SendMessageAsync(message);
         }
@@ -491,6 +465,44 @@ public class MiscModule : ModuleBase<SocketCommandContext>
             return $"\nRelevant aliases: {string.Join(", ", relevantAliases.Select(alias => $"{prefix}{alias.Key}"))}";
         else
             return "";
+    }
+
+    private string PonyReadableSelfSearch(string item, bool isMod, bool isDev, IEnumerable<string>? suggestibles = null)
+    {
+        var commandDocHits = _commands.Commands
+            .Where(c => {
+                if (!CanRunCommand(c, isMod, isDev))
+                    return false;
+                if (c.Aliases.Contains(item))
+                    return false; // this command is the one we're printing help for, so don't repeat it here
+                if (suggestibles != null && c.Aliases.Any(name => suggestibles.Contains(name)))
+                    return false; // this command's already being suggested, so don't repeat it here
+                return PonyReadableCommandHelp(_config.Prefix, c.Name, c).ToLower().Contains(item.ToLower());
+            })
+            .Select(c => $"`.help {c.Name}`");
+
+        var configDocHits = Enumerable.Empty<string>();
+        if (isMod || isDev)
+            configDocHits = _configDescriber.GetSettableConfigItems()
+                .Where(configItemKey => ConfigCommand.ConfigItemDescription(_config, _configDescriber, configItemKey).ToLower().Contains(item.ToLower()))
+                .Select(configItemKey => $"`.config {configItemKey}`");
+
+        // if we get more than 10 hits, then it was probably something like " " or "the" or "category" that's part of how we format
+        // the docs rather than useful information we want to dump an exhaustive list of search hits for
+        var documentationSearchHits = commandDocHits.Concat(configDocHits);
+        if (documentationSearchHits.Any() && documentationSearchHits.Count() < 10)
+            return $"\n\nI also see \"{item}\" in the output of: {string.Join(" and ", commandDocHits.Concat(configDocHits))}";
+        return "";
+    }
+
+    private bool CanRunCommand(CommandInfo cinfo, bool isMod, bool isDev)
+    {
+        var modAttr = cinfo.Preconditions.Any(attribute => attribute is ModCommandAttribute);
+        var devAttr = cinfo.Preconditions.Any(attribute => attribute is DevCommandAttribute);
+        if (modAttr && devAttr) return isMod || isDev;
+        else if (modAttr) return isMod;
+        else if (devAttr) return isDev;
+        else return true;
     }
 
     [Command("about")]
