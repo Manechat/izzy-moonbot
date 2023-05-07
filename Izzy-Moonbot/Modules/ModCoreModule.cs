@@ -163,10 +163,10 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
         var member = Context.Guild?.GetUser(userId);
 
         var timeArg = string.Join("", argsString.Skip(args.Indices[0]));
-        TimeHelperResponse? time = null;
+        ParseDateTimeResult? time = null;
         if (timeArg.Trim() != "")
         {
-            time = TimeHelper.TryParseDateTime(timeArg, out var parseError)?.Item1;
+            time = ParseHelper.TryParseDateTime(timeArg, out var parseError)?.Item1;
             if (time is null)
             {
                 await Context.Channel.SendMessageAsync($"Failed to comprehend time: {parseError}");
@@ -418,10 +418,10 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
         }
         var maybeMember = context.Guild?.GetUser(userId);
 
-        TimeHelperResponse? time = null;
+        ParseDateTimeResult? time = null;
         if (timeArg.Trim() != "")
         {
-            time = TimeHelper.TryParseDateTime(timeArg, out var parseError)?.Item1;
+            time = ParseHelper.TryParseDateTime(timeArg, out var parseError)?.Item1;
             if (time is null)
             {
                 await Context.Channel.SendMessageAsync($"Failed to comprehend time: {parseError}");
@@ -546,7 +546,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
         DateTimeOffset? timeArg = null;
         if (argsAfterChannel.Trim() != "")
         {
-            if (TimeHelper.TryParseInterval(argsAfterChannel, out var parseError, inThePast: true) is not var (parsedTimeArg, _remainingArguments))
+            if (ParseHelper.TryParseInterval(argsAfterChannel, out var parseError, inThePast: true) is not var (parsedTimeArg, _remainingArguments))
             {
                 await ReplyAsync($"Failed to comprehend time: {parseError}");
                 return;

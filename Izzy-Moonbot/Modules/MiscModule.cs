@@ -133,7 +133,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
             return;
         }
 
-        if (TimeHelper.TryParseDateTime(argsString, out var parseError) is not var (timeHelperResponse, content))
+        if (ParseHelper.TryParseDateTime(argsString, out var parseError) is not var (parseResult, content))
         {
             await context.Channel.SendMessageAsync($"Failed to comprehend time: {parseError}");
             return;
@@ -145,14 +145,14 @@ public class MiscModule : ModuleBase<SocketCommandContext>
             return;
         }
 
-        _logger.Log($"Adding scheduled job to remind user to \"{content}\" at {timeHelperResponse.Time:F}{(timeHelperResponse.RepeatType == ScheduledJobRepeatType.None ? "" : $" repeating {timeHelperResponse.RepeatType}")}",
+        _logger.Log($"Adding scheduled job to remind user to \"{content}\" at {parseResult.Time:F}{(parseResult.RepeatType == ScheduledJobRepeatType.None ? "" : $" repeating {parseResult.RepeatType}")}",
             context: context, level: LogLevel.Debug);
         var action = new ScheduledEchoJob(context.User, content);
-        var task = new ScheduledJob(DateTimeHelper.UtcNow, timeHelperResponse.Time, action, timeHelperResponse.RepeatType);
+        var task = new ScheduledJob(DateTimeHelper.UtcNow, parseResult.Time, action, parseResult.RepeatType);
         await _schedule.CreateScheduledJob(task);
         _logger.Log($"Added scheduled job for user", context: context, level: LogLevel.Debug);
 
-        await context.Channel.SendMessageAsync($"Okay! I'll DM you a reminder <t:{timeHelperResponse.Time.ToUnixTimeSeconds()}:R>.");
+        await context.Channel.SendMessageAsync($"Okay! I'll DM you a reminder <t:{parseResult.Time.ToUnixTimeSeconds()}:R>.");
     }
 
     [Command("rule")]

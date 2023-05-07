@@ -599,7 +599,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
             }
 
             var timeArgString = string.Join("", argsString.Skip(args.Indices[1]));
-            if (TimeHelper.TryParseDateTime(timeArgString, out var parseError) is not var (timeHelperResponse, actionArgsString))
+            if (ParseHelper.TryParseDateTime(timeArgString, out var parseError) is not var (parseResult, actionArgsString))
             {
                 await context.Channel.SendMessageAsync($"Failed to comprehend time: {parseError}");
                 return;
@@ -666,7 +666,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                 default: throw new InvalidCastException($"{typeArg} is not a valid job type");
             };
 
-            var job = new ScheduledJob(DateTimeHelper.UtcNow, timeHelperResponse.Time, action, timeHelperResponse.RepeatType);
+            var job = new ScheduledJob(DateTimeHelper.UtcNow, parseResult.Time, action, parseResult.RepeatType);
             await _schedule.CreateScheduledJob(job);
             await context.Channel.SendMessageAsync($"Created scheduled job: {job.ToDiscordString()}", allowedMentions: AllowedMentions.None);
         }
@@ -756,7 +756,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
         }
 
         var argsAfterChannel = string.Join("", argsString.Skip(args.Indices[0]));
-        if (TimeHelper.TryParseDateTime(argsAfterChannel, out var parseError) is not var (timeHelperResponse, content))
+        if (ParseHelper.TryParseDateTime(argsAfterChannel, out var parseError) is not var (parseResult, content))
         {
             await context.Channel.SendMessageAsync($"Failed to comprehend time: {parseError}");
             return;
@@ -768,14 +768,14 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
             return;
         }
 
-        _logger.Log($"Adding scheduled job to post \"{content}\" in channel {channelId} at {timeHelperResponse.Time:F}{(timeHelperResponse.RepeatType == ScheduledJobRepeatType.None ? "" : $" repeating {timeHelperResponse.RepeatType}")}",
+        _logger.Log($"Adding scheduled job to post \"{content}\" in channel {channelId} at {parseResult.Time:F}{(parseResult.RepeatType == ScheduledJobRepeatType.None ? "" : $" repeating {parseResult.RepeatType}")}",
             context: context, level: LogLevel.Debug);
         var action = new ScheduledEchoJob(channelId, content);
-        var task = new ScheduledJob(DateTimeHelper.UtcNow, timeHelperResponse.Time, action, timeHelperResponse.RepeatType);
+        var task = new ScheduledJob(DateTimeHelper.UtcNow, parseResult.Time, action, parseResult.RepeatType);
         await _schedule.CreateScheduledJob(task);
         _logger.Log($"Added scheduled job for reminder", context: context, level: LogLevel.Debug);
 
-        await context.Channel.SendMessageAsync($"Okay! I'll send that reminder to <#{channelId}> <t:{timeHelperResponse.Time.ToUnixTimeSeconds()}:R>.");
+        await context.Channel.SendMessageAsync($"Okay! I'll send that reminder to <#{channelId}> <t:{parseResult.Time.ToUnixTimeSeconds()}:R>.");
     }
 
     [Command("setbanner")]
