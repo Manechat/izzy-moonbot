@@ -19,7 +19,8 @@ public class PaginationHelper
 
     private readonly bool _useCodeBlock;
     private ulong _authorId;
-    private bool _easterEgg;
+    private bool _easterEggChanged;
+    private string _easterEggEmoji;
     private IIzzyUserMessage? _message;
     public DateTime ExpiresAt;
     private int _pageNumber = 0;
@@ -71,7 +72,8 @@ public class PaginationHelper
         _authorId = context.Message.Author.Id;
         Pages = pages;
         _staticParts = staticParts;
-        _easterEgg = false;
+        _easterEggChanged = false;
+        _easterEggEmoji = GetRandomEmoji();
         _useCodeBlock = codeblock;
         _allowedMentions = allowedMentions;
 
@@ -85,8 +87,7 @@ public class PaginationHelper
         var builder = new ComponentBuilder()
             .WithButton(customId: "goto-start", emote: Emoji.Parse(":track_previous:"), disabled: false)
             .WithButton(customId: "goto-previous", emote: Emoji.Parse(":arrow_backward:"), disabled: false)
-            .WithButton(customId: "trigger-easteregg", emote: Emote.Parse("<:izzylurk:994638513431646298>"),
-                disabled: false)
+            .WithButton(customId: "trigger-easteregg", emote: Emote.Parse(_easterEggEmoji), disabled: false)
             .WithButton(customId: "goto-next", emote: Emoji.Parse(":arrow_forward:"), disabled: false)
             .WithButton(customId: "goto-end", emote: Emoji.Parse(":track_next:"), disabled: false);
 
@@ -152,44 +153,18 @@ public class PaginationHelper
                 msg.Content =
                     $"{header}\n{truncationWarning}{codeBlock}\n{page}\n{codeBlock}`Page {_pageNumber + 1} out of {Pages.Length}`\n{footer}\n\n{expireMessage}";
 
-                if (_easterEgg)
-                {
-                    var builder = new ComponentBuilder()
-                        .WithButton(customId: "goto-start", emote: Emoji.Parse(":track_previous:"))
-                        .WithButton(customId: "goto-previous", emote: Emoji.Parse(":arrow_backward:"))
-                        .WithButton(customId: "trigger-easteregg-active",
-                            emote: Emote.Parse("<:izzyohyou:967943490698887258>"), style: ButtonStyle.Success)
-                        .WithButton(customId: "goto-next", emote: Emoji.Parse(":arrow_forward:"))
-                        .WithButton(customId: "goto-end", emote: Emoji.Parse(":track_next:"));
-                    msg.Components = builder.Build();
-                }
+                var disableButtons = ExpiresAt <= DateTime.UtcNow;
 
-                if (ExpiresAt <= DateTime.UtcNow)
-                {
-                    if (_easterEgg)
-                    {
-                        var builder = new ComponentBuilder()
-                            .WithButton(customId: "goto-start", emote: Emoji.Parse(":track_previous:"), disabled: true)
-                            .WithButton(customId: "goto-previous", emote: Emoji.Parse(":arrow_backward:"), disabled: true)
-                            .WithButton(customId: "trigger-easteregg-active",
-                                emote: Emote.Parse("<:izzyohyou:967943490698887258>"), style: ButtonStyle.Success,
-                                disabled: true)
-                            .WithButton(customId: "goto-next", emote: Emoji.Parse(":arrow_forward:"), disabled: true)
-                            .WithButton(customId: "goto-end", emote: Emoji.Parse(":track_next:"), disabled: true);
-                        msg.Components = builder.Build();
-                    }
-                    else
-                    {
-                        var builder = new ComponentBuilder()
-                            .WithButton(customId: "goto-start", emote: Emoji.Parse(":track_previous:"), disabled: true)
-                            .WithButton(customId: "goto-previous", emote: Emoji.Parse(":arrow_backward:"), disabled: true)
-                            .WithButton(customId: "trigger-easteregg", emote: Emote.Parse("<:izzylurk:994638513431646298>"),
-                                disabled: true)
-                            .WithButton(customId: "goto-next", emote: Emoji.Parse(":arrow_forward:"), disabled: true)
-                            .WithButton(customId: "goto-end", emote: Emoji.Parse(":track_next:"), disabled: true);
-                        msg.Components = builder.Build();
-                    }
-                }
+                var easterEggButtonId = _easterEggChanged ? "trigger-easteregg-active" : "trigger-easteregg";
+                var easterEggButtonStyle = _easterEggChanged ? ButtonStyle.Success : ButtonStyle.Primary;
+
+                var builder = new ComponentBuilder()
+                    .WithButton(customId: "goto-start", emote: Emoji.Parse(":track_previous:"), disabled: disableButtons)
+                    .WithButton(customId: "goto-previous", emote: Emoji.Parse(":arrow_backward:"), disabled: disableButtons)
+                    .WithButton(customId: easterEggButtonId, emote: Emote.Parse(_easterEggEmoji), style: easterEggButtonStyle, disabled: disableButtons)
+                    .WithButton(customId: "goto-next", emote: Emoji.Parse(":arrow_forward:"), disabled: disableButtons)
+                    .WithButton(customId: "goto-end", emote: Emoji.Parse(":track_next:"), disabled: disableButtons);
+                msg.Components = builder.Build();
             });
         }
         catch (ArgumentOutOfRangeException ex)
@@ -225,7 +200,8 @@ public class PaginationHelper
                 RedrawPagination();
                 break;
             case "trigger-easteregg":
-                _easterEgg = true;
+                _easterEggChanged = true;
+                _easterEggEmoji = GetRandomEmoji();
                 RedrawPagination();
                 break;
         }
@@ -243,4 +219,46 @@ public class PaginationHelper
             _message = null;
         }
     }
+
+    private string GetRandomEmoji()
+    {
+        var index = new Random().Next(EasterEggEmojis.Count());
+        return EasterEggEmojis[index];
+    }
+
+    private readonly static string[] EasterEggEmojis = new string[]
+    {
+        "<:izzynothoughtsheadempty:910198222255972382>",
+        "<a:izzywhat:891381404741550130>",
+        "<:izzystare:884921135312015460>",
+        "<:izzyooh:889126310260113449>",
+        "<:izzyangy:938893998393815143>",
+        "<:izzybeans:897571951726436444>",
+        "<:izzybedsheet:814540631555833907>",
+        "<a:izzyblep:819291324872130560>",
+        "<a:izzybongocat:1018915049902968962>",
+        "<:izzyburn:859900496109502484>",
+        "<:izzycat:819294858967384084>",
+        "<:izzydeletethis:1028964499723661372>",
+        "<:izzycoolglasses:819294859865227264>",
+        "<:izzyderp:891008714222501890>",
+        "<a:izzyearflop:892858128641687572>",
+        "<:izzyfloof:884918388185497652>",
+        "<a:izzygooglyeyes:965230685382144000>",
+        "<:izzygun:908419314250571886>",
+        "<:izzyhappy:819294868424753153>",
+        "<a:izzyimmagetya:1068184442457301202>",
+        "<:izzylmao:819294865670144000>",
+        "<:izzylurk:909475647427067904>",
+        "<:izzymediumsneaky:897569795606732830>",
+        "<:izzynoticesyoursparkleowo:989521523876446258>",
+        "<:izzysilly:814551113109209138>",
+        "<a:izzymwahaha:1045311925959004211>",
+        "<:izzypartyhat:814551115752013886>",
+        "<:izzyohyou:859937581081034782>",
+        "<:izzymaximumsneaky:892869437970059314>",
+        "<a:izzynom:1007272501451178096>",
+        "<:izzyscrunch:907312716979511317>",
+        "<:izzysneaksy:1044262492932673607>",
+    };
 }
