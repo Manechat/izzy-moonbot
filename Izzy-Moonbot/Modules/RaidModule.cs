@@ -1,14 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord.Commands;
-using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Attributes;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Service;
 using Izzy_Moonbot.Settings;
-using Serilog;
 
 namespace Izzy_Moonbot.Modules;
 
@@ -61,7 +58,7 @@ public class RaidModule : ModuleBase<SocketCommandContext>
 
         var msg = $"I've set `AutoSilenceNewJoins` to `true`";
         if (recentJoins.Any())
-            msg += $" and silenced the following recent joins: {string.Join(' ', recentJoins.Select(u => $"<@{u.Id}>"))}";
+            msg += $" and silenced the following recent joins: {string.Join(' ', recentJoins.Select(u => $"<@{u.Id}>"))}\n" + RaidService.PLEASE_ASSOFF;
         else
             // "users must have users in them" is a poorly chosen error message that this
             // command once produced, and was so funny we felt the need to keep it around.
@@ -83,7 +80,8 @@ public class RaidModule : ModuleBase<SocketCommandContext>
         _generalStorage.ManualRaidSilence = false;
         await FileHelper.SaveGeneralStorageAsync(_generalStorage);
 
-        await ReplyAsync($"Jinxie avoided! I've set `AutoSilenceNewJoins` back to `false`");
+        await ReplyAsync($"Jinxie avoided! I've set `AutoSilenceNewJoins` back to `false`, " +
+            "and consider the raid to be over. " + RaidService.ALARMS_ACTIVE);
     }
 
     [Command("getrecentjoins")]
