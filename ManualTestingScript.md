@@ -42,6 +42,13 @@ Because this is a *manual* testing script, the goal is not be comprehensive cove
 
 - `.ban <your alt> 10 seconds`, which should remove your alt from the server, post messages and mod logs, then later allow the alt to rejoin
 
-- `.wipe <#963788928702373918> 10 minutes`, which should delete most of the messages you just produced, post a bulk deletion log and link to it
+- small raids (you'd need at least two alts to test a large raid)
+	- make sure your test values for `.config SmallRaidDecay` and `.config RecentJoinDecay` are low (e.g. `1` and `10`), so this will involve less waiting, and that `.config RaidProtectionEnabled` is `true`
+	- run `.config SmallRaidSize 1`
+	- make your alt (re)join, which should post a raid message
+	- wait 1 minute for the "raid" to end, which should post another message
+	- either do `.config RaidProtectionEnabled false` or change `.config SmallRaidSize` back to a more reasonable value
+
+- `.wipe <#963788928702373918> 20 minutes`, which should delete most of the messages you just produced, post a bulk deletion log and link to it
 
 (we don't have a great way to repeatedly test raids right now; even the `.test raid` command requires seveal real user ids which would then get silenced and that's a mess to clean up)
