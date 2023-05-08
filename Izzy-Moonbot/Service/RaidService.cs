@@ -120,6 +120,11 @@ public class RaidService
                     var msg = TIME_SINCE_SMALL() + ", " + BUT_RECENT() + CONSIDER_ONGOING + "\n\n" + PLEASE_ASSOFF;
                     await _modLog.CreateModLog(guild).SetContent(msg).SetFileLogContent(msg).Send();
                 }
+                else if (_generalStorage.ManualRaidSilence)
+                {
+                    var msg = TIME_SINCE_SMALL() + ", but `.ass` was run in the meantime" + CONSIDER_ONGOING + "\n\n" + PLEASE_ASSOFF;
+                    await _modLog.CreateModLog(guild).SetContent(msg).SetFileLogContent(msg).Send();
+                }
                 else
                 {
                     _log.Log("Ending small raid");
