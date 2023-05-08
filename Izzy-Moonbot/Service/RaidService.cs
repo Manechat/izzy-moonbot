@@ -112,7 +112,8 @@ public class RaidService
                 // Either someone ran .assoff or this escalated to a large raid. Either way, we don't need a "small raid is over" message.
                 if (_generalStorage.CurrentRaidMode != RaidMode.Small) return;
 
-                if (_state.RecentJoins.Count >= _config.SmallRaidSize)
+                var recentJoinCount = GetRecentJoins(guild).Count;
+                if (recentJoinCount >= _config.SmallRaidSize)
                 {
                     _log.Log("Small raid is ongoing, inform mods it will have to be ended manually");
 
@@ -170,7 +171,8 @@ public class RaidService
 
                 // Rather than "decay" separately from large to small and then to none, it's simpler to just say
                 // a large raid doesn't end until we've fallen below the threshhold for any size of raid.
-                if (_state.RecentJoins.Count >= _config.SmallRaidSize)
+                var recentJoinCount = GetRecentJoins(guild).Count;
+                if (recentJoinCount >= _config.SmallRaidSize)
                 {
                     _log.Log("Large raid is ongoing, inform mods it will have to be ended manually");
 
