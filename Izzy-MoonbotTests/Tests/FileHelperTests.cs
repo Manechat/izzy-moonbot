@@ -192,6 +192,89 @@ public class FileHelperTests
 
         var config = JsonConvert.DeserializeObject<Config>(testConfig);
         var serialized = JsonConvert.SerializeObject(config, Formatting.Indented);
-        Assert.AreEqual(testConfig, serialized);
+
+        // testConfig with Small/LargeRaidTime removed
+        Assert.AreEqual("""
+            {
+              "Prefix": ".",
+              "UnicycleInterval": 100,
+              "MentionResponseEnabled": true,
+              "MentionResponses": [
+                "ohayo sekai good morning world",
+                "???"
+              ],
+              "MentionResponseCooldown": 10.0,
+              "DiscordActivityName": "you all soon",
+              "DiscordActivityWatching": true,
+              "Aliases": {
+                "testalias": "echo Test successful!",
+                "aliasfail": "",
+                "member": "assignrole <@&973220758736216084>",
+                "a": "ass"
+              },
+              "FirstRuleMessageId": 994643448948850788,
+              "HiddenRules": {
+                "-1": "<a:twiactually:613109204118667293>",
+                "test": "hello"
+              },
+              "BannerMode": 0,
+              "BannerInterval": 1.0,
+              "BannerImages": [
+                "test1",
+                "test2",
+                "test3",
+                "test4",
+                "test5",
+                "test6"
+              ],
+              "ModRole": 964283794083446804,
+              "ModChannel": 973218854237007963,
+              "LogChannel": 964283764240973844,
+              "ManageNewUserRoles": true,
+              "MemberRole": 965978050229571634,
+              "NewMemberRole": 1039194817231601695,
+              "NewMemberRoleDecay": 120.0,
+              "RolesToReapplyOnRejoin": [],
+              "FilterEnabled": true,
+              "FilterIgnoredChannels": [
+                964283764240973844
+              ],
+              "FilterBypassRoles": [
+                964283794083446804
+              ],
+              "FilterDevBypass": false,
+              "FilterWords": [
+                "magic",
+                "wing",
+                "feather",
+                "mayonnaise"
+              ],
+              "SpamEnabled": true,
+              "SpamBypassRoles": [
+                964283794083446804
+              ],
+              "SpamIgnoredChannels": [
+                964283764240973844
+              ],
+              "SpamDevBypass": true,
+              "SpamBasePressure": 10.0,
+              "SpamImagePressure": 8.3,
+              "SpamLengthPressure": 0.00625,
+              "SpamLinePressure": 2.8,
+              "SpamPingPressure": 2.5,
+              "SpamRepeatPressure": 20.0,
+              "SpamUnusualCharacterPressure": 0.01,
+              "SpamMaxPressure": 60.0,
+              "SpamPressureDecay": 2.5,
+              "SpamMessageDeleteLookback": 60.0,
+              "RaidProtectionEnabled": false,
+              "AutoSilenceNewJoins": false,
+              "SmallRaidSize": 3,
+              "LargeRaidSize": 10,
+              "RecentJoinDecay": 300.0,
+              "SmallRaidDecay": 5.0,
+              "LargeRaidDecay": 30.0
+            }
+            """, serialized);
     }
 }

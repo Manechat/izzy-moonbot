@@ -667,29 +667,15 @@ public class ConfigCommandTests
         Assert.AreEqual(cfg.SmallRaidSize, 5);
         Assert.AreEqual("I've set `SmallRaidSize` to the following content: 5", generalChannel.Messages.Last().Content);
 
-        // post ".config SmallRaidTime 50"
-        Assert.AreEqual(cfg.SmallRaidTime, 180);
-        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config SmallRaidTime 50");
-        await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "SmallRaidTime", "50");
-        Assert.AreEqual(cfg.SmallRaidTime, 50);
-        Assert.AreEqual("I've set `SmallRaidTime` to the following content: 50", generalChannel.Messages.Last().Content);
-
         // post ".config LargeRaidSize 20"
-        Assert.AreEqual(cfg.LargeRaidSize, 10);
+        Assert.AreEqual(cfg.LargeRaidSize, 6);
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config LargeRaidSize 20");
         await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "LargeRaidSize", "20");
         Assert.AreEqual(cfg.LargeRaidSize, 20);
         Assert.AreEqual("I've set `LargeRaidSize` to the following content: 20", generalChannel.Messages.Last().Content);
 
-        // post ".config LargeRaidTime 200"
-        Assert.AreEqual(cfg.LargeRaidTime, 120);
-        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config LargeRaidTime 200");
-        await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "LargeRaidTime", "200");
-        Assert.AreEqual(cfg.LargeRaidTime, 200);
-        Assert.AreEqual("I've set `LargeRaidTime` to the following content: 200", generalChannel.Messages.Last().Content);
-
         // post ".config RecentJoinDecay 100"
-        Assert.AreEqual(cfg.RecentJoinDecay, 300);
+        Assert.AreEqual(cfg.RecentJoinDecay, 120);
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config RecentJoinDecay 100");
         await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "RecentJoinDecay", "100");
         Assert.AreEqual(cfg.RecentJoinDecay, 100);
@@ -713,7 +699,7 @@ public class ConfigCommandTests
         // Ensure we can't forget to keep this test up to date
         var configPropsCount = typeof(Config).GetProperties().Length;
 
-        Assert.AreEqual(49, configPropsCount,
+        Assert.AreEqual(47, configPropsCount,
             $"\nIf you just added or removed a config item, then this test is probably out of date");
 
         Assert.AreEqual(configPropsCount * 2, generalChannel.Messages.Count(),

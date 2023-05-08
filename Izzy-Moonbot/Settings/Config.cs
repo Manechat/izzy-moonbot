@@ -67,10 +67,8 @@ public class Config
         RaidProtectionEnabled = true;
         AutoSilenceNewJoins = false;
         SmallRaidSize = 3;
-        SmallRaidTime = 180;
-        LargeRaidSize = 10;
-        LargeRaidTime = 120;
-        RecentJoinDecay = 300;
+        LargeRaidSize = 6;
+        RecentJoinDecay = 120;
         SmallRaidDecay = 5;
         LargeRaidDecay = 30;
     }
@@ -151,9 +149,7 @@ public class Config
     public bool RaidProtectionEnabled { get; set; }
     public bool AutoSilenceNewJoins { get; set; }
     public int SmallRaidSize { get; set; }
-    public double SmallRaidTime { get; set; }
     public int LargeRaidSize { get; set; }
-    public double LargeRaidTime { get; set; }
     public double RecentJoinDecay { get; set; }
     public double? SmallRaidDecay { get; set; }
     public double? LargeRaidDecay { get; set; }

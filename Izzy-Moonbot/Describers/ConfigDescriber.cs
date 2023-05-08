@@ -185,7 +185,7 @@ public class ConfigDescriber
         // Raid settings
         _config.Add("RaidProtectionEnabled",
             new ConfigItem(ConfigItemType.Boolean,
-                "Whether or not I will protect this server against raids. Consider disabling this if you anticipate a large increase in member count over a few days (3000 in 4 days for example)",
+                "Whether or not I will protect this server against raids. Consider disabling this if you anticipate a large increase in member count over a few days (e.g. 3000 in 4 days)",
                 ConfigItemCategory.Raid));
         _config.Add("AutoSilenceNewJoins",
             new ConfigItem(ConfigItemType.Boolean,
@@ -194,31 +194,23 @@ public class ConfigDescriber
                 ConfigItemCategory.Raid));
         _config.Add("SmallRaidSize",
             new ConfigItem(ConfigItemType.Integer,
-                "How many users have to join in `SmallRaidTime` seconds in order for me to notify mods about a potential raid.",
-                ConfigItemCategory.Raid));
-        _config.Add("SmallRaidTime",
-            new ConfigItem(ConfigItemType.Double,
-                "In how many seconds do `SmallRaidSize` users need to join in order for me to notify mods about a potential raid.",
+                "How many recent joins (see `RecentJoinDecay`) it takes for me to notify mods about a potential raid.",
                 ConfigItemCategory.Raid));
         _config.Add("LargeRaidSize",
             new ConfigItem(ConfigItemType.Integer,
-                "How many users have to join in `LargeRaidTime` seconds in order for me to automatically enable raidsilence.",
-                ConfigItemCategory.Raid));
-        _config.Add("LargeRaidTime",
-            new ConfigItem(ConfigItemType.Double,
-                "In how many seconds do `LargeRaidSize` users need to join in order for me to automatically enable raidsilence.",
+                "How many recent joins (see `RecentJoinDecay`) it takes for me to automatically enable `AutoSilenceNewUsers`.",
                 ConfigItemCategory.Raid));
         _config.Add("RecentJoinDecay",
             new ConfigItem(ConfigItemType.Double,
-                "How long to wait, in seconds, before I no longer considering a new member a 'recent join' (no longer considered part of any raid if one were to occur).",
+                "How long to wait, in seconds, before I no longer consider a new member a 'recent join'.",
                 ConfigItemCategory.Raid));
         _config.Add("SmallRaidDecay",
             new ConfigItem(ConfigItemType.Double,
-                "How many minutes do I wait before automatically downgrading a Small raid to No raid.",
+                "How many minutes do I wait before declaring a small raid over.",
                 ConfigItemCategory.Raid, true));
         _config.Add("LargeRaidDecay",
             new ConfigItem(ConfigItemType.Double,
-                "How many minutes do I wait before automatically downgrading a Large raid to a Small raid.",
+                "How many minutes do I wait before declaring a large raid over (and automatically disabling `AutoSilenceNewUsers`).",
                 ConfigItemCategory.Raid, true));
     }
 
