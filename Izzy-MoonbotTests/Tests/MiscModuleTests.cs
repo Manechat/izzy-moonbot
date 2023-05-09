@@ -346,7 +346,7 @@ public class MiscModuleTests
         description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "**.rmquote** (alternate name of **.removequote**) - Quotes category", null, null);
         StringAssert.Contains(description, "ℹ  *This is a moderator", null, null);
-        StringAssert.Contains(description, "*Removes a quote from a user or category", null, null);
+        StringAssert.Contains(description, "*Removes a quote from a user", null, null);
         StringAssert.Contains(description, "Syntax: `.removequote user id`", null, null);
         StringAssert.Contains(description, "user [User ID", null, null);
         StringAssert.Contains(description, "id [Integer]", null, null);
