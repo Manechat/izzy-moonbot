@@ -63,7 +63,10 @@ public class ModMiscModuleTests
         var cfgDescriber = new ConfigDescriber();
         var modLog = new ModLoggingService(cfg);
         var gs = new GeneralStorage();
-        var mm = new MiscModule(cfg, cfgDescriber, ss, logger, modLog, await MiscModuleTests.SetupCommandService(), gs);
+        var quotes = new QuoteStorage();
+        var userinfo = new Dictionary<ulong, User>();
+        var qs = new QuoteService(quotes, userinfo);
+        var mm = new MiscModule(cfg, cfgDescriber, ss, logger, modLog, await MiscModuleTests.SetupCommandService(), gs, qs);
 
 
         var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".schedule");

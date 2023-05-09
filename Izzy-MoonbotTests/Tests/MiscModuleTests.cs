@@ -68,9 +68,12 @@ public class MiscModuleTests
         var logger = new LoggingService(new TestLogger<Worker>());
         var ss = new ScheduleService(cfg, mod, modLog, logger, scheduledJobs);
         var gs = new GeneralStorage();
+        var quotes = new QuoteStorage();
+        var userinfo = new Dictionary<ulong, User>();
+        var qs = new QuoteService(quotes, userinfo);
 
         var cfgDescriber = new ConfigDescriber();
-        return (ss, new MiscModule(cfg, cfgDescriber, ss, logger, modLog, await SetupCommandService(), gs));
+        return (ss, new MiscModule(cfg, cfgDescriber, ss, logger, modLog, await SetupCommandService(), gs, qs));
     }
 
     [TestMethod()]
