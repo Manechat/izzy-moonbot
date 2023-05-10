@@ -32,22 +32,22 @@ public class QuoteServiceTests
         Assert.AreEqual(new Quote(0, "Sunny", "gonna be my day"), new Quote(0, "Sunny", "gonna be my day"));
         Assert.AreEqual(new Quote(0, "Sunny", "gonna be my day"), qs.GetQuote(sunny, 0));
 
-        TestUtils.AssertListsAreEqual(new List<Quote> {
-            new Quote(0, "Sunny", "gonna be my day")
-        }, qs.GetQuotes(sunny));
+        TestUtils.AssertListsAreEqual(new List<string> {
+            "gonna be my day"
+        }, qs.GetQuotes(sunny.Id));
 
         await qs.AddQuote(sunny, "eat more vegetables");
 
-        TestUtils.AssertListsAreEqual(new List<Quote> {
-            new Quote(0, "Sunny", "gonna be my day"),
-            new Quote(1, "Sunny", "eat more vegetables")
-        }, qs.GetQuotes(sunny));
+        TestUtils.AssertListsAreEqual(new List<string> {
+            "gonna be my day",
+            "eat more vegetables"
+        }, qs.GetQuotes(sunny.Id));
 
         await qs.RemoveQuote(sunny, 0);
 
-        TestUtils.AssertListsAreEqual(new List<Quote> {
-            new Quote(0, "Sunny", "eat more vegetables")
-        }, qs.GetQuotes(sunny));
+        TestUtils.AssertListsAreEqual(new List<string> {
+            "eat more vegetables"
+        }, qs.GetQuotes(sunny.Id));
     }
 
     [TestMethod()]

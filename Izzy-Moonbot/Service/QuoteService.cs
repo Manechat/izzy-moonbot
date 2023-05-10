@@ -139,26 +139,12 @@ public class QuoteService
         return new Quote(id, quoteName, quoteContent);
     }
 
-    /// <summary>
-    /// Get a list of quotes from a valid Discord user.
-    /// </summary>
-    /// <param name="user">The user to get the quotes of.</param>
-    /// <returns>An array of Quotes that this user has.</returns>
-    /// <exception cref="NullReferenceException">If the user doesn't have any quotes.</exception>
-    public Quote[] GetQuotes(IIzzyUser user)
+    public List<string>? GetQuotes(ulong userId)
     {
-        if (!_quoteStorage.Quotes.ContainsKey(user.Id.ToString()))
-            throw new NullReferenceException("That user does not have any quotes.");
-        
-        var quotes = _quoteStorage.Quotes[user.Id.ToString()].Select((content, index) =>
-        {
-            var quoteName = user.Username;
-            if (user is IGuildUser guildUser) quoteName = guildUser.DisplayName;
+        if (!_quoteStorage.Quotes.ContainsKey(userId.ToString()))
+            return null;
 
-            return new Quote(index, quoteName, content);
-        }).ToArray();
-
-        return quotes;
+        return _quoteStorage.Quotes[userId.ToString()];
     }
 
     /// <summary>

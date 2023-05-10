@@ -216,62 +216,35 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
             return;
         }
 
+        ulong userId;
         if (_quoteService.AliasExists(search))
+            userId = _quoteService.ProcessAlias(search, defaultGuild).Id;
+        else
+            userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(search, context, true);
+
+        if (userId == 0)
         {
-            var user = _quoteService.ProcessAlias(search, defaultGuild);
-
-            try
-            {
-                var quotes = _quoteService.GetQuotes(user).Select(quote => $"{quote.Id + 1}: {quote.Content}").ToArray();
-
-                PaginationHelper.PaginateIfNeededAndSendMessage(
-                    context,
-                    $"Here's all the quotes I have for **{user.Username}#{user.Discriminator}**.",
-                    quotes,
-                    $"Run `{_config.Prefix}quote <user> <number>` to get a specific quote.\n" +
-                    $"Run `{_config.Prefix}quote <user>` to get a random quote from that user.\n" +
-                    $"Run `{_config.Prefix}quote` for a random quote from a random user.",
-                    pageSize: 15,
-                    allowedMentions: AllowedMentions.None
-                );
-                return;
-            }
-            catch (NullReferenceException)
-            {
-                await context.Channel.SendMessageAsync($"I couldn't find any quotes for that user.");
-                return;
-            }
-        }
-
-        var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(search, context, true);
-        var member = defaultGuild.GetUser(userId);
-        if (member == null)
-        {
-            await context.Channel.SendMessageAsync("I was unable to find the user you asked for. Sorry!");
+            await context.Channel.SendMessageAsync($"I was unable to find the user you asked for. Sorry!");
             return;
         }
 
-        try
-        {
-            var quotes = _quoteService.GetQuotes(member).Select(quote => $"{quote.Id + 1}: {quote.Content}").ToArray();
-
-            PaginationHelper.PaginateIfNeededAndSendMessage(
-                context,
-                $"Here's all the quotes I have for **{member.DisplayName}**.",
-                quotes,
-                $"Run `{_config.Prefix}quote <user> <number>` to get a specific quote.\n" +
-                $"Run `{_config.Prefix}quote <user>` to get a random quote from that user.\n" +
-                $"Run `{_config.Prefix}quote` for a random quote from a random user.",
-                pageSize: 15,
-                allowedMentions: AllowedMentions.None
-            );
-            return;
-        }
-        catch (NullReferenceException)
+        var quotes = _quoteService.GetQuotes(userId);
+        if (quotes == null)
         {
             await context.Channel.SendMessageAsync($"I couldn't find any quotes for that user.");
             return;
         }
+
+        PaginationHelper.PaginateIfNeededAndSendMessage(
+            context,
+            $"Here's all the quotes I have for <@{userId}>.",
+            quotes.Select((quote, index) => $"{index + 1}: {quote}").ToArray(),
+            $"Run `{_config.Prefix}quote <user> <number>` to get a specific quote.\n" +
+            $"Run `{_config.Prefix}quote <user>` to get a random quote from that user.\n" +
+            $"Run `{_config.Prefix}quote` for a random quote from a random user.",
+            pageSize: 15,
+            allowedMentions: AllowedMentions.None
+        );
     }
 
     [Command("addquote")]

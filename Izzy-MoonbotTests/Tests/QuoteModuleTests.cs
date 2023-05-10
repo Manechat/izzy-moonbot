@@ -85,7 +85,7 @@ public class QuoteModuleTests
 
         description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "all the quotes");
-        StringAssert.Contains(description, "for **Izzy Moonbot**");
+        StringAssert.Contains(description, $"for <@{izzy.Id}>");
         StringAssert.Contains(description, $"```\n" +
             $"1: let's unicycle it\n" +
             $"```\n");
@@ -98,7 +98,7 @@ public class QuoteModuleTests
 
         description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "all the quotes");
-        StringAssert.Contains(description, "for **Sunny**");
+        StringAssert.Contains(description, $"for <@{sunny.Id}>");
         StringAssert.Contains(description, $"```\n" +
             $"1: gonna be my day\n" +
             $"2: eat more vegetables\n" +
@@ -163,7 +163,7 @@ public class QuoteModuleTests
 
         var description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "all the quotes");
-        StringAssert.Contains(description, "for **Sunny**");
+        StringAssert.Contains(description, $"for <@{sunny.Id}>");
         StringAssert.Contains(description, $"```\n" +
             $"1: gonna be my day\n" +
             $"2: gonna be my day\n" +
