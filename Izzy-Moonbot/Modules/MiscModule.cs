@@ -27,8 +27,9 @@ public class MiscModule : ModuleBase<SocketCommandContext>
     private readonly ModLoggingService _modLog;
     private readonly CommandService _commands;
     private readonly GeneralStorage _generalStorage;
+    private readonly QuoteService _quoteService;
 
-    public MiscModule(Config config, ConfigDescriber configDescriber, ScheduleService schedule, LoggingService logger, ModLoggingService modLog, CommandService commands, GeneralStorage generalStorage)
+    public MiscModule(Config config, ConfigDescriber configDescriber, ScheduleService schedule, LoggingService logger, ModLoggingService modLog, CommandService commands, GeneralStorage generalStorage, QuoteService quoteService)
     {
         _config = config;
         _configDescriber = configDescriber;
@@ -37,6 +38,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
         _modLog = modLog;
         _commands = commands;
         _generalStorage = generalStorage;
+        _quoteService = quoteService;
     }
 
     [Command("banner")]
@@ -381,6 +383,14 @@ public class MiscModule : ModuleBase<SocketCommandContext>
             ponyReadable += PonyReadableCommandHelp(prefix, item, commandInfo);
             ponyReadable += PonyReadableSelfSearch(item, isMod, isDev);
             await context.Channel.SendMessageAsync(ponyReadable);
+        }
+        // Try quote aliases
+        else if (_quoteService.AliasExists(item))
+        {
+            var user = _quoteService.ProcessAlias(item, context.Guild);
+
+            await context.Channel.SendMessageAsync($"'{item}' is a quotealias for the user <@{user.Id}>. Use `.listquotes {item}` or `.quote {item}` to see their quotes." +
+                "\n\nSee `.help quote` and `.help quotelias` for more information.");
         }
         else
         {
