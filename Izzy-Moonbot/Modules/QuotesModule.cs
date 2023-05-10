@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
@@ -17,11 +18,32 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
 {
     private readonly Config _config;
     private readonly QuoteService _quoteService;
+    private readonly Dictionary<ulong, User> _users;
 
-    public QuotesModule(Config config, QuoteService quoteService)
+    public QuotesModule(Config config, QuoteService quoteService, Dictionary<ulong, User> users)
     {
         _config = config;
         _quoteService = quoteService;
+        _users = users;
+    }
+
+    // Usually <@id> is the best display format, but _users contains the names for some user ids
+    // who left the server yet are still recorded in quotes, so we can do better than Discord
+    // by fetching those ancient user names.
+    private string DisplayUserId(ulong userId, IIzzyGuild guild)
+    {
+        var potentialUser = guild.GetUser(userId);
+
+        // Still in the server, so <@id> will resolve just fine
+        if (potentialUser != null)
+            return $"<@{userId}>";
+
+        if (_users.TryGetValue(userId, out var user))
+            // This is the case where we have a name that Discord probably doesn't, so use it
+            return user.Username;
+
+        // Never mind, we know nothing after all, just let them render as <@123456>
+        return $"<@{userId}>";
     }
 
     [Command("quote")]
@@ -51,7 +73,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
         {
             var (randomUserId, index, quote) = _quoteService.GetRandomQuote();
 
-            await context.Channel.SendMessageAsync($"<@{randomUserId}> **`#{index + 1}`:** {quote}", allowedMentions: AllowedMentions.None);
+            await context.Channel.SendMessageAsync($"{DisplayUserId(randomUserId, defaultGuild)} **`#{index + 1}`:** {quote}", allowedMentions: AllowedMentions.None);
             return;
         }
 
@@ -84,7 +106,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
                 return;
             }
 
-            await context.Channel.SendMessageAsync($"<@{userId}> **`#{result.Value.Item1 + 1}`:** {result.Value.Item2}", allowedMentions: AllowedMentions.None);
+            await context.Channel.SendMessageAsync($"{DisplayUserId(userId, defaultGuild)} **`#{result.Value.Item1 + 1}`:** {result.Value.Item2}", allowedMentions: AllowedMentions.None);
         }
         // Get specific quote from a specific user
         else
@@ -102,7 +124,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
                 return;
             }
 
-            await context.Channel.SendMessageAsync($"<@{userId}> **`#{number.Value}`:** {quote}", allowedMentions: AllowedMentions.None);
+            await context.Channel.SendMessageAsync($"{DisplayUserId(userId, defaultGuild)} **`#{number.Value}`:** {quote}", allowedMentions: AllowedMentions.None);
         }
     }
 
@@ -163,7 +185,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
 
         PaginationHelper.PaginateIfNeededAndSendMessage(
             context,
-            $"Here's all the quotes I have for <@{userId}>.",
+            $"Here's all the quotes I have for {DisplayUserId(userId, defaultGuild)}.",
             quotes.Select((quote, index) => $"{index + 1}: {quote}").ToArray(),
             $"Run `{_config.Prefix}quote <user> <number>` to get a specific quote.\n" +
             $"Run `{_config.Prefix}quote <user>` to get a random quote from that user.\n" +
