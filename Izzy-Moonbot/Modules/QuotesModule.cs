@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
@@ -88,7 +89,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
         }
 
         ulong userId = _quoteService.AliasExists(search)
-            ? _quoteService.ProcessAlias(search, defaultGuild).Id
+            ? _quoteService.ProcessAlias(search, defaultGuild)
             : await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(search, context, true);
         if (userId == 0)
         {
@@ -166,7 +167,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
 
         ulong userId;
         if (_quoteService.AliasExists(search))
-            userId = _quoteService.ProcessAlias(search, defaultGuild).Id;
+            userId = _quoteService.ProcessAlias(search, defaultGuild);
         else
             userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(search, context, true);
 
@@ -254,7 +255,10 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
         // Check for aliases
         if (_quoteService.AliasExists(user))
         {
-            var quoteUser = _quoteService.ProcessAlias(user, context.Guild);
+            var aliasUserId = _quoteService.ProcessAlias(user, context.Guild);
+            var quoteUser = context.Guild.GetUser(aliasUserId);
+            if (quoteUser == null)
+                throw new TargetException("The user this alias referenced to cannot be found.");
 
             var newAliasUserQuote = await _quoteService.AddQuote(quoteUser, content);
 
@@ -332,7 +336,10 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
         // Check for aliases
         if (_quoteService.AliasExists(user))
         {
-            var quoteUser = _quoteService.ProcessAlias(user, context.Guild);
+            var aliasUserId = _quoteService.ProcessAlias(user, context.Guild);
+            var quoteUser = context.Guild.GetUser(aliasUserId);
+            if (quoteUser == null)
+                throw new TargetException("The user this alias referenced to cannot be found.");
 
             await _quoteService.RemoveQuote(quoteUser, number.Value - 1);
 
@@ -415,7 +422,10 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
 
             if (_quoteService.AliasExists(alias))
             {
-                var user = _quoteService.ProcessAlias(alias, context.Guild);
+                var aliasUserId = _quoteService.ProcessAlias(alias, context.Guild);
+                var user = context.Guild?.GetUser(aliasUserId);
+                if (user == null)
+                    throw new TargetException("The user this alias referenced to cannot be found.");
 
                 await context.Channel.SendMessageAsync(
                     $"Quote alias **{alias}** maps to user **{user.Username}#{user.Discriminator}**.", allowedMentions: AllowedMentions.None);

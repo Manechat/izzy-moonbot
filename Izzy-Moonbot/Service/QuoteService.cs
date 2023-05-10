@@ -33,31 +33,14 @@ public class QuoteService
         return _quoteStorage.Aliases.Keys.Any(key => key.ToLower() == alias.ToLower());
     }
 
-    /// <summary>
-    /// Process an alias into a IIzzyUser.
-    /// </summary>
-    /// <param name="alias">The alias to process.</param>
-    /// <param name="guild">The guild to get the user from.</param>
-    /// <returns>An instance of IIzzyUser that this alias refers to.</returns>
-    /// <exception cref="TargetException">If the user couldn't be found (left the server).</exception>
-    /// <exception cref="ArgumentException">If the alias doesn't refer to a user.</exception>
-    /// <exception cref="NullReferenceException">If the alias doesn't exist.</exception>
-    public IIzzyUser ProcessAlias(string alias, IIzzyGuild? guild)
+    public ulong ProcessAlias(string alias, IIzzyGuild? guild)
     {
         alias = alias.ToLower();
 
         if (!_quoteStorage.Aliases.TryGetValue(alias, out var value))
             throw new NullReferenceException("That alias does not exist.");
 
-        if (ulong.TryParse(value, out var id))
-        {
-            var potentialUser = guild?.GetUser(id);
-            if (potentialUser == null)
-                throw new TargetException("The user this alias referenced to cannot be found.");
-
-            return potentialUser;
-        }
-        throw new ArgumentException("This alias cannot be converted to an IIzzyUser.");
+        return ulong.Parse(value);
     }
 
     /// <summary>
