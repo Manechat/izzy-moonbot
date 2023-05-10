@@ -25,19 +25,19 @@ public class QuoteModuleTests
 
         var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".quote");
         await qm.TestableQuoteCommandAsync(context, "");
-        Assert.AreEqual("**Sunny `#1`:** gonna be my day", generalChannel.Messages.Last().Content);
+        Assert.AreEqual($"<@{sunny.Id}> **`#1`:** gonna be my day", generalChannel.Messages.Last().Content);
 
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".quote Sunny");
         await qm.TestableQuoteCommandAsync(context, "Sunny");
-        Assert.AreEqual("**Sunny `#1`:** gonna be my day", generalChannel.Messages.Last().Content);
+        Assert.AreEqual($"<@{sunny.Id}> **`#1`:** gonna be my day", generalChannel.Messages.Last().Content);
 
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, $".quote <@{sunny.Id}>");
         await qm.TestableQuoteCommandAsync(context, $"<@{sunny.Id}>");
-        Assert.AreEqual("**Sunny `#1`:** gonna be my day", generalChannel.Messages.Last().Content);
+        Assert.AreEqual($"<@{sunny.Id}> **`#1`:** gonna be my day", generalChannel.Messages.Last().Content);
 
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, $".quote <@{sunny.Id}> 1");
         await qm.TestableQuoteCommandAsync(context, $"<@{sunny.Id}> 1");
-        Assert.AreEqual("**Sunny `#1`:** gonna be my day", generalChannel.Messages.Last().Content);
+        Assert.AreEqual($"<@{sunny.Id}> **`#1`:** gonna be my day", generalChannel.Messages.Last().Content);
 
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, $".quote <@{sunny.Id}> 2");
         await qm.TestableQuoteCommandAsync(context, $"<@{sunny.Id}> 2");
@@ -46,7 +46,7 @@ public class QuoteModuleTests
         // Zipp has no quotes because she never appeared on the pippcast
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".quote Zipp");
         await qm.TestableQuoteCommandAsync(context, "Zipp");
-        Assert.AreEqual("I couldn't find any for that user.", generalChannel.Messages.Last().Content);
+        Assert.AreEqual("I couldn't find any quotes for that user.", generalChannel.Messages.Last().Content);
 
         // Twi didn't make it to G5
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".quote Twilight");

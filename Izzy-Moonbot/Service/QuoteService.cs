@@ -115,28 +115,16 @@ public class QuoteService
         }).ToArray();
     }
 
-    /// <summary>
-    /// Get a quote by a valid Discord user and a quote id.
-    /// </summary>
-    /// <param name="user">The user to get the quote of.</param>
-    /// <param name="id">The quote id to get.</param>
-    /// <returns>A Quote containing the quote information.</returns>
-    /// <exception cref="NullReferenceException">If the user doesn't have any quotes.</exception>
-    /// <exception cref="IndexOutOfRangeException">If the id provided is larger than the number of quotes the user has.</exception>
-    public Quote GetQuote(IIzzyUser user, int id)
+    public string? GetQuote(ulong userId, int index)
     {
-        if (!_quoteStorage.Quotes.ContainsKey(user.Id.ToString()))
-            throw new NullReferenceException("That user does not have any quotes.");
-        
-        var quotes = _quoteStorage.Quotes[user.Id.ToString()];
+        if (!_quoteStorage.Quotes.ContainsKey(userId.ToString()))
+            return null;
 
-        if (quotes.Count <= id) throw new IndexOutOfRangeException("That quote ID does not exist.");
+        var quotes = _quoteStorage.Quotes[userId.ToString()];
+        if (quotes.Count <= index)
+            return null;
 
-        var quoteName = user.Username;
-        if (user is IGuildUser guildUser) quoteName = guildUser.DisplayName;
-        var quoteContent = quotes[id];
-
-        return new Quote(id, quoteName, quoteContent);
+        return quotes[index];
     }
 
     public List<string>? GetQuotes(ulong userId)
@@ -147,53 +135,31 @@ public class QuoteService
         return _quoteStorage.Quotes[userId.ToString()];
     }
 
-    /// <summary>
-    /// Gets a random quote from a random user.
-    /// </summary>
-    /// <param name="guild">The guild to get the user from, for name fetching purposes.</param>
-    /// <returns>A Quote containing the quote information.</returns>
-    public Quote GetRandomQuote(IIzzyGuild guild)
+    public (ulong, int, string) GetRandomQuote()
     {
-        Random rnd = new Random();
-        var key = _quoteStorage.Quotes.Keys.ToArray()[rnd.Next(_quoteStorage.Quotes.Keys.Count)];
+        var rnd = new Random();
+
+        var quoteKeys = _quoteStorage.Quotes.Keys.ToArray();
+        var key = quoteKeys[rnd.Next(quoteKeys.Length)];
+
+        var userId = ulong.Parse(key);
 
         var quotes = _quoteStorage.Quotes[key];
+        var index = rnd.Next(quotes.Count);
 
-        var id = ulong.Parse(key);
-        string quoteName;
-        var potentialUser = guild.GetUser(id);
-        if (potentialUser == null)
-            quoteName = _users.ContainsKey(id) ? _users[id].Username : $"<@{id}>";
-        else
-            quoteName = potentialUser.DisplayName;
-
-        var quoteId = rnd.Next(quotes.Count);
-        var quoteContent = quotes[quoteId];
-
-        return new Quote(quoteId, quoteName, quoteContent);
+        return (userId, index, quotes[index]);
     }
-    
-    /// <summary>
-    /// Get a random quote by a valid Discord user.
-    /// </summary>
-    /// <param name="user">The user to get the quote of.</param>
-    /// <returns>A Quote containing the quote information.</returns>
-    /// <exception cref="NullReferenceException">If the user doesn't have any quotes.</exception>
-    public Quote GetRandomQuote(IIzzyUser user)
-    {
-        if (!_quoteStorage.Quotes.ContainsKey(user.Id.ToString()))
-            throw new NullReferenceException("That user does not have any quotes.");
-        
-        var quotes = _quoteStorage.Quotes[user.Id.ToString()];
-        
-        var quoteName = user.Username;
-        if (user is IGuildUser guildUser) quoteName = guildUser.DisplayName;
-        
-        Random rnd = new Random();
-        var quoteId = rnd.Next(quotes.Count);
-        var quoteContent = quotes[quoteId];
 
-        return new Quote(quoteId, quoteName, quoteContent);
+    public (int, string)? GetRandomQuote(ulong userId)
+    {
+        if (!_quoteStorage.Quotes.ContainsKey(userId.ToString()))
+            return null;
+
+        var quotes = _quoteStorage.Quotes[userId.ToString()];
+
+        var index = new Random().Next(quotes.Count);
+
+        return (index, quotes[index]);
     }
 
     /// <summary>
