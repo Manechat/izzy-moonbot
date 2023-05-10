@@ -13,6 +13,7 @@ using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Attributes;
 using Izzy_Moonbot.EventListeners;
 using Izzy_Moonbot.Helpers;
+using Izzy_Moonbot.Modules;
 using Izzy_Moonbot.Service;
 using Izzy_Moonbot.Settings;
 using Microsoft.Extensions.DependencyInjection;
@@ -201,6 +202,7 @@ namespace Izzy_Moonbot
             _logger.LogDebug("ReadyEvent() starting unicycle loop");
             _scheduleService.BeginUnicycleLoop(new DiscordSocketClientAdapter(_client));
 
+            _logger.LogDebug("ReadyEvent() setting up application commands");
             _client.MessageCommandExecuted += MessageCommandHandler;
             _client.UserCommandExecuted += UserCommandHandler;
 
@@ -210,24 +212,28 @@ namespace Izzy_Moonbot
             // TODO: avoid resetting app commands if they're already set up
             // var gacs = await _client.Rest.GetGuildApplicationCommands(guildId);
 
-            var guildUserCommand = new UserCommandBuilder()
-                .WithName(".userinfo (ephemeral)")
-                .WithDefaultPermission(false);
-            var guildMessageCommand = new MessageCommandBuilder()
-                .WithName("Test Message Command")
+            var userinfoCommand = new UserCommandBuilder()
+                .WithName(".userinfo (ephemeral response)")
+                .WithDefaultMemberPermissions(GuildPermission.Administrator);
+            var permanpCommand = new UserCommandBuilder()
+                .WithName(".permanp (response in ModChannel)")
+                .WithDefaultMemberPermissions(GuildPermission.Administrator);
+            var addquoteCommand = new MessageCommandBuilder()
+                .WithName(".addquote (response in this channel)")
                 .WithDefaultMemberPermissions(GuildPermission.Administrator);
             try
             {
                 await guild.BulkOverwriteApplicationCommandAsync(new ApplicationCommandProperties[]
                 {
-                    guildUserCommand.Build(),
-                    guildMessageCommand.Build()
+                    userinfoCommand.Build(),
+                    permanpCommand.Build(),
+                    addquoteCommand.Build()
                 });
             }
             catch (HttpException exception)
             {
                 var json = JsonConvert.SerializeObject(exception.Errors, Formatting.Indented);
-                Console.WriteLine(json);
+                _logger.LogError(json);
             }
         }
 
@@ -238,48 +244,33 @@ namespace Izzy_Moonbot
 
         private async Task UserCommandHandler(SocketUserCommand command)
         {
-            var output = $"";
+            _logger.LogError($"UserCommandHandler received {command.CommandId} {command.CommandName}");
 
-            var discordUser = command.User;
-
-            var member = _client.GetGuild(DiscordHelper.DefaultGuild())?.GetUser(discordUser.Id);
-            if (member != null)
+            var guildId = command.GuildId;
+            if (guildId == null)
             {
-                output += $"**User:** `<@{member.Id}>` {member.Username} ({member.Id}){Environment.NewLine}";
-                output += $"**Names:** {string.Join(", ", _users[member.Id].Aliases)}{Environment.NewLine}";
-                output +=
-                    $"**Roles:** {string.Join(", ", member.Roles.Where(role => role.Id != DiscordHelper.DefaultGuild()).Select(role => role.Name))}{Environment.NewLine}";
-                output += $"**History:** ";
-                output += $"Created <t:{member.CreatedAt.ToUnixTimeSeconds()}:R>";
-                if (member.JoinedAt.HasValue)
-                {
-                    output +=
-                        $", joined <t:{member.JoinedAt.Value.ToUnixTimeSeconds()}:R>";
-                }
+                await command.RespondAsync($"Unable to execute '{command.CommandName}' because the command did not come from any guild/server", ephemeral: true);
+                return;
+            }
 
-                output += $", last seen <t:{_users[member.Id].Timestamp.ToUnixTimeSeconds()}:R>{Environment.NewLine}";
-                output += $"**Avatar(s):** {Environment.NewLine}";
-                output += $"    Server: {member.GetGuildAvatarUrl() ?? "No server avatar found."}{Environment.NewLine}";
-                output += $"    Global: {member.GetAvatarUrl() ?? "No global avatar found."}";
+            if (command.CommandName == ".userinfo (ephemeral response)")
+            {
+                var output = await ModCoreModule.UserInfoImpl(_client, (ulong)guildId, command.Data.Member.Id, _users);
+
+                await command.RespondAsync($"Executed '{command.CommandName}' and got:\n\n{output}", ephemeral: true);
+            }
+            else if (command.CommandName == ".permanp (response in ModChannel)")
+            {
+                var output = await ModMiscModule.PermaNpCommandIImpl(_scheduleService, _config, command.Data.Member.Id);
+
+                var modchatMessage = $"{command.User} executed the user context command '{command.CommandName}' on {command.Data.Member.Mention}:\n\n{output}";
+
+                await _modLog.CreateModLog(_client.GetGuild((ulong)guildId)).SetContent(modchatMessage).SetFileLogContent(modchatMessage).Send();
             }
             else
             {
-                output += $"**User:** `<@{discordUser.Id}>` {discordUser.Username} ({discordUser.Id}){Environment.NewLine}";
-                output += _users.ContainsKey(discordUser.Id)
-                    ? $"**Names:** {string.Join(", ", _users[discordUser.Id].Aliases)}{Environment.NewLine}"
-                    : $"**Names:** None (user isn't known by Izzy){Environment.NewLine}";
-                output += $"**Roles:** None (user isn't in this server){Environment.NewLine}";
-                output += "**History:** ";
-                output += $"Created <t:{discordUser.CreatedAt.ToUnixTimeSeconds()}:R>";
-                output += _users.ContainsKey(discordUser.Id)
-                    ? $", last seen <t:{_users[discordUser.Id].Timestamp.ToUnixTimeSeconds()}:R>{Environment.NewLine}"
-                    : Environment.NewLine;
-                output += $"**Avatar(s):** {Environment.NewLine}";
-                output += $"    Server: User is not in this server.{Environment.NewLine}";
-                output += $"    Global: {discordUser.GetAvatarUrl() ?? "No global avatar found."}";
+                _logger.LogError($"UserCommandHandler received unknown command {command.CommandName}");
             }
-
-            await command.RespondAsync($"You executed {command.CommandName} on {command.User} in {command.Channel} and got:{Environment.NewLine}{Environment.NewLine}{output}", ephemeral: true);
         }
 
         private void ResyncUsers()
