@@ -67,30 +67,29 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
         }
 
         var userId = DiscordHelper.ConvertUserPingToId(user);
-        var member = Context.Guild.GetUser(userId);
 
-        if (member == null)
-        {
-            await ReplyAsync("I couldn't find that user, sorry!");
-            return;
-        }
+        var output = await PermaNpCommandIImpl(_schedule, _config, userId);
 
+        await ReplyAsync(output);
+    }
+
+    static public async Task<string> PermaNpCommandIImpl(ScheduleService scheduleService, Config config, ulong userId)
+    {
         var getSingleNewPonyRemoval = new Func<ScheduledJob, bool>(job =>
             job.Action is ScheduledRoleRemovalJob removalJob &&
-            removalJob.User == member.Id &&
-            removalJob.Role == _config.NewMemberRole);
+            removalJob.User == userId &&
+            removalJob.Role == config.NewMemberRole);
 
-        var job = _schedule.GetScheduledJob(getSingleNewPonyRemoval);
+        var job = scheduleService.GetScheduledJob(getSingleNewPonyRemoval);
         if (job != null)
         {
-            await _schedule.DeleteScheduledJob(job);
+            await scheduleService.DeleteScheduledJob(job);
 
-            await ReplyAsync($"Removed the scheduled new pony role removal from <@{member.Id}>.");
+            return $"Removed the scheduled new pony role removal from <@{userId}>.";
         }
         else
         {
-            await ReplyAsync(
-                $"I couldn't find a scheduled new pony role removal for <@{member.Id}>. It either already occured or they already have permanent new pony.");
+            return $"I couldn't find a scheduled new pony role removal for <@{userId}>. It either already occured or they already have permanent new pony.";
         }
     }
 

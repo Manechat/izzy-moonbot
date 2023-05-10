@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
+using Discord.WebSocket;
 using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Attributes;
 using Izzy_Moonbot.Describers;
@@ -74,30 +75,34 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
             return;
         }
 
+        var output = await UserInfoImpl(Context.Client, Context.Guild.Id, userId, _users);
+
+        await ReplyAsync(output, allowedMentions: AllowedMentions.None);
+    }
+
+    static public async Task<string> UserInfoImpl(DiscordSocketClient client, ulong guildId, ulong userId, Dictionary<ulong, User> users)
+    {
         var output = $"";
 
-        var member = Context.Guild.GetUser(userId);
-
+        var guild = client.GetGuild(guildId);
+        var member = guild.GetUser(userId);
         if (member == null)
         {
             // Even if `userId` is not a member of Manechat, it might still be a real user elsewhere in Discord
-            var discordUser = await Context.Client.GetUserAsync(userId);
+            var discordUser = await client.GetUserAsync(userId);
 
             if (discordUser == null)
-            {
-                await ReplyAsync("I couldn't find that user, sorry!");
-                return;
-            }
+                return "I couldn't find that user, sorry!";
 
             output += $"**User:** `<@{discordUser.Id}>` {discordUser.Username} ({discordUser.Id})\n";
-            output += _users.ContainsKey(discordUser.Id)
-                ? $"**Names:** {string.Join(", ", _users[discordUser.Id].Aliases)}\n"
+            output += users.ContainsKey(discordUser.Id)
+                ? $"**Names:** {string.Join(", ", users[discordUser.Id].Aliases)}\n"
                 : $"**Names:** None (user isn't known by Izzy)\n";
             output += $"**Roles:** None (user isn't in this server)\n";
             output += "**History:** ";
             output += $"Created <t:{discordUser.CreatedAt.ToUnixTimeSeconds()}:R>";
-            output += _users.ContainsKey(discordUser.Id)
-                ? $", last seen <t:{_users[discordUser.Id].Timestamp.ToUnixTimeSeconds()}:R>\n"
+            output += users.ContainsKey(discordUser.Id)
+                ? $", last seen <t:{users[discordUser.Id].Timestamp.ToUnixTimeSeconds()}:R>\n"
                 : '\n';
             output += $"**Avatar(s):** \n";
             output += $"    Server: User is not in this server.\n";
@@ -106,9 +111,9 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
         else
         {
             output += $"**User:** `<@{member.Id}>` {member.Username} ({member.Id})\n";
-            output += $"**Names:** {string.Join(", ", _users[member.Id].Aliases)}\n";
+            output += $"**Names:** {string.Join(", ", users[member.Id].Aliases)}\n";
             output +=
-                $"**Roles:** {string.Join(", ", member.Roles.Where(role => role.Id != Context.Guild.Id).Select(role => role.Name))}\n";
+                $"**Roles:** {string.Join(", ", member.Roles.Where(role => role.Id != guildId).Select(role => role.Name))}\n";
             output += $"**History:** ";
             output += $"Created <t:{member.CreatedAt.ToUnixTimeSeconds()}:R>";
             if (member.JoinedAt.HasValue)
@@ -117,13 +122,13 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
                     $", joined <t:{member.JoinedAt.Value.ToUnixTimeSeconds()}:R>";
             }
 
-            output += $", last seen <t:{_users[member.Id].Timestamp.ToUnixTimeSeconds()}:R>\n";
+            output += $", last seen <t:{users[member.Id].Timestamp.ToUnixTimeSeconds()}:R>\n";
             output += $"**Avatar(s):** \n";
             output += $"    Server: {member.GetGuildAvatarUrl() ?? "No server avatar found."}\n";
             output += $"    Global: {member.GetAvatarUrl() ?? "No global avatar found."}";
         }
 
-        await ReplyAsync(output, allowedMentions: AllowedMentions.None);
+        return output;
     }
 
     [Command("ban")]
