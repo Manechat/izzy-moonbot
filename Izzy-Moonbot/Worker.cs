@@ -211,10 +211,11 @@ namespace Izzy_Moonbot
             // var gacs = await _client.Rest.GetGuildApplicationCommands(guildId);
 
             var guildUserCommand = new UserCommandBuilder()
-                .WithName(".userinfo (ephemeral)");
+                .WithName(".userinfo (ephemeral)")
+                .WithDefaultPermission(false);
             var guildMessageCommand = new MessageCommandBuilder()
                 .WithName("Test Message Command")
-                .WithDefaultMemberPermissions(null);
+                .WithDefaultMemberPermissions(GuildPermission.Administrator);
             try
             {
                 await guild.BulkOverwriteApplicationCommandAsync(new ApplicationCommandProperties[]
