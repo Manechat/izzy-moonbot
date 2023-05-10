@@ -45,23 +45,19 @@ public class QuoteService
     public IIzzyUser ProcessAlias(string alias, IIzzyGuild? guild)
     {
         alias = alias.ToLower();
-        
-        if (_quoteStorage.Aliases.ContainsKey(alias))
+
+        if (!_quoteStorage.Aliases.TryGetValue(alias, out var value))
+            throw new NullReferenceException("That alias does not exist.");
+
+        if (ulong.TryParse(value, out var id))
         {
-            var value = _quoteStorage.Aliases[alias];
+            var potentialUser = guild?.GetUser(id);
+            if (potentialUser == null)
+                throw new TargetException("The user this alias referenced to cannot be found.");
 
-            if (ulong.TryParse(value, out var id))
-            {
-                var potentialUser = guild?.GetUser(id);
-                if (potentialUser == null)
-                    throw new TargetException("The user this alias referenced to cannot be found.");
-
-                return potentialUser;
-            }
-            throw new ArgumentException("This alias cannot be converted to an IIzzyUser.");
+            return potentialUser;
         }
-
-        throw new NullReferenceException("That alias does not exist.");
+        throw new ArgumentException("This alias cannot be converted to an IIzzyUser.");
     }
 
     /// <summary>
@@ -109,7 +105,7 @@ public class QuoteService
             var id = ulong.Parse(key);
             var potentialUser = guild.GetUser(id);
             if (potentialUser == null)
-                return _users.ContainsKey(id) ? $"{id} ({_users[id].Username}) {aliasText}" : $"{id} {aliasText}";
+                return _users.TryGetValue(id, out var user) ? $"{id} ({user.Username}) {aliasText}" : $"{id} {aliasText}";
 
             return $"{potentialUser.DisplayName} ({potentialUser.Username}#{potentialUser.Discriminator}) {aliasText}";
         }).ToArray();
@@ -117,10 +113,9 @@ public class QuoteService
 
     public string? GetQuote(ulong userId, int index)
     {
-        if (!_quoteStorage.Quotes.ContainsKey(userId.ToString()))
+        if (!_quoteStorage.Quotes.TryGetValue(userId.ToString(), out var quotes))
             return null;
 
-        var quotes = _quoteStorage.Quotes[userId.ToString()];
         if (quotes.Count <= index)
             return null;
 
@@ -129,10 +124,10 @@ public class QuoteService
 
     public List<string>? GetQuotes(ulong userId)
     {
-        if (!_quoteStorage.Quotes.ContainsKey(userId.ToString()))
+        if (!_quoteStorage.Quotes.TryGetValue(userId.ToString(), out var quotes))
             return null;
 
-        return _quoteStorage.Quotes[userId.ToString()];
+        return quotes;
     }
 
     public (ulong, int, string) GetRandomQuote()
@@ -152,10 +147,8 @@ public class QuoteService
 
     public (int, string)? GetRandomQuote(ulong userId)
     {
-        if (!_quoteStorage.Quotes.ContainsKey(userId.ToString()))
+        if (!_quoteStorage.Quotes.TryGetValue(userId.ToString(), out var quotes))
             return null;
-
-        var quotes = _quoteStorage.Quotes[userId.ToString()];
 
         var index = new Random().Next(quotes.Count);
 
@@ -170,10 +163,13 @@ public class QuoteService
     /// <returns>The newly created Quote.</returns>
     public async Task<Quote> AddQuote(IIzzyUser user, string content)
     {
-        if (!_quoteStorage.Quotes.ContainsKey(user.Id.ToString()))
-            _quoteStorage.Quotes.Add(user.Id.ToString(), new List<string>());
+        if (!_quoteStorage.Quotes.TryGetValue(user.Id.ToString(), out var quotes))
+        {
+            quotes = new List<string>();
+            _quoteStorage.Quotes.Add(user.Id.ToString(), quotes);
+        }
 
-        _quoteStorage.Quotes[user.Id.ToString()].Add(content);
+        quotes.Add(content);
 
         await FileHelper.SaveQuoteStorageAsync(_quoteStorage);
 
@@ -194,11 +190,9 @@ public class QuoteService
     /// <exception cref="IndexOutOfRangeException">If the quote id provided doesn't exist.</exception>
     public async Task<Quote> RemoveQuote(IIzzyUser user, int id)
     {
-        if (!_quoteStorage.Quotes.ContainsKey(user.Id.ToString()))
+        if (!_quoteStorage.Quotes.TryGetValue(user.Id.ToString(), out var quotes))
             throw new NullReferenceException("That user does not have any quotes.");
         
-        var quotes = _quoteStorage.Quotes[user.Id.ToString()];
-
         if (quotes.Count <= id) throw new IndexOutOfRangeException("That quote ID does not exist.");
         
         var quoteName = user.Username;

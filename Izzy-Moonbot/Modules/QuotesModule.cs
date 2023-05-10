@@ -65,12 +65,9 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
             return;
         }
 
-        ulong userId;
-        if (_quoteService.AliasExists(search))
-            userId = _quoteService.ProcessAlias(search, defaultGuild).Id;
-        else
-            userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(search, context, true);
-
+        ulong userId = _quoteService.AliasExists(search)
+            ? _quoteService.ProcessAlias(search, defaultGuild).Id
+            : await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(search, context, true);
         if (userId == 0)
         {
             await context.Channel.SendMessageAsync("I was unable to find the user you asked for. Sorry!");
@@ -315,7 +312,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
         {
             var quoteUser = _quoteService.ProcessAlias(user, context.Guild);
 
-            var newAliasUserQuote = await _quoteService.RemoveQuote(quoteUser, number.Value - 1);
+            await _quoteService.RemoveQuote(quoteUser, number.Value - 1);
 
             await context.Channel.SendMessageAsync(
                 $"Removed quote number {number.Value} from **{quoteUser.Username}#{quoteUser.Discriminator}**.", allowedMentions: AllowedMentions.None);
