@@ -212,14 +212,15 @@ namespace Izzy_Moonbot
             // TODO: avoid resetting app commands if they're already set up
             // var gacs = await _client.Rest.GetGuildApplicationCommands(guildId);
 
+            // WARNING: command Names have a limit of 32 characters
             var userinfoCommand = new UserCommandBuilder()
-                .WithName(".userinfo (ephemeral response)")
+                .WithName(".userinfo (ephemeral)")
                 .WithDefaultMemberPermissions(GuildPermission.Administrator);
             var permanpCommand = new UserCommandBuilder()
-                .WithName(".permanp (response in ModChannel)")
+                .WithName(".permanp (in ModChannel)")
                 .WithDefaultMemberPermissions(GuildPermission.Administrator);
             var addquoteCommand = new MessageCommandBuilder()
-                .WithName(".addquote (response in this channel)")
+                .WithName(".addquote (in this channel)")
                 .WithDefaultMemberPermissions(GuildPermission.Administrator);
             try
             {
@@ -253,13 +254,13 @@ namespace Izzy_Moonbot
                 return;
             }
 
-            if (command.CommandName == ".userinfo (ephemeral response)")
+            if (command.CommandName == ".userinfo (ephemeral)")
             {
                 var output = await ModCoreModule.UserInfoImpl(_client, (ulong)guildId, command.Data.Member.Id, _users);
 
                 await command.RespondAsync($"Executed '{command.CommandName}' and got:\n\n{output}", ephemeral: true);
             }
-            else if (command.CommandName == ".permanp (response in ModChannel)")
+            else if (command.CommandName == ".permanp (in ModChannel)")
             {
                 var output = await ModMiscModule.PermaNpCommandIImpl(_scheduleService, _config, command.Data.Member.Id);
 
