@@ -21,7 +21,7 @@ public class QuoteModuleTests
 
         var userinfo = new Dictionary<ulong, User>();
         var qs = new QuoteService(quotes, userinfo);
-        var qm = new QuotesModule(cfg, qs);
+        var qm = new QuotesModule(cfg, qs, userinfo);
 
         var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".quote");
         await qm.TestableQuoteCommandAsync(context, "");
@@ -66,7 +66,7 @@ public class QuoteModuleTests
 
         var userinfo = new Dictionary<ulong, User>();
         var qs = new QuoteService(quotes, userinfo);
-        var qm = new QuotesModule(cfg, qs);
+        var qm = new QuotesModule(cfg, qs, userinfo);
 
         var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".listquotes");
         await qm.TestableListQuotesCommandAsync(context, "");
@@ -130,7 +130,7 @@ public class QuoteModuleTests
 
         var userinfo = new Dictionary<ulong, User>();
         var qs = new QuoteService(quotes, userinfo);
-        var qm = new QuotesModule(cfg, qs);
+        var qm = new QuotesModule(cfg, qs, userinfo);
 
         var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".listquotes");
         await qm.TestableListQuotesCommandAsync(context, "");
@@ -156,7 +156,7 @@ public class QuoteModuleTests
 
         var userinfo = new Dictionary<ulong, User>();
         var qs = new QuoteService(quotes, userinfo);
-        var qm = new QuotesModule(cfg, qs);
+        var qm = new QuotesModule(cfg, qs, userinfo);
 
         var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".listquotes Sunny");
         await qm.TestableListQuotesCommandAsync(context, "Sunny");
@@ -184,7 +184,7 @@ public class QuoteModuleTests
 
         var userinfo = new Dictionary<ulong, User>();
         var qs = new QuoteService(quotes, userinfo);
-        var qm = new QuotesModule(cfg, qs);
+        var qm = new QuotesModule(cfg, qs, userinfo);
 
         var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".addquote");
         await qm.TestableAddQuoteCommandAsync(context, "");

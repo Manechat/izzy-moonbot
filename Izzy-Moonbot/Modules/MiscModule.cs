@@ -387,9 +387,9 @@ public class MiscModule : ModuleBase<SocketCommandContext>
         // Try quote aliases
         else if (_quoteService.AliasExists(item))
         {
-            var user = _quoteService.ProcessAlias(item, context.Guild);
+            var userId = _quoteService.ProcessAlias(item, context.Guild);
 
-            await context.Channel.SendMessageAsync($"'{item}' is a quotealias for the user <@{user.Id}>. Use `.listquotes {item}` or `.quote {item}` to see their quotes." +
+            await context.Channel.SendMessageAsync($"'{item}' is a quotealias for the user <@{userId}>. Use `.listquotes {item}` or `.quote {item}` to see their quotes." +
                 "\n\nSee `.help quote` and `.help quotelias` for more information.");
         }
         else
