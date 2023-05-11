@@ -195,7 +195,7 @@ public class QuoteModuleTests
 
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".addquote Sunny eat more vegetables");
         await qm.TestableAddQuoteCommandAsync(context, "Sunny eat more vegetables");
-        Assert.AreEqual("Added the quote to **Sunny** as quote number 2." + 
+        Assert.AreEqual($"Added the quote to <@{sunny.Id}> as quote number 2." +
             $"\n>>> eat more vegetables", generalChannel.Messages.Last().Content);
         TestUtils.AssertListsAreEqual(quotes.Quotes[sunny.Id.ToString()], new List<string> {
             "gonna be my day",
