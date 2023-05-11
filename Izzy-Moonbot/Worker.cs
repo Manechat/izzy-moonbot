@@ -39,6 +39,7 @@ namespace Izzy_Moonbot
         private readonly Config _config;
         private readonly State _state;
         private readonly Dictionary<ulong, User> _users;
+        private readonly QuoteService _quoteService;
         private readonly ConfigListener _configListener;
         private readonly UserListener _userListener;
         private readonly MessageListener _messageListener;
@@ -48,7 +49,8 @@ namespace Izzy_Moonbot
 
         public Worker(ILogger<Worker> logger, ModLoggingService modLog, IServiceCollection services, ModService modService, RaidService raidService,
             FilterService filterService, ScheduleService scheduleService, IOptions<DiscordSettings> discordSettings,
-            Config config, State state, Dictionary<ulong, User> users, UserListener userListener, SpamService spamService, ConfigListener configListener, MessageListener messageListener)
+            Config config, State state, Dictionary<ulong, User> users, UserListener userListener, SpamService spamService, QuoteService quoteService,
+            ConfigListener configListener, MessageListener messageListener)
         {
             _logger = logger;
             _modLog = modLog;
@@ -66,6 +68,7 @@ namespace Izzy_Moonbot
             _users = users;
             _userListener = userListener;
             _spamService = spamService;
+            _quoteService = quoteService;
             _configListener = configListener;
             _messageListener = messageListener;
 
@@ -177,6 +180,12 @@ namespace Izzy_Moonbot
             await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), _services.BuildServiceProvider());
         }
 
+        // Application command Names have a hard limit of 32 characters,
+        // and they seem to get truncated on desktop at ~18-20.
+        private readonly string USERINFO_CMD_NAME = ".userinfo (ephemeral)";
+        private readonly string PERMANP_CMD_NAME =  ".permanp (ModChannel)";
+        private readonly string ADDQUOTE_CMD_NAME = ".addquote";
+
         public async Task ReadyEvent()
         {
             _logger.LogInformation("ReadyEvent() called");
@@ -209,18 +218,14 @@ namespace Izzy_Moonbot
             var guildId = DiscordHelper.DefaultGuild();
             var guild = _client.GetGuild(guildId);
 
-            // TODO: avoid resetting app commands if they're already set up
-            // var gacs = await _client.Rest.GetGuildApplicationCommands(guildId);
-
-            // WARNING: command Names have a limit of 32 characters
             var userinfoCommand = new UserCommandBuilder()
-                .WithName(".userinfo (ephemeral)")
+                .WithName(USERINFO_CMD_NAME)
                 .WithDefaultMemberPermissions(GuildPermission.Administrator);
             var permanpCommand = new UserCommandBuilder()
-                .WithName(".permanp (in ModChannel)")
+                .WithName(PERMANP_CMD_NAME)
                 .WithDefaultMemberPermissions(GuildPermission.Administrator);
             var addquoteCommand = new MessageCommandBuilder()
-                .WithName(".addquote (in this channel)")
+                .WithName(ADDQUOTE_CMD_NAME)
                 .WithDefaultMemberPermissions(GuildPermission.Administrator);
             try
             {
@@ -240,12 +245,7 @@ namespace Izzy_Moonbot
 
         private async Task MessageCommandHandler(SocketMessageCommand command)
         {
-            await command.RespondAsync($"You executed {command.CommandName} / {command.Data.Name} on {command.Channel}", ephemeral: true);
-        }
-
-        private async Task UserCommandHandler(SocketUserCommand command)
-        {
-            _logger.LogError($"UserCommandHandler received {command.CommandId} {command.CommandName}");
+            _logger.LogInformation($"MessageCommandHandler received {command.CommandId} {command.CommandName}");
 
             var guildId = command.GuildId;
             if (guildId == null)
@@ -254,17 +254,42 @@ namespace Izzy_Moonbot
                 return;
             }
 
-            if (command.CommandName == ".userinfo (ephemeral)")
+            if (command.CommandName == ADDQUOTE_CMD_NAME)
+            {
+                var guild = new SocketGuildAdapter(_client.GetGuild((ulong)guildId));
+
+                var output = await QuotesModule.AddQuoteCommandImpl(_quoteService, guild, command.Data.Message.Author.Id, command.Data.Message.Content);
+
+                await command.RespondAsync($"{command.User} used the '{command.CommandName}' context command:\n\n{output}", allowedMentions: AllowedMentions.None);
+            }
+            else
+            {
+                _logger.LogError($"MessageCommandHandler received unknown command {command.CommandName}");
+            }
+        }
+
+        private async Task UserCommandHandler(SocketUserCommand command)
+        {
+            _logger.LogInformation($"UserCommandHandler received {command.CommandId} {command.CommandName}");
+
+            var guildId = command.GuildId;
+            if (guildId == null)
+            {
+                await command.RespondAsync($"Unable to execute '{command.CommandName}' because the command did not come from any guild/server", ephemeral: true);
+                return;
+            }
+
+            if (command.CommandName == USERINFO_CMD_NAME)
             {
                 var output = await ModCoreModule.UserInfoImpl(_client, (ulong)guildId, command.Data.Member.Id, _users);
 
-                await command.RespondAsync($"Executed '{command.CommandName}' and got:\n\n{output}", ephemeral: true);
+                await command.RespondAsync($"You used the '{command.CommandName}' context command:\n\n{output}", allowedMentions: AllowedMentions.None, ephemeral: true);
             }
-            else if (command.CommandName == ".permanp (in ModChannel)")
+            else if (command.CommandName == PERMANP_CMD_NAME)
             {
                 var output = await ModMiscModule.PermaNpCommandIImpl(_scheduleService, _config, command.Data.Member.Id);
 
-                var modchatMessage = $"{command.User} executed the user context command '{command.CommandName}' on {command.Data.Member.Mention}:\n\n{output}";
+                var modchatMessage = $"{command.User} used the '{command.CommandName}' context command on {command.Data.Member.Mention}:\n\n{output}";
 
                 await _modLog.CreateModLog(_client.GetGuild((ulong)guildId)).SetContent(modchatMessage).SetFileLogContent(modchatMessage).Send();
             }
