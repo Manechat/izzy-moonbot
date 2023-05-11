@@ -227,14 +227,31 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
         var args = DiscordHelper.GetArguments(argsString);
 
         var user = args.Arguments[0];
-        var content = string.Join("", argsString.Skip(args.Indices[0]));
-
         if (user == "")
         {
             await context.Channel.SendMessageAsync("You need to tell me the user you want to add the quote to.");
             return;
         }
 
+        var guild = context.Guild;
+        if (guild == null)
+        {
+            await context.Channel.SendMessageAsync("You need to be in a server to add quotes.");
+            return;
+        }
+
+        ulong userId;
+        if (_quoteService.AliasExists(user))
+            userId = _quoteService.ProcessAlias(user, guild);
+        else
+            userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(user, context);
+        if (userId == 0)
+        {
+            await context.Channel.SendMessageAsync("I was unable to find the user you asked for. Sorry!");
+            return;
+        }
+
+        var content = string.Join("", argsString.Skip(args.Indices[0]));
         if (content == "")
         {
             await context.Channel.SendMessageAsync("You need to provide content to add.");
@@ -246,44 +263,21 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
             content = content[new Range(1, ^1)];
         }
 
-        if (context.Guild == null)
-        {
-            await context.Channel.SendMessageAsync("You need to be in a server to add quotes.");
-            return;
-        }
+        var output = await AddQuoteCommandImpl(_quoteService, guild, userId, content);
 
-        // Check for aliases
-        if (_quoteService.AliasExists(user))
-        {
-            var aliasUserId = _quoteService.ProcessAlias(user, context.Guild);
-            var quoteUser = context.Guild.GetUser(aliasUserId);
-            if (quoteUser == null)
-                throw new TargetException("The user this alias referenced to cannot be found.");
+        await context.Channel.SendMessageAsync(output, allowedMentions: AllowedMentions.None);
+    }
 
-            var newAliasUserQuote = await _quoteService.AddQuote(quoteUser, content);
-
-            await context.Channel.SendMessageAsync(
-                $"Added the quote to **{quoteUser.Username}#{quoteUser.Discriminator}** as quote number {newAliasUserQuote.Id + 1}.\n" +
-                $">>> {newAliasUserQuote.Content}", allowedMentions: AllowedMentions.None);
-            return;
-        }
-
-        // Now check user
-        var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(user, context);
-        var member = context.Guild.GetUser(userId);
-
+    static public async Task<string> AddQuoteCommandImpl(QuoteService quoteService, IIzzyGuild guild, ulong userId, string content)
+    {
+        var member = guild.GetUser(userId);
         if (member == null)
-        {
-            await context.Channel.SendMessageAsync("I was unable to find the user you asked for. Sorry!");
-            return;
-        }
+            return "I was unable to find the user you asked for. Sorry!";
 
-        var newUserQuote = await _quoteService.AddQuote(member, content);
+        var newQuote = await quoteService.AddQuote(member, content);
 
-        await context.Channel.SendMessageAsync(
-            $"Added the quote to **{newUserQuote.Name}** as quote number {newUserQuote.Id + 1}.\n" +
-            $">>> {newUserQuote.Content}", allowedMentions: AllowedMentions.None);
-        return;
+        return $"Added the quote to <@{userId}> as quote number {newQuote.Id + 1}.\n" +
+            $">>> {newQuote.Content}";
     }
 
     [Command("removequote")]
