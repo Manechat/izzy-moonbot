@@ -240,11 +240,9 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
             return;
         }
 
-        ulong userId;
-        if (_quoteService.AliasExists(user))
-            userId = _quoteService.ProcessAlias(user, guild);
-        else
-            userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(user, context);
+        ulong userId = _quoteService.AliasExists(user)
+            ? _quoteService.ProcessAlias(user, guild)
+            : await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(user, context);
         if (userId == 0)
         {
             await context.Channel.SendMessageAsync("I was unable to find the user you asked for. Sorry!");

@@ -182,9 +182,9 @@ namespace Izzy_Moonbot
 
         // Application command Names have a hard limit of 32 characters,
         // and they seem to get truncated on desktop at ~18-20.
-        private string USERINFO_CMD_NAME = ".userinfo (ephemeral)";
-        private string PERMANP_CMD_NAME =  ".permanp (ModChannel)";
-        private string ADDQUOTE_CMD_NAME = ".addquote";
+        private readonly string USERINFO_CMD_NAME = ".userinfo (ephemeral)";
+        private readonly string PERMANP_CMD_NAME =  ".permanp (ModChannel)";
+        private readonly string ADDQUOTE_CMD_NAME = ".addquote";
 
         public async Task ReadyEvent()
         {
