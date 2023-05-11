@@ -134,11 +134,12 @@ public class ConfigListener
 
     private async Task Handle_BoredChannel(ConfigValueChangeEvent e, DiscordSocketClient client)
     {
-        if (e.Original == e.Current) return;
-
         var original = e.Original is ulong originalValue ? originalValue : 0;
         var current = e.Current is ulong currentValue ? currentValue : 0;
 
+        if (original == current) return;
+
+        _logger.Log($"Clearing and recreating scheduled job for bored commands because bored channel changed from {original} to {current}.");
         var scheduledJobs = _schedule.GetScheduledJobs(job => job.Action is ScheduledBoredCommandsJob);
 
         if (current == 0 && scheduledJobs.Any())
@@ -155,10 +156,10 @@ public class ConfigListener
 
     private async Task Handle_BoredCooldown(ConfigValueChangeEvent e)
     {
-        if (e.Original == e.Current) return;
-
         var original = e.Original is double originalValue ? originalValue : 0;
         var current = e.Current is double currentValue ? currentValue : 0;
+
+        if (original == current) return;
 
         var scheduledJobs = _schedule.GetScheduledJobs(job => job.Action is ScheduledBoredCommandsJob);
 
