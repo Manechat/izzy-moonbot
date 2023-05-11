@@ -230,6 +230,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
     [DevCommand(Group = "Permission")]
     [Parameter("channel", ParameterType.Channel, "The channel to send the message to.", true)]
     [Parameter("content", ParameterType.String, "The message to send.")]
+    [BotsAllowed]
     public async Task EchoCommandAsync(
         [Remainder] string argsString = "")
     {

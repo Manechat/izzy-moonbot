@@ -223,7 +223,8 @@ public class ConfigDescriber
                 "How many seconds I'll wait before executing a randomly selected command from BoredCommands in BoredChannel.", ConfigItemCategory.Bored));
         _config.Add("BoredCommands",
             new ConfigItem(ConfigItemType.StringSet,
-                "The commands I'll randomly execute in BoredChannel after BoredCooldown seconds of inactivity.", ConfigItemCategory.Bored));
+                "The commands I'll randomly execute in BoredChannel after BoredCooldown seconds of inactivity.\n" +
+                "Since I'm a bot, each command must allow bots to run it, or nothing will actually happen.", ConfigItemCategory.Bored));
     }
 
     public List<string> GetSettableConfigItems()
@@ -271,6 +272,8 @@ public class ConfigDescriber
                 return ConfigItemCategory.Spam;
             case "raid":
                 return ConfigItemCategory.Raid;
+            case "bored":
+                return ConfigItemCategory.Bored;
             default:
                 return null;
         }
@@ -294,6 +297,8 @@ public class ConfigDescriber
                 return "Spam";
             case ConfigItemCategory.Raid:
                 return "Raid";
+            case ConfigItemCategory.Bored:
+                return "Bored";
             default:
                 return "<UNKNOWN>";
         }

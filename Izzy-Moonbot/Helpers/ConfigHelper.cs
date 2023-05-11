@@ -101,19 +101,24 @@ public static class ConfigHelper
         if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
         {
             IIzzySocketGuildChannel? channel = null;
-            if (channelResolvable is not null)
+            if (channelResolvable is null)
             {
-                var channelId = await DiscordHelper.GetChannelIdIfAccessAsync(channelResolvable, context);
-
-                if (channelId == 0) throw new MemberAccessException($"Couldn't find channel using resolvable `{channelResolvable}`");
-
-                channel = context.Guild?.GetChannel(channelId);
-
-                pinfo.SetValue(settings, channelId, null);
+                pinfo.SetValue(settings, null);
             }
             else
             {
-                pinfo.SetValue(settings, null);
+                var channelId = await DiscordHelper.GetChannelIdIfAccessAsync(channelResolvable, context);
+
+                if (channelId == 0)
+                {
+                    pinfo.SetValue(settings, null);
+                }
+                else
+                {
+                    channel = context.Guild?.GetChannel(channelId);
+
+                    pinfo.SetValue(settings, channelId, null);
+                }
             }
 
             await FileHelper.SaveConfigAsync(settings);
