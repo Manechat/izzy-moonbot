@@ -576,9 +576,12 @@ public class ScheduleService
         DateTimeOffset nextExecuteTime;
         if ((DateTimeHelper.UtcNow - lastMessage).TotalSeconds > _config.BoredCooldown)
         {
-            // TODO: actually implement bored command selection and execution
-            _logger.Log($"last BoredChannel message was posted {lastMessage} which was over {_config.BoredCooldown} seconds ago. Executing randomly selected command: ???");
-            await boredChannel.SendMessageAsync("I'm booooooored");
+            var cmds = _config.BoredCommands.ToArray();
+            var cmd = cmds[new Random().Next(cmds.Length)];
+
+            _logger.Log($"last BoredChannel message was posted {lastMessage} which was over {_config.BoredCooldown} seconds ago.\n" +
+                $"Posting randomly selected command message: {cmd}");
+            await boredChannel.SendMessageAsync(cmd);
 
             // Then reschedule ourselves
             nextExecuteTime = DateTimeHelper.UtcNow.AddSeconds(_config.BoredCooldown);
@@ -592,6 +595,5 @@ public class ScheduleService
         _logger.Log($"Scheduling next BoredCommands job for {nextExecuteTime}");
         var nextJob = new ScheduledJob(DateTimeHelper.UtcNow, nextExecuteTime, new ScheduledBoredCommandsJob(), ScheduledJobRepeatType.None);
         await CreateScheduledJob(nextJob);
-
     }
 }
