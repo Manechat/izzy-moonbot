@@ -50,8 +50,8 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
     }
 
     [Command("permanp")]
-    [Summary(
-        "Remove the scheduled new pony role removal for this user, essentially meaning they keep the new pony role until manually removed.")]
+    [Summary("Remove the scheduled new pony role removal for this user, essentially meaning they keep the new pony role until manually removed.")]
+    [Remarks("In the Discord UI, right-click on a user's name and go to 'Apps' for an alternative way of invoking this command.")]
     [RequireContext(ContextType.Guild)]
     [ModCommand(Group = "Permissions")]
     [DevCommand(Group = "Permissions")]

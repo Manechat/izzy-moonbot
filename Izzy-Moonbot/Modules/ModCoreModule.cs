@@ -60,6 +60,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
 
     [Command("userinfo")]
     [Summary("Get information about a user (or yourself)")]
+    [Remarks("In the Discord UI, right-click on a user's name and go to 'Apps' for an alternative way of invoking this command.")]
     [Alias("uinfo")]
     [Parameter("user", ParameterType.UserResolvable, "The user to get information about, or yourself if not provided.", true)]
     public async Task UserInfoCommandAsync(

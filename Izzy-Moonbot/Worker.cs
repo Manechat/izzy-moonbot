@@ -260,7 +260,7 @@ namespace Izzy_Moonbot
 
                 var output = await QuotesModule.AddQuoteCommandImpl(_quoteService, guild, command.Data.Message.Author.Id, command.Data.Message.Content);
 
-                await command.RespondAsync($"{command.User} used the '{command.CommandName}' context command:\n\n{output}", allowedMentions: AllowedMentions.None);
+                await command.RespondAsync($"{command.User.Mention} used the '{command.CommandName}' context command:\n\n{output}", allowedMentions: AllowedMentions.None);
             }
             else
             {
@@ -289,7 +289,7 @@ namespace Izzy_Moonbot
             {
                 var output = await ModMiscModule.PermaNpCommandIImpl(_scheduleService, _config, command.Data.Member.Id);
 
-                var modchatMessage = $"{command.User} used the '{command.CommandName}' context command on {command.Data.Member.Mention}:\n\n{output}";
+                var modchatMessage = $"{command.User.Mention} used the '{command.CommandName}' context command on {command.Data.Member.Mention}:\n\n{output}";
 
                 await _modLog.CreateModLog(_client.GetGuild((ulong)guildId)).SetContent(modchatMessage).SetFileLogContent(modchatMessage).Send();
             }
