@@ -101,6 +101,7 @@ public interface IIzzySocketTextChannel
     Task<IIzzyMessage?> GetMessageAsync(ulong messageId);
     Task<IIzzyUserMessage> SendFileAsync(FileAttachment fa, string message);
     IAsyncEnumerable<IReadOnlyCollection<IIzzyMessage>> GetMessagesAsync(ulong firstMessageId, Direction dir, int limit);
+    IAsyncEnumerable<IReadOnlyCollection<IIzzyMessage>> GetMessagesAsync(int messageCount);
 }
 
 public interface IIzzySocketGuildChannel

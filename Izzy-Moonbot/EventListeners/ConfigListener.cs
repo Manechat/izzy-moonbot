@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Discord.WebSocket;
 using Izzy_Moonbot.Adapters;
@@ -41,6 +42,12 @@ public class ConfigListener
                 break;
             case "BannerInterval":
                 await Handle_BannerInterval(e);
+                break;
+            case "BoredChannel":
+                await Handle_BoredChannel(e, client);
+                break;
+            case "BoredCooldown":
+                await Handle_BoredCooldown(e);
                 break;
             default:
                 throw new NotImplementedException("This config value doesn't have a method to fire on change.");
@@ -123,5 +130,44 @@ public class ConfigListener
         Rotate,
         Shuffle,
         ManebooruFeatured
+    }
+
+    private async Task Handle_BoredChannel(ConfigValueChangeEvent e, DiscordSocketClient client)
+    {
+        var original = e.Original is ulong originalValue ? originalValue : 0;
+        var current = e.Current is ulong currentValue ? currentValue : 0;
+
+        if (original == current) return;
+
+        _logger.Log($"Clearing and recreating scheduled job for bored commands because bored channel changed from {original} to {current}.");
+        var scheduledJobs = _schedule.GetScheduledJobs(job => job.Action is ScheduledBoredCommandsJob);
+
+        if (current == 0 && scheduledJobs.Any())
+        {
+            foreach (var scheduledJob in scheduledJobs)
+                await _schedule.DeleteScheduledJob(scheduledJob);
+        }
+        else if (current != 0 && !scheduledJobs.Any())
+        {
+            var nextJob = new ScheduledJob(DateTimeHelper.UtcNow, DateTimeHelper.UtcNow, new ScheduledBoredCommandsJob(), ScheduledJobRepeatType.None);
+            await _schedule.CreateScheduledJob(nextJob);
+        }
+    }
+
+    private async Task Handle_BoredCooldown(ConfigValueChangeEvent e)
+    {
+        var original = e.Original is double originalValue ? originalValue : 0;
+        var current = e.Current is double currentValue ? currentValue : 0;
+
+        if (original == current) return;
+
+        var scheduledJobs = _schedule.GetScheduledJobs(job => job.Action is ScheduledBoredCommandsJob);
+
+        _logger.Log($"Updating all scheduled jobs for bored commands to occur {current} seconds after creation instead of after {original} seconds.", level: LogLevel.Debug);
+        foreach (var scheduledJob in scheduledJobs)
+        {
+            scheduledJob.ExecuteAt = scheduledJob.CreatedAt.AddSeconds(current);
+            await _schedule.ModifyScheduledJob(scheduledJob.Id, scheduledJob);
+        }
     }
 }

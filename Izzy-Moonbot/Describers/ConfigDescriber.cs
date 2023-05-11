@@ -212,6 +212,19 @@ public class ConfigDescriber
             new ConfigItem(ConfigItemType.Double,
                 "How many minutes do I wait before declaring a large raid over (and automatically disabling `AutoSilenceNewUsers`).",
                 ConfigItemCategory.Raid, true));
+
+        // Bored settings
+        _config.Add("BoredChannel",
+            new ConfigItem(ConfigItemType.Channel,
+                "The channel where I'll execute a randomly selected command from BoredCommands after BoredCooldown seconds of inactivity.\n" +
+                "Set to nothing to disabled bored commands.", ConfigItemCategory.Bored));
+        _config.Add("BoredCooldown",
+            new ConfigItem(ConfigItemType.Double,
+                "How many seconds I'll wait before executing a randomly selected command from BoredCommands in BoredChannel.", ConfigItemCategory.Bored));
+        _config.Add("BoredCommands",
+            new ConfigItem(ConfigItemType.StringSet,
+                "The commands I'll randomly execute in BoredChannel after BoredCooldown seconds of inactivity.\n" +
+                "Since I'm a bot, each command must allow bots to run it, or nothing will actually happen.", ConfigItemCategory.Bored));
     }
 
     public List<string> GetSettableConfigItems()
@@ -259,6 +272,8 @@ public class ConfigDescriber
                 return ConfigItemCategory.Spam;
             case "raid":
                 return ConfigItemCategory.Raid;
+            case "bored":
+                return ConfigItemCategory.Bored;
             default:
                 return null;
         }
@@ -282,6 +297,8 @@ public class ConfigDescriber
                 return "Spam";
             case ConfigItemCategory.Raid:
                 return "Raid";
+            case ConfigItemCategory.Bored:
+                return "Bored";
             default:
                 return "<UNKNOWN>";
         }

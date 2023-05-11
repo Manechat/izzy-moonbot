@@ -216,13 +216,23 @@ public class ScheduledBannerRotationJob : ScheduledJobAction
     }
 }
 
+public class ScheduledBoredCommandsJob : ScheduledJobAction
+{
+    public ScheduledBoredCommandsJob() =>
+        Type = ScheduledJobActionType.BoredCommands;
+
+    public override string ToDiscordString() => $"Run Bored Commands";
+    public override string ToFileString() => ToDiscordString();
+}
+
 public enum ScheduledJobActionType
 {
     RemoveRole,
     AddRole,
     Unban,
     Echo,
-    BannerRotation
+    BannerRotation,
+    BoredCommands
 }
 
 public enum ScheduledJobRepeatType

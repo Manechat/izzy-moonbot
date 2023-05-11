@@ -25,7 +25,8 @@ public enum ConfigItemCategory
     ManagedRoles,
     Filter,
     Spam,
-    Raid
+    Raid,
+    Bored
 }
 
 public enum ConfigItemType

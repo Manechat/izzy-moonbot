@@ -11,8 +11,13 @@ public class Config
     
     public Config()
     {
-        // Core settings
+        // Setup settings
         Prefix = '.';
+        ModRole = 0;
+        ModChannel = 0;
+        LogChannel = 0;
+
+        // Misc settings
         UnicycleInterval = 100;
         MentionResponseEnabled = false;
         MentionResponses = new HashSet<string>();
@@ -23,17 +28,12 @@ public class Config
         FirstRuleMessageId = 0;
         HiddenRules = new Dictionary<string, string>();
 
-        // Server settings
+        // Banner settings
         _bannerMode = ConfigListener.BannerMode.None;
         _bannerInterval = 60;
         BannerImages = new HashSet<string>();
 
-        // Mod settings
-        ModRole = 0;
-        ModChannel = 0;
-        LogChannel = 0;
-
-        // User based settings
+        // ManagedRoles settings
         ManageNewUserRoles = false;
         MemberRole = 0;
         NewMemberRole = 0;
@@ -47,7 +47,7 @@ public class Config
         FilterDevBypass = true;
         FilterWords = new HashSet<string>();
 
-        // Pressure settings
+        // Spam settings
         SpamEnabled = true;
         SpamBypassRoles = new HashSet<ulong>();
         SpamIgnoredChannels = new HashSet<ulong>();
@@ -71,6 +71,11 @@ public class Config
         RecentJoinDecay = 120;
         SmallRaidDecay = 5;
         LargeRaidDecay = 30;
+
+        // Bored settings
+        _boredChannel = 0;
+        _boredCooldown = 300;
+        BoredCommands = new HashSet<string>();
     }
 
     // Core settings
@@ -153,4 +158,29 @@ public class Config
     public double RecentJoinDecay { get; set; }
     public double? SmallRaidDecay { get; set; }
     public double? LargeRaidDecay { get; set; }
+
+    // Bored settings
+    private ulong _boredChannel { get; set; }
+    public ulong BoredChannel
+    {
+        get => _boredChannel;
+        set
+        {
+            var eventData = new ConfigValueChangeEvent("BoredChannel", _boredChannel, value);
+            Changed?.Invoke(this, eventData);
+            _boredChannel = value;
+        }
+    }
+    private double _boredCooldown { get; set; }
+    public double BoredCooldown
+    {
+        get => _boredCooldown;
+        set
+        {
+            var eventData = new ConfigValueChangeEvent("BoredCooldown", _boredCooldown, value);
+            Changed?.Invoke(this, eventData);
+            _boredCooldown = value;
+        }
+    }
+    public HashSet<string> BoredCommands { get; set; }
 }
