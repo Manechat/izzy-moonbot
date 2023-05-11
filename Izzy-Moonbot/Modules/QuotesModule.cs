@@ -198,6 +198,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
 
     [Command("addquote")]
     [Summary("Adds a quote to a user.")]
+    [Remarks("In the Discord UI, right-click on a message and go to 'Apps' for an alternative way of invoking this command.")]
     [ModCommand(Group = "Permission")]
     [DevCommand(Group = "Permission")]
     [Parameter("user", ParameterType.UserResolvable, "The user to add the quote to.")]
