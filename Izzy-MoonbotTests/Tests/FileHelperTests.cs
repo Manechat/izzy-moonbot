@@ -194,6 +194,7 @@ public class FileHelperTests
         var serialized = JsonConvert.SerializeObject(config, Formatting.Indented);
 
         // testConfig with Small/LargeRaidTime removed
+        // and bored config items added
         Assert.AreEqual("""
             {
               "Prefix": ".",
@@ -273,7 +274,10 @@ public class FileHelperTests
               "LargeRaidSize": 10,
               "RecentJoinDecay": 300.0,
               "SmallRaidDecay": 5.0,
-              "LargeRaidDecay": 30.0
+              "LargeRaidDecay": 30.0,
+              "BoredChannel": 0,
+              "BoredCooldown": 300.0,
+              "BoredCommands": []
             }
             """, serialized);
     }
