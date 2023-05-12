@@ -32,7 +32,8 @@ public class ConfigCommand
                 $"managedroles - Config items regarding the automated management of member and new member roles.\n" +
                 $"filter - Config items regarding the filter.\n" +
                 $"spam - Config items regarding spam pressure.\n" +
-                $"raid - Config items regarding raid detection.\n```\n\n" +
+                $"raid - Config items regarding raid detection.\n" +
+                $"bored - Config items regarding bored commands.\n```\n\n" +
                 $"ℹ  **See also: `{config.Prefix}help`. Run `{config.Prefix}help` for more information.**");
 
             return;
