@@ -362,6 +362,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
             { "unban", typeof(ScheduledUnbanJob) },
             { "echo", typeof(ScheduledEchoJob) },
             { "banner", typeof(ScheduledBannerRotationJob) },
+            { "bored", typeof(ScheduledBoredCommandsJob) },
         };
         var supportedJobTypesMessage = $"The currently supported job types are: {string.Join(", ", jobTypes.Keys.Select(k => $"`{k}`"))}";
 
@@ -574,6 +575,16 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                                   $"{_config.Prefix}schedule add {searchString} <date/time>\n" +
                                   "```";
                         break;
+                    case "ScheduledBoredCommandsJob":
+                        content = "**Bored Commands**\n" +
+                                  "*If no one has posted in `BoredChannel` within the last `BoredCooldown` seconds, this job posts one of the strings in `BoredCommands`, " +
+                                      "typically a command meant to be executed by Izzy herself or another bot. Then reschedules itself for `BoredCooldown` seconds in the future.*\n" +
+                                  ":warning: This scheduled job is managed by Izzy internally. It is best not to modify it with this command.\n" +
+                                  "Creation syntax:\n" +
+                                  "```\n" +
+                                  $"{_config.Prefix}schedule add {searchString} <date/time>\n" +
+                                  "```";
+                        break;
                     default:
                         content = "**Unknown type**\n" +
                                   "*I don't know what this type is?*";
@@ -662,6 +673,9 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                     break;
                 case "banner":
                     action = new ScheduledBannerRotationJob();
+                    break;
+                case "bored":
+                    action = new ScheduledBoredCommandsJob();
                     break;
                 default: throw new InvalidCastException($"{typeArg} is not a valid job type");
             };
