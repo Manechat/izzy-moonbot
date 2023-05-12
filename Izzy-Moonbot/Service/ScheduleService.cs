@@ -579,20 +579,20 @@ public class ScheduleService
             var cmds = _config.BoredCommands.ToArray();
             var cmd = cmds[new Random().Next(cmds.Length)];
 
-            _logger.Log($"last BoredChannel message was posted {lastMessage} which was over {_config.BoredCooldown} seconds ago.\n" +
-                $"Posting randomly selected command message: {cmd}");
-            await boredChannel.SendMessageAsync(cmd);
-
-            // Then reschedule ourselves
             nextExecuteTime = DateTimeHelper.UtcNow.AddSeconds(_config.BoredCooldown);
+
+            _logger.Log($"last BoredChannel message was posted {lastMessage} which was over {_config.BoredCooldown} seconds ago.\n" +
+                $"Posting randomly selected command message: {cmd}\n" +
+                $"and scheduling next BoredCommands job for {nextExecuteTime}");
+            await boredChannel.SendMessageAsync(cmd);
         }
         else
         {
-            _logger.Log($"BoredChannel has recent activity at {lastMessage}, not executing anything.");
             nextExecuteTime = lastMessage.AddSeconds(_config.BoredCooldown);
+            _logger.Log($"BoredChannel has recent activity at {lastMessage}, not executing anything." +
+                $"Scheduling next BoredCommands job for {nextExecuteTime}");
         }
 
-        _logger.Log($"Scheduling next BoredCommands job for {nextExecuteTime}");
         var nextJob = new ScheduledJob(DateTimeHelper.UtcNow, nextExecuteTime, new ScheduledBoredCommandsJob(), ScheduledJobRepeatType.None);
         await CreateScheduledJob(nextJob);
     }
