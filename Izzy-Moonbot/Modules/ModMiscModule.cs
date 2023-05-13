@@ -593,7 +593,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                             Creation syntax:
                             ```
                             {_config.Prefix}schedule add {searchString} <date/time>
-                            ```"
+                            ```
                             """;
                         break;
                     default:
