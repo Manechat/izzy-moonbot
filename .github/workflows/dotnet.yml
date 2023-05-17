@@ -17,6 +17,7 @@ on:
       - '**/.dockerignore'
       - '**/.gitattributes'
       - '**/.github/**'
+      - '**/.editorconfig'
 
 jobs:
   build-and-test:
