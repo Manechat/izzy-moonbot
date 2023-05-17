@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
+using Discord.WebSocket;
 using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Attributes;
 using Izzy_Moonbot.Helpers;
@@ -28,20 +29,29 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
         _users = users;
     }
 
-    // Usually <@id> is the best display format, but _users contains the names for some user ids
-    // who left the server yet are still recorded in quotes, so we can do better than Discord
-    // by fetching those ancient user names.
-    private string DisplayUserId(ulong userId, IIzzyGuild guild)
+    private async Task<string> DisplayUserName(ulong userId)
     {
-        var potentialUser = guild.GetUser(userId);
+        // First, assuming the user is in the server, try to get them from cache
+        var potentialGuildUser = this.Context.Guild.GetUser(userId);
 
-        // Still in the server, so <@id> will resolve just fine
+        // Either use their nickname or username if the former is empty
+        if (potentialGuildUser != null)
+            return !string.IsNullOrWhiteSpace(potentialGuildUser.Nickname)
+                ? potentialGuildUser.Nickname
+                : potentialGuildUser.Username;
+
+        // If we the user is not in the server then we perform a request to find them
+        var potentialUser = await this.Context.Client.GetUserAsync(userId);
+
         if (potentialUser != null)
-            return $"<@{userId}>";
+            return potentialUser.Username;
 
+        // Do we still need this? What is _users for exactly?
+        /*
         if (_users.TryGetValue(userId, out var user))
             // This is the case where we have a name that Discord probably doesn't, so use it
             return user.Username;
+        */
 
         // Never mind, we know nothing after all, just let them render as <@123456>
         return $"<@{userId}>";
@@ -74,7 +84,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
         {
             var (randomUserId, index, quote) = _quoteService.GetRandomQuote();
 
-            await context.Channel.SendMessageAsync($"{DisplayUserId(randomUserId, defaultGuild)} **`#{index + 1}`:** {quote}", allowedMentions: AllowedMentions.None);
+            await context.Channel.SendMessageAsync($"**{await DisplayUserName(randomUserId)}**, #{index + 1}: {quote}", allowedMentions: AllowedMentions.None);
             return;
         }
 
@@ -107,7 +117,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
                 return;
             }
 
-            await context.Channel.SendMessageAsync($"{DisplayUserId(userId, defaultGuild)} **`#{result.Value.Item1 + 1}`:** {result.Value.Item2}", allowedMentions: AllowedMentions.None);
+            await context.Channel.SendMessageAsync($"**{await DisplayUserName(userId)}**, #{result.Value.Item1 + 1}: {result.Value.Item2}", allowedMentions: AllowedMentions.None);
         }
         // Get specific quote from a specific user
         else
@@ -125,7 +135,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
                 return;
             }
 
-            await context.Channel.SendMessageAsync($"{DisplayUserId(userId, defaultGuild)} **`#{number.Value}`:** {quote}", allowedMentions: AllowedMentions.None);
+            await context.Channel.SendMessageAsync($"**{await DisplayUserName(userId)}**, #{number.Value}: {quote}", allowedMentions: AllowedMentions.None);
         }
     }
 
@@ -186,11 +196,15 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
 
         PaginationHelper.PaginateIfNeededAndSendMessage(
             context,
-            $"Here's all the quotes I have for {DisplayUserId(userId, defaultGuild)}.",
-            quotes.Select((quote, index) => $"{index + 1}: {quote}").ToArray(),
-            $"Run `{_config.Prefix}quote <user> <number>` to get a specific quote.\n" +
-            $"Run `{_config.Prefix}quote <user>` to get a random quote from that user.\n" +
-            $"Run `{_config.Prefix}quote` for a random quote from a random user.",
+            $"Here's all the quotes I have for {await DisplayUserName(userId)}.\n",
+            quotes.Select((quote, index) => $"{index + 1}. {quote}").ToArray(),
+            $"""
+
+            Run `{_config.Prefix}quote <user> <number>` to get a specific quote.
+            Run `{_config.Prefix}quote <user>` to get a random quote from that user.
+            Run `{_config.Prefix}quote` for a random quote from a random user.
+            """,
+            codeblock: false,
             pageSize: 15,
             allowedMentions: AllowedMentions.None
         );
