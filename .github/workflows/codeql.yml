@@ -26,6 +26,7 @@ on:
       - '**/.dockerignore'
       - '**/.gitattributes'
       - '**/.github/**'
+      - '**/.editorconfig'
   # Uncomment the below two lines to enable scheduled scan runs
   schedule:
    - cron: '30 12 * * 6' #Randomly generated cron value
