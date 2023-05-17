@@ -800,7 +800,6 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
         var action = new ScheduledEchoJob(channelId, content);
         var task = new ScheduledJob(DateTimeHelper.UtcNow, parseResult.Time, action, parseResult.RepeatType);
         await _schedule.CreateScheduledJob(task);
-        _logger.Log($"Added scheduled job for reminder", context: context, level: LogLevel.Debug);
 
         await context.Channel.SendMessageAsync($"Okay! I'll send that reminder to <#{channelId}> <t:{parseResult.Time.ToUnixTimeSeconds()}:R>.");
     }

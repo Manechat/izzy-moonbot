@@ -304,15 +304,15 @@ public class UserListener
         {
             if (_users[newUser.Id].Username != $"{newUser.Username}#{newUser.Discriminator}")
             {
-                _logger.Log($"User name/discriminator changed from {_users[newUser.Id].Username} to {newUser.Username}#{newUser.Discriminator}, updating...", level: LogLevel.Debug);
-                _users[newUser.Id].Username =
-                    $"{newUser.Username}#{newUser.Discriminator}";
+                _logger.Log($"User id {newUser.Id} changed their name and/or discriminator from {_users[newUser.Id].Username} to {newUser.Username}#{newUser.Discriminator}. Updating userinfo.", level: LogLevel.Debug);
+                _users[newUser.Id].Username = $"{newUser.Username}#{newUser.Discriminator}";
+                if (!_users[newUser.Id].Aliases.Contains(newUser.DisplayName))
+                    _users[newUser.Id].Aliases.Add(newUser.DisplayName);
                 changed = true;
             }
-
-            if (!_users[newUser.Id].Aliases.Contains(newUser.DisplayName))
+            else if (!_users[newUser.Id].Aliases.Contains(newUser.DisplayName))
             {
-                _logger.Log($"{newUser.Username}#{newUser.Discriminator} ({newUser.Id}) has new displayname, updating...", level: LogLevel.Debug);
+                _logger.Log($"{newUser.Username}#{newUser.Discriminator} ({newUser.Id}) changed their DisplayName. Updating userinfo.", level: LogLevel.Debug);
                 _users[newUser.Id].Aliases.Add(newUser.DisplayName);
                 changed = true;
             }

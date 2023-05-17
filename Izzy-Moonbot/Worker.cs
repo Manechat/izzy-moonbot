@@ -470,13 +470,17 @@ namespace Izzy_Moonbot
             if (message.HasCharPrefix(_config.Prefix, ref argPos) ||
                 message.Content.StartsWith($"<@{_client.CurrentUser.Id}>"))
             {
+                // This kind of non-command happens so often that it's not even worth logging these cases
+                if (message.Content.StartsWith($"{_config.Prefix}{_config.Prefix}"))
+                    return;
+
                 _logger.Log(LogLevel.Information, $"Received possible command: {messageParam.CleanContent}");
 
                 if (message.Content.StartsWith($"<@{_client.CurrentUser.Id}>"))
                 {
                     if (!_config.MentionResponseEnabled)
                     {
-                        _logger.Log(LogLevel.Information, $"Ignoring mentioni because MentionResponseEnabled is false.");
+                        _logger.Log(LogLevel.Information, $"Ignoring mention because MentionResponseEnabled is false.");
                         return;
                     }
                     var secondsSinceLastMention = (DateTimeOffset.UtcNow - _state.LastMentionResponse).TotalSeconds;
