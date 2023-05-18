@@ -25,10 +25,10 @@ Get started by posting `.help` and/or `.config` in one of the private bots-* cha
     - After installation you likely need to go into Settings (the cog wheel icon) -> Resources -> WSL Integration -> "Enable integration with additional distros" and enable "Ubuntu"
 - Ask one of the existing devs for a copy of the following files. These contain secrets such as Discord tokens and database credentials that we don't want to store in GitHub.
   - `Izzy-Moonbot/Docker Compose/Dev/appsettings.json`
-  - `Izzy-Moonbot/Docker Compose/Dev/appsettings.Development.json`
   - `Izzy-Moonbot/Docker Compose/Dev/mongo.env`
   - `Izzy-Moonbot/Docker Compose/Dev/mongo_express.env`
-- Add your Discord user id to the "DevUsers" list in `appsettings.json` and `appsettings.Development.json`, so your instance of Izzy will give you developer permissions.
+- Add your Discord user id to the "DevUsers" list in `appsettings.json`, so your instance of Izzy will give you developer permissions.
+- Ask one of the existing devs to add you to the "DevUsers" list in the `appsettings.json` file on Izzy's production environment.
 - Ask one of the existing devs for an invite to our "Bot Testing" Discord server.
 - Launch a WSL terminal, `cd` over to `<your local repo clone>/Izzy-Moonbot/Docker Compose/Dev`, then running `docker compose up` should launch Izzy and connect her to our Bot Testing server, after which she should start responding to Discord messages there.
   - Use `docker compose up -d` if you don't want Docker taking over control of your terminal.
