@@ -199,12 +199,9 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
             context,
             $"Here's all the quotes I have for **{await DisplayUserName(userId, context.Client, defaultGuild)}**:\n",
             quotes.Select((quote, index) => $"{index + 1}. {quote}").Select(SanitizeQuote).ToArray(),
-            $"""
-
-            Run `{_config.Prefix}quote <user> <number>` to get a specific quote.
-            Run `{_config.Prefix}quote <user>` to get a random quote from that user.
-            Run `{_config.Prefix}quote` for a random quote from a random user.
-            """,
+            $"\nRun `{_config.Prefix}quote <user> <number>` to get a specific quote.\n" +
+            $"Run `{_config.Prefix}quote <user>` to get a random quote from that user." +
+            $"Run `{_config.Prefix}quote` for a random quote from a random user.",
             codeblock: false,
             pageSize: 15,
             allowedMentions: AllowedMentions.None
