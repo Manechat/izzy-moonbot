@@ -1,8 +1,9 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
@@ -28,23 +29,33 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
         _users = users;
     }
 
-    // Usually <@id> is the best display format, but _users contains the names for some user ids
-    // who left the server yet are still recorded in quotes, so we can do better than Discord
-    // by fetching those ancient user names.
-    private string DisplayUserId(ulong userId, IIzzyGuild guild)
+    private async Task<string> DisplayUserName(ulong userId, IIzzyClient client, IIzzyGuild guild)
     {
-        var potentialUser = guild.GetUser(userId);
+        // First, assuming the user is in the server, try to get them from cache
+        var potentialGuildUser = guild.GetUser(userId);
 
-        // Still in the server, so <@id> will resolve just fine
+        if (potentialGuildUser != null)
+            return potentialGuildUser.DisplayName;
+
+        // If the user is not in the server then we perform a request to find them
+        var potentialUser = await client.GetUserAsync(userId);
+
         if (potentialUser != null)
-            return $"<@{userId}>";
+            return potentialUser.Username;
 
+        // If all else fails, check our own 'userinfo' cache
         if (_users.TryGetValue(userId, out var user))
-            // This is the case where we have a name that Discord probably doesn't, so use it
             return user.Username;
 
         // Never mind, we know nothing after all, just let them render as <@123456>
         return $"<@{userId}>";
+    }
+
+    private static string SanitizeQuote(string quote)
+    {
+        // Find all unfurling urls in the given string and surround them with <>. If any are already non-unfurling then ignore them
+        // Regex taken from https://stackoverflow.com/a/3809435
+        return Regex.Replace(quote, @"(?<!<)(https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*))(?!>)", "<$&>");
     }
 
     [Command("quote")]
@@ -74,7 +85,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
         {
             var (randomUserId, index, quote) = _quoteService.GetRandomQuote();
 
-            await context.Channel.SendMessageAsync($"{DisplayUserId(randomUserId, defaultGuild)} **`#{index + 1}`:** {quote}", allowedMentions: AllowedMentions.None);
+            await context.Channel.SendMessageAsync($"**{await DisplayUserName(randomUserId, context.Client, defaultGuild)}**, #{index + 1}: {quote}", allowedMentions: AllowedMentions.None);
             return;
         }
 
@@ -107,7 +118,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
                 return;
             }
 
-            await context.Channel.SendMessageAsync($"{DisplayUserId(userId, defaultGuild)} **`#{result.Value.Item1 + 1}`:** {result.Value.Item2}", allowedMentions: AllowedMentions.None);
+            await context.Channel.SendMessageAsync($"**{await DisplayUserName(userId, context.Client, defaultGuild)}**, #{result.Value.Item1 + 1}: {result.Value.Item2}", allowedMentions: AllowedMentions.None);
         }
         // Get specific quote from a specific user
         else
@@ -125,7 +136,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
                 return;
             }
 
-            await context.Channel.SendMessageAsync($"{DisplayUserId(userId, defaultGuild)} **`#{number.Value}`:** {quote}", allowedMentions: AllowedMentions.None);
+            await context.Channel.SendMessageAsync($"**{await DisplayUserName(userId, context.Client, defaultGuild)}**, #{number.Value}: {quote}", allowedMentions: AllowedMentions.None);
         }
     }
 
@@ -186,11 +197,12 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
 
         PaginationHelper.PaginateIfNeededAndSendMessage(
             context,
-            $"Here's all the quotes I have for {DisplayUserId(userId, defaultGuild)}.",
-            quotes.Select((quote, index) => $"{index + 1}: {quote}").ToArray(),
-            $"Run `{_config.Prefix}quote <user> <number>` to get a specific quote.\n" +
+            $"Here's all the quotes I have for **{await DisplayUserName(userId, context.Client, defaultGuild)}**:\n",
+            quotes.Select((quote, index) => $"{index + 1}. {quote}").Select(SanitizeQuote).ToArray(),
+            $"\nRun `{_config.Prefix}quote <user> <number>` to get a specific quote.\n" +
             $"Run `{_config.Prefix}quote <user>` to get a random quote from that user.\n" +
             $"Run `{_config.Prefix}quote` for a random quote from a random user.",
+            codeblock: false,
             pageSize: 15,
             allowedMentions: AllowedMentions.None
         );
@@ -267,16 +279,17 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
         await context.Channel.SendMessageAsync(output, allowedMentions: AllowedMentions.None);
     }
 
-    static public async Task<string> AddQuoteCommandImpl(QuoteService quoteService, IIzzyGuild guild, ulong userId, string content)
+    public static async Task<string> AddQuoteCommandImpl(QuoteService quoteService, IIzzyGuild guild, ulong userId, string content)
     {
         var member = guild.GetUser(userId);
+
         if (member == null)
             return "I was unable to find the user you asked for. Sorry!";
 
         var newQuote = await quoteService.AddQuote(member, content);
 
-        return $"Added the quote to <@{userId}> as quote number {newQuote.Id + 1}.\n" +
-            $">>> {newQuote.Content}";
+        return $"Added quote #{newQuote.Id + 1} to **{member.DisplayName}**:\n\n" +
+            $">>> {SanitizeQuote(newQuote.Content)}";
     }
 
     [Command("removequote")]
@@ -337,7 +350,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
             await _quoteService.RemoveQuote(quoteUser, number.Value - 1);
 
             await context.Channel.SendMessageAsync(
-                $"Removed quote number {number.Value} from **{quoteUser.Username}#{quoteUser.Discriminator}**.", allowedMentions: AllowedMentions.None);
+                $"Removed quote #{number.Value} from **{quoteUser.Username}#{quoteUser.Discriminator}**.", allowedMentions: AllowedMentions.None);
             return;
         }
 
@@ -354,7 +367,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
         var newUserQuote = await _quoteService.RemoveQuote(member, number.Value - 1);
 
         await context.Channel.SendMessageAsync(
-            $"Removed quote number {number.Value} from **{newUserQuote.Name}**.", allowedMentions: AllowedMentions.None);
+            $"Removed quote #{number.Value} from **{newUserQuote.Name}**.", allowedMentions: AllowedMentions.None);
         return;
     }
 
