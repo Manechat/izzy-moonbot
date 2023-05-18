@@ -29,29 +29,23 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
         _users = users;
     }
 
-    private async Task<string> DisplayUserName(ulong userId)
+    private async Task<string> DisplayUserName(ulong userId, IIzzyClient client, IIzzyGuild guild)
     {
         // First, assuming the user is in the server, try to get them from cache
-        var potentialGuildUser = this.Context.Guild.GetUser(userId);
+        var potentialGuildUser = guild.GetUser(userId);
 
-        // Either use their nickname or username if the former is empty
         if (potentialGuildUser != null)
-            return !string.IsNullOrWhiteSpace(potentialGuildUser.Nickname)
-                ? potentialGuildUser.Nickname
-                : potentialGuildUser.Username;
+            return potentialGuildUser.DisplayName;
 
-        // If we the user is not in the server then we perform a request to find them
-        var potentialUser = await this.Context.Client.GetUserAsync(userId);
+        // If the user is not in the server then we perform a request to find them
+        var potentialUser = await client.GetUserAsync(userId);
 
         if (potentialUser != null)
             return potentialUser.Username;
 
-        // Do we still need this? What is _users for exactly?
-        /*
+        // If all else fails, check our own 'userinfo' cache
         if (_users.TryGetValue(userId, out var user))
-            // This is the case where we have a name that Discord probably doesn't, so use it
             return user.Username;
-        */
 
         // Never mind, we know nothing after all, just let them render as <@123456>
         return $"<@{userId}>";
@@ -84,7 +78,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
         {
             var (randomUserId, index, quote) = _quoteService.GetRandomQuote();
 
-            await context.Channel.SendMessageAsync($"**{await DisplayUserName(randomUserId)}**, #{index + 1}: {quote}", allowedMentions: AllowedMentions.None);
+            await context.Channel.SendMessageAsync($"**{await DisplayUserName(randomUserId, context.Client, defaultGuild)}**, #{index + 1}: {quote}", allowedMentions: AllowedMentions.None);
             return;
         }
 
@@ -117,7 +111,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
                 return;
             }
 
-            await context.Channel.SendMessageAsync($"**{await DisplayUserName(userId)}**, #{result.Value.Item1 + 1}: {result.Value.Item2}", allowedMentions: AllowedMentions.None);
+            await context.Channel.SendMessageAsync($"**{await DisplayUserName(userId, context.Client, defaultGuild)}**, #{result.Value.Item1 + 1}: {result.Value.Item2}", allowedMentions: AllowedMentions.None);
         }
         // Get specific quote from a specific user
         else
@@ -135,7 +129,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
                 return;
             }
 
-            await context.Channel.SendMessageAsync($"**{await DisplayUserName(userId)}**, #{number.Value}: {quote}", allowedMentions: AllowedMentions.None);
+            await context.Channel.SendMessageAsync($"**{await DisplayUserName(userId, context.Client, defaultGuild)}**, #{number.Value}: {quote}", allowedMentions: AllowedMentions.None);
         }
     }
 
@@ -196,7 +190,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
 
         PaginationHelper.PaginateIfNeededAndSendMessage(
             context,
-            $"Here's all the quotes I have for {await DisplayUserName(userId)}.\n",
+            $"Here's all the quotes I have for **{await DisplayUserName(userId, context.Client, defaultGuild)}**:\n",
             quotes.Select((quote, index) => $"{index + 1}. {quote}").ToArray(),
             $"""
 
