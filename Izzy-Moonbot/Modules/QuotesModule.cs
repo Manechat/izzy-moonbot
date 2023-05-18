@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
@@ -49,6 +50,13 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
 
         // Never mind, we know nothing after all, just let them render as <@123456>
         return $"<@{userId}>";
+    }
+
+    private static string SanitizeQuote(string quote)
+    {
+        // Find all unfurling urls in the given string and surround them with <>. If any are already non-unfurling then ignore them
+        // Regex taken from https://stackoverflow.com/a/3809435
+        return Regex.Replace(quote, @"(?<!<)(https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*))(?!>)", "<$&>");
     }
 
     [Command("quote")]
@@ -191,7 +199,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
         PaginationHelper.PaginateIfNeededAndSendMessage(
             context,
             $"Here's all the quotes I have for **{await DisplayUserName(userId, context.Client, defaultGuild)}**:\n",
-            quotes.Select((quote, index) => $"{index + 1}. {quote}").ToArray(),
+            quotes.Select((quote, index) => $"{index + 1}. {quote}").Select(SanitizeQuote).ToArray(),
             $"""
 
             Run `{_config.Prefix}quote <user> <number>` to get a specific quote.
@@ -284,7 +292,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
         var newQuote = await quoteService.AddQuote(member, content);
 
         return $"Added the quote to <@{userId}> as quote number {newQuote.Id + 1}.\n" +
-            $">>> {newQuote.Content}";
+            $">>> {SanitizeQuote(newQuote.Content)}";
     }
 
     [Command("removequote")]
