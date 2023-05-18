@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Worker">
+<Project Sdk="Microsoft.NET.Sdk.Worker">
     <PropertyGroup>
         <UserSecretsId>dotnet-Izzy_Moonbot-C054BD3A-F4E3-4221-81C0-9AE116BDD30F</UserSecretsId>
         <RootNamespace>Izzy_Moonbot</RootNamespace>
@@ -33,6 +33,6 @@
         <PackageReference Include="Microsoft.Extensions.Hosting" Version="7.0.1" />
         <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="7.0.0" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-        <PackageReference Include="Serilog.AspNetCore" Version="6.1.0" />
+        <PackageReference Include="Serilog.AspNetCore" Version="7.0.0" />
     </ItemGroup>
 </Project>
