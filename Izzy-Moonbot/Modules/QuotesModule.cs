@@ -7,7 +7,6 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
-using Discord.WebSocket;
 using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Attributes;
 using Izzy_Moonbot.Helpers;
@@ -283,15 +282,16 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
         await context.Channel.SendMessageAsync(output, allowedMentions: AllowedMentions.None);
     }
 
-    static public async Task<string> AddQuoteCommandImpl(QuoteService quoteService, IIzzyGuild guild, ulong userId, string content)
+    public static async Task<string> AddQuoteCommandImpl(QuoteService quoteService, IIzzyGuild guild, ulong userId, string content)
     {
         var member = guild.GetUser(userId);
+
         if (member == null)
             return "I was unable to find the user you asked for. Sorry!";
 
         var newQuote = await quoteService.AddQuote(member, content);
 
-        return $"Added the quote to <@{userId}> as quote number {newQuote.Id + 1}.\n" +
+        return $"Added quote #{newQuote.Id + 1} to **{member.DisplayName}**:\n\n" +
             $">>> {SanitizeQuote(newQuote.Content)}";
     }
 
@@ -353,7 +353,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
             await _quoteService.RemoveQuote(quoteUser, number.Value - 1);
 
             await context.Channel.SendMessageAsync(
-                $"Removed quote number {number.Value} from **{quoteUser.Username}#{quoteUser.Discriminator}**.", allowedMentions: AllowedMentions.None);
+                $"Removed quote #{number.Value} from **{quoteUser.Username}#{quoteUser.Discriminator}**.", allowedMentions: AllowedMentions.None);
             return;
         }
 
@@ -370,7 +370,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
         var newUserQuote = await _quoteService.RemoveQuote(member, number.Value - 1);
 
         await context.Channel.SendMessageAsync(
-            $"Removed quote number {number.Value} from **{newUserQuote.Name}**.", allowedMentions: AllowedMentions.None);
+            $"Removed quote #{number.Value} from **{newUserQuote.Name}**.", allowedMentions: AllowedMentions.None);
         return;
     }
 
