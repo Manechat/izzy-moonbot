@@ -471,7 +471,8 @@ namespace Izzy_Moonbot
                 message.Content.StartsWith($"<@{_client.CurrentUser.Id}>"))
             {
                 // This kind of non-command happens so often that it's not even worth logging these cases
-                if (message.Content.StartsWith($"{_config.Prefix}{_config.Prefix}"))
+                if (message.Content.StartsWith($"{_config.Prefix}{_config.Prefix}") ||
+                    message.Content.Length == 1)
                     return;
 
                 _logger.Log(LogLevel.Information, $"Received possible command: {messageParam.CleanContent}");
@@ -502,10 +503,9 @@ namespace Izzy_Moonbot
                 }
 
                 string parsedMessage = message.Content[1..];
-                if (parsedMessage.Length == 0 || !char.IsLetter(parsedMessage[0]))
+                if (char.IsWhiteSpace(parsedMessage[0]))
                 {
-                    _logger.Log(LogLevel.Information, $"Ignoring message {messageParam.CleanContent} because the {_config.Prefix} " +
-                        $"is not followed immediately by a letter.");
+                    _logger.Log(LogLevel.Information, $"Ignoring message {messageParam.CleanContent} because the {_config.Prefix} is followed by whitespace.");
                     return;
                 }
 
