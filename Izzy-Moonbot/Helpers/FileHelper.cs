@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -68,7 +68,7 @@ public static class FileHelper
         var filepath = SetUpFilepath(FilePathType.Root, "config", "conf");
         if (!File.Exists(filepath))
         {
-            var defaultFileContents = JsonConvert.SerializeObject(settings, Formatting.Indented);
+            var defaultFileContents = JsonConvert.SerializeObject(settings, Formatting.Indented).Replace("\r\n", "\n");
             await File.WriteAllTextAsync(filepath, defaultFileContents);
         }
         else
@@ -85,7 +85,7 @@ public static class FileHelper
     public static async Task SaveConfigAsync(Config settings)
     {
         var filepath = SetUpFilepath(FilePathType.Root, "config", "conf");
-        var fileContents = JsonConvert.SerializeObject(settings, Formatting.Indented);
+        var fileContents = JsonConvert.SerializeObject(settings, Formatting.Indented).Replace("\r\n", "\n");
         await File.WriteAllTextAsync(filepath, fileContents);
     }
 
@@ -95,7 +95,7 @@ public static class FileHelper
         var filepath = SetUpFilepath(FilePathType.Root, "users", "conf");
         if (!File.Exists(filepath))
         {
-            var defaultFileContents = JsonConvert.SerializeObject(users, Formatting.Indented);
+            var defaultFileContents = JsonConvert.SerializeObject(users, Formatting.Indented).Replace("\r\n", "\n");
             await File.WriteAllTextAsync(filepath, defaultFileContents);
         }
         else
@@ -112,7 +112,7 @@ public static class FileHelper
     public static async Task SaveUsersAsync(Dictionary<ulong, User> users)
     {
         var filepath = SetUpFilepath(FilePathType.Root, "users", "conf");
-        var fileContents = JsonConvert.SerializeObject(users, Formatting.Indented);
+        var fileContents = JsonConvert.SerializeObject(users, Formatting.Indented).Replace("\r\n", "\n");
         await File.WriteAllTextAsync(filepath, fileContents);
     }
 
@@ -122,7 +122,7 @@ public static class FileHelper
         var filepath = SetUpFilepath(FilePathType.Root, "scheduled-tasks", "conf");
         if (!File.Exists(filepath))
         {
-            var defaultFileContents = JsonConvert.SerializeObject(scheduledJobs, Formatting.Indented);
+            var defaultFileContents = JsonConvert.SerializeObject(scheduledJobs, Formatting.Indented).Replace("\r\n", "\n");
             await File.WriteAllTextAsync(filepath, defaultFileContents);
         }
         else
@@ -186,7 +186,7 @@ public static class FileHelper
 
     public static string TestableSerializeSchedule(List<ScheduledJob> scheduledTasks)
     {
-        return JsonConvert.SerializeObject(scheduledTasks, Formatting.Indented);
+        return JsonConvert.SerializeObject(scheduledTasks, Formatting.Indented).Replace("\r\n", "\n");
     }
 
     public static async Task<GeneralStorage> LoadGeneralStorageAsync()
@@ -195,7 +195,7 @@ public static class FileHelper
         var filepath = SetUpFilepath(FilePathType.Root, "general-storage", "conf");
         if (!File.Exists(filepath))
         {
-            var defaultFileContents = JsonConvert.SerializeObject(generalStorage, Formatting.Indented);
+            var defaultFileContents = JsonConvert.SerializeObject(generalStorage, Formatting.Indented).Replace("\r\n", "\n");
             await File.WriteAllTextAsync(filepath, defaultFileContents);
         }
         else
@@ -212,7 +212,7 @@ public static class FileHelper
     public static async Task SaveGeneralStorageAsync(GeneralStorage settings)
     {
         var filepath = SetUpFilepath(FilePathType.Root, "general-storage", "conf");
-        var fileContents = JsonConvert.SerializeObject(settings, Formatting.Indented);
+        var fileContents = JsonConvert.SerializeObject(settings, Formatting.Indented).Replace("\r\n", "\n");
         await File.WriteAllTextAsync(filepath, fileContents);
     }
     
@@ -222,7 +222,7 @@ public static class FileHelper
         var filepath = SetUpFilepath(FilePathType.Root, "quotes", "conf");
         if (!File.Exists(filepath))
         {
-            var defaultFileContents = JsonConvert.SerializeObject(quoteStorage, Formatting.Indented);
+            var defaultFileContents = JsonConvert.SerializeObject(quoteStorage, Formatting.Indented).Replace("\r\n", "\n");
             await File.WriteAllTextAsync(filepath, defaultFileContents);
         }
         else
@@ -239,7 +239,7 @@ public static class FileHelper
     public static async Task SaveQuoteStorageAsync(QuoteStorage settings)
     {
         var filepath = SetUpFilepath(FilePathType.Root, "quotes", "conf");
-        var fileContents = JsonConvert.SerializeObject(settings, Formatting.Indented);
+        var fileContents = JsonConvert.SerializeObject(settings, Formatting.Indented).Replace("\r\n", "\n");
         await File.WriteAllTextAsync(filepath, fileContents);
     }
 

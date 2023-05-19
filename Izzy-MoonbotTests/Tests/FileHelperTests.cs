@@ -1,4 +1,4 @@
-﻿using Izzy_Moonbot.Helpers;
+using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Settings;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json;
@@ -98,7 +98,7 @@ public class FileHelperTests
             """;
 
         var generalStorage = JsonConvert.DeserializeObject<GeneralStorage>(testGeneralStorage);
-        var serialized = JsonConvert.SerializeObject(generalStorage, Formatting.Indented);
+        var serialized = JsonConvert.SerializeObject(generalStorage, Formatting.Indented).Replace("\r\n", "\n");
         Assert.AreEqual(testGeneralStorage, serialized);
     }
 
@@ -191,7 +191,7 @@ public class FileHelperTests
             """;
 
         var config = JsonConvert.DeserializeObject<Config>(testConfig);
-        var serialized = JsonConvert.SerializeObject(config, Formatting.Indented);
+        var serialized = JsonConvert.SerializeObject(config, Formatting.Indented).Replace("\r\n", "\n");
 
         // testConfig with Small/LargeRaidTime removed
         // and bored config items added
