@@ -12,17 +12,16 @@ public static class ParseHelper
     {
         errorString = null;
 
-        var args = DiscordHelper.GetArguments(argsString);
-        if (!args.Arguments.Any())
+        var (firstArg, argsAfterFirst) = DiscordHelper.GetArgument(argsString);
+        if (firstArg == null)
         {
             errorString = $"empty or all-whitespace string \"{argsString}\" can't be a datetime";
             return null;
         }
 
-        if (args.Arguments[0] == "in")
+        if (firstArg == "in")
         {
-            var intervalArgsString = string.Join("", argsString.Skip(args.Indices[0]));
-            if (TryParseInterval(intervalArgsString, out var intervalError) is var (dto, remainingArgs))
+            if (TryParseInterval(argsAfterFirst ?? "", out var intervalError) is var (dto, remainingArgs))
                 return (new ParseDateTimeResult(dto, ScheduledJobRepeatType.None), remainingArgs);
 
             errorString = $"Failed to extract a date/time from the start of \"{argsString}\":\n" +
@@ -30,10 +29,9 @@ public static class ParseHelper
                 $"    Valid example: \"in 1 hour\"";
             return null;
         }
-        else if (args.Arguments[0] == "at")
+        else if (firstArg == "at")
         {
-            var timeArgsString = string.Join("", argsString.Skip(args.Indices[0]));
-            if (TryParseTimeInput(timeArgsString, out var timeError) is var (dto, remainingArgs))
+            if (TryParseTimeInput(argsAfterFirst ?? "", out var timeError) is var (dto, remainingArgs))
                 return (new ParseDateTimeResult(dto, ScheduledJobRepeatType.None), remainingArgs);
 
             errorString = $"Failed to extract a date/time from the start of \"{argsString}\":\n" +
@@ -41,12 +39,11 @@ public static class ParseHelper
                 $"    Valid example: \"at 12:00 UTC+0\"";
             return null;
         }
-        else if (args.Arguments[0] == "on")
+        else if (firstArg == "on")
         {
-            var subArgsString = string.Join("", argsString.Skip(args.Indices[0]));
-            if (TryParseWeekdayTime(subArgsString, out var weekdayError) is var (weekdayDto, weekdayRemainingArgs))
+            if (TryParseWeekdayTime(argsAfterFirst ?? "", out var weekdayError) is var (weekdayDto, weekdayRemainingArgs))
                 return (new ParseDateTimeResult(weekdayDto, ScheduledJobRepeatType.None), weekdayRemainingArgs);
-            if (TryParseAbsoluteDateTime(subArgsString, out var dateError) is var (dateDto, dateRemainingArgs))
+            if (TryParseAbsoluteDateTime(argsAfterFirst ?? "", out var dateError) is var (dateDto, dateRemainingArgs))
                 return (new ParseDateTimeResult(dateDto, ScheduledJobRepeatType.None), dateRemainingArgs);
 
             errorString = $"Failed to extract a date/time from the start of \"{argsString}\". Using \"on\" means either weekday + time or date + time, but:\n" +
@@ -56,12 +53,12 @@ public static class ParseHelper
                 $"    Valid example: \"on 1 jan 2020 12:00 UTC+0\"";
             return null;
         }
-        else if (args.Arguments[0] == "every")
+        else if (firstArg == "every")
         {
-            if (args.Arguments[1] == "day")
+            var (secondArg, argsAfterSecond) = argsAfterFirst != null ? DiscordHelper.GetArgument(argsAfterFirst) : (null, null);
+            if (secondArg == "day")
             {
-                var dayArgsString = string.Join("", argsString.Skip(args.Indices[1]));
-                if (TryParseTimeInput(dayArgsString, out var timeError) is var (timeDto, timeRemainingArgs))
+                if (TryParseTimeInput(argsAfterSecond ?? "", out var timeError) is var (timeDto, timeRemainingArgs))
                     return (new ParseDateTimeResult(timeDto, ScheduledJobRepeatType.Daily), timeRemainingArgs);
 
                 errorString = $"Failed to extract a date/time from the start of \"{argsString}\":\n" +
@@ -69,10 +66,9 @@ public static class ParseHelper
                     $"    Valid example: \"every day 12:00 UTC+0\"";
                 return null;
             }
-            else if (args.Arguments[1] == "week")
+            else if (secondArg == "week")
             {
-                var weekArgsString = string.Join("", argsString.Skip(args.Indices[1]));
-                if (TryParseWeekdayTime(weekArgsString, out var weekdayError) is var (weekdayDto, weekdayRemainingArgs))
+                if (TryParseWeekdayTime(argsAfterSecond ?? "", out var weekdayError) is var (weekdayDto, weekdayRemainingArgs))
                     return (new ParseDateTimeResult(weekdayDto, ScheduledJobRepeatType.Weekly), weekdayRemainingArgs);
 
                 errorString = $"Failed to extract a date/time from the start of \"{argsString}\":\n" +
@@ -80,10 +76,9 @@ public static class ParseHelper
                     $"    Valid example: \"every week monday 12:00 UTC+0\"";
                 return null;
             }
-            else if (args.Arguments[1] == "year")
+            else if (secondArg == "year")
             {
-                var yearArgsString = string.Join("", argsString.Skip(args.Indices[1]));
-                if (TryParseDayMonthTime(yearArgsString, out var dateError) is var (dateDto, dateRemainingArgs))
+                if (TryParseDayMonthTime(argsAfterSecond ?? "", out var dateError) is var (dateDto, dateRemainingArgs))
                     return (new ParseDateTimeResult(dateDto, ScheduledJobRepeatType.Yearly), dateRemainingArgs);
 
                 errorString = $"Failed to extract a date/time from the start of \"{argsString}\":\n" +
@@ -92,27 +87,26 @@ public static class ParseHelper
                 return null;
             }
 
-            // no disambiguation word, so we have to try every *repeatable* format, i.e.
-            // no timestamps and AbsoluteDateTime are replaced by DayMonthTime
-            var subArgsString = string.Join("", argsString.Skip(args.Indices[0]));
-            if (TryParseInterval(subArgsString, out var intervalError) is var (intervalDto, intervalRemainingArgs))
-                return (new ParseDateTimeResult(intervalDto, ScheduledJobRepeatType.Relative), intervalRemainingArgs);
-            if (TryParseTimeInput(subArgsString, out var timeError2) is var (timeDto2, timeRemainingArgs2))
-                return (new ParseDateTimeResult(timeDto2, ScheduledJobRepeatType.Daily), timeRemainingArgs2);
-            if (TryParseWeekdayTime(subArgsString, out var weekdayError2) is var (weekdayDto2, weekdayRemainingArgs2))
-                return (new ParseDateTimeResult(weekdayDto2, ScheduledJobRepeatType.Weekly), weekdayRemainingArgs2);
-            if (TryParseDayMonthTime(subArgsString, out var dateError2) is var (dateDto2, dateRemainingArgs2))
-                return (new ParseDateTimeResult(dateDto2, ScheduledJobRepeatType.Yearly), dateRemainingArgs2);
-
-            if (args.Arguments.Length == 1)
+            if (argsAfterFirst == null)
             {
                 errorString = "Failed to extract a date/time because there's nothing after the 'every'.\n" +
                               "    Valid example: \"every 1 hour\"";
                 return null;
             }
 
-            errorString = ErrorBasedOnIntendedFormat(args.Arguments.Skip(1).ToArray(),
-                "Failed to extract a date/time from the start of \"{argsString}\" because it looks like a Discord timestamp, but repeating timestamps are not supported.\n" +
+            // no disambiguation word, so we have to try every *repeatable* format, i.e.
+            // no timestamps and AbsoluteDateTime are replaced by DayMonthTime
+            if (TryParseInterval(argsAfterFirst, out var intervalError) is var (intervalDto, intervalRemainingArgs))
+                return (new ParseDateTimeResult(intervalDto, ScheduledJobRepeatType.Relative), intervalRemainingArgs);
+            if (TryParseTimeInput(argsAfterFirst, out var timeError2) is var (timeDto2, timeRemainingArgs2))
+                return (new ParseDateTimeResult(timeDto2, ScheduledJobRepeatType.Daily), timeRemainingArgs2);
+            if (TryParseWeekdayTime(argsAfterFirst, out var weekdayError2) is var (weekdayDto2, weekdayRemainingArgs2))
+                return (new ParseDateTimeResult(weekdayDto2, ScheduledJobRepeatType.Weekly), weekdayRemainingArgs2);
+            if (TryParseDayMonthTime(argsAfterFirst, out var dateError2) is var (dateDto2, dateRemainingArgs2))
+                return (new ParseDateTimeResult(dateDto2, ScheduledJobRepeatType.Yearly), dateRemainingArgs2);
+
+            errorString = ErrorBasedOnIntendedFormat(DiscordHelper.GetArguments(argsString).Arguments.Skip(1).ToArray(),
+                $"Failed to extract a date/time from the start of \"{argsString}\" because it looks like a Discord timestamp, but repeating timestamps are not supported.\n" +
                 $"    Valid examples: \"<t:1234567890>\", \"every 1 hour\"",
                 $"Failed to extract a repeating date/time interval from the start of \"{argsString}\" because:\n" +
                 $"    {intervalError}\n" +
@@ -144,7 +138,7 @@ public static class ParseHelper
             if (TryParseAbsoluteDateTime(argsString, out var dateError) is var (dateDto, dateRemainingArgs))
                 return (new ParseDateTimeResult(dateDto, ScheduledJobRepeatType.None), dateRemainingArgs);
 
-            errorString = ErrorBasedOnIntendedFormat(args.Arguments,
+            errorString = ErrorBasedOnIntendedFormat(DiscordHelper.GetArguments(argsString).Arguments,
                 timestampError ?? "<unreachable>",
                 $"Failed to extract a date/time interval from the start of \"{argsString}\" because:\n" +
                 $"    {intervalError}\n" +
@@ -194,14 +188,14 @@ public static class ParseHelper
 
     public static (DateTimeOffset, string)? TryParseDiscordTimestamp(string argsString, out string? errorString)
     {
-        var args = DiscordHelper.GetArguments(argsString);
-        if (!args.Arguments.Any())
+        var (firstArg, argsAfterFirst) = DiscordHelper.GetArgument(argsString);
+        if (firstArg == null)
         {
             errorString = $"empty or all-whitespace string \"{argsString}\" can't be a Discord timestamp";
             return null;
         }
 
-        var match = Regex.Match(args.Arguments[0], "^<t:(?<epoch>[0-9]+)(:[a-z])?>$", RegexOptions.IgnoreCase);
+        var match = Regex.Match(firstArg, "^<t:(?<epoch>[0-9]+)(:[a-z])?>$", RegexOptions.IgnoreCase);
         if (match.Success)
         {
             var epochString = match.Groups["epoch"].Value;
@@ -209,27 +203,27 @@ public static class ParseHelper
             var dateTimeOffset = DateTimeOffset.FromUnixTimeSeconds(epochSeconds);
 
             errorString = null;
-            return (dateTimeOffset, string.Join("", argsString.Skip(args.Indices[0])));
+            return (dateTimeOffset, argsAfterFirst ?? "");
         }
         else
         {
-            errorString = $"\"{args.Arguments[0]}\" is not a Discord timestamp (e.g. \"<t:1234567890>\", \"<t:1234567890:R>\")";
+            errorString = $"\"{firstArg}\" is not a Discord timestamp (e.g. \"<t:1234567890>\", \"<t:1234567890:R>\")";
             return null;
         }
     }
 
     public static (DateTimeOffset, string)? TryParseInterval(string argsString, out string? errorString, bool inThePast = false)
     {
-        var args = DiscordHelper.GetArguments(argsString);
-        if (!args.Arguments.Any())
+        var (firstArg, argsAfterFirst) = DiscordHelper.GetArgument(argsString);
+        if (firstArg == null)
         {
             errorString = $"empty or all-whitespace string \"{argsString}\" can't be a date/time interval";
             return null;
         }
 
-        if (!int.TryParse(args.Arguments[0], out int dateInt))
+        if (!int.TryParse(firstArg, out int dateInt))
         {
-            errorString = $"\"{args.Arguments[0]}\" is not a positive integer";
+            errorString = $"\"{firstArg}\" is not a positive integer";
             return null;
         }
         if (dateInt < 0)
@@ -238,16 +232,22 @@ public static class ParseHelper
             return null;
         }
 
-        if (args.Arguments.Length < 2)
+        if (argsAfterFirst == null)
+        {
+            errorString = $"incomplete date/time interval: \"{argsString}\" contains a number but not a unit";
+            return null;
+        }
+        var (secondArg, argsAfterSecond) = DiscordHelper.GetArgument(argsAfterFirst);
+        if (secondArg == null)
         {
             errorString = $"incomplete date/time interval: \"{argsString}\" contains a number but not a unit";
             return null;
         }
 
-        var unitMatch = Regex.Match(args.Arguments[1], "^(?<unit>year|month|day|week|hour|minute|second)s?$", RegexOptions.IgnoreCase);
+        var unitMatch = Regex.Match(secondArg, "^(?<unit>year|month|day|week|hour|minute|second)s?$", RegexOptions.IgnoreCase);
         if (!unitMatch.Success)
         {
-            errorString = $"\"{args.Arguments[1]}\" is not one of the supported date/time interval units: year(s), month(s), day(s), week(s), hour(s), minute(s), second(s)";
+            errorString = $"\"{secondArg}\" is not one of the supported date/time interval units: year(s), month(s), day(s), week(s), hour(s), minute(s), second(s)";
             return null;
         }
 
@@ -265,7 +265,7 @@ public static class ParseHelper
         };
 
         errorString = null;
-        return (dateTimeOffset, string.Join("", argsString.Skip(args.Indices[1])));
+        return (dateTimeOffset, argsAfterSecond ?? "");
     }
 
     public static (TimeSpan, string)? TryParseOffset(string argsString, out string? errorString)
