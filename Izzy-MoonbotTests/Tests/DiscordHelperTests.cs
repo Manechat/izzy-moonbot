@@ -1,4 +1,4 @@
-﻿using Izzy_Moonbot.Helpers;
+using Izzy_Moonbot.Helpers;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using static Izzy_Moonbot.Helpers.DiscordHelper;
 
@@ -58,143 +58,114 @@ public class DiscordHelperTests
         Assert.ThrowsException<FormatException>(() => DiscordHelper.ConvertRolePingToId("foo <@&1234> bar"));
     }
 
-    void AssertArgumentResultsAreEqual(ArgumentResult expected, ArgumentResult actual)
+    [TestMethod()]
+    public void GetArgument_NoQuotesTests()
     {
-        TestUtils.AssertListsAreEqual(expected.Arguments, actual.Arguments, "\nArguments");
-        TestUtils.AssertListsAreEqual(expected.Indices, actual.Indices, "\nIndices");
-    }
+        Assert.AreEqual((null, null), DiscordHelper.GetArgument(""));
 
-    string SkippedArgsString(string argsString, int argsToSkip)
-    {
-        var args = DiscordHelper.GetArguments(argsString);
-        return string.Join("", argsString.Skip(args.Indices[argsToSkip]));
+        Assert.AreEqual((null, null), DiscordHelper.GetArgument(" "));
+
+        Assert.AreEqual(("foo", null), DiscordHelper.GetArgument("foo"));
+
+        Assert.AreEqual(("foo", null), DiscordHelper.GetArgument("foo "));
+
+        Assert.AreEqual(("foo", null), DiscordHelper.GetArgument(" foo"));
+
+        Assert.AreEqual(("foo", "bar"), DiscordHelper.GetArgument("foo bar"));
+        Assert.AreEqual(("bar", null), DiscordHelper.GetArgument("bar"));
+
+        Assert.AreEqual(("foo", "bar"), DiscordHelper.GetArgument("foo    bar"));
+        Assert.AreEqual(("bar", null), DiscordHelper.GetArgument("bar"));
+
+        Assert.AreEqual(("foo", "bar   "), DiscordHelper.GetArgument("foo bar   "));
+        Assert.AreEqual(("bar", null), DiscordHelper.GetArgument("bar   "));
+
+        Assert.AreEqual(("foo", "bar"), DiscordHelper.GetArgument("   foo bar"));
+        Assert.AreEqual(("bar", null), DiscordHelper.GetArgument("bar"));
+
+        Assert.AreEqual(("foo", "baaaar"), DiscordHelper.GetArgument("foo baaaar"));
+        Assert.AreEqual(("baaaar", null), DiscordHelper.GetArgument("baaaar"));
+
+        Assert.AreEqual(("foo", "bar baz"), DiscordHelper.GetArgument("foo bar baz"));
+        Assert.AreEqual(("bar", "baz"), DiscordHelper.GetArgument("bar baz"));
+        Assert.AreEqual(("baz", null), DiscordHelper.GetArgument("baz"));
+
+        Assert.AreEqual(("foo", "bar   baz"), DiscordHelper.GetArgument("foo   bar   baz"));
+        Assert.AreEqual(("bar", "baz"), DiscordHelper.GetArgument("bar   baz"));
+        Assert.AreEqual(("baz", null), DiscordHelper.GetArgument("baz"));
+
+        Assert.AreEqual(("foo", "bar   baz   "), DiscordHelper.GetArgument("   foo   bar   baz   "));
+        Assert.AreEqual(("bar", "baz   "), DiscordHelper.GetArgument("bar   baz   "));
+        Assert.AreEqual(("baz", null), DiscordHelper.GetArgument("baz   "));
     }
 
     [TestMethod()]
-    public void GetArguments_NoQuotesTests()
+    public void GetArgument_QuotesTests()
     {
-        AssertArgumentResultsAreEqual(new ArgumentResult{ Arguments = Array.Empty<string>(), Indices = Array.Empty<int>() }, DiscordHelper.GetArguments(""));
+        Assert.AreEqual(("", null), DiscordHelper.GetArgument("\"\""));
 
-        AssertArgumentResultsAreEqual(new ArgumentResult{ Arguments = Array.Empty<string>(), Indices = Array.Empty<int>() }, DiscordHelper.GetArguments(" "));
+        Assert.AreEqual(("foo", null), DiscordHelper.GetArgument("\"foo\""));
 
-        var argsString = "foo";
-        AssertArgumentResultsAreEqual(new ArgumentResult{ Arguments = new[] { "foo" }, Indices = new[] { 3 } }, DiscordHelper.GetArguments(argsString));
-        Assert.AreEqual("", SkippedArgsString(argsString, 0));
+        Assert.AreEqual(("foo bar", null), DiscordHelper.GetArgument("\"foo bar\""));
 
-        argsString = "foo ";
-        AssertArgumentResultsAreEqual(new ArgumentResult{ Arguments = new[] { "foo" }, Indices = new[] { 4 } }, DiscordHelper.GetArguments(argsString));
-        Assert.AreEqual("", SkippedArgsString(argsString, 0));
+        Assert.AreEqual(("foo", "\"bar\""), DiscordHelper.GetArgument("foo \"bar\""));
+        Assert.AreEqual(("bar", null), DiscordHelper.GetArgument("\"bar\""));
 
-        argsString = " foo";
-        AssertArgumentResultsAreEqual(new ArgumentResult { Arguments = new[] { "foo" }, Indices = new[] { 4 } }, DiscordHelper.GetArguments(argsString));
-        Assert.AreEqual("", SkippedArgsString(argsString, 0));
-
-        argsString = "foo bar";
-        AssertArgumentResultsAreEqual(new ArgumentResult{ Arguments = new[] { "foo", "bar" }, Indices = new[] { 4, 7 } }, DiscordHelper.GetArguments(argsString));
-        Assert.AreEqual("bar", SkippedArgsString(argsString, 0));
-        Assert.AreEqual("", SkippedArgsString(argsString, 1));
-
-        argsString = "foo    bar";
-        AssertArgumentResultsAreEqual(new ArgumentResult{ Arguments = new[] { "foo", "bar" }, Indices = new[] { 7, 10 } }, DiscordHelper.GetArguments(argsString));
-        Assert.AreEqual("bar", SkippedArgsString(argsString, 0));
-        Assert.AreEqual("", SkippedArgsString(argsString, 1));
-
-        argsString = "foo bar   ";
-        AssertArgumentResultsAreEqual(new ArgumentResult{ Arguments = new[] { "foo", "bar" }, Indices = new[] { 4, 10 } }, DiscordHelper.GetArguments(argsString));
-        Assert.AreEqual("bar   ", SkippedArgsString(argsString, 0));
-        Assert.AreEqual("", SkippedArgsString(argsString, 1));
-
-        argsString = "   foo bar";
-        AssertArgumentResultsAreEqual(new ArgumentResult { Arguments = new[] { "foo", "bar" }, Indices = new[] { 7, 10 } }, DiscordHelper.GetArguments(argsString));
-        Assert.AreEqual("bar", SkippedArgsString(argsString, 0));
-        Assert.AreEqual("", SkippedArgsString(argsString, 1));
-
-        argsString = "foo baaaar";
-        AssertArgumentResultsAreEqual(new ArgumentResult{ Arguments = new[] { "foo", "baaaar" }, Indices = new[] { 4, 10 } }, DiscordHelper.GetArguments(argsString));
-        Assert.AreEqual("baaaar", SkippedArgsString(argsString, 0));
-        Assert.AreEqual("", SkippedArgsString(argsString, 1));
-
-        argsString = "foo bar baz";
-        AssertArgumentResultsAreEqual(new ArgumentResult{ Arguments = new[] { "foo", "bar", "baz" }, Indices = new[] { 4, 8, 11 } }, DiscordHelper.GetArguments(argsString));
-        Assert.AreEqual("bar baz", SkippedArgsString(argsString, 0));
-        Assert.AreEqual("baz", SkippedArgsString(argsString, 1));
-        Assert.AreEqual("", SkippedArgsString(argsString, 2));
-
-        argsString = "foo   bar   baz";
-        AssertArgumentResultsAreEqual(new ArgumentResult{ Arguments = new[] { "foo", "bar", "baz" }, Indices = new[] { 6, 12, 15 } }, DiscordHelper.GetArguments(argsString));
-        Assert.AreEqual("bar   baz", SkippedArgsString(argsString, 0));
-        Assert.AreEqual("baz", SkippedArgsString(argsString, 1));
-        Assert.AreEqual("", SkippedArgsString(argsString, 2));
-
-        argsString = "   foo   bar   baz   ";
-        AssertArgumentResultsAreEqual(new ArgumentResult { Arguments = new[] { "foo", "bar", "baz" }, Indices = new[] { 9, 15, 21 } }, DiscordHelper.GetArguments(argsString));
-        Assert.AreEqual("bar   baz   ", SkippedArgsString(argsString, 0));
-        Assert.AreEqual("baz   ", SkippedArgsString(argsString, 1));
-        Assert.AreEqual("", SkippedArgsString(argsString, 2));
+        Assert.AreEqual(("foo", "\"bar baz\" quux"), DiscordHelper.GetArgument("foo \"bar baz\" quux"));
+        Assert.AreEqual(("bar baz", "quux"), DiscordHelper.GetArgument("\"bar baz\" quux"));
+        Assert.AreEqual(("quux", null), DiscordHelper.GetArgument("quux"));
     }
 
     [TestMethod()]
-    public void GetArguments_QuotesTests()
+    public void GetArgument_EscapedQuotesTests()
     {
-        var argsString = "\"\"";
-        AssertArgumentResultsAreEqual(new ArgumentResult{ Arguments = new[] { "" }, Indices = new[] { 2 } }, DiscordHelper.GetArguments(argsString));
-        Assert.AreEqual("", SkippedArgsString(argsString, 0));
-
-        argsString = "\"foo\"";
-        AssertArgumentResultsAreEqual(new ArgumentResult{ Arguments = new[] { "foo" }, Indices = new[] { 5 } }, DiscordHelper.GetArguments(argsString));
-        Assert.AreEqual("", SkippedArgsString(argsString, 0));
-
-        argsString = "\"foo bar\"";
-        AssertArgumentResultsAreEqual(new ArgumentResult{ Arguments = new[] { "foo bar" }, Indices = new[] { 9 } }, DiscordHelper.GetArguments(argsString));
-        Assert.AreEqual("", SkippedArgsString(argsString, 0));
-
-        argsString = "foo \"bar\"";
-        AssertArgumentResultsAreEqual(new ArgumentResult{ Arguments = new[] { "foo", "bar" }, Indices = new[] { 4, 9 } }, DiscordHelper.GetArguments(argsString));
-        Assert.AreEqual("\"bar\"", SkippedArgsString(argsString, 0));
-        Assert.AreEqual("", SkippedArgsString(argsString, 1));
-
-        argsString = "foo \"bar baz\" quux";
-        AssertArgumentResultsAreEqual(new ArgumentResult{ Arguments = new[] { "foo", "bar baz", "quux" }, Indices = new[] { 4, 14, 18 } }, DiscordHelper.GetArguments(argsString));
-        Assert.AreEqual("\"bar baz\" quux", SkippedArgsString(argsString, 0));
-        Assert.AreEqual("quux", SkippedArgsString(argsString, 1));
-        Assert.AreEqual("", SkippedArgsString(argsString, 2));
-    }
-
-    [TestMethod()]
-    public void GetArguments_EscapedQuotesTests()
-    {
-        var argsString = """
+        var parse = DiscordHelper.GetArgument("""
             "\""
-            """;
-        AssertArgumentResultsAreEqual(new ArgumentResult { Arguments = new[] { "\\\"" }, Indices = new[] { 4 } }, DiscordHelper.GetArguments(argsString));
-        Assert.AreEqual("", SkippedArgsString(argsString, 0));
+            """);
+        Assert.AreEqual(("""
+            \"
+            """, null), parse);
 
-        argsString = """
+        parse = DiscordHelper.GetArgument("""
             "foo\"bar"
-            """;
-        AssertArgumentResultsAreEqual(new ArgumentResult { Arguments = new[] { "foo\\\"bar" }, Indices = new[] { 10 } }, DiscordHelper.GetArguments(argsString));
-        Assert.AreEqual("", SkippedArgsString(argsString, 0));
+            """);
+        Assert.AreEqual(("""
+            foo\"bar
+            """, null), parse);
 
-        argsString = """
+        parse = DiscordHelper.GetArgument("""
             "fo\"o b\"ar"
-            """;
-        AssertArgumentResultsAreEqual(new ArgumentResult { Arguments = new[] { "fo\\\"o b\\\"ar" }, Indices = new[] { 13 } }, DiscordHelper.GetArguments(argsString));
-        Assert.AreEqual("", SkippedArgsString(argsString, 0));
+            """);
+        Assert.AreEqual(("""
+            fo\"o b\"ar
+            """, null), parse);
 
-        argsString = """
+        parse = DiscordHelper.GetArgument("""
             foo\" "bar"
-            """;
-        AssertArgumentResultsAreEqual(new ArgumentResult { Arguments = new[] { "foo\\\"", "bar" }, Indices = new[] { 6, 11 } }, DiscordHelper.GetArguments(argsString));
-        Assert.AreEqual("\"bar\"", SkippedArgsString(argsString, 0));
-        Assert.AreEqual("", SkippedArgsString(argsString, 1));
+            """);
+        Assert.AreEqual(("""
+            foo\"
+            """, """
+            "bar"
+            """), parse);
+        parse = DiscordHelper.GetArgument("""
+            "bar"
+            """);
+        Assert.AreEqual(("bar", null), parse);
 
-        argsString = """
+        parse = DiscordHelper.GetArgument("""
             foo "bar baz\"" quux
-            """;
-        AssertArgumentResultsAreEqual(new ArgumentResult { Arguments = new[] { "foo", "bar baz\\\"", "quux" }, Indices = new[] { 4, 16, 20 } }, DiscordHelper.GetArguments(argsString));
-        Assert.AreEqual("\"bar baz\\\"\" quux", SkippedArgsString(argsString, 0));
-        Assert.AreEqual("quux", SkippedArgsString(argsString, 1));
-        Assert.AreEqual("", SkippedArgsString(argsString, 2));
+            """);
+        Assert.AreEqual(("foo", """
+            "bar baz\"" quux
+            """), parse);
+        parse = DiscordHelper.GetArgument("""
+            "bar baz\"" quux
+            """);
+        Assert.AreEqual(("""
+            bar baz\"
+            """, "quux"), parse);
+        Assert.AreEqual(("quux", null), DiscordHelper.GetArgument("quux"));
     }
 
     [TestMethod()]
