@@ -165,14 +165,13 @@ public static class DiscordHelper
                 while (endOfSpaceRun < args.Length && IsSpace(args[endOfSpaceRun]))
                     endOfSpaceRun++;
 
-                // If there are only spaces after the arg, then it's the last arg if any
-                if (endOfSpaceRun >= args.Length)
-                    return (nextArg == "") ?
+                return (endOfSpaceRun >= args.Length) ?
+                    // If there are only spaces after the arg, then it's the last arg if any
+                    (nextArg == "") ?
                         (null, null) :
-                        (trimQuotes(nextArg), null);
-                // otherwise there are more args left to parse with future GetArgument() calls
-                else
-                    return (nextArg == "") ?
+                        (trimQuotes(nextArg), null) :
+                    // otherwise there are more args left to parse with future GetArgument() calls
+                    (nextArg == "") ?
                         // if this "arg" was the empty string, recurse so caller gets the first non-empty arg if any
                         GetArgument(args.Substring(endOfSpaceRun)) :
                         (trimQuotes(nextArg), args.Substring(endOfSpaceRun));
