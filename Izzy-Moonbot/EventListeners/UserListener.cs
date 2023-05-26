@@ -219,28 +219,13 @@ public class UserListener
                 return null;
             }).Where(audit => audit != null).FirstOrDefault();
 
-        var output = 
-            $"Leave: {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined <t:{_users[user.Id].Joins.Last().ToUnixTimeSeconds()}:R>";
-        var fileOutput = 
-            $"Leave: {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined {_users[user.Id].Joins.Last():O}";
+        var output = $"Leave: {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined <t:{_users[user.Id].Joins.Last().ToUnixTimeSeconds()}:R>";
 
         if (banAuditLog != null)
-        {
-            _logger.Log($"Fetched, user was banned by {banAuditLog.User.Username}#{banAuditLog.User.Discriminator} ({banAuditLog.User.Id}) for \"{banAuditLog.Reason}\"", level: LogLevel.Debug);
-            output =
-                $"Leave (Ban): {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined <t:{_users[user.Id].Joins.Last().ToUnixTimeSeconds()}:R>, \"{banAuditLog.Reason}\" by {banAuditLog.User.Username}#{banAuditLog.User.Discriminator} ({guild.GetUser((ulong)banAuditLog.User.Id).DisplayName})";
-            fileOutput =
-                $"Leave (Ban): {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined {_users[user.Id].Joins.Last():O}, \"{banAuditLog.Reason}\" by {banAuditLog.User.Username}#{banAuditLog.User.Discriminator} ({guild.GetUser((ulong)banAuditLog.User.Id).DisplayName})";
-        }
+            output += $"\n\nAccording to the server audit log, they were **banned** at {banAuditLog.CreatedAt} by {banAuditLog.User.Username}#{banAuditLog.User.Discriminator} ({guild.GetUser((ulong)banAuditLog.User.Id).DisplayName}) for the following reason:\n\"{banAuditLog.Reason}\"";
 
         if (kickAuditLog != null)
-        {
-            _logger.Log($"Fetched, user was kicked by {kickAuditLog.User.Username}#{kickAuditLog.User.Discriminator} ({kickAuditLog.User.Id}) for \"{kickAuditLog.Reason}\"", level: LogLevel.Debug);
-            output =
-                $"Leave (Kick): {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined <t:{_users[user.Id].Joins.Last().ToUnixTimeSeconds()}:R>, \"{kickAuditLog.Reason}\" by {kickAuditLog.User.Username}#{kickAuditLog.User.Discriminator} ({guild.GetUser((ulong)kickAuditLog.User.Id).DisplayName})";
-            fileOutput =
-                $"Leave (Kick): {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined {_users[user.Id].Joins.Last():O}, \"{kickAuditLog.Reason}\" by {kickAuditLog.User.Username}#{kickAuditLog.User.Discriminator} ({guild.GetUser((ulong)kickAuditLog.User.Id).DisplayName})";
-        }
+            output += $"\n\nAccording to the server audit log, they were **kicked** at {kickAuditLog.CreatedAt} by {kickAuditLog.User.Username}#{kickAuditLog.User.Discriminator} ({guild.GetUser((ulong)kickAuditLog.User.Id).DisplayName}) for the following reason:\n\"{kickAuditLog.Reason}\"";
 
         // Scheduled jobs that require a user to be in the server create a difficult question.
         // Do we delete them on leave so there's no error later? Or keep them in case the user rejoins?
@@ -278,10 +263,7 @@ public class UserListener
         }
 
         _logger.Log($"Sending moderation log: ${output}");
-        await _modLogger.CreateModLog(guild)
-            .SetContent(output)
-            .SetFileLogContent(fileOutput)
-            .Send();
+        await _modLogger.CreateModLog(guild).SetContent(output).SetFileLogContent(output).Send();
     }
 
     private async Task MemberUpdateEvent(Cacheable<SocketGuildUser,ulong> oldUser, SocketGuildUser newUser)
