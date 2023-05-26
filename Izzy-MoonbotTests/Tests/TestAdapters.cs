@@ -1,4 +1,4 @@
-﻿using Discord;
+using Discord;
 using System.Text.RegularExpressions;
 using static Izzy_Moonbot.Adapters.IIzzyClient;
 
@@ -65,6 +65,10 @@ public class TestGuildUser : IIzzyGuildUser
         var ur = _guildBackref.UserRoles;
         if (ur.ContainsKey(Id))
             ur[Id].Remove(roleId);
+    }
+    public async Task SetTimeOutAsync(TimeSpan span, RequestOptions? requestOptions)
+    {
+        /* not implemented */
     }
 }
 

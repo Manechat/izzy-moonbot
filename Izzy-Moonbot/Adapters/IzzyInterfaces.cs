@@ -1,4 +1,4 @@
-﻿using Discord;
+using Discord;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -22,6 +22,7 @@ public interface IIzzyGuildUser : IIzzyUser
     Task AddRoleAsync(ulong roleId, RequestOptions? requestOptions);
     Task AddRolesAsync(IEnumerable<ulong> roles, RequestOptions? requestOptions);
     Task RemoveRoleAsync(ulong memberRole, RequestOptions? requestOptions);
+    Task SetTimeOutAsync(TimeSpan span, RequestOptions? requestOptions);
 }
 
 public interface IIzzyRole
