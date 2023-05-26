@@ -141,10 +141,9 @@ public static class DiscordHelper
     {
         Func<string, string> trimQuotes = arg =>
         {
-            if (arg[0] == '"' && arg.Last() == '"')
-                return arg[1..(arg.Length - 1)];
-            else
-                return arg;
+            return (arg[0] == '"' && arg.Last() == '"') ?
+                arg[1..(arg.Length - 1)] :
+                arg;
         };
 
         var betweenQuotes = false;
@@ -152,11 +151,10 @@ public static class DiscordHelper
         {
             var c = args[i];
 
-            // start or end a quoted argument
-            if (c == '"')
-                // only if that quote is unescaped (and \ only has this special meaning when preceding ")
-                if (i <= 1 || args[i-1] != '\\')
-                    betweenQuotes = !betweenQuotes;
+            // start or end a quoted argument only if that quote is unescaped
+            // (and \ only has this special meaning when preceding ")
+            if ((c == '"') && (i <= 1 || args[i-1] != '\\'))
+                betweenQuotes = !betweenQuotes;
 
             // found a space outside quotes; that means we've reached the end of the current arg
             if (IsSpace(c) && !betweenQuotes)
@@ -169,25 +167,22 @@ public static class DiscordHelper
 
                 // If there are only spaces after the arg, then it's the last arg if any
                 if (endOfSpaceRun >= args.Length)
-                    if (nextArg == "")
-                        return (null, null);
-                    else
-                        return (trimQuotes(nextArg), null);
+                    return (nextArg == "") ?
+                        (null, null) :
+                        (trimQuotes(nextArg), null);
                 // otherwise there are more args left to parse with future GetArgument() calls
                 else
-                    if (nextArg == "")
-                        // this "arg" was the empty string, recurse so caller gets the first non-empty arg if any
-                        return GetArgument(args.Substring(endOfSpaceRun));
-                    else
-                        return (trimQuotes(nextArg), args.Substring(endOfSpaceRun));
+                    return (nextArg == "") ?
+                        // if this "arg" was the empty string, recurse so caller gets the first non-empty arg if any
+                        GetArgument(args.Substring(endOfSpaceRun)) :
+                        (trimQuotes(nextArg), args.Substring(endOfSpaceRun));
             }
         }
 
         // If we never found a space (outside a quoted arg), then the whole string is at most one arg
-        if (args == "")
-            return (null, null);
-        else
-            return (trimQuotes(args), null);
+        return (args == "") ?
+            (null, null) :
+            (trimQuotes(args), null);
     }
 
     public static ArgumentResult GetArguments(string content)
