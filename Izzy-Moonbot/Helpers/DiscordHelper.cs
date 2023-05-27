@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -456,7 +456,7 @@ public static class DiscordHelper
         // but some of them are still useful to make the message clearer
         return $"Command `{context.Message.Content}` " +
             $"was run by {user.Username}#{user.Discriminator} ({user.Id}) " +
-            $"in #{channel.Name} ({channel.Id}) " +
+            $"in #{channel.Name} (<#{channel.Id}>) " +
             $"at {now} (<t:{now.ToUnixTimeMilliseconds()}>)";
     }
 }
