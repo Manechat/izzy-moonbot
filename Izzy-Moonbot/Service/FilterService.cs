@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -14,6 +14,7 @@ public class FilterService
     private readonly ModService _mod;
     private readonly ModLoggingService _modLog;
     private readonly Config _config;
+    private readonly Dictionary<ulong, User> _users;
     private readonly LoggingService _logger;
 
     /*
@@ -23,9 +24,10 @@ public class FilterService
     */
     private readonly string _testString = "=+i8F8s+#(-{×nsBIo8~lA:IZZY_FILTER_TEST:G8282!##!";
 
-    public FilterService(Config config, ModService mod, ModLoggingService modLog, LoggingService logger)
+    public FilterService(Config config, Dictionary<ulong, User> users, ModService mod, ModLoggingService modLog, LoggingService logger)
     {
         _config = config;
+        _users = users;
         _mod = mod;
         _modLog = modLog;
         _logger = logger;
@@ -52,26 +54,25 @@ public class FilterService
         actions.Add(":x: - **I've deleted the offending message.**");
 
         if (actionsTaken.Contains("message"))
-            actions.Add(
-                $":speech_balloon: - **I've sent a message in response.**");
+            actions.Add($":speech_balloon: - **I've sent a message in response.**");
         if (actionsTaken.Contains("silence"))
         {
             actions.Add(":mute: - **I've silenced the user.**");
             actions.Add(":exclamation: - **I've pinged all moderators.**");
         }
+        if (actionsTaken.Contains("timeout"))
+            actions.Add($":stopwatch: - Since the user was already silenced, **I've given them a one-hour timeout.**");
 
         var roleIds = context.Guild?.GetUser(context.User.Id)?.Roles.Select(role => role.Id).ToList() ?? new List<ulong>();
         if (_config.FilterBypassRoles.Overlaps(roleIds))
         {
             actions.Clear();
-            actions.Add(
-                ":information_source: - **I've done nothing as this user has a role which is in `FilterBypassRoles`.**");
+            actions.Add(":information_source: - **I've done nothing as this user has a role which is in `FilterBypassRoles`.**");
         }
         else if (DiscordHelper.IsDev(context.User.Id) && _config.FilterDevBypass)
         {
             actions.Clear();
-            actions.Add(
-                ":information_source: - **I've done nothing as this is one of my developers and `FilterDevBypass` is true.**");
+            actions.Add(":information_source: - **I've done nothing as this is one of my developers and `FilterDevBypass` is true.**");
         }
 
         embedBuilder.AddField("What have I done in response?", string.Join('\n', actions));
@@ -107,12 +108,20 @@ public class FilterService
         {
             var actions = new List<string>();
 
-            var dontSilence = _config.FilterBypassRoles.Overlaps(roleIds) ||
+            var bypassFilter = _config.FilterBypassRoles.Overlaps(roleIds) ||
                 (DiscordHelper.IsDev(context.User.Id) && _config.FilterDevBypass);
-            if (!dontSilence && context.Guild?.GetUser(context.User.Id) is IIzzyGuildUser user)
+            if (!bypassFilter && context.Guild?.GetUser(context.User.Id) is IIzzyGuildUser user)
             {
-                await _mod.SilenceUser(user, $"Filter violation");
-                actions.Add("silence");
+                if (_users[user.Id].Silenced)
+                {
+                    await user.SetTimeOutAsync(TimeSpan.FromHours(1), new RequestOptions { AuditLogReason = "Filter violation" });
+                    actions.Add("timeout");
+                }
+                else
+                {
+                    await _mod.SilenceUser(user, $"Filter violation");
+                    actions.Add("silence");
+                }
             }
 
             await LogFilterTrip(context, word, actions, onEdit);

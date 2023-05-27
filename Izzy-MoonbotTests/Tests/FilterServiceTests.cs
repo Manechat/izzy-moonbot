@@ -1,4 +1,4 @@
-﻿using Izzy_Moonbot;
+using Izzy_Moonbot;
 using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Service;
@@ -24,7 +24,7 @@ public class FilterServiceTests
         var mod = new ModService(cfg, users);
         var modLog = new ModLoggingService(cfg);
         var logger = new LoggingService(new TestLogger<Worker>());
-        var fs = new FilterService(cfg, mod, modLog, logger);
+        var fs = new FilterService(cfg, users, mod, modLog, logger);
 
         fs.RegisterEvents(client);
     }
@@ -77,9 +77,32 @@ public class FilterServiceTests
         Assert.AreEqual(1, modChat.Messages.Count);
         Assert.AreEqual($"<@&{cfg.ModRole}> Filter Violation for <@{sunny.Id}>", modChat.Messages.Last().Content);
 
+        TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, new List<(string, string)>
+        {
+            ("User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
+            ("Channel", $"<#{generalChannel.Id}>"),
+            ("Trigger Word", "magic"),
+            ("Filtered Message", "MaGiC"),
+            ("What have I done in response?", ":x: - **I've deleted the offending message.**\n" +
+                                              ":mute: - **I've silenced the user.**\n" +
+                                              ":exclamation: - **I've pinged all moderators.**"),
+        });
+
+        // The user's second filter trip earns them a timeout instead of a silence and mod ping
+
         await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, "fEatHer");
 
         Assert.AreEqual(2, modChat.Messages.Count);
-        Assert.AreEqual($"<@&{cfg.ModRole}> Filter Violation for <@{sunny.Id}>", modChat.Messages.Last().Content);
+        Assert.AreEqual($" Filter Violation for <@{sunny.Id}>", modChat.Messages.Last().Content);
+
+        TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, new List<(string, string)>
+        {
+            ("User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
+            ("Channel", $"<#{generalChannel.Id}>"),
+            ("Trigger Word", "feather"),
+            ("Filtered Message", "fEatHer"),
+            ("What have I done in response?", ":x: - **I've deleted the offending message.**\n" +
+                                              ":stopwatch: - Since the user was already silenced, **I've given them a one-hour timeout.**"),
+        });
     }
 }

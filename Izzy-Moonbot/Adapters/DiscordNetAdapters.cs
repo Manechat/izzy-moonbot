@@ -1,4 +1,4 @@
-﻿using Discord;
+using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using System;
@@ -61,6 +61,8 @@ public class SocketGuildUserAdapter : IIzzyGuildUser
         await _user.AddRolesAsync(roles, requestOptions);
     public async Task RemoveRoleAsync(ulong memberRole, RequestOptions? requestOptions) =>
         await _user.RemoveRoleAsync(memberRole, requestOptions);
+    public async Task SetTimeOutAsync(TimeSpan span, RequestOptions? requestOptions) =>
+        await _user.SetTimeOutAsync(span, requestOptions);
 }
 
 public class DiscordNetRoleAdapter : IIzzyRole
