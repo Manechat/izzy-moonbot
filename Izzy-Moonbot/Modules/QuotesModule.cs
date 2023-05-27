@@ -40,12 +40,20 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
         // If the user is not in the server then we perform a request to find them
         var potentialUser = await client.GetUserAsync(userId);
 
-        if (potentialUser != null)
+        // If they aren't a deleted user
+        // Deleted users should (I think) always have 21 chars in their name
+        // (13 for "Deleted User " and 8 for the ID afterwards)
+        // IMPORTANT: If that changes this MUST be revised
+        if (potentialUser != null && !(potentialUser.Username.Length == 21 && potentialUser.Username.StartsWith("Deleted User ")))
             return potentialUser.Username;
 
         // If all else fails, check our own 'userinfo' cache
         if (_users.TryGetValue(userId, out var user))
             return user.Username;
+
+        // Finally, if we didn't find them in our own user info just default to "Deleted User XXXXXXXX"
+        if (potentialUser != null)
+            return potentialUser.Username;
 
         // Never mind, we know nothing after all, just let them render as <@123456>
         return $"<@{userId}>";
