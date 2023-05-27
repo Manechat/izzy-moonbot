@@ -310,8 +310,13 @@ public class SpamService
         if (context.Guild == null)
             throw new InvalidOperationException("ProcessTrip was somehow called with a non-guild context");
 
-        // Silence user, this also logs the action.
-        await _mod.SilenceUser(user, $"Exceeded pressure max ({pressure}/{_config.SpamMaxPressure}) in <#{message.Channel.Id}>");
+        // Silence or timeout user, this also logs the action.
+        var auditLogMessage = $"Exceeded pressure max ({pressure}/{_config.SpamMaxPressure}) in <#{message.Channel.Id}>";
+        var alreadySilenced = _users[id].Silenced;
+        if (alreadySilenced)
+            await user.SetTimeOutAsync(TimeSpan.FromHours(1), new RequestOptions { AuditLogReason = auditLogMessage });
+        else
+            await _mod.SilenceUser(user, auditLogMessage);
 
         var bulkDeletionLog = new List<(DateTimeOffset, string)>();
 
@@ -390,7 +395,7 @@ public class SpamService
         var embedBuilder = new EmbedBuilder()
             .WithTitle(":warning: Spam detected")
             .WithColor(16776960)
-            .AddField("Silenced User", $"<@{context.User.Id}> (`{context.User.Id}`)", true)
+            .AddField(alreadySilenced ? "Timeout User" : "Silenced User", $"<@{context.User.Id}> (`{context.User.Id}`)", true)
             .AddField("Channel", $"<#{context.Channel.Id}>", true)
             .AddField("Pressure", $"This user's last message raised their pressure from {oldPressureAfterDecay} to {pressure}, exceeding {_config.SpamMaxPressure}")
             .AddField("Breakdown of last message", $"{PonyReadableBreakdown(pressureBreakdown)}");
@@ -403,10 +408,13 @@ public class SpamService
                 $":information_source: **I was unable to delete {alreadyDeletedMessages} messages by this user. Please double check that these messages have been deleted.**");
 
         await _modLogger.CreateModLog(context.Guild)
-            .SetContent($"<@&{_config.ModRole}> I've silenced <@{user.Id}> for spamming")
+            .SetContent(alreadySilenced ?
+                $"I've given <@{user.Id}> a one-hour timeout for spamming after being silenced" :
+                $"<@&{_config.ModRole}> I've silenced <@{user.Id}> for spamming"
+            )
             .SetEmbed(embedBuilder.Build())
             .SetFileLogContent(
-                $"{user.Username}#{user.Discriminator} ({user.DisplayName}) (`{user.Id}`) was silenced for exceeding pressure max ({pressure}/{_config.SpamMaxPressure}) in #{message.Channel.Name} (`{message.Channel.Id}`).\n" +
+                $"{user.Username}#{user.Discriminator} ({user.DisplayName}) (`{user.Id}`) was silenced/timed out for exceeding pressure max ({pressure}/{_config.SpamMaxPressure}) in #{message.Channel.Name} (`{message.Channel.Id}`).\n" +
                 $"Pressure breakdown: {PonyReadableBreakdown(pressureBreakdown)}\n" +
                 $"{(alreadyDeletedMessages != 0 ? $"I was unable to delete {alreadyDeletedMessages} messages from this user, please double check whether their messages have been deleted." : "")}")
             .Send();
