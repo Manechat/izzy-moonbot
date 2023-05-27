@@ -135,60 +135,82 @@ public static class DiscordHelper
         return array.ElementAt(index);
     }
 
+    // The return value is (nextArgString, remainingArgsIfAny)
+    // string.Split() does not suffice because we want to support quoted arguments
+    public static (string?, string?) GetArgument(string args)
+    {
+        Func<string, string> trimQuotes = arg =>
+        {
+            return (arg[0] == '"' && arg.Last() == '"') ?
+                arg[1..(arg.Length - 1)] :
+                arg;
+        };
+
+        var betweenQuotes = false;
+        for (var i = 0; i < args.Length; i++)
+        {
+            var c = args[i];
+
+            // start or end a quoted argument only if that quote is unescaped
+            // (and \ only has this special meaning when preceding ")
+            if ((c == '"') && (i <= 1 || args[i-1] != '\\'))
+                betweenQuotes = !betweenQuotes;
+
+            // found a space outside quotes; that means we've reached the end of the current arg
+            if (IsSpace(c) && !betweenQuotes)
+            {
+                var nextArg = args.Substring(0, i);
+
+                var endOfSpaceRun = i;
+                while (endOfSpaceRun < args.Length && IsSpace(args[endOfSpaceRun]))
+                    endOfSpaceRun++;
+
+                return (endOfSpaceRun >= args.Length) ?
+                    // If there are only spaces after the arg, then it's the last arg if any
+                    (nextArg == "") ?
+                        (null, null) :
+                        (trimQuotes(nextArg), null) :
+                    // otherwise there are more args left to parse with future GetArgument() calls
+                    (nextArg == "") ?
+                        // if this "arg" was the empty string, recurse so caller gets the first non-empty arg if any
+                        GetArgument(args.Substring(endOfSpaceRun)) :
+                        (trimQuotes(nextArg), args.Substring(endOfSpaceRun));
+            }
+        }
+
+        // If we never found a space (outside a quoted arg), then the whole string is at most one arg
+        return (args == "") ?
+            (null, null) :
+            (trimQuotes(args), null);
+    }
+
     public static ArgumentResult GetArguments(string content)
     {
-        var characters = content.ToCharArray();
-        
         var arguments = new List<string>();
         var indices = new List<int>();
 
-        for (var i = 0; i < characters.Length; i++)
+        var (nextArg, remainingArgs) = GetArgument(content);
+        if (nextArg != null)
         {
-            var argument = characters[i];
-            if (!IsSpace(argument))
+            arguments.Add(nextArg);
+            if (remainingArgs != null)
+                indices.Add(content.Length - remainingArgs.Length);
+            else
+                indices.Add(content.Length);
+
+            while (remainingArgs != null)
             {
-                var safePrevious = (char?)GetSafely(characters, i - 1);
-                
-                if (argument == '"' && (i < 1 || safePrevious != '\\'))
+                var remainingLength = remainingArgs!.Length;
+
+                (nextArg, remainingArgs) = GetArgument(remainingArgs);
+                if (nextArg != null)
                 {
-                    i++;
-                    var start = i;
-
-                    while (i < content.Length && (characters[i] != '"' || characters[i-1] == '\\'))
-                    {
-                        i++;
-                    }
-
-                    int end;
-                    if (i-1 >= 0 && characters[i-1] == '\\')
-                    {
-                        end = i - 1;
-                    }
+                    arguments.Add(nextArg);
+                    if (remainingArgs != null)
+                        indices.Add(indices.Last() + (remainingLength - remainingArgs.Length));
                     else
-                    {
-                        end = i;
-                        i++;
-                    }
-                    arguments.Add(string.Join("", content[new Range(start, end)]));
+                        indices.Add(content.Length);
                 }
-                else
-                {
-                    var start = i;
-                    i++;
-                    
-                    while (i < content.Length && !IsSpace(characters[i]) &&
-                           (characters[i] != '"' || characters[i-1] == '\\'))
-                    {
-                        i++;
-                    }
-                    arguments.Add(string.Join("", content[new Range(start, i)]));
-                }
-
-                var nextIndex = i;
-                while (nextIndex < characters.Length && IsSpace(characters[nextIndex]))
-                    nextIndex++;
-
-                indices.Add(nextIndex);
             }
         }
 
