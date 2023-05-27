@@ -261,10 +261,6 @@ public class SpamService
         // Logging on every single server message proved too spammy, but this is indispensable for testing spam changes, so leaving as a comment for us to uncomment during manual testing.
         // _logger.Log($"\nPressure channge: {oldPressureAfterDecay} + {pressure} = {newPressure} out of {_config.SpamMaxPressure}\n{string.Join('\n', pressureBreakdown)}", context, level: LogLevel.Debug);
 
-        // If this user already tripped spam pressure, but was either immune to silencing or managed to
-        // send another message before Izzy could respond, we don't want duplicate notifications
-        var alreadyAlerted = oldPressureBeforeDecay >= _config.SpamMaxPressure;
-
         if (newPressure >= _config.SpamMaxPressure)
         {
             _logger.Log("Spam pressure trip, checking whether user should be silenced or not...", context, level: LogLevel.Debug);
@@ -274,8 +270,6 @@ public class SpamService
             {
                 // User has a role which bypasses the punishment of spam trigger. Mention it in action log.
                 _logger.Log("No silence, user has role(s) in Config.SpamBypassRoles", context, level: LogLevel.Debug);
-
-                if (alreadyAlerted) return;
 
                 var embedBuilder = new EmbedBuilder()
                     .WithTitle(":warning: Spam detected")
@@ -299,13 +293,13 @@ public class SpamService
             {
                 // User is not immune to spam punishments, process trip.
                 _logger.Log("Silence, executing trip method.", context, level: LogLevel.Debug);
-                await ProcessTrip(id, oldPressureAfterDecay, newPressure, pressureBreakdown, message, user, context, alreadyAlerted);
+                await ProcessTrip(id, oldPressureAfterDecay, newPressure, pressureBreakdown, message, user, context);
             }
         }
     }
 
     private async Task ProcessTrip(ulong id, double oldPressureAfterDecay, double pressure, List<(double, string)> pressureBreakdown,
-        IIzzyMessage message, IIzzyGuildUser user, IIzzyContext context, bool alreadyAlerted = false)
+        IIzzyMessage message, IIzzyGuildUser user, IIzzyContext context)
     {
         if (context.Guild == null)
             throw new InvalidOperationException("ProcessTrip was somehow called with a non-guild context");
@@ -390,8 +384,6 @@ public class SpamService
             }
         }
 
-        if (alreadyAlerted) return;
-        
         var embedBuilder = new EmbedBuilder()
             .WithTitle(":warning: Spam detected")
             .WithColor(16776960)
