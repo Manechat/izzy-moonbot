@@ -222,10 +222,10 @@ public class UserListener
         var output = $"Leave: {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined <t:{_users[user.Id].Joins.Last().ToUnixTimeSeconds()}:R>";
 
         if (banAuditLog != null)
-            output += $"\n\nAccording to the server audit log, they were **banned** at <t:{banAuditLog.CreatedAt.ToUnixTimeSeconds()}:R> by {banAuditLog.User.Username}#{banAuditLog.User.Discriminator} ({guild.GetUser(banAuditLog.User.Id).DisplayName}) for the following reason:\n\"{banAuditLog.Reason}\"";
+            output += $"\n\nAccording to the server audit log, they were **banned** <t:{banAuditLog.CreatedAt.ToUnixTimeSeconds()}:R> by {banAuditLog.User.Username}#{banAuditLog.User.Discriminator} ({guild.GetUser(banAuditLog.User.Id).DisplayName}) for the following reason:\n\"{banAuditLog.Reason}\"";
 
         if (kickAuditLog != null)
-            output += $"\n\nAccording to the server audit log, they were **kicked** at <t:{kickAuditLog.CreatedAt.ToUnixTimeSeconds()}:R> by {kickAuditLog.User.Username}#{kickAuditLog.User.Discriminator} ({guild.GetUser(kickAuditLog.User.Id).DisplayName}) for the following reason:\n\"{kickAuditLog.Reason}\"";
+            output += $"\n\nAccording to the server audit log, they were **kicked** <t:{kickAuditLog.CreatedAt.ToUnixTimeSeconds()}:R> by {kickAuditLog.User.Username}#{kickAuditLog.User.Discriminator} ({guild.GetUser(kickAuditLog.User.Id).DisplayName}) for the following reason:\n\"{kickAuditLog.Reason}\"";
 
         // Scheduled jobs that require a user to be in the server create a difficult question.
         // Do we delete them on leave so there's no error later? Or keep them in case the user rejoins?
