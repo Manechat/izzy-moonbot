@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Izzy_Moonbot.EventListeners;
 using Izzy_Moonbot.Types;
@@ -27,6 +27,7 @@ public class Config
         Aliases = new Dictionary<string, string>();
         FirstRuleMessageId = 0;
         HiddenRules = new Dictionary<string, string>();
+        BestPonyChannel = 0;
 
         // Banner settings
         _bannerMode = ConfigListener.BannerMode.None;
@@ -89,6 +90,7 @@ public class Config
     public Dictionary<string, string> Aliases { get; set; }
     public ulong FirstRuleMessageId { get; set; }
     public Dictionary<string, string> HiddenRules { get; set; }
+    public ulong BestPonyChannel { get; set; }
 
     // Server settings
     private ConfigListener.BannerMode _bannerMode { get; set; }
