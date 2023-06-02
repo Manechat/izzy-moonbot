@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 
 namespace Izzy_Moonbot.Describers;
 
@@ -57,6 +57,9 @@ public class ConfigDescriber
         _config.Add("HiddenRules",
             new ConfigItem(ConfigItemType.StringDictionary,
                 "Rules that we want `.rule` to display but aren't or can't be messages in the rules channel.",
+                ConfigItemCategory.Misc));
+        _config.Add("BestPonyChannel",
+            new ConfigItem(ConfigItemType.Channel, "The channel for Best Pony winners. If this is set, .rollforbestpony wins will send a message here in addition to ModChannel.",
                 ConfigItemCategory.Misc));
 
         // Banner settings

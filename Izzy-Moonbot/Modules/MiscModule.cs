@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Metadata;
@@ -573,13 +573,25 @@ public class MiscModule : ModuleBase<SocketCommandContext>
         {
             if (rollResult == 100)
             {
+                await ReplyAsync($"{Context.User.Mention} rolled a {rollResult}! <:izzyooh:889126310260113449>\n\nI've sent the mods a glitter bomb <a:izzyspin:969209801961771008>", allowedMentions: AllowedMentions.None);
+
                 var modMsg = $"{Context.User.Mention} just won Best Pony! {Context.Message.GetJumpUrl()}";
                 await _modLog.CreateModLog(Context.Guild)
                     .SetContent(modMsg)
                     .SetFileLogContent(modMsg)
                     .Send();
 
-                await ReplyAsync($"{Context.User.Mention} rolled a {rollResult}! <:izzyooh:889126310260113449>\n\nI've sent the mods a glitter bomb <a:izzyspin:969209801961771008>", allowedMentions: AllowedMentions.None);
+                if (_config.BestPonyChannel != 0)
+                {
+                    var bestPonyChannel = Context.Guild.GetTextChannel(_config.BestPonyChannel);
+                    if (bestPonyChannel == null)
+                    {
+                        _logger.Log("Something went wrong trying to access BestPonyChannel.");
+                        return;
+                    }
+
+                    await bestPonyChannel.SendMessageAsync(modMsg);
+                }
             }
             else
             {

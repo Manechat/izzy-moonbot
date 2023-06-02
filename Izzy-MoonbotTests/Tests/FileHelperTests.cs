@@ -218,6 +218,7 @@ public class FileHelperTests
                 "-1": "<a:twiactually:613109204118667293>",
                 "test": "hello"
               },
+              "BestPonyChannel": 0,
               "BannerMode": 0,
               "BannerInterval": 1.0,
               "BannerImages": [

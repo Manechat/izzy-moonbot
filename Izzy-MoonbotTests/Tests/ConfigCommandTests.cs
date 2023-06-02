@@ -1,4 +1,4 @@
-﻿using Izzy_Moonbot.Adapters;
+using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Describers;
 using Izzy_Moonbot.Modules;
 using Izzy_Moonbot.Settings;
@@ -339,7 +339,8 @@ public class ConfigCommandTests
         var generalChannel = new StubChannel(1, "general");
         var modChannel = new StubChannel(2, "modchat");
         var logChannel = new StubChannel(3, "bot-logs");
-        var channels = new List<StubChannel> { generalChannel, modChannel, logChannel };
+        var bestPonyChannel = new StubChannel(42, "best-pony-queue");
+        var channels = new List<StubChannel> { generalChannel, modChannel, logChannel, bestPonyChannel };
 
         var guild = new StubGuild(1, "Maretime Bay", roles, users, channels);
         var client = new StubClient(izzyHerself, new List<StubGuild> { guild });
@@ -467,6 +468,13 @@ public class ConfigCommandTests
         await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "LogChannel", "<#3>");
         Assert.AreEqual(cfg.LogChannel, 3ul);
         Assert.AreEqual("I've set `LogChannel` to the following content: <#3>", generalChannel.Messages.Last().Content);
+
+        // post ".config BestPonyChannel <#42>"
+        Assert.AreEqual(cfg.BestPonyChannel, 0ul);
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config BestPonyChannel <#42>");
+        await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "BestPonyChannel", "<#42>");
+        Assert.AreEqual(cfg.BestPonyChannel, 42ul);
+        Assert.AreEqual("I've set `BestPonyChannel` to the following content: <#42>", generalChannel.Messages.Last().Content);
 
         // post ".config ManageNewUserRoles true"
         Assert.AreEqual(cfg.ManageNewUserRoles, false);
@@ -720,7 +728,7 @@ public class ConfigCommandTests
         // Ensure we can't forget to keep this test up to date
         var configPropsCount = typeof(Config).GetProperties().Length;
 
-        Assert.AreEqual(50, configPropsCount,
+        Assert.AreEqual(51, configPropsCount,
             $"\nIf you just added or removed a config item, then this test is probably out of date");
 
         Assert.AreEqual(configPropsCount * 2, generalChannel.Messages.Count(),
