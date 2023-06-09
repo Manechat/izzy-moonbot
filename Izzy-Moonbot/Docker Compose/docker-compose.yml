@@ -10,8 +10,8 @@ services:
               source: /opt/izzy/appsettings.json
               target: /app/appsettings.json
               read_only: true
-            - type: volume
-              source: izzy_data
+            - type: bind # Changed to bind because we need to access this to restore backups - Cloudburst (Leah)
+              source: /opt/izzy/data
               target: /app/botsettings
         restart: on-failure
         pull_policy: always
@@ -42,8 +42,8 @@ services:
         networks:
             - izzy
         volumes:
-            - type: volume
-              source: izzy_data
+            - type: bind # Changed to bind to match above change.
+              source: /opt/izzy/data
               target: /backup/izzy-data
               read_only: true
             - type: bind
