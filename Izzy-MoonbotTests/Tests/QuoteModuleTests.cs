@@ -225,8 +225,8 @@ public class QuoteModuleTests
         StringAssert.Contains(description, "all the quotes");
         StringAssert.Contains(description, $"for **{sunny.DisplayName}**:");
         StringAssert.Contains(description, "\n" +
-            "1\. gonna be my day\n" +
-            "2\. gonna be my day\n" +
+            "1\\. gonna be my day\n" +
+            "2\\. gonna be my day\n" +
             "\n");
         StringAssert.Contains(description, "Run `.quote <user> <number>` to");
         StringAssert.Contains(description, "Run `.quote <user>` to");
