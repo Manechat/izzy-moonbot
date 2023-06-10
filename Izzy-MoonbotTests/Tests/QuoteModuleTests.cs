@@ -116,8 +116,8 @@ public class QuoteModuleTests
         description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "all the quotes");
         StringAssert.Contains(description, $"for **{izzy.DisplayName}**:");
-        StringAssert.Contains(description, "\n\n" +
-            $"1. let's unicycle it\n" +
+        StringAssert.Contains(description, "\n" +
+            $"1\\. let's unicycle it\n" +
             "\n");
         StringAssert.Contains(description, "Run `.quote <user> <number>` to");
         StringAssert.Contains(description, "Run `.quote <user>` to");
@@ -131,9 +131,9 @@ public class QuoteModuleTests
         description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "all the quotes");
         StringAssert.Contains(description, $"for **{sunny.DisplayName}**:");
-        StringAssert.Contains(description, "\n\n" +
-            "1. gonna be my day\n" +
-            "2. eat more vegetables\n" +
+        StringAssert.Contains(description, "\n" +
+            "1\\. gonna be my day\n" +
+            "2\\. eat more vegetables\n" +
             "\n");
         StringAssert.Contains(description, "Run `.quote <user> <number>` to");
         StringAssert.Contains(description, "Run `.quote <user>` to");
@@ -161,9 +161,9 @@ public class QuoteModuleTests
         description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "all the quotes");
         StringAssert.Contains(description, $"for **{pipp.DisplayName}**:");
-        StringAssert.Contains(description, "\n\n" +
-            "1. Heeeey pippsqueaks! <https://youtu.be/CLT4aSurqCg> Check out my latest sooong!\n" +
-            "2. It may looks scary but don't be afraid~ cuz nothin's what it seems at a monster par-tay! <https://youtu.be/CLT4aSurqCg>\n" +
+        StringAssert.Contains(description, "\n" +
+            "1\\. Heeeey pippsqueaks! <https://youtu.be/CLT4aSurqCg> Check out my latest sooong!\n" +
+            "2\\. It may looks scary but don't be afraid~ cuz nothin's what it seems at a monster par-tay! <https://youtu.be/CLT4aSurqCg>\n" +
             "\n");
         StringAssert.Contains(description, "Run `.quote <user> <number>` to");
         StringAssert.Contains(description, "Run `.quote <user>` to");
@@ -224,9 +224,9 @@ public class QuoteModuleTests
         var description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "all the quotes");
         StringAssert.Contains(description, $"for **{sunny.DisplayName}**:");
-        StringAssert.Contains(description, "\n\n" +
-            "1. gonna be my day\n" +
-            "2. gonna be my day\n" +
+        StringAssert.Contains(description, "\n" +
+            "1\. gonna be my day\n" +
+            "2\. gonna be my day\n" +
             "\n");
         StringAssert.Contains(description, "Run `.quote <user> <number>` to");
         StringAssert.Contains(description, "Run `.quote <user>` to");
