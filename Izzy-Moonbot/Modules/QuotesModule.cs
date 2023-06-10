@@ -205,8 +205,10 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
 
         PaginationHelper.PaginateIfNeededAndSendMessage(
             context,
-            $"Here's all the quotes I have for **{await DisplayUserName(userId, context.Client, defaultGuild)}**:\n",
-            quotes.Select((quote, index) => $"{index + 1}. {quote}").Select(SanitizeQuote).ToArray(),
+            $"Here's all the quotes I have for **{await DisplayUserName(userId, context.Client, defaultGuild)}**:",
+            // We put a \ before the . to prevent Discord's numbered list markdown formatting from kicking in, since
+            // that not only adds weird spacing and margins, but also changes the quote numbers in some cases.
+            quotes.Select((quote, index) => $"{index + 1}\\. {quote}").Select(SanitizeQuote).ToArray(),
             $"\nRun `{_config.Prefix}quote <user> <number>` to get a specific quote.\n" +
             $"Run `{_config.Prefix}quote <user>` to get a random quote from that user.\n" +
             $"Run `{_config.Prefix}quote` for a random quote from a random user.",
