@@ -92,6 +92,6 @@ public class Program
             services.AddSingleton<MessageListener>();
 
             services.AddHostedService<Worker>();
-        });
+        }); 
     }
 }
