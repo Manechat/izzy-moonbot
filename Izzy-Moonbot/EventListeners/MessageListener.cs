@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Izzy_Moonbot.Adapters;
@@ -89,7 +89,7 @@ public class MessageListener
         if (author.Id == client.CurrentUser.Id) return; // Don't process self.
         if (author.IsBot) return; // Don't listen to bots
 
-        var logMessage = $"Message by {author.Username}#{author.Discriminator} ({author.Id}) **deleted**";
+        var logMessage = $"Message id {messageId} by {author.Username}#{author.Discriminator} ({author.Id}) **deleted**";
 
         if (channel is null)
             logMessage += $" in unknown channel {channelId}:\n";
