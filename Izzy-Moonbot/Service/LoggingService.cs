@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Runtime.CompilerServices;
 using Discord.Commands;
 using Izzy_Moonbot.Adapters;
@@ -57,7 +57,7 @@ public class LoggingService
         {
             if (context.IsPrivate)
             {
-                logMessage += $"DM with @{context.User.Username}#{context.User.Discriminator} ({context.User.Id})";
+                logMessage += $"DM with @{context.User.Username} ({context.User.Id})";
 
                 logMessage += ", ";
 
@@ -69,7 +69,7 @@ public class LoggingService
 
                 logMessage += " ";
 
-                logMessage += $"@{context.User.Username}#{context.User.Discriminator} ({context.User.Id}), ";
+                logMessage += $"@{context.User.Username} ({context.User.Id}), ";
                 logMessage += message;
             }
         }

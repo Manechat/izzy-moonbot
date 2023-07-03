@@ -253,14 +253,14 @@ public class ScheduleService
         var reason = job.Reason;
         
         _logger.Log(
-            $"Adding {role.Name} ({role.Id}) to {user.Username}#{user.Discriminator} ({user.Id})", level: LogLevel.Debug);
+            $"Adding {role.Name} ({role.Id}) to {user.DisplayName} ({user.Username}/{user.Id})", level: LogLevel.Debug);
         
         await _mod.AddRole(user, role.Id, reason);
         await _modLogging.CreateModLog(guild)
             .SetContent(
                 $"Gave <@&{role.Id}> to <@{user.Id}> (`{user.Id}`).")
             .SetFileLogContent(
-                $"Gave {role.Name} ({role.Id}) to {user.Username}#{user.Discriminator} ({user.Id}). {(reason != null ? $"Reason: {reason}." : "")}")
+                $"Gave {role.Name} ({role.Id}) to {user.DisplayName} ({user.Username}/{user.Id}). {(reason != null ? $"Reason: {reason}." : "")}")
             .Send();
     }
     
@@ -285,14 +285,14 @@ public class ScheduleService
         string? reason = job.Reason;
         
         _logger.Log(
-            $"Removing {role.Name} ({role.Id}) from {user.Username}#{user.Discriminator} ({user.Id})", level: LogLevel.Debug);
+            $"Removing {role.Name} ({role.Id}) from {user.DisplayName} ({user.Username}/{user.Id})", level: LogLevel.Debug);
         
         await _mod.RemoveRole(user, role.Id, reason);
         await _modLogging.CreateModLog(guild)
             .SetContent(
                 $"Removed <@&{role.Id}> from <@{user.Id}> (`{user.Id}`)")
             .SetFileLogContent(
-                $"Removed {role.Name} ({role.Id}) from {user.Username}#{user.Discriminator} ({user.Id}). {(reason != null ? $"Reason: {reason}." : "")}")
+                $"Removed {role.Name} ({role.Id}) from {user.DisplayName} ({user.Username}/{user.Id}). {(reason != null ? $"Reason: {reason}." : "")}")
             .Send();
     }
 
@@ -310,14 +310,14 @@ public class ScheduleService
 
         var embed = new EmbedBuilder()
             .WithTitle(
-                $"Unbanned {(user != null ? $"{user.Username}#{user.Discriminator}" : "")} ({job.User})")
+                $"Unbanned {(user != null ? $"{DiscordHelper.DisplayName(user, guild)} ({user.Username}/{user.Id})" : "")}")
             .WithColor(16737792)
             .WithDescription($"Gasp! Does this mean I can invite <@{job.User}> to our next traditional unicorn sleepover?")
             .Build();
         
         await _modLogging.CreateModLog(guild)
             .SetEmbed(embed)
-            .SetFileLogContent($"Unbanned {(user != null ? $"{user.Username}#{user.Discriminator}" : "")} ({job.User})")
+            .SetFileLogContent($"Unbanned {job.User}")
             .Send();
     }
 

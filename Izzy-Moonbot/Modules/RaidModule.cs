@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord.Commands;
@@ -96,7 +96,7 @@ public class RaidModule : ModuleBase<SocketCommandContext>
 
         await ReplyAsync($"The following users are recent joins:\n" +
             "```\n" +
-            string.Join(", ", recentJoins.Select(user => $"{user.Username}#{user.Discriminator}")) + "\n" +
+            string.Join(", ", recentJoins.Select(user => $"{user.DisplayName} ({user.Username}/{user.Id})")) + "\n" +
             "```");
     }
 }

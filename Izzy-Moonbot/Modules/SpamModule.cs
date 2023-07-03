@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using System.Threading.Tasks;
 using Discord.Commands;
 using Izzy_Moonbot.Adapters;
@@ -49,7 +49,7 @@ public class SpamModule : ModuleBase<SocketCommandContext>
         {
             double pressure = _spamService.GetPressure(user.Id);
 
-            await context.Channel.SendMessageAsync($"Current Pressure for {user.Username}#{user.Discriminator}: {pressure}");
+            await context.Channel.SendMessageAsync($"Current Pressure for {user.DisplayName} ({user.Username}/{user.Id}): {pressure}");
         }
     }
 
@@ -90,7 +90,7 @@ public class SpamModule : ModuleBase<SocketCommandContext>
             );
 
             await context.Channel.SendMessageAsync(
-                $"I consider the following messages from {user.Username}#{user.Discriminator} to be recent: \n{string.Join('\n', messageList)}\n*Note that these messages may not actually be recent as their age is only checked when the user sends more messages.*");
+                $"I consider the following messages from {user.DisplayName} ({user.Username}/{user.Id}) to be recent: \n{string.Join('\n', messageList)}\n*Note that these messages may not actually be recent as their age is only checked when the user sends more messages.*");
         }
     }
 }

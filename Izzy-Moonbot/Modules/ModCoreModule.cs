@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -95,10 +95,12 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
             if (discordUser == null)
                 return "I couldn't find that user, sorry!";
 
-            output += $"**User:** `<@{discordUser.Id}>` {discordUser.Username} ({discordUser.Id})\n";
+            output += $"**User:** `<@{discordUser.Id}>` {DiscordHelper.DisplayName(discordUser, guild)} ({discordUser.Username}/{discordUser.Id})\n";
+            output += $"**{guild.Name} Server Nickname**: None (user isn't in this server)\n";
+            output += $"**Global Display Name**: {discordUser.GlobalName ?? "None"}\n";
             output += users.ContainsKey(discordUser.Id)
-                ? $"**Names:** {string.Join(", ", users[discordUser.Id].Aliases)}\n"
-                : $"**Names:** None (user isn't known by Izzy)\n";
+                ? $"**All Known Names:** {string.Join(", ", users[discordUser.Id].Aliases)}\n"
+                : $"**All Known Names:** None (user isn't known by Izzy)\n";
             output += $"**Roles:** None (user isn't in this server)\n";
             output += "**History:** ";
             output += $"Created <t:{discordUser.CreatedAt.ToUnixTimeSeconds()}:R>";
@@ -111,8 +113,10 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
         }
         else
         {
-            output += $"**User:** `<@{member.Id}>` {member.Username} ({member.Id})\n";
-            output += $"**Names:** {string.Join(", ", users[member.Id].Aliases)}\n";
+            output += $"**User:** `<@{member.Id}>` {member.DisplayName} ({member.Username}/{member.Id})\n";
+            output += $"**{guild.Name} Server Nickname**: {member.Nickname ?? "None"}\n";
+            output += $"**Global Display Name**: {member.GlobalName ?? "None"}\n";
+            output += $"**All Known Names:** {string.Join(", ", users[member.Id].Aliases)}\n";
             output +=
                 $"**Roles:** {string.Join(", ", member.Roles.Where(role => role.Id != guildId).Select(role => role.Name))}\n";
             output += $"**History:** ";
@@ -240,7 +244,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
                 msg += "\n\n" +
                     $"Here's a userlog I unicycled that you can use if you want to!\n```\n" +
                     $"Type: Ban ({(timeArg == "" ? "" : $"{timeArg} ")}{(time == null ? "Indefinite" : $"<t:{time.Time.ToUnixTimeSeconds()}:R>")})\n" +
-                    $"User: <@{userId}> {(member != null ? $"({member.Username}#{member.Discriminator})" : "")} ({userId})\n" +
+                    $"User: <@{userId}> ({userId})\n" +
                     $"Names: {(_users.ContainsKey(userId) ? string.Join(", ", _users[userId].Aliases) : "None (user isn't known by Izzy)")}\n" +
                     $"```";
             }
@@ -268,7 +272,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
                         msg += "\n\n" +
                             $"Here's a userlog I unicycled that you can use if you want to!\n```\n" +
                             $"Type: Ban (Indefinite)\n" +
-                            $"User: <@{userId}> {(member != null ? $"({member.Username}#{member.Discriminator})" : "")} ({userId})\n" +
+                            $"User: <@{userId}> ({(member != null ? $"{member.Username}/" : "")}{userId})\n" +
                             $"Names: {(_users.ContainsKey(userId) ? string.Join(", ", _users[userId].Aliases) : "None (user isn't known by Izzy)")}\n" +
                             $"```";
                     }
@@ -310,7 +314,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
                     msg += "\n\n" +
                         $"Here's a userlog I unicycled that you can use if you want to!\n```\n" +
                         $"Type: Ban ({timeArg} <t:{time.Time.ToUnixTimeSeconds()}:R>)\n" +
-                        $"User: <@{userId}> {(member != null ? $"({member.Username}#{member.Discriminator})" : "")} ({userId})\n" +
+                        $"User: <@{userId}> ({(member != null ? $"{member.Username}/" : "")}{userId})\n" +
                         $"Names: {(_users.ContainsKey(userId) ? string.Join(", ", _users[userId].Aliases) : "None (user isn't known by Izzy)")}\n" +
                         $"```";
                 }
@@ -330,7 +334,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
                     msg += "\n\n" +
                         $"Here's a userlog I unicycled that you can use if you want to!\n```\n" +
                         $"Type: Ban ({timeArg} <t:{time.Time.ToUnixTimeSeconds()}:R>)\n" +
-                        $"User: <@{userId}> {(member != null ? $"({member.Username}#{member.Discriminator})" : "")} ({userId})\n" +
+                        $"User: <@{userId}> ({(member != null ? $"{member.Username}/" : "")}{userId})\n" +
                         $"Names: {(_users.ContainsKey(userId) ? string.Join(", ", _users[userId].Aliases) : "None (user isn't known by Izzy)")}\n" +
                         $"```";
                 }

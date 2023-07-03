@@ -284,7 +284,7 @@ public class SpamService
                     .SetContent($"Spam detected by <@{user.Id}>")
                     .SetEmbed(embedBuilder.Build())
                     .SetFileLogContent(
-                        $"{user.Username}#{user.Discriminator} ({user.DisplayName}) (`{user.Id}`) exceeded pressure max ({newPressure}/{_config.SpamMaxPressure}) in #{message.Channel.Name} (`{message.Channel.Id}`).\n" +
+                        $"{user.DisplayName} (`{user.Username}`/`{user.Id}`) exceeded pressure max ({newPressure}/{_config.SpamMaxPressure}) in #{message.Channel.Name} (`{message.Channel.Id}`).\n" +
                         $"Pressure breakdown: {PonyReadableBreakdown(pressureBreakdown)}\n" +
                         $"Did nothing: User has a role which bypasses punishment or has dev bypass.") 
                     .Send();
@@ -406,7 +406,7 @@ public class SpamService
             )
             .SetEmbed(embedBuilder.Build())
             .SetFileLogContent(
-                $"{user.Username}#{user.Discriminator} ({user.DisplayName}) (`{user.Id}`) was silenced/timed out for exceeding pressure max ({pressure}/{_config.SpamMaxPressure}) in #{message.Channel.Name} (`{message.Channel.Id}`).\n" +
+                $"{user.DisplayName} (`{user.Username}`/`{user.Id}`) was silenced/timed out for exceeding pressure max ({pressure}/{_config.SpamMaxPressure}) in #{message.Channel.Name} (`{message.Channel.Id}`).\n" +
                 $"Pressure breakdown: {PonyReadableBreakdown(pressureBreakdown)}\n" +
                 $"{(alreadyDeletedMessages != 0 ? $"I was unable to delete {alreadyDeletedMessages} messages from this user, please double check whether their messages have been deleted." : "")}")
             .Send();
