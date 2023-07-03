@@ -20,6 +20,7 @@ public class DiscordNetUserAdapter : IIzzyUser
 
     public ulong Id { get => _user.Id; }
     public string Username { get => _user.Username; }
+    public string? GlobalName { get => _user.GlobalName; }
     public string Discriminator { get => _user.Discriminator; }
     public bool IsBot => _user.IsBot;
     public async Task<IIzzyUserMessage> SendMessageAsync(string text) =>
@@ -42,6 +43,8 @@ public class SocketGuildUserAdapter : IIzzyGuildUser
 
     public ulong Id { get => _user.Id; }
     public string Username { get => _user.Username; }
+    public string? GlobalName { get => _user.GlobalName; }
+    public string? Nickname { get => _user.Nickname; }
     public string Discriminator { get => _user.Discriminator; }
     public string DisplayName { get => _user.DisplayName; }
     public int Hierarchy { get => _user.Hierarchy; }

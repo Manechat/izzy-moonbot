@@ -1,4 +1,4 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Settings;
 using Izzy_Moonbot.Service;
@@ -29,25 +29,25 @@ public class QuoteModuleTests
 
         var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".quote");
         await qm.TestableQuoteCommandAsync(context, "");
-        Assert.AreEqual($"**{sunny.DisplayName}**, #1: gonna be my day", generalChannel.Messages.Last().Content);
+        Assert.AreEqual($"**{sunny.GlobalName}**, #1: gonna be my day", generalChannel.Messages.Last().Content);
 
         //
 
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".quote Sunny");
         await qm.TestableQuoteCommandAsync(context, "Sunny");
-        Assert.AreEqual($"**{sunny.DisplayName}**, #1: gonna be my day", generalChannel.Messages.Last().Content);
+        Assert.AreEqual($"**{sunny.GlobalName}**, #1: gonna be my day", generalChannel.Messages.Last().Content);
 
         //
 
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, $".quote <@{sunny.Id}>");
         await qm.TestableQuoteCommandAsync(context, $"<@{sunny.Id}>");
-        Assert.AreEqual($"**{sunny.DisplayName}**, #1: gonna be my day", generalChannel.Messages.Last().Content);
+        Assert.AreEqual($"**{sunny.GlobalName}**, #1: gonna be my day", generalChannel.Messages.Last().Content);
 
         //
 
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, $".quote <@{sunny.Id}> 1");
         await qm.TestableQuoteCommandAsync(context, $"<@{sunny.Id}> 1");
-        Assert.AreEqual($"**{sunny.DisplayName}**, #1: gonna be my day", generalChannel.Messages.Last().Content);
+        Assert.AreEqual($"**{sunny.GlobalName}**, #1: gonna be my day", generalChannel.Messages.Last().Content);
 
         //
 
@@ -115,7 +115,7 @@ public class QuoteModuleTests
 
         description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "all the quotes");
-        StringAssert.Contains(description, $"for **{izzy.DisplayName}**:");
+        StringAssert.Contains(description, $"for **{izzy.GlobalName}**:");
         StringAssert.Contains(description, "\n" +
             $"1\\. let's unicycle it\n" +
             "\n");
@@ -130,7 +130,7 @@ public class QuoteModuleTests
 
         description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "all the quotes");
-        StringAssert.Contains(description, $"for **{sunny.DisplayName}**:");
+        StringAssert.Contains(description, $"for **{sunny.GlobalName}**:");
         StringAssert.Contains(description, "\n" +
             "1\\. gonna be my day\n" +
             "2\\. eat more vegetables\n" +
@@ -160,7 +160,7 @@ public class QuoteModuleTests
 
         description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "all the quotes");
-        StringAssert.Contains(description, $"for **{pipp.DisplayName}**:");
+        StringAssert.Contains(description, $"for **{pipp.GlobalName}**:");
         StringAssert.Contains(description, "\n" +
             "1\\. Heeeey pippsqueaks! <https://youtu.be/CLT4aSurqCg> Check out my latest sooong!\n" +
             "2\\. It may looks scary but don't be afraid~ cuz nothin's what it seems at a monster par-tay! <https://youtu.be/CLT4aSurqCg>\n" +
@@ -223,7 +223,7 @@ public class QuoteModuleTests
 
         var description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "all the quotes");
-        StringAssert.Contains(description, $"for **{sunny.DisplayName}**:");
+        StringAssert.Contains(description, $"for **{sunny.GlobalName}**:");
         StringAssert.Contains(description, "\n" +
             "1\\. gonna be my day\n" +
             "2\\. gonna be my day\n" +
@@ -264,7 +264,7 @@ public class QuoteModuleTests
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".addquote Sunny eat more vegetables");
         await qm.TestableAddQuoteCommandAsync(context, "Sunny eat more vegetables");
 
-        Assert.AreEqual($"Added quote #2 to **{sunny.DisplayName}**:\n" +
+        Assert.AreEqual($"Added quote #2 to **{sunny.GlobalName}**:\n" +
             "\n" +
             ">>> eat more vegetables", generalChannel.Messages.Last().Content);
         TestUtils.AssertListsAreEqual(quotes.Quotes[sunny.Id.ToString()], new List<string> {
@@ -277,7 +277,7 @@ public class QuoteModuleTests
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".addquote Pipp Heeeey pippsqueaks! <https://youtu.be/CLT4aSurqCg> Check out my latest sooong!");
         await qm.TestableAddQuoteCommandAsync(context, "Pipp Heeeey pippsqueaks! <https://youtu.be/CLT4aSurqCg> Check out my latest sooong!");
 
-        Assert.AreEqual($"Added quote #1 to **{pipp.DisplayName}**:\n" +
+        Assert.AreEqual($"Added quote #1 to **{pipp.GlobalName}**:\n" +
             "\n" +
             ">>> Heeeey pippsqueaks! <https://youtu.be/CLT4aSurqCg> Check out my latest sooong!", generalChannel.Messages.Last().Content);
 
@@ -286,7 +286,7 @@ public class QuoteModuleTests
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".addquote It may looks scary but don't be afraid~ cuz nothin's what it seems at a monster par-tay! https://youtu.be/CLT4aSurqCg");
         await qm.TestableAddQuoteCommandAsync(context, "Pipp It may looks scary but don't be afraid~ cuz nothin's what it seems at a monster par-tay! https://youtu.be/CLT4aSurqCg");
 
-        Assert.AreEqual($"Added quote #2 to **{pipp.DisplayName}**:\n" +
+        Assert.AreEqual($"Added quote #2 to **{pipp.GlobalName}**:\n" +
             "\n" +
             ">>> It may looks scary but don't be afraid~ cuz nothin's what it seems at a monster par-tay! <https://youtu.be/CLT4aSurqCg>", generalChannel.Messages.Last().Content);
 
@@ -306,7 +306,7 @@ public class QuoteModuleTests
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, $".removequote <@{sunny.Id}> 1");
         await qm.TestableRemoveQuoteCommandAsync(context, $"<@{sunny.Id}> 1");
 
-        Assert.AreEqual($"Removed quote #1 from **{sunny.DisplayName}**.", generalChannel.Messages.Last().Content);
+        Assert.AreEqual($"Removed quote #1 from **{sunny.GlobalName}**.", generalChannel.Messages.Last().Content);
         TestUtils.AssertListsAreEqual(quotes.Quotes[sunny.Id.ToString()], new List<string> {
             "eat more vegetables"
         });

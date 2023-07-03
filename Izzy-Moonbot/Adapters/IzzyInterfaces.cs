@@ -9,6 +9,7 @@ public interface IIzzyUser
 {
     ulong Id { get; }
     string Username { get; }
+    string? GlobalName { get; }
     string Discriminator { get => "1234"; }
     bool IsBot { get; }
 }
@@ -16,6 +17,7 @@ public interface IIzzyUser
 public interface IIzzyGuildUser : IIzzyUser
 {
     string DisplayName { get; }
+    string? Nickname { get; }
     int Hierarchy => DisplayName.Contains("Izzy") ? 1 : 0; // not used enough to be worth accurately imitating in tests
     IReadOnlyCollection<IIzzyRole> Roles { get; }
 
