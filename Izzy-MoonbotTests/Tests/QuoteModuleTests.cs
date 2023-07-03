@@ -101,9 +101,9 @@ public class QuoteModuleTests
         var description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "Here's all the");
         StringAssert.Contains(description, "```\n" +
-            "Sunny (Sunny#1234) \n" +
-            "Izzy Moonbot (Izzy Moonbot#1234) \n" +
-            "Pipp (Pipp#1234) \n" +
+            "Sunny (Sunny/2) \n" +
+            "Izzy Moonbot (Izzy Moonbot/1) \n" +
+            "Pipp (Pipp/4) \n" +
             "```\n");
         StringAssert.Contains(description, "Run `.quote <user>`");
         StringAssert.Contains(description, "Run `.quote`");

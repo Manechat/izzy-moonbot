@@ -1,4 +1,4 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Settings;
 using Izzy_Moonbot.Service;
@@ -72,7 +72,7 @@ public class ModCoreModuleTests
         await ss.Unicycle(client);
 
         Assert.AreEqual(1, modChat.Messages.Last().Embeds.Count);
-        Assert.AreEqual("Unbanned Pipp#1234 (4)", modChat.Messages.Last().Embeds.Last().Title);
+        Assert.AreEqual("Unbanned Pipp (Pipp/4)", modChat.Messages.Last().Embeds.Last().Title);
         TestUtils.AssertSetsAreEqual(new HashSet<ulong> { hitchId }, guild.BannedUserIds);
         Assert.AreEqual(1, ss.GetScheduledJobs().Count);
 
@@ -80,7 +80,7 @@ public class ModCoreModuleTests
         await ss.Unicycle(client);
 
         Assert.AreEqual(1, modChat.Messages.Last().Embeds.Count);
-        Assert.AreEqual("Unbanned Hitch#1234 (5)", modChat.Messages.Last().Embeds.Last().Title);
+        Assert.AreEqual("Unbanned Hitch (Hitch/5)", modChat.Messages.Last().Embeds.Last().Title);
         TestUtils.AssertSetsAreEqual(new HashSet<ulong>(), guild.BannedUserIds);
         Assert.AreEqual(0, ss.GetScheduledJobs().Count);
 

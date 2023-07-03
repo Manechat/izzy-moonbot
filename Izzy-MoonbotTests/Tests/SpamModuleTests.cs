@@ -1,4 +1,4 @@
-﻿using Izzy_Moonbot;
+using Izzy_Moonbot;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Modules;
 using Izzy_Moonbot.Service;
@@ -39,7 +39,7 @@ public class SpamModuleTests
         await sm.TestableGetPressureAsync(context, "");
 
         var firstPressure = cfg.SpamBasePressure + commandLengthPenalty;
-        Assert.AreEqual($"Current Pressure for Sunny#1234: {firstPressure}", generalChannel.Messages.Last().Content);
+        Assert.AreEqual($"Current Pressure for Sunny (Sunny/2): {firstPressure}", generalChannel.Messages.Last().Content);
 
         // say a few normal messages without any time passing to raise pressure
         var message1 = "hi everypony";
@@ -54,7 +54,7 @@ public class SpamModuleTests
             (cfg.SpamBasePressure + Math.Round(cfg.SpamLengthPressure * message1.Length, 2)) +
             (cfg.SpamBasePressure + Math.Round(cfg.SpamLengthPressure * message2.Length, 2)) +
             (cfg.SpamBasePressure + commandLengthPenalty);
-        Assert.AreEqual($"Current Pressure for Sunny#1234: {secondPressure}", generalChannel.Messages.Last().Content);
+        Assert.AreEqual($"Current Pressure for Sunny (Sunny/2): {secondPressure}", generalChannel.Messages.Last().Content);
 
         // simulate 10 seconds of pressure decay
         DateTimeHelper.FakeUtcNow = DateTimeHelper.FakeUtcNow?.AddSeconds(10);
@@ -64,7 +64,7 @@ public class SpamModuleTests
 
         var thirdPressure = (secondPressure - (10 * (cfg.SpamBasePressure / cfg.SpamPressureDecay))) +
             (cfg.SpamBasePressure + cfg.SpamRepeatPressure + commandLengthPenalty);
-        Assert.AreEqual($"Current Pressure for Sunny#1234: {thirdPressure}", generalChannel.Messages.Last().Content);
+        Assert.AreEqual($"Current Pressure for Sunny (Sunny/2): {thirdPressure}", generalChannel.Messages.Last().Content);
 
         // let pressure fully decay back to zero
         DateTimeHelper.FakeUtcNow = DateTimeHelper.FakeUtcNow?.AddMinutes(10);
@@ -73,7 +73,7 @@ public class SpamModuleTests
         await sm.TestableGetPressureAsync(context, "");
 
         var finalPressure = cfg.SpamBasePressure + cfg.SpamRepeatPressure + commandLengthPenalty;
-        Assert.AreEqual($"Current Pressure for Sunny#1234: {finalPressure}", generalChannel.Messages.Last().Content);
+        Assert.AreEqual($"Current Pressure for Sunny (Sunny/2): {finalPressure}", generalChannel.Messages.Last().Content);
     }
 
     [TestMethod()]
@@ -102,7 +102,7 @@ public class SpamModuleTests
         var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".getmessages");
         await sm.TestableGetPreviousMessagesAsync(context, "");
 
-        Assert.AreEqual($"I consider the following messages from Sunny#1234 to be recent: " +
+        Assert.AreEqual($"I consider the following messages from Sunny (Sunny/2) to be recent: " +
             $"\nhttps://discord.com/channels/{guild.Id}/{generalChannel.Id}/0 at <t:1286668800:F> (<t:1286668800:R>)" +
             $"\n*Note that these messages may not actually be recent as their age is only checked when the user sends more messages.*",
             generalChannel.Messages.Last().Content);
@@ -116,7 +116,7 @@ public class SpamModuleTests
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".getmessages");
         await sm.TestableGetPreviousMessagesAsync(context, "");
 
-        Assert.AreEqual($"I consider the following messages from Sunny#1234 to be recent: " +
+        Assert.AreEqual($"I consider the following messages from Sunny (Sunny/2) to be recent: " +
             $"\nhttps://discord.com/channels/{guild.Id}/{generalChannel.Id}/0 at <t:1286668800:F> (<t:1286668800:R>)" +
             $"\nhttps://discord.com/channels/{guild.Id}/{generalChannel.Id}/1 at <t:1286668800:F> (<t:1286668800:R>)" +
             $"\nhttps://discord.com/channels/{guild.Id}/{generalChannel.Id}/2 at <t:1286668800:F> (<t:1286668800:R>)" +
@@ -130,7 +130,7 @@ public class SpamModuleTests
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".getmessages");
         await sm.TestableGetPreviousMessagesAsync(context, "");
 
-        Assert.AreEqual($"I consider the following messages from Sunny#1234 to be recent: " +
+        Assert.AreEqual($"I consider the following messages from Sunny (Sunny/2) to be recent: " +
             $"\nhttps://discord.com/channels/{guild.Id}/{generalChannel.Id}/0 at <t:1286668800:F> (<t:1286668800:R>)" +
             $"\nhttps://discord.com/channels/{guild.Id}/{generalChannel.Id}/1 at <t:1286668800:F> (<t:1286668800:R>)" +
             $"\nhttps://discord.com/channels/{guild.Id}/{generalChannel.Id}/2 at <t:1286668800:F> (<t:1286668800:R>)" +
@@ -145,7 +145,7 @@ public class SpamModuleTests
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".getmessages");
         await sm.TestableGetPreviousMessagesAsync(context, "");
 
-        Assert.AreEqual($"I consider the following messages from Sunny#1234 to be recent: " +
+        Assert.AreEqual($"I consider the following messages from Sunny (Sunny/2) to be recent: " +
             $"\nhttps://discord.com/channels/{guild.Id}/{generalChannel.Id}/5 at <t:1286669410:F> (<t:1286669410:R>)" +
             $"\n*Note that these messages may not actually be recent as their age is only checked when the user sends more messages.*",
             generalChannel.Messages.Last().Content);
@@ -180,12 +180,12 @@ public class SpamModuleTests
         var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, $".getpressure {regularUserId}");
         await sm.TestableGetPressureAsync(context, $"{regularUserId}");
 
-        Assert.AreEqual($"Current Pressure for Zipp#1234: 0", generalChannel.Messages.Last().Content);
+        Assert.AreEqual($"Current Pressure for Zipp (Zipp/3): 0", generalChannel.Messages.Last().Content);
 
         context = await client.AddMessageAsync(guild.Id, modChat.Id, sunny.Id, $".getpressure {regularUserId}");
         await sm.TestableGetPressureAsync(context, $"{regularUserId}");
 
-        Assert.AreEqual($"Current Pressure for Zipp#1234: 0", modChat.Messages.Last().Content);
+        Assert.AreEqual($"Current Pressure for Zipp (Zipp/3): 0", modChat.Messages.Last().Content);
     }
 
 }
