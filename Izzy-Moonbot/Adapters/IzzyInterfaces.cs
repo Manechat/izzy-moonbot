@@ -10,7 +10,6 @@ public interface IIzzyUser
     ulong Id { get; }
     string Username { get; }
     string? GlobalName { get; }
-    string Discriminator { get => "1234"; }
     bool IsBot { get; }
 }
 
