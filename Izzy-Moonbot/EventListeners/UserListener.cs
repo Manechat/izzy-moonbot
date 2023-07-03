@@ -53,7 +53,7 @@ public class UserListener
                 _ => false
             }
         );
-        _logger.Log($"User was unbanned: {user.Username}#{user.Discriminator}.{(scheduledJobs.Any() ? $" Cancelling {scheduledJobs.Count} scheduled unban job(s) for this user." : "")}");
+        _logger.Log($"User was unbanned: {user.Username} ({user.Id}).{(scheduledJobs.Any() ? $" Cancelling {scheduledJobs.Count} scheduled unban job(s) for this user." : "")}");
         foreach (var scheduledJob in scheduledJobs)
             await _schedule.DeleteScheduledJob(scheduledJob);
     }
@@ -62,7 +62,7 @@ public class UserListener
     {
         if (member.Guild.Id != DiscordHelper.DefaultGuild()) return;
         
-        _logger.Log($"New member join{(catchingUp ? " found after reboot" : "")}: {member.Username}#{member.DiscriminatorValue} ({member.Id})");
+        _logger.Log($"New member join{(catchingUp ? " found after reboot" : "")}: {member.DisplayName} ({member.Username}/{member.Id})");
         if (!_users.ContainsKey(member.Id))
         {
             User newUser = new User();
@@ -135,7 +135,7 @@ public class UserListener
             
             if (!member.Guild.Roles.Select(role => role.Id).Contains(roleId))
             {
-                _logger.Log($"{member.Username}#{member.Discriminator} ({member.Id}) had role which I would have reapplied on join but no longer exists: role id {roleId}");
+                _logger.Log($"{member.DisplayName} ({member.Username}/{member.Id}) had role which I would have reapplied on join but no longer exists: role id {roleId}");
                 _users[member.Id].RolesToReapplyOnRejoin.Remove(roleId);
                 _config.RolesToReapplyOnRejoin.Remove(roleId);
                 await FileHelper.SaveConfigAsync(_config);
@@ -147,7 +147,7 @@ public class UserListener
 
                 if (!_config.RolesToReapplyOnRejoin.Contains(roleId))
                 {
-                    _logger.Log($"{member.Username}#{member.Discriminator} ({member.Id}) has role which will no longer reapply on join, role {member.Guild.Roles.Single(role => role.Id == roleId).Name} ({roleId})");
+                    _logger.Log($"{member.DisplayName} ({member.Username}/{member.Id}) has role which will no longer reapply on join, role {member.Guild.Roles.Single(role => role.Id == roleId).Name} ({roleId})");
                     _users[member.Id].RolesToReapplyOnRejoin.Remove(roleId);
                     await FileHelper.SaveUsersAsync(_users);
                     shouldAdd = false;
@@ -177,7 +177,7 @@ public class UserListener
     {
         if (guild.Id != DiscordHelper.DefaultGuild()) return;
         
-        _logger.Log($"Member leaving: {user.Username}#{user.Discriminator} ({user.Id})");
+        _logger.Log($"Member leaving: {DiscordHelper.DisplayName(user, guild)} ({user.Username}/{user.Id})");
         var lastNickname = "";
         try
         {
@@ -219,13 +219,13 @@ public class UserListener
                 return null;
             }).Where(audit => audit != null).FirstOrDefault();
 
-        var output = $"Leave: {user.Username}#{user.Discriminator} ({lastNickname}) (`{user.Id}`) joined <t:{_users[user.Id].Joins.Last().ToUnixTimeSeconds()}:R>";
+        var output = $"Leave: {lastNickname} (`{user.Username}`/`{user.Id}`) joined <t:{_users[user.Id].Joins.Last().ToUnixTimeSeconds()}:R>";
 
         if (banAuditLog != null)
-            output += $"\n\nAccording to the server audit log, they were **banned** <t:{banAuditLog.CreatedAt.ToUnixTimeSeconds()}:R> by {banAuditLog.User.Username}#{banAuditLog.User.Discriminator} ({guild.GetUser(banAuditLog.User.Id).DisplayName}) for the following reason:\n\"{banAuditLog.Reason}\"";
+            output += $"\n\nAccording to the server audit log, they were **banned** <t:{banAuditLog.CreatedAt.ToUnixTimeSeconds()}:R> by {DiscordHelper.DisplayName(banAuditLog.User, guild)} ({banAuditLog.User.Username}/{banAuditLog.User.Id}) for the following reason:\n\"{banAuditLog.Reason}\"";
 
         if (kickAuditLog != null)
-            output += $"\n\nAccording to the server audit log, they were **kicked** <t:{kickAuditLog.CreatedAt.ToUnixTimeSeconds()}:R> by {kickAuditLog.User.Username}#{kickAuditLog.User.Discriminator} ({guild.GetUser(kickAuditLog.User.Id).DisplayName}) for the following reason:\n\"{kickAuditLog.Reason}\"";
+            output += $"\n\nAccording to the server audit log, they were **kicked** <t:{kickAuditLog.CreatedAt.ToUnixTimeSeconds()}:R> by {DiscordHelper.DisplayName(kickAuditLog.User, guild)} ({kickAuditLog.User.Username}/{kickAuditLog.User.Id})) for the following reason:\n\"{kickAuditLog.Reason}\"";
 
         // Scheduled jobs that require a user to be in the server create a difficult question.
         // Do we delete them on leave so there's no error later? Or keep them in case the user rejoins?
@@ -275,7 +275,7 @@ public class UserListener
         if (!_users.ContainsKey(newUser.Id))
         {
             changed = true;
-            _logger.Log($"{newUser.Username}#{newUser.Discriminator} ({newUser.Id}) has no metadata, creating now...", level: LogLevel.Debug);
+            _logger.Log($"{newUser.DisplayName} ({newUser.Username}/{newUser.Id}) has no metadata, creating now...", level: LogLevel.Debug);
             var newUserData = new User();
             newUserData.Username = $"{newUser.Username}#{newUser.Discriminator}";
             newUserData.Aliases.Add(newUser.Username);
@@ -294,7 +294,7 @@ public class UserListener
             }
             else if (!_users[newUser.Id].Aliases.Contains(newUser.DisplayName))
             {
-                _logger.Log($"{newUser.Username}#{newUser.Discriminator} ({newUser.Id}) changed their DisplayName. Updating userinfo.", level: LogLevel.Debug);
+                _logger.Log($"{newUser.DisplayName} ({newUser.Username}/{newUser.Id}) changed their DisplayName. Updating userinfo.", level: LogLevel.Debug);
                 _users[newUser.Id].Aliases.Add(newUser.DisplayName);
                 changed = true;
             }
@@ -307,7 +307,7 @@ public class UserListener
             {
                 // Unsilenced, Remove the flag.
                 _logger.Log(
-                    $"{newUser.Username}#{newUser.Discriminator} ({newUser.Id}) unsilenced, removing silence flag...");
+                    $"{newUser.DisplayName} ({newUser.Username}/{newUser.Id}) unsilenced, removing silence flag...");
                 _users[newUser.Id].Silenced = false;
                 changed = true;
             }
@@ -317,7 +317,7 @@ public class UserListener
             {
                 // Silenced, add the flag
                 _logger.Log(
-                    $"{newUser.Username}#{newUser.Discriminator} ({newUser.Id}) silenced, adding silence flag...");
+                    $"{newUser.DisplayName} ({newUser.Username}/{newUser.Id}) silenced, adding silence flag...");
                 _users[newUser.Id].Silenced = true;
                 changed = true;
             }
@@ -329,7 +329,7 @@ public class UserListener
                 newUser.Roles.Select(role => role.Id).Contains(roleId))
             {
                 _logger.Log(
-                    $"{newUser.Username}#{newUser.Discriminator} ({newUser.Id}) gained role which will reapply on join, role {newUser.Roles.Single(role => role.Id == roleId).Name} ({roleId})");
+                    $"{newUser.DisplayName} ({newUser.Username}/{newUser.Id}) gained role which will reapply on join, role {newUser.Roles.Single(role => role.Id == roleId).Name} ({roleId})");
                 _users[newUser.Id].RolesToReapplyOnRejoin.Add(roleId);
                 changed = true;
             }
@@ -338,7 +338,7 @@ public class UserListener
                 !newUser.Roles.Select(role => role.Id).Contains(roleId))
             {
                 _logger.Log(
-                    $"{newUser.Username}#{newUser.Discriminator} ({newUser.Id}) lost role which would reapply on join, role {newUser.Guild.Roles.Single(role => role.Id == roleId).Name} ({roleId})");
+                    $"{newUser.DisplayName} ({newUser.Username}/{newUser.Id}) lost role which would reapply on join, role {newUser.Guild.Roles.Single(role => role.Id == roleId).Name} ({roleId})");
                 _users[newUser.Id].RolesToReapplyOnRejoin.Remove(roleId);
                 changed = true;
             }
@@ -349,7 +349,7 @@ public class UserListener
             if (!newUser.Guild.Roles.Select(role => role.Id).Contains(roleId))
             {
                 _logger.Log(
-                    $"{newUser.Username}#{newUser.Discriminator} ({newUser.Id}) had role which I would have reapplied on join but no longer exists: role id {roleId}");
+                    $"{newUser.DisplayName} ({newUser.Username}/{newUser.Id}) had role which I would have reapplied on join but no longer exists: role id {roleId}");
                 _users[newUser.Id].RolesToReapplyOnRejoin.Remove(roleId);
                 _config.RolesToReapplyOnRejoin.Remove(roleId);
                 await FileHelper.SaveConfigAsync(_config);
@@ -361,7 +361,7 @@ public class UserListener
                 if (!_config.RolesToReapplyOnRejoin.Contains(roleId))
                 {
                     _logger.Log(
-                        $"{newUser.Username}#{newUser.Discriminator} ({newUser.Id}) has role which will no longer reapply on join, role {newUser.Guild.Roles.Single(role => role.Id == roleId).Name} ({roleId})");
+                        $"{newUser.DisplayName} ({newUser.Username}/{newUser.Id}) has role which will no longer reapply on join, role {newUser.Guild.Roles.Single(role => role.Id == roleId).Name} ({roleId})");
                     _users[newUser.Id].RolesToReapplyOnRejoin.Remove(roleId);
                     changed = true;
                 }

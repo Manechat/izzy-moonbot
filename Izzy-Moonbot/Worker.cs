@@ -442,7 +442,7 @@ namespace Izzy_Moonbot
                 if (stowawaySet.Count != 0)
                 {
                     var stowawayStringList = stowawaySet.Select(user => $"<@{user.Id}>");
-                    var stowawayStringFileList = stowawaySet.Select(user => $"{user.Username}#{user.Discriminator}");
+                    var stowawayStringFileList = stowawaySet.Select(user => $"{user.DisplayName} ({user.Username}/{user.Id})");
                     
                     await _modLog.CreateModLog(guild)
                         .SetContent($"I found these stowaways after I rebooted, cannot tell if they're new users:\n" +

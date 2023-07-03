@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
+using Discord.WebSocket;
 using Izzy_Moonbot.Settings;
 using Izzy_Moonbot.Adapters;
 using Microsoft.Extensions.Configuration;
@@ -477,8 +478,23 @@ public static class DiscordHelper
         // note that newlines, markdown, mentions, etc. aren't applied in audit log messages,
         // but some of them are still useful to make the message clearer
         return $"Command `{context.Message.Content}` " +
-            $"was run by {user.Username}#{user.Discriminator} ({user.Id}) " +
+            $"was run by {DisplayName(user, context.Guild)} ({user.Username}/{user.Id}) " +
             $"in #{channel.Name} (<#{channel.Id}>) " +
             $"at {now} (<t:{now.ToUnixTimeMilliseconds()}>)";
+    }
+
+    // For a GuildUser, the .DisplayName property appears to use
+    //    .Nickname -> .GlobalName -> .Username
+    // in that order.
+    // This method helps ensure we consistently guild/member-ify our users if it's
+    // possible to do so, and if not we still do .GlobalName -> .Username at least.
+    public static string DisplayName(IUser user, SocketGuild? guild)
+    {
+        return DisplayName(new DiscordNetUserAdapter(user), guild != null ? new SocketGuildAdapter(guild) : null);
+    }
+    public static string DisplayName(IIzzyUser user, IIzzyGuild? guild)
+    {
+        var member = guild?.GetUser(user.Id);
+        return member != null ? member.DisplayName : user.GlobalName ?? user.Username;
     }
 }

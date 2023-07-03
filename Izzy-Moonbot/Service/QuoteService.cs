@@ -90,7 +90,7 @@ public class QuoteService
             if (potentialUser == null)
                 return _users.TryGetValue(id, out var user) ? $"{id} ({user.Username}) {aliasText}" : $"{id} {aliasText}";
 
-            return $"{potentialUser.DisplayName} ({potentialUser.Username}#{potentialUser.Discriminator}) {aliasText}";
+            return $"{potentialUser.DisplayName} ({potentialUser.Username}/{potentialUser.Id}) {aliasText}";
         }).ToArray();
     }
 

@@ -1,4 +1,4 @@
-﻿using Izzy_Moonbot;
+using Izzy_Moonbot;
 using Izzy_Moonbot.Service;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -36,7 +36,7 @@ public class LoggingServiceTests
         logService.Log("sunny said something", context);
         TestUtils.AssertListsAreEqual(new List<string> {
             $"[LoggingServiceTests.cs:BasicTests:30] test",
-            $"[LoggingServiceTests.cs:BasicTests:36] server: Maretime Bay ({guild.Id}) #general ({generalChannel.Id}) @Sunny#1234 ({sunny.Id}), sunny said something"
+            $"[LoggingServiceTests.cs:BasicTests:36] server: Maretime Bay ({guild.Id}) #general ({generalChannel.Id}) @Sunny ({sunny.Id}), sunny said something"
         }, logger.Logs);
     }
 }

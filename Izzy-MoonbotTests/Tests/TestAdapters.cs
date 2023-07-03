@@ -11,7 +11,7 @@ public class TestUser : IIzzyUser
 {
     public ulong Id { get; }
     public string Username { get; }
-    public string DisplayName => Username; // TODO: implement nicknames
+    public string? GlobalName => Username;
     public bool IsBot { get; }
 
     public TestUser(string username, ulong id, bool isBot = false)
@@ -26,7 +26,9 @@ public class TestGuildUser : IIzzyGuildUser
 {
     public ulong Id { get; }
     public string Username { get; }
-    public string DisplayName => Username; // TODO: implement nicknames
+    public string? GlobalName => Username;
+    public string? Nickname => Username;
+    public string DisplayName => Username;
     public bool IsBot { get; }
 
     private readonly StubGuild _guildBackref;

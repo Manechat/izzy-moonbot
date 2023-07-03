@@ -90,7 +90,7 @@ public class FilterService
         await _modLog.CreateModLog(context.Guild)
             .SetContent($"{(actionsTaken.Contains("silence") ? $"<@&{_config.ModRole}>" : "")} Filter Violation for <@{context.User.Id}>")
             .SetEmbed(embedBuilder.Build())
-            .SetFileLogContent($"Filter violation by {context.User.Username}#{context.User.Discriminator} ({context.Guild.GetUser(context.User.Id)?.DisplayName}) (`{context.User.Id}`) in #{context.Channel.Name} (`{context.Channel.Id}`)\n" +
+            .SetFileLogContent($"Filter violation by {DiscordHelper.DisplayName(context.User, context.Guild)} (`{context.User.Username}`/`{context.User.Id}`) in #{context.Channel.Name} (`{context.Channel.Id}`)\n" +
                                $"Trigger: {context.Message.CleanContent.Replace(word, $"[[{word}]]")}\n" +
                                $"Response: {fileLogResponse}")
             .Send();

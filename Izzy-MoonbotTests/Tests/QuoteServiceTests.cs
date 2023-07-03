@@ -1,4 +1,4 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Settings;
 using Izzy_Moonbot.Service;
@@ -26,7 +26,7 @@ public class QuoteServiceTests
 
         Assert.AreEqual((0, "gonna be my day"), qs.GetRandomQuote(sunny.Id));
 
-        TestUtils.AssertListsAreEqual(new List<string> { "Sunny (Sunny#1234) " }, qs.GetKeyList(testGuild));
+        TestUtils.AssertListsAreEqual(new List<string> { "Sunny (Sunny/2) " }, qs.GetKeyList(testGuild));
 
         Assert.AreEqual("gonna be my day", qs.GetQuote(sunny.Id, 0));
 

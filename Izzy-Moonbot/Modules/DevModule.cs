@@ -262,27 +262,6 @@ public class DevModule : ModuleBase<SocketCommandContext>
                         $"{(time.RepeatType is ScheduledJobRepeatType.None ? "" : $" repeating {time.RepeatType}")}\n" +
                     $"with remainingArgsString: \"{remainingArgsString}\"");
                 break;
-            case "getuser":
-                if (ulong.TryParse(args[0], out var id))
-                {
-                    var user = await Context.Client.GetUserAsync(id);
-
-                    if (user == null)
-                    {
-                        await ReplyAsync("Couldn't find user");
-                    }
-                    else
-                    {
-                        await ReplyAsync($"User info:\n" +
-                                         $"Id: {id}\n" +
-                                         $"Name: {user.Username}#{user.Discriminator}");
-                    }
-                }
-                else
-                {
-                    await ReplyAsync($"not valid user");
-                }
-                break;
             case "customArgument":
                 var customArgument_Result = DiscordHelper.GetArguments(argString);
 

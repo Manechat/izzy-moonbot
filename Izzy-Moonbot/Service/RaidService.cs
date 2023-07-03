@@ -1,6 +1,7 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Discord;
 using Discord.WebSocket;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Settings;
@@ -76,11 +77,10 @@ public class RaidService
         {
             var joinDate = "`Couldn't get member join time`";
             if (member.JoinedAt.HasValue) joinDate = $"<t:{member.JoinedAt.Value.ToUnixTimeSeconds()}:F>";
-            raiderDescriptions.Add($"<@{member.Id}> {member.Username}#{member.Discriminator} (joined: {joinDate})");
+            raiderDescriptions.Add($"<@{member.Id}> {member.DisplayName} ({member.Username}/{member.Id}) (joined: {joinDate})");
         });
         return string.Join($"\n", raiderDescriptions);
     }
-
     private async Task TripSmallRaid(SocketGuild guild, List<SocketGuildUser> recentJoins)
     {
         _log.Log("Small raid detected!");
@@ -211,7 +211,7 @@ public class RaidService
         if (!_config.RaidProtectionEnabled) return;
         if (_state.RecentJoins.Contains(member.Id))
         {
-            _log.Log($"{member.DisplayName}#{member.Discriminator} ({member.Id}) rejoined while still considered a recent join. Not updating recent joins list.");
+            _log.Log($"{member.DisplayName} ({member.Username}/{member.Id}) rejoined while still considered a recent join. Not updating recent joins list.");
             return;
         }
 

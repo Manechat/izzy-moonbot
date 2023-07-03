@@ -360,7 +360,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
             await _quoteService.RemoveQuote(quoteUser, number.Value - 1);
 
             await context.Channel.SendMessageAsync(
-                $"Removed quote #{number.Value} from **{quoteUser.Username}#{quoteUser.Discriminator}**.", allowedMentions: AllowedMentions.None);
+                $"Removed quote #{number.Value} from **{quoteUser.DisplayName}** ({quoteUser.Username}).", allowedMentions: AllowedMentions.None);
             return;
         }
 
@@ -444,7 +444,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
                     throw new TargetException("The user this alias referenced to cannot be found.");
 
                 await context.Channel.SendMessageAsync(
-                    $"Quote alias **{alias}** maps to user **{user.Username}#{user.Discriminator}**.", allowedMentions: AllowedMentions.None);
+                    $"Quote alias **{alias}** maps to user **{user.DisplayName}** ({user.Username}).", allowedMentions: AllowedMentions.None);
             }
         }
         else if (operation.ToLower() == "set" || operation.ToLower() == "add")

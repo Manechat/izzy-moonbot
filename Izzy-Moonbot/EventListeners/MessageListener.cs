@@ -57,7 +57,7 @@ public class MessageListener
         if (author.IsBot) return; // Don't listen to bots
 
         var logMessage =
-            $"Message {newMessage.Id} by {author.Username}#{author.Discriminator} ({author.Id}) **edited** in {channel.Name}:\n" +
+            $"Message {newMessage.Id} by {DiscordHelper.DisplayName(author, defaultGuild)} ({author.Username}/{author.Id}) **edited** in {channel.Name}:\n" +
             $"__Before__:\n{oldContent}\n" +
             $"__After__:\n{newMessage.Content}";
 
@@ -89,7 +89,7 @@ public class MessageListener
         if (author.Id == client.CurrentUser.Id) return; // Don't process self.
         if (author.IsBot) return; // Don't listen to bots
 
-        var logMessage = $"Message id {messageId} by {author.Username}#{author.Discriminator} ({author.Id}) **deleted**";
+        var logMessage = $"Message id {messageId} by {DiscordHelper.DisplayName(author, defaultGuild)} ({author.Username}/{author.Id}) **deleted**";
 
         if (channel is null)
             logMessage += $" in unknown channel {channelId}:\n";
