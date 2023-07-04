@@ -484,6 +484,11 @@ namespace Izzy_Moonbot
                         _logger.Log(LogLevel.Information, $"Ignoring mention because MentionResponseEnabled is false.");
                         return;
                     }
+                    if (message.Author.Id == _client.CurrentUser.Id)
+                    {
+                        _logger.Log(LogLevel.Information, $"Ignoring self-mention.");
+                        return;
+                    }
                     var secondsSinceLastMention = (DateTimeOffset.UtcNow - _state.LastMentionResponse).TotalSeconds;
                     if (secondsSinceLastMention < _config.MentionResponseCooldown)
                     {
