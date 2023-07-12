@@ -49,7 +49,7 @@ public class SpamServiceTests
         Assert.AreEqual(0, generalChannel.Messages.Count);
 
         Assert.AreEqual(1, modChat.Messages.Count);
-        Assert.AreEqual("<@&0> I've silenced <@2> for spamming", modChat.Messages.Last().Content);
+        Assert.AreEqual("<@&0> I've silenced <@2> for spamming and deleted 1 of their message(s)", modChat.Messages.Last().Content);
         TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, new List<(string, string)>
         {
             ("Silenced User", "<@2> (`2`)"),
@@ -91,7 +91,7 @@ public class SpamServiceTests
         await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, "so very dead");
         Assert.AreEqual(1, modChat.Messages.Count);
 
-        Assert.AreEqual($"<@&0> I've silenced <@{sunny.Id}> for spamming", modChat.Messages.Last().Content);
+        Assert.AreEqual($"<@&0> I've silenced <@{sunny.Id}> for spamming and deleted 6 of their message(s)", modChat.Messages.Last().Content);
         TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, new List<(string, string)>
         {
             ("Silenced User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
@@ -119,7 +119,7 @@ public class SpamServiceTests
             $"\n\n\n\n\ni'm new here");
 
         Assert.AreEqual(2, modChat.Messages.Count);
-        Assert.AreEqual($"I've given <@{sunny.Id}> a one-hour timeout for spamming after being silenced", modChat.Messages.Last().Content);
+        Assert.AreEqual($"I've given <@{sunny.Id}> a one-hour timeout for spamming after being silenced and deleted 1 of their message(s)", modChat.Messages.Last().Content);
         TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, new List<(string, string)>
         {
             ("Timeout User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
@@ -146,7 +146,7 @@ public class SpamServiceTests
             "i cwan wite wike dis fwor owors, swo dwont cwalengbe mii..");
 
         Assert.AreEqual(3, modChat.Messages.Count);
-        Assert.AreEqual($"I've given <@{sunny.Id}> a one-hour timeout for spamming after being silenced", modChat.Messages.Last().Content);
+        Assert.AreEqual($"I've given <@{sunny.Id}> a one-hour timeout for spamming after being silenced and deleted 1 of their message(s)", modChat.Messages.Last().Content);
         TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, new List<(string, string)>
         {
             ("Timeout User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
@@ -169,7 +169,7 @@ public class SpamServiceTests
             "<@1234> <@1234> <@1234> <@1234> <@1234> <@1234> <@1234> <@1234> <@1234> <@1234>");
 
         Assert.AreEqual(4, modChat.Messages.Count);
-        Assert.AreEqual($"I've given <@{sunny.Id}> a one-hour timeout for spamming after being silenced", modChat.Messages.Last().Content);
+        Assert.AreEqual($"I've given <@{sunny.Id}> a one-hour timeout for spamming after being silenced and deleted 1 of their message(s)", modChat.Messages.Last().Content);
         TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, new List<(string, string)>
         {
             ("Timeout User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
@@ -198,7 +198,7 @@ public class SpamServiceTests
         });
 
         Assert.AreEqual(5, modChat.Messages.Count);
-        Assert.AreEqual($"I've given <@{sunny.Id}> a one-hour timeout for spamming after being silenced", modChat.Messages.Last().Content);
+        Assert.AreEqual($"I've given <@{sunny.Id}> a one-hour timeout for spamming after being silenced and deleted 1 of their message(s)", modChat.Messages.Last().Content);
         TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, new List<(string, string)>
         {
             ("Timeout User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
@@ -222,7 +222,7 @@ public class SpamServiceTests
         await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, "hi");
 
         Assert.AreEqual(6, modChat.Messages.Count);
-        Assert.AreEqual($"I've given <@{sunny.Id}> a one-hour timeout for spamming after being silenced", modChat.Messages.Last().Content);
+        Assert.AreEqual($"I've given <@{sunny.Id}> a one-hour timeout for spamming after being silenced and deleted 3 of their message(s)", modChat.Messages.Last().Content);
         TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, new List<(string, string)>
         {
             ("Timeout User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
@@ -252,7 +252,7 @@ public class SpamServiceTests
             "░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░");
 
         Assert.AreEqual(7, modChat.Messages.Count);
-        Assert.AreEqual($"I've given <@{sunny.Id}> a one-hour timeout for spamming after being silenced", modChat.Messages.Last().Content);
+        Assert.AreEqual($"I've given <@{sunny.Id}> a one-hour timeout for spamming after being silenced and deleted 1 of their message(s)", modChat.Messages.Last().Content);
         TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, new List<(string, string)>
         {
             ("Timeout User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
@@ -284,7 +284,7 @@ public class SpamServiceTests
         });
         Assert.AreEqual(1, modChat.Messages.Count);
 
-        Assert.AreEqual($"<@&0> I've silenced <@{sunny.Id}> for spamming", modChat.Messages.Last().Content);
+        Assert.AreEqual($"<@&0> I've silenced <@{sunny.Id}> for spamming and deleted 2 of their message(s)", modChat.Messages.Last().Content);
         TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, new List<(string, string)>
         {
             ("Silenced User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
@@ -335,7 +335,7 @@ public class SpamServiceTests
             $"░░░░▄██▄░░░░░▄██▄░░");
 
         Assert.AreEqual(1, modChat.Messages.Count);
-        Assert.AreEqual($"<@&0> I've silenced <@{sunny.Id}> for spamming", modChat.Messages.Last().Content);
+        Assert.AreEqual($"<@&0> I've silenced <@{sunny.Id}> for spamming and deleted 1 of their message(s)", modChat.Messages.Last().Content);
         TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, new List<(string, string)>
         {
             ("Silenced User", $"<@{sunny.Id}> (`{sunny.Id}`)"),

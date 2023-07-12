@@ -405,7 +405,7 @@ public class SpamService
                 (alreadySilenced ?
                     $"I've given <@{user.Id}> a one-hour timeout for spamming after being silenced" :
                     $"<@&{_config.ModRole}> I've silenced <@{user.Id}> for spamming")
-                + $" and deleted {bulkDeletionCount} of their messages"
+                + $" and deleted {bulkDeletionCount} of their message(s)"
             )
             .SetEmbed(embedBuilder.Build())
             .SetFileLogContent(
