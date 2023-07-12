@@ -399,39 +399,11 @@ public class ScheduleService
                         $"Set banner to {url} for banner rotation.")
                     .Send();
             }
-            catch (FlurlHttpTimeoutException ex)
-            {
-                await _modLogging.CreateModLog(guild)
-                    .SetContent(
-                        $"Tried to change banner but the host server didn't respond fast enough, is it down? If so please run `.config BannerMode None` to avoid unnecessarily pinging Manebooru.")
-                    .SetFileLogContent(
-                        $"Tried to change banner but the host server didn't respond fast enough, is it down? If so please run `.config BannerMode None` to avoid unnecessarily pinging Manebooru.")
-                    .Send();
-                _logger.Log(
-                    $"Encountered HTTP timeout exception when trying to change banner: {ex.Message}\n{ex.StackTrace}");
-            }
-            catch (FlurlHttpException ex)
-            {
-                // Http request failure.
-                await _modLogging.CreateModLog(guild)
-                    .SetContent(
-                        $"Tried to change banner and received a {ex.StatusCode} status code when attempting to ask the host server for the image. Doing nothing.")
-                    .SetFileLogContent(
-                        $"Tried to change banner and received a {ex.StatusCode} status code when attempting to ask the host server for the image. Doing nothing.")
-                    .Send();
-                _logger.Log(
-                    $"Encountered HTTP exception when trying to change banner: {ex.Message}\n{ex.StackTrace}");
-            }
             catch (Exception ex)
             {
-                await _modLogging.CreateModLog(guild)
-                    .SetContent(
-                        $"Tried to change banner and received a general error when attempting to ask the host server for the image. Doing nothing.")
-                    .SetFileLogContent(
-                        $"Tried to change banner and received a general error when attempting to ask the host server for the image. Doing nothing.")
-                    .Send();
-                _logger.Log(
-                    $"Encountered exception when trying to change banner: {ex.Message}\n{ex.StackTrace}");
+                var msg = $"Failed to change banner: [{ex.GetType().Name}] {ex.Message}\n{ex.StackTrace}";
+                await _modLogging.CreateModLog(guild).SetContent(msg).SetFileLogContent(msg).Send();
+                _logger.Log(msg);
             }
         }
         else if (_config.BannerMode == ConfigListener.BannerMode.ManebooruFeatured)
@@ -481,55 +453,11 @@ public class ScheduleService
                 else
                     _logger.Log("Can't post logs because .config LogChannel hasn't been set.");
             }
-            catch (FlurlHttpTimeoutException ex)
-            {
-                await _modLogging.CreateModLog(guild)
-                    .SetContent(
-                        $"Tried to change banner but Manebooru didn't respond fast enough, is it down? If so please run `.config BannerMode None` to avoid unnecessarily pinging Manebooru.")
-                    .SetFileLogContent(
-                        $"Tried to change banner but Manebooru didn't respond fast enough, is it down? If so please run `.config BannerMode None` to avoid unnecessarily pinging Manebooru.")
-                    .Send();
-                _logger.Log(
-                    $"Encountered HTTP timeout exception when trying to change banner: {ex.Message}\n{ex.StackTrace}");
-            }
-            catch (FlurlHttpException ex)
-            {
-                // Http request failure.
-                await _modLogging.CreateModLog(guild)
-                    .SetContent(
-                        $"Tried to change banner and received a {ex.StatusCode} status code when attempting to ask Manebooru for the featured image. Doing nothing.\n" +
-                        $"Likely causes:\n" +
-                        $"  - I sent a badly formatted request to Manebooru.\n" +
-                        $"  - Manebooru thinks I sent a badly formatted request when I didn't.\n" +
-                        $"  - Manebooru is down and Cloudflare is giving me a error page.")
-                    .SetFileLogContent(
-                        $"Tried to change banner and recieved a {ex.StatusCode} status code when attempting to ask Manebooru for the featured image. Doing nothing.\n" +
-                        $"Likely causes:\n" +
-                        $"  - I sent a badly formatted request to Manebooru.\n" +
-                        $"  - Manebooru thinks I sent a badly formatted request when I didn't.\n" +
-                        $"  - Manebooru is down and Cloudflare is giving me a error page.")
-                    .Send();
-                _logger.Log(
-                    $"Encountered HTTP exception when trying to change banner: {ex.Message}\n{ex.StackTrace}");
-            }
             catch (Exception ex)
             {
-                await _modLogging.CreateModLog(guild)
-                    .SetContent(
-                        $"Tried to change banner and received a general error when attempting to ask Manebooru for the featured image. Doing nothing.\n" +
-                        $"Likely causes:\n" +
-                        $"  - The image is too big for Discord.\n" +
-                        $"  - This server cannot have a banner.\n" +
-                        $"  - The banner rotation job is an unexpected state.")
-                    .SetFileLogContent(
-                        $"Tried to change banner and received a general error when attempting to ask Manebooru for the featured image. Doing nothing.\n" +
-                        $"Likely causes:\n" +
-                        $"  - The image is too big for Discord.\n" +
-                        $"  - This server cannot have a banner.\n" +
-                        $"  - The banner rotation job is an unexpected state.")
-                    .Send();
-                _logger.Log(
-                    $"Encountered exception when trying to change banner: {ex.Message}\n{ex.StackTrace}");
+                var msg = $"Failed to change banner to the Manebooru featured image: [{ex.GetType().Name}] {ex.Message}\n{ex.StackTrace}";
+                await _modLogging.CreateModLog(guild).SetContent(msg).SetFileLogContent(msg).Send();
+                _logger.Log(msg);
             }
         }
     }

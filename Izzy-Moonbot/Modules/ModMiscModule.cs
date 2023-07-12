@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
@@ -818,12 +818,11 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
         {
             await DiscordHelper.SetBannerToUrlImage(cleanUrl, new SocketGuildAdapter(Context.Guild));
         }
-        catch (FlurlHttpException ex)
+        catch (Exception ex)
         {
-            var errorMsg = $"Recieved HTTP exception when executing Banner Rotation: {ex.Message}";
+            var errorMsg = $"Failed to set banner: [{ex.GetType().Name}] {ex.Message}\n{ex.StackTrace}";
             await ReplyAsync(errorMsg);
             _logger.Log(errorMsg);
-            return;
         }
         var msg = $"Set banner to <{cleanUrl}>";
 
