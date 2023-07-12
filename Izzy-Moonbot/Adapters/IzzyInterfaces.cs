@@ -57,7 +57,8 @@ public interface IIzzyMessage
     MessageType Type => MessageType.Default;
 
     // all we ever do with these is attach them to an embed, so no point properly faking them
-    DateTimeOffset Timestamp { get => new DateTimeOffset(2010, 10, 10, 0, 0, 0, TimeSpan.Zero); }
+    DateTimeOffset CreatedAt { get; }
+    DateTimeOffset Timestamp { get; }
     DateTimeOffset? EditedTimestamp { get => null; }
 
     Task DeleteAsync();

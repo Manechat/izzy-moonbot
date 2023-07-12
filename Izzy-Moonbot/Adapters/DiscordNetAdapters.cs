@@ -122,6 +122,7 @@ public class DiscordNetMessageAdapter : IIzzyMessage
     public IReadOnlyCollection<IAttachment> Attachments => _message.Attachments;
     public IReadOnlyCollection<IEmbed> Embeds => _message.Embeds;
     public IReadOnlyCollection<IStickerItem> Stickers => _message.Stickers;
+    public DateTimeOffset CreatedAt => _message.CreatedAt;
     public DateTimeOffset Timestamp => _message.Timestamp;
     public async Task DeleteAsync() => await _message.DeleteAsync();
     public string GetJumpUrl() => _message.GetJumpUrl();
@@ -152,6 +153,8 @@ public class DiscordNetUserMessageAdapter : IIzzyUserMessage
     public IReadOnlyCollection<IAttachment> Attachments => _message.Attachments;
     public IReadOnlyCollection<IEmbed> Embeds => _message.Embeds;
     public IReadOnlyCollection<IStickerItem> Stickers => _message.Stickers;
+    public DateTimeOffset CreatedAt => _message.CreatedAt;
+    public DateTimeOffset Timestamp => _message.Timestamp;
 
     public async Task ModifyAsync(Action<IIzzyMessageProperties> action)
     {
