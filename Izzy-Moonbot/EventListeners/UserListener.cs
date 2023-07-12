@@ -229,7 +229,7 @@ public class UserListener
                 $"Here's a userlog I unicycled that you can use if you want to!\n```\n" +
                 $"Type: Ban\n" +
                 $"User: <@{user.Id}> ({user.Username}/{user.Id})\n" +
-                $"Names: {(_users.ContainsKey(user.Id) ? string.Join(", ", _users[user.Id].Aliases) : "None (user isn't known by Izzy)")}\n" +
+                $"Names: {(_users.TryGetValue(user.Id, out var userInfo) ? string.Join(", ", userInfo.Aliases) : "None (user isn't known by Izzy)")}\n" +
                 $"```";
 
         if (kickAuditLog != null)
@@ -240,7 +240,7 @@ public class UserListener
                 $"Here's a userlog I unicycled that you can use if you want to!\n```\n" +
                 $"Type: Kick\n" +
                 $"User: <@{user.Id}> ({user.Username}/{user.Id})\n" +
-                $"Names: {(_users.ContainsKey(user.Id) ? string.Join(", ", _users[user.Id].Aliases) : "None (user isn't known by Izzy)")}\n" +
+                $"Names: {(_users.TryGetValue(user.Id, out var userInfo) ? string.Join(", ", userInfo.Aliases) : "None (user isn't known by Izzy)")}\n" +
                 $"```";
 
         // Scheduled jobs that require a user to be in the server create a difficult question.
