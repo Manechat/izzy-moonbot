@@ -55,9 +55,9 @@ public class MessageListener
 
         string? oldEditWarning = null;
         if (newMessage.Timestamp.AddHours(24) > DateTimeOffset.UtcNow)
-            oldEditWarning = $":warning: >24-hour-old message edit detected: {newMessage.GetJumpUrl()}";
+            oldEditWarning = $":warning: >24-hour-old message edit by <@{author.Id}> ({author.Id}) detected: {newMessage.GetJumpUrl()}";
         else if (oldContent is null)
-            oldEditWarning = $":warning: Possible old message edit detected: {newMessage.GetJumpUrl()}";
+            oldEditWarning = $":warning: Possible old message edit by <@{author.Id}> ({author.Id}) detected: {newMessage.GetJumpUrl()}";
 
         if (oldEditWarning != null)
             await _modLogger.CreateModLog(defaultGuild).SetContent(oldEditWarning).SetFileLogContent(oldEditWarning).Send();
