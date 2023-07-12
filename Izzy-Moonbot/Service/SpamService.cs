@@ -313,7 +313,7 @@ public class SpamService
             await _mod.SilenceUser(user, auditLogMessage);
 
         var bulkDeletionLog = new List<(DateTimeOffset, string)>();
-
+        var bulkDeletionCount = 0;
         var alreadyDeletedMessages = 0;
         
         // Remove all messages considered part of spam.
@@ -332,6 +332,7 @@ public class SpamService
                         bulkDeletionLog.Add((previousMessageItem.Timestamp,
                             $"[{previousMessageItem.Timestamp}] in #{channel?.Name}: {previousMessage.Content}"));
                     await previousMessage.DeleteAsync();
+                    bulkDeletionCount++;
                 }
                 else
                     alreadyDeletedMessages++;
@@ -400,9 +401,11 @@ public class SpamService
                 $":information_source: **I was unable to delete {alreadyDeletedMessages} messages by this user. Please double check that these messages have been deleted.**");
 
         await _modLogger.CreateModLog(context.Guild)
-            .SetContent(alreadySilenced ?
-                $"I've given <@{user.Id}> a one-hour timeout for spamming after being silenced" :
-                $"<@&{_config.ModRole}> I've silenced <@{user.Id}> for spamming"
+            .SetContent(
+                (alreadySilenced ?
+                    $"I've given <@{user.Id}> a one-hour timeout for spamming after being silenced" :
+                    $"<@&{_config.ModRole}> I've silenced <@{user.Id}> for spamming")
+                + $" and deleted {bulkDeletionCount} of their messages"
             )
             .SetEmbed(embedBuilder.Build())
             .SetFileLogContent(
