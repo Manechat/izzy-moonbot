@@ -149,6 +149,8 @@ public class TestMessage : IIzzyUserMessage
     public IReadOnlyCollection<IAttachment> Attachments => (IReadOnlyCollection<IAttachment>)_message.Attachments;
     public IReadOnlyCollection<IEmbed> Embeds => (IReadOnlyCollection<IEmbed>)_message.Embeds;
     public IReadOnlyCollection<IStickerItem> Stickers => (IReadOnlyCollection<IStickerItem>)_message.Stickers;
+    public DateTimeOffset CreatedAt => new DateTimeOffset(2010, 10, 10, 0, 0, 0, TimeSpan.Zero);
+    public DateTimeOffset Timestamp => new DateTimeOffset(2010, 10, 10, 0, 0, 0, TimeSpan.Zero);
 
     private readonly StubMessage _message;
     private readonly StubChannel _channelBackref;
