@@ -222,10 +222,26 @@ public class UserListener
         var output = $"Leave: {lastNickname} (`{user.Username}`/`{user.Id}`) joined <t:{_users[user.Id].Joins.Last().ToUnixTimeSeconds()}:R>";
 
         if (banAuditLog != null)
-            output += $"\n\nAccording to the server audit log, they were **banned** <t:{banAuditLog.CreatedAt.ToUnixTimeSeconds()}:R> by {DiscordHelper.DisplayName(banAuditLog.User, guild)} ({banAuditLog.User.Username}/{banAuditLog.User.Id}) for the following reason:\n\"{banAuditLog.Reason}\"";
+            output += $"\n\n" +
+                $"According to the server audit log, they were **banned** <t:{banAuditLog.CreatedAt.ToUnixTimeSeconds()}:R> by {DiscordHelper.DisplayName(banAuditLog.User, guild)} ({banAuditLog.User.Username}/{banAuditLog.User.Id}) for the following reason:\n" +
+                $"\"{banAuditLog.Reason}\"" +
+                "\n\n" +
+                $"Here's a userlog I unicycled that you can use if you want to!\n```\n" +
+                $"Type: Ban\n" +
+                $"User: <@{user.Id}> ({user.Username}/{user.Id})\n" +
+                $"Names: {(_users.TryGetValue(user.Id, out var userInfo) ? string.Join(", ", userInfo.Aliases) : "None (user isn't known by Izzy)")}\n" +
+                $"```";
 
         if (kickAuditLog != null)
-            output += $"\n\nAccording to the server audit log, they were **kicked** <t:{kickAuditLog.CreatedAt.ToUnixTimeSeconds()}:R> by {DiscordHelper.DisplayName(kickAuditLog.User, guild)} ({kickAuditLog.User.Username}/{kickAuditLog.User.Id})) for the following reason:\n\"{kickAuditLog.Reason}\"";
+            output += $"\n\n" +
+                $"According to the server audit log, they were **kicked** <t:{kickAuditLog.CreatedAt.ToUnixTimeSeconds()}:R> by {DiscordHelper.DisplayName(kickAuditLog.User, guild)} ({kickAuditLog.User.Username}/{kickAuditLog.User.Id})) for the following reason:\n" +
+                $"\"{kickAuditLog.Reason}\"" +
+                "\n\n" +
+                $"Here's a userlog I unicycled that you can use if you want to!\n```\n" +
+                $"Type: Kick\n" +
+                $"User: <@{user.Id}> ({user.Username}/{user.Id})\n" +
+                $"Names: {(_users.TryGetValue(user.Id, out var userInfo) ? string.Join(", ", userInfo.Aliases) : "None (user isn't known by Izzy)")}\n" +
+                $"```";
 
         // Scheduled jobs that require a user to be in the server create a difficult question.
         // Do we delete them on leave so there's no error later? Or keep them in case the user rejoins?
