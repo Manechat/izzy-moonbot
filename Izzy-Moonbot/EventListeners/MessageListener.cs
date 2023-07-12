@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord;
@@ -12,11 +13,13 @@ public class MessageListener
 {
     private readonly LoggingService _logger;
     private readonly Config _config;
+    private readonly ModLoggingService _modLogger;
 
-    public MessageListener(LoggingService logger, Config config)
+    public MessageListener(LoggingService logger, Config config, ModLoggingService modLogger)
     {
         _logger = logger;
         _config = config;
+        _modLogger = modLogger;
     }
 
     public void RegisterEvents(IIzzyClient client)
@@ -31,19 +34,13 @@ public class MessageListener
         IIzzyMessageChannel channel,
         IIzzyClient client)
     {
+        _logger.Log($"Received MessageUpdated event for message id {newMessage.Id}.");
+
         var logChannel = GetLogChannel(client);
         if (logChannel == null) return;
 
         var defaultGuild = client.GetGuild(DiscordHelper.DefaultGuild());
         if (defaultGuild?.GetChannel(channel.Id) is null) return;
-
-        if (oldContent is null)
-        {
-            _logger.Log($"Received MessageUpdated event without an oldContent. " +
-                $"This usually means the message was too old to be in Izzy's local cache. " +
-                $"Skipping LogChannel post since we don't know anything Discord isn't already displaying.");
-            return;
-        }
 
         if (newMessage.Content == oldContent)
         {
@@ -56,9 +53,20 @@ public class MessageListener
         if (author.Id == client.CurrentUser.Id) return; // Don't process self.
         if (author.IsBot) return; // Don't listen to bots
 
+        string? oldEditWarning = null;
+        if (newMessage.Timestamp.AddHours(24) > DateTimeOffset.UtcNow)
+            oldEditWarning = $":warning: >24-hour-old message edit detected: {newMessage.GetJumpUrl()}";
+        else if (oldContent is null)
+            oldEditWarning = $":warning: Possible old message edit detected: {newMessage.GetJumpUrl()}";
+
+        if (oldEditWarning != null)
+            await _modLogger.CreateModLog(defaultGuild).SetContent(oldEditWarning).SetFileLogContent(oldEditWarning).Send();
+
         var logMessage =
             $"Message {newMessage.Id} by {DiscordHelper.DisplayName(author, defaultGuild)} ({author.Username}/{author.Id}) **edited** in {channel.Name}:\n" +
-            $"__Before__:\n{oldContent}\n" +
+            (oldContent != null ?
+                $"__Before__:\n{oldContent}\n" :
+                "Content before edit unknown (this usually means the original message was too old to be in Izzy's cache).\n") +
             $"__After__:\n{newMessage.Content}";
 
         await logChannel.SendMessageAsync(logMessage, allowedMentions: AllowedMentions.None);
@@ -71,6 +79,8 @@ public class MessageListener
         IIzzyMessageChannel? channel,
         IIzzyClient client)
     {
+        _logger.Log($"Received MessageDeleted event for message id {messageId}.");
+
         var logChannel = GetLogChannel(client);
         if (logChannel == null) return;
 
@@ -79,9 +89,8 @@ public class MessageListener
 
         if (message is null)
         {
-            _logger.Log($"Received MessageDeleted event for an unknown message with id {messageId}. " +
-                $"This usually means the message was too old to be in Izzy's local cache. " +
-                $"Skipping LogChannel post since we don't know the author or content of the deleted message.");
+            await logChannel.SendMessageAsync($"Message id {messageId} **deleted**, but we know nothing else about it. " +
+                "This usually means the message was too old to be in Izzy's local cache.", allowedMentions: AllowedMentions.None);
             return;
         }
 
