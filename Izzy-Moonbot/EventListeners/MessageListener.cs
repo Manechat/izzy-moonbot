@@ -54,7 +54,7 @@ public class MessageListener
         if (author.IsBot) return; // Don't listen to bots
 
         string? oldEditWarning = null;
-        if (newMessage.Timestamp.AddHours(24) > DateTimeOffset.UtcNow)
+        if (newMessage.Timestamp.AddHours(24) < DateTimeOffset.UtcNow)
             oldEditWarning = $":warning: >24-hour-old message edit by <@{author.Id}> ({author.Id}) detected: {newMessage.GetJumpUrl()}";
         else if (oldContent is null)
             oldEditWarning = $":warning: Possible old message edit by <@{author.Id}> ({author.Id}) detected: {newMessage.GetJumpUrl()}";
