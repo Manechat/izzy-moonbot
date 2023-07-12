@@ -75,6 +75,9 @@ public class ScheduleService
 
     public async Task Unicycle(IIzzyClient client)
     {
+        if (client.GetGuild(DiscordHelper.DefaultGuild()) is not IIzzyGuild defaultGuild)
+            throw new InvalidOperationException("Failed to get default guild");
+
         var scheduledJobsToExecute = new List<ScheduledJob>();
 
         foreach (var job in _scheduledJobs)
@@ -91,9 +94,6 @@ public class ScheduleService
 
             try
             {
-                if (client.GetGuild(DiscordHelper.DefaultGuild()) is not IIzzyGuild defaultGuild)
-                    throw new InvalidOperationException("Failed to get default guild");
-
                 // Do processing here I guess!
                 switch (job.Action)
                 {
@@ -121,11 +121,19 @@ public class ScheduleService
             }
             catch (Exception ex)
             {
+                var msg = $":warning: Failed to execute scheduled job :warning:\n" +
+                    $"\n" +
+                    $"Job was: {job.ToDiscordString()}\n" +
+                    $"\n" +
+                    $"Error was: [{ex.GetType().Name}] {ex.Message}\n" +
+                    $"(Check Izzy's logs for a full stack trace)";
+                await _modLogging.CreateModLog(defaultGuild).SetContent(msg).SetFileLogContent(msg).Send();
+
                 _logger.Log(
                     $"Scheduled job threw an exception when trying to execute!\n" +
                     $"Type: {ex.GetType().Name}\n" +
                     $"Message: {ex.Message}\n" +
-                    $"Job: {job}\n" +
+                    $"Job: {job.ToFileString()}\n" +
                     $"Stack Trace: {ex.StackTrace}");
             }
 
