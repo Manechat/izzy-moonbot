@@ -34,7 +34,8 @@ public class MessageListener
         IIzzyMessageChannel channel,
         IIzzyClient client)
     {
-        _logger.Log($"Received MessageUpdated event for message id {newMessage.Id}.");
+        _logger.Log($"Received MessageUpdated event for message id {newMessage.Id}." +
+            $"\n{newMessage.CreatedAt} | {newMessage.CreatedAt.AddHours(24)} | {DateTimeOffset.UtcNow} | {newMessage.CreatedAt.AddHours(24) < DateTimeOffset.UtcNow}");
 
         var logChannel = GetLogChannel(client);
         if (logChannel == null) return;
