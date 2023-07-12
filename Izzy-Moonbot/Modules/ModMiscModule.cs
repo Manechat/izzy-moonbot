@@ -823,9 +823,10 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
             var errorMsg = $"Failed to set banner: [{ex.GetType().Name}] {ex.Message}\n{ex.StackTrace}";
             await ReplyAsync(errorMsg);
             _logger.Log(errorMsg);
+            return;
         }
-        var msg = $"Set banner to <{cleanUrl}>";
 
+        var msg = $"Set banner to <{cleanUrl}>";
         if (_config.BannerMode != BannerMode.None)
         {
             _config.BannerMode = BannerMode.None;
