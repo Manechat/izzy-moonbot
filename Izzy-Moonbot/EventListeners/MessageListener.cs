@@ -89,7 +89,7 @@ public class MessageListener
 
         if (message is null)
         {
-            await logChannel.SendMessageAsync($"Message id {messageId} **deleted**, but we know nothing else about it. " +
+            await logChannel.SendMessageAsync($"Message id {messageId} **deleted** in channel {channelId}, but we know nothing else about it. " +
                 "This usually means the message was too old to be in Izzy's local cache.", allowedMentions: AllowedMentions.None);
             return;
         }
