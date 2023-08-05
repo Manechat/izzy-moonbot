@@ -72,9 +72,9 @@ public class MessageListener
         var newContent = newMessage.Content;
         var truncationWarning = "";
         if (logMessageTemplate.Length + oldLength + newContent.Length > DiscordHelper.MessageLengthLimit) {
-            truncationWarning = "⚠️ The message needed to be truncated";
-            var spaceForMessages = DiscordHelper.MessageLengthLimit - logMessageTemplate.Length - truncationWarning.Length - oldLength - newContent.Length;
-            var truncationMarker = " [...] ";
+            truncationWarning = "⚠️ The message needed to be truncated\n";
+            var spaceForMessages = DiscordHelper.MessageLengthLimit - logMessageTemplate.Length - truncationWarning.Length;
+            var truncationMarker = "\n[...]\n";
             var spaceForHalfMessage = ((spaceForMessages / 2) - truncationMarker.Length) / 2;
 
             if (oldContent != null)
@@ -139,16 +139,18 @@ public class MessageListener
         var content = message.Content;
         if (logMessageTemplate.Length + content.Length + attachmentUrls.Length > DiscordHelper.MessageLengthLimit)
         {
-            truncationWarning = "⚠️ The message needed to be truncated";
-            var spaceForMessages = DiscordHelper.MessageLengthLimit - logMessageTemplate.Length - truncationWarning.Length - content.Length - attachmentUrls.Length;
-            var truncationMarker = " [...] ";
+            truncationWarning = "⚠️ The message needed to be truncated\n";
+            var spaceForMessages = DiscordHelper.MessageLengthLimit - logMessageTemplate.Length - truncationWarning.Length;
+            var truncationMarker = "\n[...]\n";
 
             var spaceForHalfContent = ((int)Math.Floor(spaceForMessages * 0.9) - truncationMarker.Length) / 2;
             content = content.Substring(0, spaceForHalfContent) +
                 truncationMarker +
                 content.Substring(content.Length - spaceForHalfContent);
 
-            attachmentUrls = attachmentUrls.Substring(0, (int)Math.Floor(spaceForMessages * 0.1)) + truncationMarker;
+            var spaceForAttachments = (int)Math.Floor(spaceForMessages * 0.1);
+            if (attachmentUrls.Length > spaceForAttachments)
+                attachmentUrls = attachmentUrls.Substring(0, spaceForAttachments) + truncationMarker;
         }
 
         var logMessage = logMessageTemplate.Replace("{warn}", truncationWarning).Replace("{content}", content).Replace("{attachments}", attachmentUrls);
