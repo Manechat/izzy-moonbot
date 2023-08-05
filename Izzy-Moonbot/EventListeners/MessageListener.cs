@@ -53,14 +53,12 @@ public class MessageListener
         if (author.Id == client.CurrentUser.Id) return; // Don't process self.
         if (author.IsBot) return; // Don't listen to bots
 
-        string? oldEditWarning = null;
-        if (newMessage.CreatedAt.AddHours(24) < DateTimeOffset.UtcNow)
-            oldEditWarning = $":warning: >24-hour-old message edit by <@{author.Id}> ({author.Id}) detected: {newMessage.GetJumpUrl()}";
-        else if (oldContent is null)
-            oldEditWarning = $":warning: Possible old message edit by <@{author.Id}> ({author.Id}) detected: {newMessage.GetJumpUrl()}";
-
-        if (oldEditWarning != null)
+        var isMod = defaultGuild.GetUser(author.Id)?.Roles.Any(r => r.Id == _config.ModRole) ?? false;
+        if ((newMessage.CreatedAt.AddHours(24) < DateTimeOffset.UtcNow) && !isMod)
+        {
+            var oldEditWarning = $":warning: >24-hour-old message edit by <@{author.Id}> ({author.Id}) detected: {newMessage.GetJumpUrl()}";
             await _modLogger.CreateModLog(defaultGuild).SetContent(oldEditWarning).SetFileLogContent(oldEditWarning).Send();
+        }
 
         var logMessage =
             $"Message {newMessage.Id} by {DiscordHelper.DisplayName(author, defaultGuild)} ({author.Username}/{author.Id}) **edited** in {channel.Name}:\n" +
