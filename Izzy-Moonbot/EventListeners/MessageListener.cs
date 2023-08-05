@@ -60,13 +60,34 @@ public class MessageListener
             await _modLogger.CreateModLog(defaultGuild).SetContent(oldEditWarning).SetFileLogContent(oldEditWarning).Send();
         }
 
-        var logMessage =
-            $"Message {newMessage.Id} by {DiscordHelper.DisplayName(author, defaultGuild)} ({author.Username}/{author.Id}) **edited** in {channel.Name}:\n" +
+        var logMessageTemplate =
+            $"Message {newMessage.Id} by {DiscordHelper.DisplayName(author, defaultGuild)} ({author.Username}/{author.Id}) **edited** in {channel.Name}:" +
+            "\n{warn}" +
             (oldContent != null ?
-                $"__Before__:\n{oldContent}\n" :
+                "__Before__:\n{old}\n" :
                 "Content before edit unknown (this usually means the original message was too old to be in Izzy's cache).\n") +
-            $"__After__:\n{newMessage.Content}";
+            "__After__:\n{new}";
 
+        var oldLength = oldContent?.Length ?? 0;
+        var newContent = newMessage.Content;
+        var truncationWarning = "";
+        if (logMessageTemplate.Length + oldLength + newContent.Length > DiscordHelper.MessageLengthLimit) {
+            truncationWarning = "⚠️ The message needed to be truncated";
+            var spaceForMessages = DiscordHelper.MessageLengthLimit - logMessageTemplate.Length - truncationWarning.Length - oldLength - newContent.Length;
+            var truncationMarker = " [...] ";
+            var spaceForHalfMessage = ((spaceForMessages / 2) - truncationMarker.Length) / 2;
+
+            if (oldContent != null)
+                oldContent = oldContent.Substring(0, spaceForHalfMessage) +
+                    truncationMarker +
+                    oldContent.Substring(oldLength - spaceForHalfMessage);
+
+            newContent = newContent.Substring(0, spaceForHalfMessage) +
+                truncationMarker +
+                newContent.Substring(newContent.Length - spaceForHalfMessage);
+        }
+
+        var logMessage = logMessageTemplate.Replace("{warn}", truncationWarning).Replace("{old}", oldContent).Replace("{new}", newContent);
         await logChannel.SendMessageAsync(logMessage, allowedMentions: AllowedMentions.None);
     }
 
