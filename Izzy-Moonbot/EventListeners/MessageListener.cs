@@ -117,19 +117,41 @@ public class MessageListener
         if (author.Id == client.CurrentUser.Id) return; // Don't process self.
         if (author.IsBot) return; // Don't listen to bots
 
-        var logMessage = $"Message id {messageId} by {DiscordHelper.DisplayName(author, defaultGuild)} ({author.Username}/{author.Id}) **deleted**";
+        var logMessageTemplate = $"Message id {messageId} by {DiscordHelper.DisplayName(author, defaultGuild)} ({author.Username}/{author.Id}) **deleted**";
 
         if (channel is null)
-            logMessage += $" in unknown channel {channelId}:\n";
+            logMessageTemplate += $" in unknown channel {channelId}:\n";
         else
-            logMessage += $" in {channel.Name}:\n";
+            logMessageTemplate += $" in {channel.Name}:\n";
 
+        logMessageTemplate += "{warn}";
+
+        var attachmentUrls = "";
         if (message.Attachments?.Any() ?? false)
-            logMessage += $"__Content__:\n{message.Content}\n" +
-                $"__Attachments__:\n{string.Join('\n', message.Attachments.Select(a => a.ProxyUrl))}";
+        {
+            logMessageTemplate += "__Content__:\n{content}\n__Attachments__:\n{attachments}";
+            attachmentUrls = string.Join('\n', message.Attachments.Select(a => a.ProxyUrl));
+        }
         else
-            logMessage += $"{message.Content}";
+            logMessageTemplate += "{content}";
 
+        var truncationWarning = "";
+        var content = message.Content;
+        if (logMessageTemplate.Length + content.Length + attachmentUrls.Length > DiscordHelper.MessageLengthLimit)
+        {
+            truncationWarning = "⚠️ The message needed to be truncated";
+            var spaceForMessages = DiscordHelper.MessageLengthLimit - logMessageTemplate.Length - truncationWarning.Length - content.Length - attachmentUrls.Length;
+            var truncationMarker = " [...] ";
+
+            var spaceForHalfContent = ((int)Math.Floor(spaceForMessages * 0.9) - truncationMarker.Length) / 2;
+            content = content.Substring(0, spaceForHalfContent) +
+                truncationMarker +
+                content.Substring(content.Length - spaceForHalfContent);
+
+            attachmentUrls = attachmentUrls.Substring(0, (int)Math.Floor(spaceForMessages * 0.1)) + truncationMarker;
+        }
+
+        var logMessage = logMessageTemplate.Replace("{warn}", truncationWarning).Replace("{content}", content).Replace("{attachments}", attachmentUrls);
         await logChannel.SendMessageAsync(logMessage, allowedMentions: AllowedMentions.None);
     }
 
