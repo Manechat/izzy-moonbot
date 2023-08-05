@@ -129,17 +129,16 @@ public class PaginationHelper
 
                 var truncationWarning = "";
                 var paginationBoilerplate = 200; // intentionally high so we have space for future changes
-                var discordMessageLimit = 2000;
 
                 var header = _staticParts[0];
                 var page = Pages[_pageNumber];
                 var footer = _staticParts[1];
-                if (header.Length + footer.Length + page.Length + paginationBoilerplate > discordMessageLimit)
+                if (header.Length + footer.Length + page.Length + paginationBoilerplate > DiscordHelper.MessageLengthLimit)
                 {
                     truncationWarning = "⚠️ Some items needed to be truncated";
                     var items = page.Split('\n');
                     var newlinesInPage = items.Count();
-                    var spaceForPage = discordMessageLimit - header.Length - footer.Length - paginationBoilerplate - newlinesInPage;
+                    var spaceForPage = DiscordHelper.MessageLengthLimit - header.Length - footer.Length - paginationBoilerplate - newlinesInPage;
 
                     var maxItemLength = spaceForPage / items.Count();
                     var truncationMarker = "[...]";
