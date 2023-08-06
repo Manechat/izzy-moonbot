@@ -1,4 +1,4 @@
-﻿using Izzy_Moonbot.Helpers;
+using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Settings;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -7,6 +7,30 @@ namespace Izzy_Moonbot_Tests.Helpers;
 [TestClass()]
 public class ParseHelperTests
 {
+    [TestMethod()]
+    public void TryParseUnambiguousUser()
+    {
+        string? err;
+
+        Assert.AreEqual(null, ParseHelper.TryParseUnambiguousUser("", out err));
+        Assert.IsNotNull(err);
+
+        Assert.AreEqual((1234ul, ""), ParseHelper.TryParseUnambiguousUser("1234", out err));
+        Assert.IsNull(err);
+
+        Assert.AreEqual((1234ul, ""), ParseHelper.TryParseUnambiguousUser("<@1234>", out err));
+        Assert.IsNull(err);
+
+        Assert.AreEqual(null, ParseHelper.TryParseUnambiguousUser("<@>", out err));
+        Assert.IsNotNull(err);
+
+        Assert.AreEqual(null, ParseHelper.TryParseUnambiguousUser("foo <@1234> bar", out err));
+        Assert.IsNotNull(err);
+
+        Assert.AreEqual((1234ul, "foo bar"), ParseHelper.TryParseUnambiguousUser("<@1234> foo bar", out err));
+        Assert.IsNull(err);
+    }
+
     public static void AssertParseDateTimeResultAreEqual(ParseDateTimeResult expected, ParseDateTimeResult actual)
     {
         Assert.AreEqual(expected.RepeatType, actual.RepeatType, "\nRepeatType");

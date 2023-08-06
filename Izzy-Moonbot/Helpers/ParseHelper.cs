@@ -8,6 +8,34 @@ namespace Izzy_Moonbot.Helpers;
 
 public static class ParseHelper
 {
+    public static (ulong, string)? TryParseUnambiguousUser(string argsString, out string? errorString)
+    {
+        errorString = null;
+
+        var (firstArg, argsAfterFirst) = DiscordHelper.GetArgument(argsString);
+        if (firstArg == null)
+        {
+            errorString = $"empty or all-whitespace string \"{argsString}\" can't be a user";
+            return null;
+        }
+
+        if (ulong.TryParse(firstArg, out var result))
+            return (result, argsAfterFirst ?? "");
+
+        if (!firstArg.StartsWith("<@") || !firstArg.EndsWith(">"))
+        {
+            errorString = $"\"{firstArg}\" is neither a user id (e.g. `123`) nor a user mention (e.g. `<@123>`)";
+            return null;
+        }
+
+        var trimmedArg = firstArg[2..(firstArg.Length - 1)];
+        if (ulong.TryParse(trimmedArg, out var trimmedResult))
+            return (trimmedResult, argsAfterFirst ?? "");
+
+        errorString = $"\"{firstArg}\" is not a user mention (e.g. `<@123>`) because \"{trimmedArg}\" is not an integer";
+        return null;
+    }
+
     public static (ParseDateTimeResult, string)? TryParseDateTime(string argsString, out string? errorString)
     {
         errorString = null;
