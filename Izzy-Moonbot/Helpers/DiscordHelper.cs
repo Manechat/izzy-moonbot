@@ -16,6 +16,8 @@ namespace Izzy_Moonbot.Helpers;
 
 public static class DiscordHelper
 {
+    public readonly static int MessageLengthLimit = 2000;
+
     // These setters should only be used by tests
     public static ulong? DefaultGuildId { get; set; } = null;
     public static List<ulong>? DevUserIds { get; set; } = null;
