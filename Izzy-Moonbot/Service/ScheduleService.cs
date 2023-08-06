@@ -358,14 +358,18 @@ public class ScheduleService
             _logger.Log("Unicycle_BannerRotation early returning because BannerMode is None.");
             return;
         }
-        if (_config.BannerMode == ConfigListener.BannerMode.Shuffle && _config.BannerImages.Count == 0)
-        {
-            _logger.Log("Unicycle_BannerRotation early returning because BannerMode is Shuffle but BannerImages is empty.");
-            return;
-        }
 
         if (_config.BannerMode == ConfigListener.BannerMode.Shuffle || _config.BannerMode == ConfigListener.BannerMode.Rotate)
         {
+            if (_config.BannerImages.Count == 0)
+            {
+                var modeString = _config.BannerMode.GetType().GetEnumName(_config.BannerMode);
+                var msg = $"Unable to change banner because BannerMode is {modeString} but BannerImages is empty";
+                await _modLogging.CreateModLog(guild).SetContent(msg).SetFileLogContent(msg).Send();
+                _logger.Log(msg);
+                return;
+            }
+
             try
             {
                 int bannerIndex;
