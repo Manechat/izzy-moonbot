@@ -57,16 +57,20 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
     [DevCommand(Group = "Permissions")]
     [Parameter("user", ParameterType.UnambiguousUser, "The user to remove the scheduled removal from.")]
     public async Task PermaNpCommandAsync(
-        [Remainder]string user = "")
+        [Remainder]string argsString = "")
     {
-        if (user == "")
+        if (argsString == "")
         {
             await ReplyAsync(
                 "Hey uhh... I can't remove the scheduled new pony role removal for a user if you haven't given me the user to remove it from...");
             return;
         }
 
-        var userId = DiscordHelper.ConvertUserPingToId(user);
+        if (ParseHelper.TryParseUnambiguousUser(argsString, out var userErrorString) is not var (userId, _))
+        {
+            await Context.Channel.SendMessageAsync($"Failed to get a user id from the first argument: {userErrorString}");
+            return;
+        }
 
         var output = await PermaNpCommandIImpl(_schedule, _config, userId);
 

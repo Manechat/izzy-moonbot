@@ -166,17 +166,17 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
             return;
         }
 
-        var args = DiscordHelper.GetArguments(argsString);
-
-        var userArg = args.Arguments[0];
-        var userId = DiscordHelper.ConvertUserPingToId(userArg);
+        if (ParseHelper.TryParseUnambiguousUser(argsString, out var userErrorString) is not var (userId, argsAfterUser))
+        {
+            await Context.Channel.SendMessageAsync($"Failed to get a user id from the first argument: {userErrorString}");
+            return;
+        }
         var member = Context.Guild?.GetUser(userId);
 
-        var timeArg = string.Join("", argsString.Skip(args.Indices[0]));
         ParseDateTimeResult? time = null;
-        if (timeArg.Trim() != "")
+        if (argsAfterUser.Trim() != "")
         {
-            time = ParseHelper.TryParseDateTime(timeArg, out var parseError)?.Item1;
+            time = ParseHelper.TryParseDateTime(argsAfterUser, out var parseError)?.Item1;
             if (time is null)
             {
                 await Context.Channel.SendMessageAsync($"Failed to comprehend time: {parseError}");
@@ -243,7 +243,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
             {
                 msg += "\n\n" +
                     $"Here's a userlog I unicycled that you can use if you want to!\n```\n" +
-                    $"Type: Ban ({(timeArg == "" ? "" : $"{timeArg} ")}{(time == null ? "Indefinite" : $"<t:{time.Time.ToUnixTimeSeconds()}:R>")})\n" +
+                    $"Type: Ban ({(argsAfterUser == "" ? "" : $"{argsAfterUser} ")}{(time == null ? "Indefinite" : $"<t:{time.Time.ToUnixTimeSeconds()}:R>")})\n" +
                     $"User: <@{userId}> ({userId})\n" +
                     $"Names: {(_users.ContainsKey(userId) ? string.Join(", ", _users[userId].Aliases) : "None (user isn't known by Izzy)")}\n" +
                     $"```";
@@ -313,7 +313,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
                 {
                     msg += "\n\n" +
                         $"Here's a userlog I unicycled that you can use if you want to!\n```\n" +
-                        $"Type: Ban ({timeArg} <t:{time.Time.ToUnixTimeSeconds()}:R>)\n" +
+                        $"Type: Ban ({argsAfterUser} <t:{time.Time.ToUnixTimeSeconds()}:R>)\n" +
                         $"User: <@{userId}> ({(member != null ? $"{member.Username}/" : "")}{userId})\n" +
                         $"Names: {(_users.ContainsKey(userId) ? string.Join(", ", _users[userId].Aliases) : "None (user isn't known by Izzy)")}\n" +
                         $"```";
@@ -333,7 +333,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
                 {
                     msg += "\n\n" +
                         $"Here's a userlog I unicycled that you can use if you want to!\n```\n" +
-                        $"Type: Ban ({timeArg} <t:{time.Time.ToUnixTimeSeconds()}:R>)\n" +
+                        $"Type: Ban ({argsAfterUser} <t:{time.Time.ToUnixTimeSeconds()}:R>)\n" +
                         $"User: <@{userId}> ({(member != null ? $"{member.Username}/" : "")}{userId})\n" +
                         $"Names: {(_users.ContainsKey(userId) ? string.Join(", ", _users[userId].Aliases) : "None (user isn't known by Izzy)")}\n" +
                         $"```";
@@ -420,10 +420,10 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
         }
         var role = context.Guild?.GetRole(roleId);
 
-        var userId = DiscordHelper.ConvertUserPingToId(userArg);
-        if (userId == 0)
+        // TODO: pass argsAfterRole, once we have TryParseRole()
+        if (ParseHelper.TryParseUnambiguousUser(userArg, out var userErrorString) is not var (userId, _argsAfterUser))
         {
-            await context.Channel.SendMessageAsync("I couldn't find that user, sorry!");
+            await Context.Channel.SendMessageAsync($"Failed to get a user id from the second argument: {userErrorString}");
             return;
         }
         var maybeMember = context.Guild?.GetUser(userId);

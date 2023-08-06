@@ -365,9 +365,13 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
         }
 
         // Now check user
-        var userId = DiscordHelper.ConvertUserPingToId(user);
-        var member = context.Guild.GetUser(userId);
+        if (ParseHelper.TryParseUnambiguousUser(user, out var userErrorString) is not var (userId, _))
+        {
+            await Context.Channel.SendMessageAsync($"Failed to convert \"{user}\" to a user id: {userErrorString}");
+            return;
+        }
 
+        var member = context.Guild.GetUser(userId);
         if (member == null)
         {
             await context.Channel.SendMessageAsync($"Sorry, I couldn't find that user");
@@ -401,7 +405,8 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
         IIzzyContext context,
         string argsString = "")
     {
-        if (argsString == "")
+        var (operation, argsAfterFirst) = DiscordHelper.GetArgument(argsString);
+        if (operation == null)
         {
             await context.Channel.SendMessageAsync($"Hiya! This is how to use the quote alias command!\n" +
                              $"`{_config.Prefix}quotealias get <alias>` - Work out what an alias maps to.\n" +
@@ -411,11 +416,8 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
             return;
         }
 
-        var args = DiscordHelper.GetArguments(argsString);
-
-        var operation = args.Arguments[0];
-        var alias = args.Arguments.Length >= 2 ? args.Arguments[1] : "";
-        var target = args.Arguments.Length >= 3 ? args.Arguments[2] : "";
+        var (alias, argsAfterSecond) = DiscordHelper.GetArgument(argsAfterFirst ?? "");
+        alias = alias ?? "";
 
         if (operation.ToLower() == "list")
         {
@@ -455,24 +457,27 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
                 return;
             }
 
-            if (target == "")
+            if (argsAfterSecond == null)
             {
                 await context.Channel.SendMessageAsync("You need to provide a user name to set the alias to.");
                 return;
             }
+            if (ParseHelper.TryParseUnambiguousUser(argsAfterSecond ?? "", out var targetErrorString) is not var (userId, _))
+            {
+                await Context.Channel.SendMessageAsync($"You need to provide a user to set the alias to, but ailed to get a user id from the third argument: {targetErrorString}");
+                return;
+            }
 
-            var userId = DiscordHelper.ConvertUserPingToId(target);
             var member = context.Guild?.GetUser(userId);
-
             if (member == null)
             {
-                await context.Channel.SendMessageAsync($"I couldn't find a user with the target you provided.");
+                await context.Channel.SendMessageAsync($"I couldn't find a user in this server with the id you provided.");
                 return;
             }
 
             await _quoteService.AddAlias(alias, member);
 
-            await context.Channel.SendMessageAsync($"Added alias **{alias}** to map to user **{target}**.", allowedMentions: AllowedMentions.None);
+            await context.Channel.SendMessageAsync($"Added alias **{alias}** to map to user **{userId}**.", allowedMentions: AllowedMentions.None);
         }
         else if (operation.ToLower() == "delete" || operation.ToLower() == "remove")
         {
