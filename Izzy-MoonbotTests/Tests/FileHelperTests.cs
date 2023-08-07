@@ -278,7 +278,10 @@ public class FileHelperTests
               "LargeRaidDecay": 30.0,
               "BoredChannel": 0,
               "BoredCooldown": 300.0,
-              "BoredCommands": []
+              "BoredCommands": [],
+              "Witties": {},
+              "WittyChannels": [],
+              "WittyCooldown": 300.0
             }
             """, serialized);
     }

@@ -1,4 +1,4 @@
-﻿namespace Izzy_Moonbot.Describers;
+namespace Izzy_Moonbot.Describers;
 
 public class ConfigItem
 {
@@ -26,7 +26,8 @@ public enum ConfigItemCategory
     Filter,
     Spam,
     Raid,
-    Bored
+    Bored,
+    Witty
 }
 
 public enum ConfigItemType

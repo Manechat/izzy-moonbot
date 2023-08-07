@@ -724,11 +724,34 @@ public class ConfigCommandTests
         TestUtils.AssertSetsAreEqual(new HashSet<string> { ".echo glitter!" }, cfg.BoredCommands);
         Assert.AreEqual("I added the following content to the `BoredCommands` string list:\n```\n.echo glitter!\n```", generalChannel.Messages.Last().Content);
 
+        // post ".config Witties set \"izzy\" \"that's my name!\""
+        TestUtils.AssertDictionariesAreEqual(new Dictionary<string, string>(), cfg.Witties);
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config Witties set \"izzy\" \"that's my name!\"");
+        await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "Witties", "set \"izzy\" \"that's my name!\"");
+        TestUtils.AssertDictionariesAreEqual(new Dictionary<string, string> { { "izzy", "that's my name!" } }, cfg.Witties);
+        Assert.AreEqual("I added the following string to the `izzy` map key in the `Witties` map: `that's my name!`", generalChannel.Messages.Last().Content);
+
+        // post ".config WittyChannels add <#2>"
+        TestUtils.AssertSetsAreEqual(new HashSet<ulong>(), cfg.WittyChannels);
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config WittyChannels add <#2>");
+        await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "WittyChannels", "add <#2>");
+        TestUtils.AssertSetsAreEqual(new HashSet<ulong> { 2ul }, cfg.WittyChannels);
+        Assert.AreEqual($"I added the following content to the `WittyChannels` channel list:\n" +
+            $"modchat",
+            generalChannel.Messages.Last().Content);
+
+        // post ".config WittyCooldown 50"
+        Assert.AreEqual(cfg.WittyCooldown, 300);
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config WittyCooldown 50");
+        await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "WittyCooldown", "50");
+        Assert.AreEqual(cfg.WittyCooldown, 50);
+        Assert.AreEqual("I've set `WittyCooldown` to the following content: 50", generalChannel.Messages.Last().Content);
+
 
         // Ensure we can't forget to keep this test up to date
         var configPropsCount = typeof(Config).GetProperties().Length;
 
-        Assert.AreEqual(51, configPropsCount,
+        Assert.AreEqual(54, configPropsCount,
             $"\nIf you just added or removed a config item, then this test is probably out of date");
 
         Assert.AreEqual(configPropsCount * 2, generalChannel.Messages.Count(),
