@@ -14,18 +14,54 @@ public class MessageListener
     private readonly LoggingService _logger;
     private readonly Config _config;
     private readonly ModLoggingService _modLogger;
+    private readonly State _state;
 
-    public MessageListener(LoggingService logger, Config config, ModLoggingService modLogger)
+    public MessageListener(LoggingService logger, Config config, ModLoggingService modLogger, State state)
     {
         _logger = logger;
         _config = config;
         _modLogger = modLogger;
+        _state = state;
     }
 
     public void RegisterEvents(IIzzyClient client)
     {
+        client.MessageReceived += async (message) => await DiscordHelper.LeakOrAwaitTask(ProcessMessageReceived(message, client));
         client.MessageUpdated += async (oldContent, newMessage, channel) => await DiscordHelper.LeakOrAwaitTask(ProcessMessageUpdate(oldContent, newMessage, channel, client));
         client.MessageDeleted += async (messageId, message, channelId, channel) => await DiscordHelper.LeakOrAwaitTask(ProcessMessageDelete(messageId, message, channelId, channel, client));
+    }
+
+    private async Task ProcessMessageReceived(
+        IIzzyMessage message,
+        IIzzyClient client)
+    {
+        var author = message.Author;
+        if (author.Id == client.CurrentUser.Id) return; // Don't process self.
+        if (author.IsBot) return; // Don't listen to bots
+
+        var content = message.Content;
+        var match = _config.Witties.FirstOrDefault(pair => content.Contains(pair.Key));
+        if (match.Key == null)
+            return;
+
+        var channelId = message.Channel.Id;
+        if (!_config.WittyChannels.Contains(channelId))
+        {
+            _logger.Log($"Ignoring message {message.Id} matching witty pattern \"{match.Key}\" because it wasn't in one of the WittyChannels");
+            return;
+        }
+
+        var secondsSinceWitty = (DateTimeOffset.UtcNow - _state.LastWittyResponse).TotalSeconds;
+        if (secondsSinceWitty <= _config.WittyCooldown)
+        {
+            _logger.Log($"Ignoring message {message.Id} matching witty pattern \"{match.Key}\" because it's only been {secondsSinceWitty} seconds since the last witty response");
+            return;
+        }
+
+        _logger.Log($"Received message {message.Id} matching witty pattern \"{match.Key}\". Posting witty response \"{match.Value}\" in {message.Channel.Name}");
+        await message.Channel.SendMessageAsync(match.Value);
+
+        _state.LastWittyResponse = DateTimeOffset.UtcNow;
     }
 
     private async Task ProcessMessageUpdate(

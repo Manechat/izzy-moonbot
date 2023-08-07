@@ -77,6 +77,11 @@ public class Config
         _boredChannel = 0;
         _boredCooldown = 300;
         BoredCommands = new HashSet<string>();
+
+        // Witty settings
+        Witties = new Dictionary<string, string>();
+        WittyChannels = new HashSet<ulong>();
+        WittyCooldown = 300;
     }
 
     // Core settings
@@ -185,4 +190,9 @@ public class Config
         }
     }
     public HashSet<string> BoredCommands { get; set; }
+
+    // Witty settings
+    public Dictionary<string, string> Witties { get; set; }
+    public HashSet<ulong> WittyChannels { get; set; }
+    public double WittyCooldown { get; set; }
 }

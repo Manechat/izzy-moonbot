@@ -98,6 +98,7 @@ public class ConfigCommand
                 {
                     case ConfigItemType.String:
                         if (configItem.Nullable && value == "<nothing>") value = null;
+                        else value = DiscordHelper.StripQuotes(value);
 
                         var resultString =
                             await ConfigHelper.SetSimpleValue(config, configItemKey, value);
@@ -368,6 +369,7 @@ public class ConfigCommand
                         case ConfigItemType.StringSet:
                             try
                             {
+                                value = DiscordHelper.StripQuotes(value);
                                 var output =
                                     await ConfigHelper.AddToStringSet(config, configItemKey, value);
 
@@ -448,6 +450,7 @@ public class ConfigCommand
                         case ConfigItemType.StringSet:
                             try
                             {
+                                value = DiscordHelper.StripQuotes(value);
                                 var output =
                                     await ConfigHelper.RemoveFromStringSet(config, configItemKey,
                                         value);
@@ -630,6 +633,7 @@ public class ConfigCommand
                         case ConfigItemType.StringDictionary:
                             try
                             {
+                                value = DiscordHelper.StripQuotes(value);
                                 var contents = "";
 
                                 if (configItem.Nullable)
@@ -678,6 +682,9 @@ public class ConfigCommand
                         case ConfigItemType.StringDictionary:
                             try
                             {
+                                key = DiscordHelper.StripQuotes(key);
+                                value = DiscordHelper.StripQuotes(value);
+
                                 (string, string?, string?) result = ("", null, null);
 
                                 if (configItem.Nullable)
@@ -738,6 +745,7 @@ public class ConfigCommand
                         case ConfigItemType.StringDictionary:
                             try
                             {
+                                value = DiscordHelper.StripQuotes(value);
                                 if (configItem.Nullable)
                                     await ConfigHelper.RemoveDictionaryKey<string?>(config,
                                         configItemKey, value);
@@ -823,6 +831,7 @@ public class ConfigCommand
                         case ConfigItemType.StringSetDictionary:
                             try
                             {
+                                value = DiscordHelper.StripQuotes(value);
                                 var stringSet =
                                     ConfigHelper.GetDictionaryValue<HashSet<string>>(config, configItemKey,
                                         value);
@@ -860,6 +869,8 @@ public class ConfigCommand
                         case ConfigItemType.StringSetDictionary:
                             try
                             {
+                                key = DiscordHelper.StripQuotes(key);
+                                value = DiscordHelper.StripQuotes(value);
                                 var output =
                                     ConfigHelper.DoesDictionaryKeyExist<HashSet<string>>(config, configItemKey, key)
                                     ? await ConfigHelper.AddToStringSetDictionaryValue(config,
@@ -892,6 +903,8 @@ public class ConfigCommand
                         case ConfigItemType.StringSetDictionary:
                             try
                             {
+                                key = DiscordHelper.StripQuotes(key);
+                                value = DiscordHelper.StripQuotes(value);
                                 var output =
                                     await ConfigHelper.RemoveFromStringSetDictionaryValue(
                                         config, configItemKey, key, value);
@@ -920,6 +933,7 @@ public class ConfigCommand
                         case ConfigItemType.StringSetDictionary:
                             try
                             {
+                                value = DiscordHelper.StripQuotes(value);
                                 await ConfigHelper.RemoveDictionaryKey<HashSet<string>>(config,
                                     configItemKey, value);
 

@@ -228,6 +228,23 @@ public class ConfigDescriber
             new ConfigItem(ConfigItemType.StringSet,
                 "The commands I'll randomly execute in BoredChannel after BoredCooldown seconds of inactivity.\n" +
                 "Since I'm a bot, each command must allow bots to run it, or nothing will actually happen.", ConfigItemCategory.Bored));
+
+        // Witty settings
+        _config.Add("Witties",
+            new ConfigItem(ConfigItemType.StringDictionary,
+                "A map from message patterns to automated Izzy responses. Also known as an 'autoresponder.'\n" +
+                "For example, `.config Witties set \"izzy\" \"that's my name!\"` will make Izzy post \"that's my name!\" whenever anyone posts a message containing \"izzy\".\n" +
+                "This will only happen if the message is in one of the `WittyChannels` channels, and no witty response has been posted within the last `WittyCooldown` seconds, and the message author is not a bot.\n" +
+                "Currently, there is no special pattern matching syntax; the 'patterns' are just strings taken literally. No wildcards or regexes.",
+                ConfigItemCategory.Witty));
+        _config.Add("WittyChannels",
+            new ConfigItem(ConfigItemType.ChannelSet,
+                "The channels where I will check for witty patterns and post witty responses.",
+                ConfigItemCategory.Witty));
+        _config.Add("WittyCooldown",
+            new ConfigItem(ConfigItemType.Double,
+                "After posting a witty response, I will not respond to any witty patterns for this many seconds.",
+                ConfigItemCategory.Witty));
     }
 
     public List<string> GetSettableConfigItems()
@@ -277,6 +294,8 @@ public class ConfigDescriber
                 return ConfigItemCategory.Raid;
             case "bored":
                 return ConfigItemCategory.Bored;
+            case "witty":
+                return ConfigItemCategory.Witty;
             default:
                 return null;
         }
@@ -302,6 +321,8 @@ public class ConfigDescriber
                 return "Raid";
             case ConfigItemCategory.Bored:
                 return "Bored";
+            case ConfigItemCategory.Witty:
+                return "Witty";
             default:
                 return "<UNKNOWN>";
         }
