@@ -10,7 +10,7 @@ updates:
   - package-ecosystem: "nuget" # See documentation for possible values
     directory: "/Izzy-MoonbotTests" # Location of package manifests
     schedule:
-      interval: "weekly"
+      interval: "monthly"
     # Prefix all commit messages with "NuGet"
     # include a list of updated dependencies
     commit-message:
@@ -21,7 +21,7 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
     commit-message:
       prefix: "Actions"
       include: "scope"
@@ -30,7 +30,7 @@ updates:
   - package-ecosystem: "docker"
     directory: "/Izzy-Moonbot"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
     assignees:
       - "LunarNightShade"
     reviewers:
