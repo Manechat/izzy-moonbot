@@ -233,7 +233,7 @@ public class ConfigDescriber
         _config.Add("Witties",
             new ConfigItem(ConfigItemType.StringDictionary,
                 "A map from message patterns to automated Izzy responses. Also known as an 'autoresponder.'\n" +
-                "For example, `.config Witties set \"izzy\" \"that's my name!\"` will make Izzy post \"that's my name!\" whenever anyone posts a message containing \"izzy\".\n" +
+                "For example, `.config Witties set \"izzy\" \"that's my name!\"` will make Izzy post \"that's my name!\" whenever anyone posts a message containing \"izzy\" (or any capitalization thereof).\n" +
                 "This will only happen if the message is in one of the `WittyChannels` channels, and no witty response has been posted within the last `WittyCooldown` seconds, and the message author is not a bot.\n" +
                 "Currently, there is no special pattern matching syntax; the 'patterns' are just strings taken literally. No wildcards or regexes.",
                 ConfigItemCategory.Witty));
