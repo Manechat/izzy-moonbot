@@ -54,9 +54,8 @@ public static class ParseHelper
 
         if (TryParseUnambiguousRole(argsString, out var unambiguousErrorString) is var (roleId, remainingArgsString))
         {
-            foreach (var role in guild.Roles)
-                if (role.Id == roleId)
-                    return (roleId, remainingArgsString);
+            if (guild.Roles.Any(role => role.Id == roleId))
+                return (roleId, remainingArgsString);
 
             errorString = $"guild \"{guild.Name}\" does not contain a role with id {roleId}";
             return null;
@@ -69,9 +68,8 @@ public static class ParseHelper
             return null;
         }
 
-        foreach (var role in guild.Roles)
-            if (role.Name == firstArg)
-                return (role.Id, argsAfterFirst ?? "");
+        foreach (var role in guild.Roles.Where(role => role.Name == firstArg))
+            return (role.Id, argsAfterFirst ?? "");
 
         errorString = $"guild \"{guild.Name}\" does not contain a role with name \"{firstArg}\", and: {unambiguousErrorString}";
         return null;
@@ -93,15 +91,14 @@ public static class ParseHelper
 
         if (TryParseUnambiguousChannel(argsString, out var unambiguousErrorString) is var (channelId, remainingArgsString))
         {
-            foreach (var channel in guild.TextChannels)
-                if (channel.Id == channelId)
-                    if (channel.Users.Any(u => u.Id == izzyMoonbotId))
-                        return (channelId, remainingArgsString);
-                    else
-                    {
-                        errorString = $"I'm not allowed in channel {channelId} <:izzysadness:910198257702031362>";
-                        return null;
-                    }
+            foreach (var channel in guild.TextChannels.Where(channel => channel.Id == channelId))
+                if (channel.Users.Any(u => u.Id == izzyMoonbotId))
+                    return (channelId, remainingArgsString);
+                else
+                {
+                    errorString = $"I'm not allowed in channel {channelId} <:izzysadness:910198257702031362>";
+                    return null;
+                }
 
             errorString = $"guild \"{guild.Name}\" does not contain a channel with id {channelId}";
             return null;
@@ -114,15 +111,17 @@ public static class ParseHelper
             return null;
         }
 
-        foreach (var channel in guild.TextChannels)
-            if (channel.Name == firstArg && channel.Users.Any(u => u.Id == izzyMoonbotId))
-                if (channel.Users.Any(u => u.Id == izzyMoonbotId))
-                    return (channel.Id, argsAfterFirst ?? "");
-                else
-                {
-                    errorString = $"I'm not allowed in the {channel.Name} channel <:izzysadness:910198257702031362>";
-                    return null;
-                }
+        foreach (var channel in guild.TextChannels.Where(channel =>
+            channel.Name == firstArg &&
+            channel.Users.Any(u => u.Id == izzyMoonbotId)
+        ))
+            if (channel.Users.Any(u => u.Id == izzyMoonbotId))
+                return (channel.Id, argsAfterFirst ?? "");
+            else
+            {
+                errorString = $"I'm not allowed in the {channel.Name} channel <:izzysadness:910198257702031362>";
+                return null;
+            }
 
         errorString = $"guild \"{guild.Name}\" does not contain a channel with name \"{firstArg}\", and: {unambiguousErrorString}";
         return null;

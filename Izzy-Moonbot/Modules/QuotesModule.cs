@@ -112,7 +112,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
             await ParseHelper.TryParseUserResolvable(search, defaultGuild);
         if (userId == null)
         {
-            await context.Channel.SendMessageAsync("I was unable to find the user you asked for. Sorry!");
+            await context.Channel.SendMessageAsync($"I was unable to find the user you asked for. Sorry! {userError}");
             return;
         }
 
@@ -189,7 +189,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
             await ParseHelper.TryParseUserResolvable(search, defaultGuild);
         if (userId == null)
         {
-            await context.Channel.SendMessageAsync($"I was unable to find the user you asked for. Sorry!");
+            await context.Channel.SendMessageAsync($"I was unable to find the user you asked for. Sorry! {userError}");
             return;
         }
 
