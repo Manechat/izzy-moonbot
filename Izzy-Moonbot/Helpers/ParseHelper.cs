@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Izzy_Moonbot.Adapters;
+using System.Threading.Tasks;
 using Izzy_Moonbot.Settings;
 
 namespace Izzy_Moonbot.Helpers;
@@ -34,6 +36,22 @@ public static class ParseHelper
 
         errorString = $"\"{firstArg}\" is not a user mention (e.g. `<@123>`) because \"{trimmedArg}\" is not an integer";
         return null;
+    }
+
+    // User names (whole or partial) can contain spaces outside quotes, so how much of the argsString we want to ask Discord about
+    // is fundamentally a question only the top-level command handler can answer.
+    // So this TryParse*() function cannot do the argsString -> remainingArgsString convenience that most of the others do.
+    // Also, because of the inherently async step, we're forced to return a tuple rather than keep errorString as an out parameter
+    async public static Task<(ulong?, string?)> TryParseUserResolvable(string userArg, IIzzyGuild guild)
+    {
+        if (ParseHelper.TryParseUnambiguousUser(userArg, out var unambiguousErrorString) is var (userId, _))
+            return (userId, null);
+
+        var userList = await guild.SearchUsersAsync(userArg);
+        if (userList.Count == 0)
+            return (null, $"guild.SearchUsersAsync() found 0 users matching \"`{userArg}`\", and: {unambiguousErrorString}");
+
+        return (userList.First().Id, null);
     }
 
     public static (ParseDateTimeResult, string)? TryParseDateTime(string argsString, out string? errorString)

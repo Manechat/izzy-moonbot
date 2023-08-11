@@ -1,3 +1,4 @@
+using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Settings;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -29,6 +30,27 @@ public class ParseHelperTests
 
         Assert.AreEqual((1234ul, "foo bar"), ParseHelper.TryParseUnambiguousUser("<@1234> foo bar", out err));
         Assert.IsNull(err);
+    }
+
+    [TestMethod()]
+    async public Task TryParseUserResolvable()
+    {
+        var (_, _, (izzyHerself, _), _, (generalChannel, _, _), stubGuild, stubClient) = TestUtils.DefaultStubs();
+        var guild = new TestGuild(stubGuild, stubClient);
+
+        Assert.AreEqual((1ul, null), await ParseHelper.TryParseUserResolvable("1", guild));
+        Assert.AreEqual((999ul, null), await ParseHelper.TryParseUserResolvable("999", guild));
+
+        Assert.AreEqual((1ul, null), await ParseHelper.TryParseUserResolvable("<@1>", guild));
+        Assert.AreEqual((999ul, null), await ParseHelper.TryParseUserResolvable("<@999>", guild));
+
+        Assert.AreEqual((1ul, null), await ParseHelper.TryParseUserResolvable("Izzy", guild));
+        Assert.AreEqual((2ul, null), await ParseHelper.TryParseUserResolvable("Sunny", guild));
+
+        var failureResult = await ParseHelper.TryParseUserResolvable("other", guild);
+        Assert.AreEqual(null, failureResult.Item1);
+        StringAssert.Contains(failureResult.Item2, "0 users");
+        StringAssert.Contains(failureResult.Item2, "other");
     }
 
     public static void AssertParseDateTimeResultAreEqual(ParseDateTimeResult expected, ParseDateTimeResult actual)
