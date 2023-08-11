@@ -365,7 +365,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
     {
         if (usersString == "")
         {
-            await context.Channel.SendMessageAsync($"Remind you of what now? (see `.help remind`)");
+            await context.Channel.SendMessageAsync($"Who do you want me to ban?");
             return;
         }
 
