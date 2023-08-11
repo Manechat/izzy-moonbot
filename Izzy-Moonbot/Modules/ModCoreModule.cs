@@ -405,22 +405,14 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
             return;
         }
 
-        var args = DiscordHelper.GetArguments(argsString);
-
-        var roleResolvable = args.Arguments[0];
-        var userArg = args.Arguments[1];
-        var timeArg = string.Join("", argsString.Skip(args.Indices[1]));
-
-        var roleId = DiscordHelper.GetRoleIdIfAccessAsync(roleResolvable, context);
-        if (roleId == 0)
+        if (ParseHelper.TryParseRoleResolvable(argsString, context.Guild!, out var roleParseError) is not var (roleId, argsAfterRole))
         {
-            await context.Channel.SendMessageAsync("I couldn't find that role, sorry!");
+            await context.Channel.SendMessageAsync($"I couldn't find that role, sorry! {roleParseError}");
             return;
         }
         var role = context.Guild?.GetRole(roleId);
 
-        // TODO: pass argsAfterRole, once we have TryParseRole()
-        if (ParseHelper.TryParseUnambiguousUser(userArg, out var userErrorString) is not var (userId, _argsAfterUser))
+        if (ParseHelper.TryParseUnambiguousUser(argsAfterRole, out var userErrorString) is not var (userId, argsAfterUser))
         {
             await Context.Channel.SendMessageAsync($"Failed to get a user id from the second argument: {userErrorString}");
             return;
@@ -428,9 +420,9 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
         var maybeMember = context.Guild?.GetUser(userId);
 
         ParseDateTimeResult? time = null;
-        if (timeArg.Trim() != "")
+        if (argsAfterUser.Trim() != "")
         {
-            time = ParseHelper.TryParseDateTime(timeArg, out var parseError)?.Item1;
+            time = ParseHelper.TryParseDateTime(argsAfterUser, out var parseError)?.Item1;
             if (time is null)
             {
                 await Context.Channel.SendMessageAsync($"Failed to comprehend time: {parseError}");
@@ -531,13 +523,13 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
             return;
         }
 
-        var args = DiscordHelper.GetArguments(argsString);
+        if (ParseHelper.TryParseChannelResolvable(argsString, new SocketCommandContextAdapter(Context), out var channelParseError) is not var (channelId, argsAfterChannel))
+        {
+            await ReplyAsync($"Failed to get a channel: {channelParseError}");
+            return;
+        }
 
-        var channelName = args.Arguments[0];
-        var argsAfterChannel = string.Join("", argsString.Skip(args.Indices[0]));
-
-        var channelId = await DiscordHelper.GetChannelIdIfAccessAsync(channelName, Context);
-        var channel = (channelId != 0) ? Context.Guild.GetTextChannel(channelId) : null;
+        var channel = Context.Guild.GetTextChannel(channelId);
         if (channel == null)
         {
             await ReplyAsync("I can't send a message there.");
@@ -555,9 +547,9 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
         DateTimeOffset? timeArg = null;
         if (argsAfterChannel.Trim() != "")
         {
-            if (ParseHelper.TryParseInterval(argsAfterChannel, out var parseError, inThePast: true) is not var (parsedTimeArg, _remainingArguments))
+            if (ParseHelper.TryParseInterval(argsAfterChannel, out var timeParseError, inThePast: true) is not var (parsedTimeArg, _remainingArguments))
             {
-                await ReplyAsync($"Failed to comprehend time: {parseError}");
+                await ReplyAsync($"Failed to comprehend time: {timeParseError}");
                 return;
             }
             timeArg = parsedTimeArg;
@@ -572,7 +564,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
             return;
         }
 
-        _logger.Log($"Parsed .wipe command arguments. Scanning for messages in channel {channelName} more recent than {wipeThreshold}");
+        _logger.Log($"Parsed .wipe command arguments. Scanning for messages in channel {channel.Name} more recent than {wipeThreshold}");
 
         // Gather up all the messages we need to delete and log.
 
@@ -603,7 +595,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
 
         // Actually do the deletion
         var messagesToDeleteCount = messageIdsToDelete.Count;
-        _logger.Log($"Deleting {messagesToDeleteCount} messages from channel {channelName}");
+        _logger.Log($"Deleting {messagesToDeleteCount} messages from channel {channel.Name}");
         await channel.DeleteMessagesAsync(messageIdsToDelete);
 
         // Finally, post a bulk deletion log in LogChannel
@@ -634,13 +626,13 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
 
             var s = new MemoryStream(Encoding.UTF8.GetBytes(bulkDeletionLogString));
             var fa = new FileAttachment(s, $"{channel.Name}_bulk_deletion_log_{DateTimeHelper.UtcNow.ToString()}.txt");
-            var bulkDeletionMessage = await logChannel.SendFileAsync(fa, $"Finished wiping {channelName}, here's the bulk deletion log involving {involvedUserDescriptions}:");
+            var bulkDeletionMessage = await logChannel.SendFileAsync(fa, $"Finished wiping {channel.Name}, here's the bulk deletion log involving {involvedUserDescriptions}:");
 
-            await ReplyAsync($"Finished wiping {channelName}. {messagesToDeleteCount} messages were deleted: {bulkDeletionMessage.GetJumpUrl()}");
+            await ReplyAsync($"Finished wiping {channel.Mention}. {messagesToDeleteCount} messages were deleted: {bulkDeletionMessage.GetJumpUrl()}");
         }
         else
         {
-            await ReplyAsync($"I didn't find any messages that recent in {channelName}. Deleted nothing.");
+            await ReplyAsync($"I didn't find any messages that recent in {channel.Mention}. Deleted nothing.");
         }
     }
 }

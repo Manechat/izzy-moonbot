@@ -75,9 +75,8 @@ public static class ConfigHelper
             IIzzyRole? role = null;
             if (roleResolvable is not null)
             {
-                var roleId = DiscordHelper.GetRoleIdIfAccessAsync(roleResolvable, context);
-
-                if (roleId == 0) throw new MemberAccessException($"Couldn't find role using resolvable `{roleResolvable}`");
+                if (ParseHelper.TryParseRoleResolvable(roleResolvable, context.Guild!, out var roleParseError) is not var (roleId, _))
+                    throw new MemberAccessException($"Couldn't find role using resolvable `{roleResolvable}`: {roleParseError}");
 
                 role = context.Guild?.GetRole(roleId);
 
@@ -107,9 +106,7 @@ public static class ConfigHelper
             }
             else
             {
-                var channelId = await DiscordHelper.GetChannelIdIfAccessAsync(channelResolvable, context);
-
-                if (channelId == 0)
+                if (ParseHelper.TryParseChannelResolvable(channelResolvable, context, out var channelParseError) is not var (channelId, _))
                 {
                     pinfo.SetValue(settings, null);
                 }
@@ -352,8 +349,8 @@ public static class ConfigHelper
                 && set.GetType().IsGenericType
                 && set.GetType().GetGenericTypeDefinition().IsAssignableFrom(typeof(HashSet<>)))
             {
-                var roleId = DiscordHelper.GetRoleIdIfAccessAsync(roleResolvable, context);
-                if (roleId == 0) throw new MemberAccessException($"Cannot access role '{roleResolvable}'.");
+                if (ParseHelper.TryParseRoleResolvable(roleResolvable, context.Guild!, out var roleParseError) is not var (roleId, _))
+                    throw new MemberAccessException($"Cannot access role '{roleResolvable}': {roleParseError}");
 
                 var role = context.Guild?.GetRole(roleId);
 
@@ -380,8 +377,8 @@ public static class ConfigHelper
                 && set.GetType().IsGenericType
                 && set.GetType().GetGenericTypeDefinition().IsAssignableFrom(typeof(HashSet<>)))
             {
-                var roleId = DiscordHelper.GetRoleIdIfAccessAsync(roleResolvable, context);
-                if (roleId == 0) throw new MemberAccessException($"Cannot access role '{roleResolvable}'.");
+                if (ParseHelper.TryParseRoleResolvable(roleResolvable, context.Guild!, out var roleParseError) is not var (roleId, _))
+                    throw new MemberAccessException($"Cannot access role '{roleResolvable}': {roleParseError}");
 
                 var role = context.Guild?.GetRole(roleId);
 
@@ -459,8 +456,8 @@ public static class ConfigHelper
                 && set.GetType().IsGenericType
                 && set.GetType().GetGenericTypeDefinition().IsAssignableFrom(typeof(HashSet<>)))
             {
-                var channelId = await DiscordHelper.GetChannelIdIfAccessAsync(channelResolvable, context);
-                if (channelId == 0) throw new MemberAccessException($"Cannot access channel '{channelResolvable}'.");
+                if (ParseHelper.TryParseChannelResolvable(channelResolvable, context, out var channelParseError) is not var (channelId, _))
+                    throw new MemberAccessException($"Cannot access channel '{channelResolvable}': {channelParseError}");
 
                 var channel = context.Guild?.GetChannel(channelId);
 
@@ -487,8 +484,8 @@ public static class ConfigHelper
                 && set.GetType().IsGenericType
                 && set.GetType().GetGenericTypeDefinition().IsAssignableFrom(typeof(HashSet<>)))
             {
-                var channelId = await DiscordHelper.GetChannelIdIfAccessAsync(channelResolvable, context);
-                if (channelId == 0) throw new MemberAccessException($"Cannot access channel '{channelResolvable}'.");
+                if (ParseHelper.TryParseChannelResolvable(channelResolvable, context, out var channelParseError) is not var (channelId, _))
+                    throw new MemberAccessException($"Cannot access channel '{channelResolvable}': {channelParseError}");
 
                 var channel = context.Guild?.GetChannel(channelId);
 
