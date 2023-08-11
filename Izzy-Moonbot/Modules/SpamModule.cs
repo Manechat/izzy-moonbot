@@ -36,11 +36,16 @@ public class SpamModule : ModuleBase<SocketCommandContext>
         string userName = "")
     {
         // If no target is specified, target self.
-        if (userName == "") userName = $"<@!{context.User.Id}>";
+        if (userName == "") userName = $"<@{context.User.Id}>";
 
-        var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(userName, context);
-        var user = context.Guild?.GetUser(userId);
+        var (userId, userError) = await ParseHelper.TryParseUserResolvable(userName, context.Guild!);
+        if (userId == null)
+        {
+            await context.Channel.SendMessageAsync($"Failed to get user id from \"{userName}\": {userError}");
+            return;
+        }
 
+        var user = context.Guild?.GetUser((ulong)userId);
         if (user == null)
         {
             await context.Channel.SendMessageAsync("Couldn't find that user in this server");
@@ -72,11 +77,16 @@ public class SpamModule : ModuleBase<SocketCommandContext>
         string userName = "")
     {
         // If no target is specified, target self.
-        if (userName == "") userName = $"<@!{context.User.Id}>";
+        if (userName == "") userName = $"<@{context.User.Id}>";
 
-        var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(userName, context);
-        var user = context.Guild?.GetUser(userId);
+        var (userId, userError) = await ParseHelper.TryParseUserResolvable(userName, context.Guild!);
+        if (userId == null)
+        {
+            await context.Channel.SendMessageAsync($"Failed to get user id from \"{userName}\": {userError}");
+            return;
+        }
 
+        var user = context.Guild?.GetUser((ulong)userId);
         if (user == null)
         {
             await context.Channel.SendMessageAsync("Couldn't find that user in this server");

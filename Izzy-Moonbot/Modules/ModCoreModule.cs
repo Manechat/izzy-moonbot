@@ -68,15 +68,14 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
     {
         if (user == "") user = Context.User.Id.ToString(); // Set to user ID to target self.
 
-        var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(user, Context);
-
-        if (userId == 0)
+        var (userId, userError) = await ParseHelper.TryParseUserResolvable(user, new SocketGuildAdapter(Context.Guild));
+        if (userId == null)
         {
-            await ReplyAsync("I couldn't find that user's id.");
+            await ReplyAsync($"I couldn't find that user's id: {userError}");
             return;
         }
 
-        var output = await UserInfoImpl(Context.Client, Context.Guild.Id, userId, _users);
+        var output = await UserInfoImpl(Context.Client, Context.Guild.Id, (ulong)userId, _users);
 
         await ReplyAsync(output, allowedMentions: AllowedMentions.None);
     }

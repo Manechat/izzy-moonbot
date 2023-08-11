@@ -191,17 +191,6 @@ public class DiscordHelperTests
 
         Assert.AreEqual(1ul, GetRoleIdIfAccessAsync("Alicorn", context));
         Assert.AreEqual(0ul, GetRoleIdIfAccessAsync("other", context));
-
-        // unlike the channel and role getters, this user method intentionally supports "unknown" users not in the guild
-        Assert.AreEqual(1ul, await GetUserIdFromPingOrIfOnlySearchResultAsync("1", context));
-        Assert.AreEqual(999ul, await GetUserIdFromPingOrIfOnlySearchResultAsync("999", context));
-
-        Assert.AreEqual(1ul, await GetUserIdFromPingOrIfOnlySearchResultAsync("<@1>", context));
-        Assert.AreEqual(999ul, await GetUserIdFromPingOrIfOnlySearchResultAsync("<@999>", context));
-
-        Assert.AreEqual(1ul, await GetUserIdFromPingOrIfOnlySearchResultAsync("Izzy", context));
-        Assert.AreEqual(2ul, await GetUserIdFromPingOrIfOnlySearchResultAsync("Sunny", context));
-        Assert.AreEqual(0ul, await GetUserIdFromPingOrIfOnlySearchResultAsync("other", context));
     }
 
     [TestMethod()]

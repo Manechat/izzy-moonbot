@@ -259,23 +259,6 @@ public static class DiscordHelper
         return id > 0 ? CheckIfRoleExistsAsync(id, context) : CheckIfRoleExistsAsync(roleName, context);
     }
 
-    public static async Task<ulong> GetUserIdFromPingOrIfOnlySearchResultAsync(string userName,
-        SocketCommandContext context, bool searchDefaultGuild = false)
-    {
-        return await GetUserIdFromPingOrIfOnlySearchResultAsync(userName, new SocketCommandContextAdapter(context), searchDefaultGuild);
-    }
-    public static async Task<ulong> GetUserIdFromPingOrIfOnlySearchResultAsync(string userName,
-        IIzzyContext context, bool searchDefaultGuild = false)
-    {
-        var userId = ConvertUserPingToId(userName);
-        if (userId > 0) return userId;
-
-        var userList = searchDefaultGuild 
-            ? await context.Client.Guilds.Single(guild => guild.Id == DefaultGuild()).SearchUsersAsync(userName)
-            : await context.Guild!.SearchUsersAsync(userName);
-        return userList.Count < 1 ? 0 : userList.First().Id;
-    }
-
     private static async Task<ulong> CheckIfChannelExistsAsync(string channelName, SocketCommandContext context)
     {
         return await CheckIfChannelExistsAsync(channelName, new SocketCommandContextAdapter(context));

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -268,12 +268,12 @@ public static class ConfigHelper
                 && set.GetType().IsGenericType
                 && set.GetType().GetGenericTypeDefinition().IsAssignableFrom(typeof(HashSet<>)))
             {
-                var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(userResolvable, context);
-                if (userId == 0) throw new MemberAccessException($"Cannot access user '{userResolvable}'.");
+                var (userId, userError) = await ParseHelper.TryParseUserResolvable(userResolvable, context.Guild!);
+                if (userId == null) throw new MemberAccessException($"Cannot access user '{userResolvable}': {userError}");
 
-                var user = context.Guild?.GetUser(userId);
+                var user = context.Guild?.GetUser((ulong)userId);
 
-                var result = set.Add(userId);
+                var result = set.Add((ulong)userId);
                 if (!result) throw new ArgumentOutOfRangeException($"'{userId}' is already present within the HashSet.");
 
                 pinfo.SetValue(settings, set);
@@ -296,12 +296,12 @@ public static class ConfigHelper
                 && set.GetType().IsGenericType
                 && set.GetType().GetGenericTypeDefinition().IsAssignableFrom(typeof(HashSet<>)))
             {
-                var userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(userResolvable, context);
-                if (userId == 0) throw new MemberAccessException($"Cannot access user '{userResolvable}'.");
+                var (userId, userError) = await ParseHelper.TryParseUserResolvable(userResolvable, context.Guild!);
+                if (userId == null) throw new MemberAccessException($"Cannot access user '{userResolvable}': {userError}");
 
-                var user = context.Guild?.GetUser(userId);
+                var user = context.Guild?.GetUser((ulong)userId);
 
-                var result = set.Remove(userId);
+                var result = set.Remove((ulong)userId);
                 if (!result) throw new ArgumentOutOfRangeException($"'{userResolvable}' was not in the HashSet to begin with.");
 
                 pinfo.SetValue(settings, set);

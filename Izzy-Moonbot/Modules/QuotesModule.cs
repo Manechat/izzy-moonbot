@@ -107,10 +107,10 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
             return;
         }
 
-        ulong userId = _quoteService.AliasExists(search)
-            ? _quoteService.ProcessAlias(search, defaultGuild)
-            : await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(search, context, true);
-        if (userId == 0)
+        (ulong? userId, string? userError) = _quoteService.AliasExists(search) ?
+            (_quoteService.ProcessAlias(search, defaultGuild), null) :
+            await ParseHelper.TryParseUserResolvable(search, defaultGuild);
+        if (userId == null)
         {
             await context.Channel.SendMessageAsync("I was unable to find the user you asked for. Sorry!");
             return;
@@ -119,14 +119,14 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
         // Get random quote from a specific user
         if (number == null)
         {
-            var result = _quoteService.GetRandomQuote(userId);
+            var result = _quoteService.GetRandomQuote((ulong)userId);
             if (result == null)
             {
                 await context.Channel.SendMessageAsync($"I couldn't find any quotes for that user.");
                 return;
             }
 
-            await context.Channel.SendMessageAsync($"**{await DisplayUserName(userId, context.Client, defaultGuild)}**, #{result.Value.Item1 + 1}: {result.Value.Item2}", allowedMentions: AllowedMentions.None);
+            await context.Channel.SendMessageAsync($"**{await DisplayUserName((ulong)userId, context.Client, defaultGuild)}**, #{result.Value.Item1 + 1}: {result.Value.Item2}", allowedMentions: AllowedMentions.None);
         }
         // Get specific quote from a specific user
         else
@@ -137,14 +137,14 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
                 return;
             }
 
-            var quote = _quoteService.GetQuote(userId, number.Value - 1);
+            var quote = _quoteService.GetQuote((ulong)userId, number.Value - 1);
             if (quote == null)
             {
                 await context.Channel.SendMessageAsync($"I couldn't find that quote, sorry!");
                 return;
             }
 
-            await context.Channel.SendMessageAsync($"**{await DisplayUserName(userId, context.Client, defaultGuild)}**, #{number.Value}: {quote}", allowedMentions: AllowedMentions.None);
+            await context.Channel.SendMessageAsync($"**{await DisplayUserName((ulong)userId, context.Client, defaultGuild)}**, #{number.Value}: {quote}", allowedMentions: AllowedMentions.None);
         }
     }
 
@@ -184,19 +184,16 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
             return;
         }
 
-        ulong userId;
-        if (_quoteService.AliasExists(search))
-            userId = _quoteService.ProcessAlias(search, defaultGuild);
-        else
-            userId = await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(search, context, true);
-
-        if (userId == 0)
+        (ulong? userId, string? userError) = _quoteService.AliasExists(search) ?
+            (_quoteService.ProcessAlias(search, defaultGuild), null) :
+            await ParseHelper.TryParseUserResolvable(search, defaultGuild);
+        if (userId == null)
         {
             await context.Channel.SendMessageAsync($"I was unable to find the user you asked for. Sorry!");
             return;
         }
 
-        var quotes = _quoteService.GetQuotes(userId);
+        var quotes = _quoteService.GetQuotes((ulong)userId);
         if (quotes == null)
         {
             await context.Channel.SendMessageAsync($"I couldn't find any quotes for that user.");
@@ -205,7 +202,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
 
         PaginationHelper.PaginateIfNeededAndSendMessage(
             context,
-            $"Here's all the quotes I have for **{await DisplayUserName(userId, context.Client, defaultGuild)}**:",
+            $"Here's all the quotes I have for **{await DisplayUserName((ulong)userId, context.Client, defaultGuild)}**:",
             // We put a \ before the . to prevent Discord's numbered list markdown formatting from kicking in, since
             // that not only adds weird spacing and margins, but also changes the quote numbers in some cases.
             quotes.Select((quote, index) => $"{index + 1}\\. {quote}").Select(SanitizeQuote).ToArray(),
@@ -263,12 +260,12 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
             return;
         }
 
-        ulong userId = _quoteService.AliasExists(user)
-            ? _quoteService.ProcessAlias(user, guild)
-            : await DiscordHelper.GetUserIdFromPingOrIfOnlySearchResultAsync(user, context);
-        if (userId == 0)
+        (ulong? userId, string? userError) = _quoteService.AliasExists(user) ?
+            (_quoteService.ProcessAlias(user, guild), null) :
+            await ParseHelper.TryParseUserResolvable(user, context.Guild!);
+        if (userId == null)
         {
-            await context.Channel.SendMessageAsync("I was unable to find the user you asked for. Sorry!");
+            await context.Channel.SendMessageAsync($"I was unable to find the user you asked for. Sorry! {userError}");
             return;
         }
 
@@ -284,7 +281,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
             content = content[new Range(1, ^1)];
         }
 
-        var output = await AddQuoteCommandImpl(_quoteService, guild, userId, content);
+        var output = await AddQuoteCommandImpl(_quoteService, guild, (ulong)userId, content);
 
         await context.Channel.SendMessageAsync(output, allowedMentions: AllowedMentions.None);
     }
