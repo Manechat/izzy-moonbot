@@ -39,8 +39,8 @@ public class MessageListener
         if (author.Id == client.CurrentUser.Id) return; // Don't process self.
         if (author.IsBot) return; // Don't listen to bots
 
-        var content = message.Content;
-        var match = _config.Witties.FirstOrDefault(pair => content.Contains(pair.Key));
+        var content = message.Content.ToLower();
+        var match = _config.Witties.FirstOrDefault(pair => content.Contains(pair.Key.ToLower()));
         if (match.Key == null)
             return;
 
