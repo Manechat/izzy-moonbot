@@ -10,31 +10,121 @@ namespace Izzy_Moonbot.Helpers;
 
 public static class ParseHelper
 {
-    public static (ulong, string)? TryParseUnambiguousUser(string argsString, out string? errorString)
+    public static (ulong, string)? TryParseUnambiguousUser(string argsString, out string? errorString) =>
+        TryParseGenericIdOrMention(argsString, "<@", ">", "user", out errorString);
+
+    public static (ulong, string)? TryParseUnambiguousRole(string argsString, out string? errorString) =>
+        TryParseGenericIdOrMention(argsString, "<@&", ">", "role", out errorString);
+    public static (ulong, string)? TryParseUnambiguousChannel(string argsString, out string? errorString) =>
+        TryParseGenericIdOrMention(argsString, "<#", ">", "role", out errorString);
+
+    public static (ulong, string)? TryParseGenericIdOrMention(string argsString, string prefix, string suffix, string type, out string? errorString)
     {
         errorString = null;
 
         var (firstArg, argsAfterFirst) = DiscordHelper.GetArgument(argsString);
         if (firstArg == null)
         {
-            errorString = $"empty or all-whitespace string \"{argsString}\" can't be a user";
+            errorString = $"empty or all-whitespace string \"{argsString}\" can't be a {type}";
             return null;
         }
 
         if (ulong.TryParse(firstArg, out var result))
             return (result, argsAfterFirst ?? "");
 
-        if (!firstArg.StartsWith("<@") || !firstArg.EndsWith(">"))
+        if (!firstArg.StartsWith(prefix) || !firstArg.EndsWith(suffix))
         {
-            errorString = $"\"{firstArg}\" is neither a user id (e.g. `123`) nor a user mention (e.g. `<@123>`)";
+            errorString = $"\"{firstArg}\" is neither an id (e.g. `123`) nor a {type} mention (e.g. `{prefix}123{suffix}`)";
             return null;
         }
 
-        var trimmedArg = firstArg[2..(firstArg.Length - 1)];
+        var trimmedArg = firstArg[prefix.Length .. (firstArg.Length - suffix.Length)];
         if (ulong.TryParse(trimmedArg, out var trimmedResult))
             return (trimmedResult, argsAfterFirst ?? "");
 
-        errorString = $"\"{firstArg}\" is not a user mention (e.g. `<@123>`) because \"{trimmedArg}\" is not an integer";
+        errorString = $"\"{firstArg}\" is not a {type} mention (e.g. `{prefix}123{suffix}`) because \"{trimmedArg}\" is not an integer";
+        return null;
+    }
+
+    // We only support role ids, role mentions, and an exactly matching whitespace-free role name.
+    // No attempt is made to search for the nearest match of a partial role name, and I don't think Discord allows whitespace in role names anyway.
+    public static (ulong, string)? TryParseRoleResolvable(string argsString, IIzzyGuild guild, out string? errorString)
+    {
+        errorString = null;
+
+        if (TryParseUnambiguousRole(argsString, out var unambiguousErrorString) is var (roleId, remainingArgsString))
+        {
+            foreach (var role in guild.Roles)
+                if (role.Id == roleId)
+                    return (roleId, remainingArgsString);
+
+            errorString = $"guild \"{guild.Name}\" does not contain a role with id {roleId}";
+            return null;
+        }
+
+        var (firstArg, argsAfterFirst) = DiscordHelper.GetArgument(argsString);
+        if (firstArg == null)
+        {
+            errorString = $"empty or all-whitespace string \"{argsString}\" can't be a role";
+            return null;
+        }
+
+        foreach (var role in guild.Roles)
+            if (role.Name == firstArg)
+                return (role.Id, argsAfterFirst ?? "");
+
+        errorString = $"guild \"{guild.Name}\" does not contain a role with name \"{firstArg}\", and: {unambiguousErrorString}";
+        return null;
+    }
+
+    // We only support channel ids, channel mentions, and an exactly matching whitespace-free channel name.
+    // No attempt is made to search for the nearest match of a partial channel name, and I don't think Discord allows whitespace in channel names anyway.
+    public static (ulong, string)? TryParseChannelResolvable(string argsString, IIzzyContext context, out string? errorString)
+    {
+        errorString = null;
+
+        var guild = context.Guild;
+        if (guild == null)
+        {
+            errorString = $"Unable to validate channel argument because context.Guild was null";
+            return null;
+        }
+        var izzyMoonbotId = context.Client.CurrentUser.Id;
+
+        if (TryParseUnambiguousChannel(argsString, out var unambiguousErrorString) is var (channelId, remainingArgsString))
+        {
+            foreach (var channel in guild.TextChannels)
+                if (channel.Id == channelId)
+                    if (channel.Users.Any(u => u.Id == izzyMoonbotId))
+                        return (channelId, remainingArgsString);
+                    else
+                    {
+                        errorString = $"I'm not allowed in channel {channelId} <:izzysadness:910198257702031362>";
+                        return null;
+                    }
+
+            errorString = $"guild \"{guild.Name}\" does not contain a channel with id {channelId}";
+            return null;
+        }
+
+        var (firstArg, argsAfterFirst) = DiscordHelper.GetArgument(argsString);
+        if (firstArg == null)
+        {
+            errorString = $"empty or all-whitespace string \"{argsString}\" can't be a channel";
+            return null;
+        }
+
+        foreach (var channel in guild.TextChannels)
+            if (channel.Name == firstArg && channel.Users.Any(u => u.Id == izzyMoonbotId))
+                if (channel.Users.Any(u => u.Id == izzyMoonbotId))
+                    return (channel.Id, argsAfterFirst ?? "");
+                else
+                {
+                    errorString = $"I'm not allowed in the {channel.Name} channel <:izzysadness:910198257702031362>";
+                    return null;
+                }
+
+        errorString = $"guild \"{guild.Name}\" does not contain a channel with name \"{firstArg}\", and: {unambiguousErrorString}";
         return null;
     }
 
@@ -44,7 +134,7 @@ public static class ParseHelper
     // Also, because of the inherently async step, we're forced to return a tuple rather than keep errorString as an out parameter
     async public static Task<(ulong?, string?)> TryParseUserResolvable(string userArg, IIzzyGuild guild)
     {
-        if (ParseHelper.TryParseUnambiguousUser(userArg, out var unambiguousErrorString) is var (userId, _))
+        if (TryParseUnambiguousUser(userArg, out var unambiguousErrorString) is var (userId, _))
             return (userId, null);
 
         var userList = await guild.SearchUsersAsync(userArg);

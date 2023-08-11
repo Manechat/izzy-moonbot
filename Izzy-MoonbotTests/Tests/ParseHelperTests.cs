@@ -33,6 +33,54 @@ public class ParseHelperTests
     }
 
     [TestMethod()]
+    public void TryParseRoleMention()
+    {
+        string? err;
+
+        Assert.AreEqual(null, ParseHelper.TryParseUnambiguousRole("", out err));
+        Assert.IsNotNull(err);
+
+        Assert.AreEqual((1234ul, ""), ParseHelper.TryParseUnambiguousRole("1234", out err));
+        Assert.IsNull(err);
+
+        Assert.AreEqual((1234ul, ""), ParseHelper.TryParseUnambiguousRole("<@&1234>", out err));
+        Assert.IsNull(err);
+
+        Assert.AreEqual(null, ParseHelper.TryParseUnambiguousRole("<@&>", out err));
+        Assert.IsNotNull(err);
+
+        Assert.AreEqual(null, ParseHelper.TryParseUnambiguousRole("foo <@&1234> bar", out err));
+        Assert.IsNotNull(err);
+
+        Assert.AreEqual((1234ul, "foo bar"), ParseHelper.TryParseUnambiguousRole("<@&1234> foo bar", out err));
+        Assert.IsNull(err);
+    }
+
+    [TestMethod()]
+    public void TryParseChannelMention()
+    {
+        string? err;
+
+        Assert.AreEqual(null, ParseHelper.TryParseUnambiguousChannel("", out err));
+        Assert.IsNotNull(err);
+
+        Assert.AreEqual((1234ul, ""), ParseHelper.TryParseUnambiguousChannel("1234", out err));
+        Assert.IsNull(err);
+
+        Assert.AreEqual((1234ul, ""), ParseHelper.TryParseUnambiguousChannel("<#1234>", out err));
+        Assert.IsNull(err);
+
+        Assert.AreEqual(null, ParseHelper.TryParseUnambiguousChannel("<#>", out err));
+        Assert.IsNotNull(err);
+
+        Assert.AreEqual(null, ParseHelper.TryParseUnambiguousChannel("foo <#1234> bar", out err));
+        Assert.IsNotNull(err);
+
+        Assert.AreEqual((1234ul, "foo bar"), ParseHelper.TryParseUnambiguousChannel("<#1234> foo bar", out err));
+        Assert.IsNull(err);
+    }
+
+    [TestMethod()]
     async public Task TryParseUserResolvable()
     {
         var (_, _, (izzyHerself, _), _, (generalChannel, _, _), stubGuild, stubClient) = TestUtils.DefaultStubs();
@@ -51,6 +99,72 @@ public class ParseHelperTests
         Assert.AreEqual(null, failureResult.Item1);
         StringAssert.Contains(failureResult.Item2, "0 users");
         StringAssert.Contains(failureResult.Item2, "other");
+    }
+
+    [TestMethod()]
+    public void TryParseRoleResolvable()
+    {
+        string? err;
+
+        var (_, _, (izzyHerself, _), _, (generalChannel, _, _), stubGuild, stubClient) = TestUtils.DefaultStubs();
+        var guild = new TestGuild(stubGuild, stubClient);
+
+        Assert.AreEqual((1ul, ""), ParseHelper.TryParseRoleResolvable("1", guild, out err));
+        Assert.IsNull(err);
+
+        Assert.AreEqual(null, ParseHelper.TryParseRoleResolvable("999", guild, out err));
+        Assert.IsNotNull(err);
+        StringAssert.Contains(err, "role with id");
+        StringAssert.Contains(err, "999");
+
+        Assert.AreEqual((1ul, ""), ParseHelper.TryParseRoleResolvable("<@&1>", guild, out err));
+        Assert.IsNull(err);
+
+        Assert.AreEqual(null, ParseHelper.TryParseRoleResolvable("<@&999>", guild, out err));
+        Assert.IsNotNull(err);
+        StringAssert.Contains(err, "role with id");
+        StringAssert.Contains(err, "999");
+
+        Assert.AreEqual((1ul, ""), ParseHelper.TryParseRoleResolvable("Alicorn", guild, out err));
+        Assert.IsNull(err);
+
+        Assert.AreEqual(null, ParseHelper.TryParseRoleResolvable("other", guild, out err));
+        Assert.IsNotNull(err);
+        StringAssert.Contains(err, "role with name");
+        StringAssert.Contains(err, "other");
+    }
+
+    [TestMethod()]
+    async public Task TryParseChannelResolvable()
+    {
+        string? err;
+
+        var (_, _, (izzyHerself, _), _, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
+        var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, izzyHerself.Id, "hello");
+
+        Assert.AreEqual((generalChannel.Id, ""), ParseHelper.TryParseChannelResolvable($"{generalChannel.Id}", context, out err));
+        Assert.IsNull(err);
+
+        Assert.AreEqual(null, ParseHelper.TryParseChannelResolvable("999", context, out err));
+        Assert.IsNotNull(err);
+        StringAssert.Contains(err, "channel with id");
+        StringAssert.Contains(err, "999");
+
+        Assert.AreEqual((generalChannel.Id, ""), ParseHelper.TryParseChannelResolvable($"<#{generalChannel.Id}>", context, out err));
+        Assert.IsNull(err);
+
+        Assert.AreEqual(null, ParseHelper.TryParseChannelResolvable("<#999>", context, out err));
+        Assert.IsNotNull(err);
+        StringAssert.Contains(err, "channel with id");
+        StringAssert.Contains(err, "999");
+
+        Assert.AreEqual((generalChannel.Id, ""), ParseHelper.TryParseChannelResolvable("general", context, out err));
+        Assert.IsNull(err);
+
+        Assert.AreEqual(null, ParseHelper.TryParseChannelResolvable("other", context, out err));
+        Assert.IsNotNull(err);
+        StringAssert.Contains(err, "channel with name");
+        StringAssert.Contains(err, "other");
     }
 
     public static void AssertParseDateTimeResultAreEqual(ParseDateTimeResult expected, ParseDateTimeResult actual)
