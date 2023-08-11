@@ -37,28 +37,6 @@ public class DiscordHelperTests
     }
 
     [TestMethod()]
-    public void ConvertPingsTests()
-    {
-        Assert.AreEqual(0ul, DiscordHelper.ConvertChannelPingToId(""));
-        Assert.AreEqual(1234ul, DiscordHelper.ConvertChannelPingToId("1234"));
-        Assert.AreEqual(1234ul, DiscordHelper.ConvertChannelPingToId("<#1234>"));
-        Assert.ThrowsException<FormatException>(() => DiscordHelper.ConvertChannelPingToId("<#>"));
-        Assert.ThrowsException<FormatException>(() => DiscordHelper.ConvertChannelPingToId("foo <#1234> bar"));
-
-        Assert.AreEqual(0ul, DiscordHelper.ConvertUserPingToId(""));
-        Assert.AreEqual(1234ul, DiscordHelper.ConvertUserPingToId("1234"));
-        Assert.AreEqual(1234ul, DiscordHelper.ConvertUserPingToId("<@1234>"));
-        Assert.ThrowsException<FormatException>(() => DiscordHelper.ConvertUserPingToId("<@>"));
-        Assert.ThrowsException<FormatException>(() => DiscordHelper.ConvertUserPingToId("foo <@1234> bar"));
-
-        Assert.AreEqual(0ul, DiscordHelper.ConvertRolePingToId(""));
-        Assert.AreEqual(1234ul, DiscordHelper.ConvertRolePingToId("1234"));
-        Assert.AreEqual(1234ul, DiscordHelper.ConvertRolePingToId("<@&1234>"));
-        Assert.ThrowsException<FormatException>(() => DiscordHelper.ConvertRolePingToId("<@&>"));
-        Assert.ThrowsException<FormatException>(() => DiscordHelper.ConvertRolePingToId("foo <@&1234> bar"));
-    }
-
-    [TestMethod()]
     public void GetArgument_NoQuotesTests()
     {
         Assert.AreEqual((null, null), DiscordHelper.GetArgument(""));
@@ -166,42 +144,6 @@ public class DiscordHelperTests
             bar baz\"
             """, "quux"), parse);
         Assert.AreEqual(("quux", null), DiscordHelper.GetArgument("quux"));
-    }
-
-    [TestMethod()]
-    public async Task UserRoleChannel_GettersTests()
-    {
-        var (_, _, (izzyHerself, _), _, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
-        var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, izzyHerself.Id, "hello");
-
-        Assert.AreEqual(generalChannel.Id, await GetChannelIdIfAccessAsync($"{generalChannel.Id}", context));
-        Assert.AreEqual(0ul, await GetChannelIdIfAccessAsync("999", context));
-
-        Assert.AreEqual(generalChannel.Id, await GetChannelIdIfAccessAsync($"<#{generalChannel.Id}>", context));
-        Assert.AreEqual(0ul, await GetChannelIdIfAccessAsync("<#999>", context));
-
-        Assert.AreEqual(generalChannel.Id, await GetChannelIdIfAccessAsync("general", context));
-        Assert.AreEqual(0ul, await GetChannelIdIfAccessAsync("other", context));
-
-        Assert.AreEqual(1ul, GetRoleIdIfAccessAsync("1", context));
-        Assert.AreEqual(0ul, GetRoleIdIfAccessAsync("999", context));
-
-        Assert.AreEqual(1ul, GetRoleIdIfAccessAsync("<@&1>", context));
-        Assert.AreEqual(0ul, GetRoleIdIfAccessAsync("<@&999>", context));
-
-        Assert.AreEqual(1ul, GetRoleIdIfAccessAsync("Alicorn", context));
-        Assert.AreEqual(0ul, GetRoleIdIfAccessAsync("other", context));
-
-        // unlike the channel and role getters, this user method intentionally supports "unknown" users not in the guild
-        Assert.AreEqual(1ul, await GetUserIdFromPingOrIfOnlySearchResultAsync("1", context));
-        Assert.AreEqual(999ul, await GetUserIdFromPingOrIfOnlySearchResultAsync("999", context));
-
-        Assert.AreEqual(1ul, await GetUserIdFromPingOrIfOnlySearchResultAsync("<@1>", context));
-        Assert.AreEqual(999ul, await GetUserIdFromPingOrIfOnlySearchResultAsync("<@999>", context));
-
-        Assert.AreEqual(1ul, await GetUserIdFromPingOrIfOnlySearchResultAsync("Izzy", context));
-        Assert.AreEqual(2ul, await GetUserIdFromPingOrIfOnlySearchResultAsync("Sunny", context));
-        Assert.AreEqual(0ul, await GetUserIdFromPingOrIfOnlySearchResultAsync("other", context));
     }
 
     [TestMethod()]

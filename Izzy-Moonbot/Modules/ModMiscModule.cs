@@ -57,16 +57,20 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
     [DevCommand(Group = "Permissions")]
     [Parameter("user", ParameterType.UnambiguousUser, "The user to remove the scheduled removal from.")]
     public async Task PermaNpCommandAsync(
-        [Remainder]string user = "")
+        [Remainder]string argsString = "")
     {
-        if (user == "")
+        if (argsString == "")
         {
             await ReplyAsync(
                 "Hey uhh... I can't remove the scheduled new pony role removal for a user if you haven't given me the user to remove it from...");
             return;
         }
 
-        var userId = DiscordHelper.ConvertUserPingToId(user);
+        if (ParseHelper.TryParseUnambiguousUser(argsString, out var userErrorString) is not var (userId, _))
+        {
+            await Context.Channel.SendMessageAsync($"Failed to get a user id from the first argument: {userErrorString}");
+            return;
+        }
 
         var output = await PermaNpCommandIImpl(_schedule, _config, userId);
 
@@ -248,24 +252,17 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
         string argsString = "",
         ISticker[]? stickers = null)
     {
-        var args = DiscordHelper.GetArguments(argsString);
-
-        var channelName = args.Arguments.FirstOrDefault("");
-        var message = "";
-        try
+        ulong? channelId;
+        string message;
+        if (ParseHelper.TryParseChannelResolvable(argsString, context, out var channelParseError) is var (parsedChannelId, argsAfterChannel))
         {
-            message = string.Join("", argsString.Skip(args.Indices[0]));
-            message = DiscordHelper.StripQuotes(message);
+            message = DiscordHelper.StripQuotes(argsAfterChannel);
+            channelId = parsedChannelId;
         }
-        catch
-        {
-            message = "";
-        }
-
-        var channelId = await DiscordHelper.GetChannelIdIfAccessAsync(channelName, context);
-        if (channelId == 0)
+        else
         {
             message = DiscordHelper.StripQuotes(argsString);
+            channelId = null;
         }
 
         if (message == "" && (stickers is null || !stickers.Any()))
@@ -274,9 +271,9 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
             return;
         }
 
-        if (channelId > 0)
+        if (channelId != null)
         {
-            var channel = context.Guild?.GetTextChannel(channelId);
+            var channel = context.Guild?.GetTextChannel((ulong)channelId);
             if (channel != null)
             {
                 await channel.SendMessageAsync(message, stickers: stickers);
@@ -772,17 +769,12 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
             return;
         }
 
-        var args = DiscordHelper.GetArguments(argsString);
-
-        var channelName = args.Arguments.FirstOrDefault("");
-        var channelId = await DiscordHelper.GetChannelIdIfAccessAsync(channelName, context);
-        if (channelId == 0)
+        if (ParseHelper.TryParseChannelResolvable(argsString, context, out var channelParseError) is not var (channelId, argsAfterChannel))
         {
-            await context.Channel.SendMessageAsync($"Channel <#{channelId}> ({channelId}) either doesn't exist or I don't have accss to it");
+            await ReplyAsync($"Failed to get a channel: {channelParseError}");
             return;
         }
 
-        var argsAfterChannel = string.Join("", argsString.Skip(args.Indices[0]));
         if (ParseHelper.TryParseDateTime(argsAfterChannel, out var parseError) is not var (parseResult, content))
         {
             await context.Channel.SendMessageAsync($"Failed to comprehend time: {parseError}");

@@ -67,7 +67,7 @@ public class QuoteModuleTests
         // Twi didn't make it to G5
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".quote Twilight");
         await qm.TestableQuoteCommandAsync(context, "Twilight");
-        Assert.AreEqual("I was unable to find the user you asked for. Sorry!", generalChannel.Messages.Last().Content);
+        StringAssert.Contains(generalChannel.Messages.Last().Content, "I was unable to find the user you asked for. Sorry!");
 
         // TODO: test cases where user left (both cached in userinfo and not)
     }
@@ -151,7 +151,7 @@ public class QuoteModuleTests
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".listquotes Twilight");
         await qm.TestableListQuotesCommandAsync(context, "Twilight");
 
-        Assert.AreEqual("I was unable to find the user you asked for. Sorry!", generalChannel.Messages.Last().Content);
+        StringAssert.Contains(generalChannel.Messages.Last().Content, "I was unable to find the user you asked for. Sorry!");
 
         //
 
