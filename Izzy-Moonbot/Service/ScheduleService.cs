@@ -12,7 +12,6 @@ using Izzy_Moonbot.Settings;
 using Microsoft.Extensions.Logging;
 using static Izzy_Moonbot.Settings.ScheduledJobRepeatType;
 using static Izzy_Moonbot.Adapters.IIzzyClient;
-using static System.Collections.Specialized.BitVector32;
 
 namespace Izzy_Moonbot.Service;
 
@@ -114,6 +113,9 @@ public class ScheduleService
                         break;
                     case ScheduledBoredCommandsJob boredCommandsJob:
                         await Unicycle_BoredCommands(boredCommandsJob, defaultGuild, client);
+                        break;
+                    case ScheduledEndRaidJob endRaidJob:
+                        await Unicycle_EndRaid(endRaidJob, defaultGuild, client);
                         break;
                     default:
                         throw new NotSupportedException($"{job.Action.GetType().Name} is currently not supported.");
@@ -535,5 +537,10 @@ public class ScheduleService
 
         var nextJob = new ScheduledJob(DateTimeHelper.UtcNow, nextExecuteTime, new ScheduledBoredCommandsJob(), ScheduledJobRepeatType.None);
         await CreateScheduledJob(nextJob);
+    }
+
+    public async Task Unicycle_EndRaid(ScheduledEndRaidJob job, IIzzyGuild guild, IIzzyClient _client)
+    {
+
     }
 }

@@ -225,6 +225,20 @@ public class ScheduledBoredCommandsJob : ScheduledJobAction
     public override string ToFileString() => ToDiscordString();
 }
 
+public class ScheduledEndRaidJob : ScheduledJobAction
+{
+    public ScheduledEndRaidJob(bool isLarge)
+    {
+        Type = ScheduledJobActionType.EndRaid;
+        IsLarge = isLarge;
+    }
+
+    public bool IsLarge { get; }
+
+    public override string ToDiscordString() => $"End {(IsLarge ? "large" : "small")} raid";
+    public override string ToFileString() => ToDiscordString();
+}
+
 public enum ScheduledJobActionType
 {
     RemoveRole,
@@ -232,7 +246,8 @@ public enum ScheduledJobActionType
     Unban,
     Echo,
     BannerRotation,
-    BoredCommands
+    BoredCommands,
+    EndRaid
 }
 
 public enum ScheduledJobRepeatType

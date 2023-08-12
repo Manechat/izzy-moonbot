@@ -1,4 +1,4 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Izzy_Moonbot.Settings;
 using Izzy_Moonbot.Service;
 using Izzy_Moonbot.Helpers;
@@ -55,7 +55,8 @@ public class ScheduleServiceTests
         Assert.AreEqual("test echo", generalChannel.Messages.Last().Content);
     }
 
-    // For now, BannerRotation isn't worth testing because of its non-Discord network dependencies
+    // BannerRotation isn't worth testing because of its non-Discord network dependencies
+    // EndRaid makes little sense to test in isolation from the rest of the raid logic
     [TestMethod()]
     public async Task RunBasicJobTypes_Tests()
     {

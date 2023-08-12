@@ -360,6 +360,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
             { "echo", typeof(ScheduledEchoJob) },
             { "banner", typeof(ScheduledBannerRotationJob) },
             { "bored", typeof(ScheduledBoredCommandsJob) },
+            { "endraid", typeof(ScheduledEndRaidJob) },
         };
         var supportedJobTypesMessage = $"The currently supported job types are: {string.Join(", ", jobTypes.Keys.Select(k => $"`{k}`"))}";
 
@@ -488,6 +489,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                                                 $"Content:\n```\n{echoJob.Content}\n```\n",
                     ScheduledBannerRotationJob => $"Current banner mode: {_config.BannerMode}\n" +
                                                   $"Configure this job via `.config`.\n",
+                    ScheduledEndRaidJob endRaidJob => $"Raid IsLarge: {endRaidJob.IsLarge}",
                     _ => ""
                 };
                 
@@ -593,6 +595,17 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                             ```
                             """;
                         break;
+                    case "ScheduledEndRaidJob":
+                        content = $"""
+                            **End Raid**
+                            Resets Izzy's internal raid-related state some time after a possible raid is detected. See `.help ass` for more context.
+                            :warning: This scheduled job is managed by Izzy internally. It is best not to modify it with this command.
+                            Creation syntax:
+                            ```
+                            {_config.Prefix}schedule add {searchString} <date/time> <islarge>
+                            ```
+                            """;
+                        break;
                     default:
                         content = $"""
                             **Unknown type**
@@ -686,6 +699,14 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                     break;
                 case "bored":
                     action = new ScheduledBoredCommandsJob();
+                    break;
+                case "endraid":
+                    if (!bool.TryParse(actionArgTokens.ElementAt(0), out bool isLarge))
+                    {
+                        await context.Channel.SendMessageAsync($"Failed to parse arguments: \"{actionArgTokens.ElementAt(0)}\" is not a boolean");
+                        return;
+                    }
+                    action = new ScheduledEndRaidJob(isLarge);
                     break;
                 default: throw new InvalidCastException($"{typeArg} is not a valid job type");
             };

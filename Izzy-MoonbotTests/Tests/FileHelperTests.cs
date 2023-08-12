@@ -73,6 +73,17 @@ public class FileHelperTests
                   "Type": 2
                 },
                 "RepeatType": 0
+              },
+              {
+                "Id": "test-end-raid",
+                "CreatedAt": "2023-01-01T12:00:00+00:00",
+                "LastExecutedAt": null,
+                "ExecuteAt": "2023-01-01T12:05:00+00:00",
+                "Action": {
+                  "IsLarge": true,
+                  "Type": 6
+                },
+                "RepeatType": 0
               }
             ]
             """;
