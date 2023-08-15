@@ -12,7 +12,7 @@ namespace Izzy_Moonbot_Tests.Services;
 [TestClass()]
 public class SpamServiceTests
 {
-    public void SpamSetup(Config cfg, TestUser spammer, StubChannel modChat, StubGuild guild, StubClient client)
+    public void SpamSetup(Config cfg, IIzzyUser spammer, StubChannel modChat, StubGuild guild, StubClient client)
     {
         DiscordHelper.DefaultGuildId = guild.Id;
         DiscordHelper.DevUserIds = new List<ulong>();

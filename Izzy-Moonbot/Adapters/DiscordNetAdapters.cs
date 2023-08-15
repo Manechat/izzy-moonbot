@@ -389,6 +389,8 @@ public class DiscordSocketClientAdapter : IIzzyClient
                 channel.Id,
                 channel.Value is null ? null : new DiscordNetMessageChannelAdapter(channel.Value)
             );
+        _client.UserJoined += async (member) =>
+            UserJoined?.Invoke(new SocketGuildUserAdapter(member));
     }
 
     public IIzzyUser CurrentUser { get => new DiscordNetUserAdapter(_client.CurrentUser); }
@@ -401,6 +403,7 @@ public class DiscordSocketClientAdapter : IIzzyClient
     public event Func<string?, IIzzyMessage, IIzzyMessageChannel, Task>? MessageUpdated;
     public event Func<IIzzySocketMessageComponent, Task>? ButtonExecuted;
     public event Func<ulong, IIzzyMessage?, ulong, IIzzyMessageChannel?, Task>? MessageDeleted;
+    public event Func<IIzzyGuildUser, Task>? UserJoined;
 
     public IIzzyContext MakeContext(IIzzyUserMessage message) =>
         new ClientAndMessageContextAdapter(this, message);

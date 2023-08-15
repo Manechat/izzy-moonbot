@@ -112,7 +112,7 @@ namespace Izzy_Moonbot
                 _messageListener.RegisterEvents(clientAdapter);
 
                 _spamService.RegisterEvents(clientAdapter);
-                _raidService.RegisterEvents(_client);
+                _raidService.RegisterEvents(clientAdapter);
                 _filterService.RegisterEvents(clientAdapter);
                 _scheduleService.RegisterEvents(clientAdapter);
 

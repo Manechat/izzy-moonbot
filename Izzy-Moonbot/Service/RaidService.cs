@@ -41,9 +41,9 @@ public class RaidService
         });
     }
 
-    public void RegisterEvents(DiscordSocketClient client)
+    public void RegisterEvents(IIzzyClient client)
     {
-        client.UserJoined += (member) => Task.Run(async () => { await ProcessMemberJoin(new SocketGuildUserAdapter(member)); });
+        client.UserJoined += (member) => Task.Run(async () => { await ProcessMemberJoin(member); });
     }
 
     // This method proactively checks that the joins still are recent and updates _state if any expired,
@@ -59,7 +59,7 @@ public class RaidService
 
             if (member is not { JoinedAt: { } })
                 expiredUserIds.Add(userId);
-            else if (member.JoinedAt.Value.AddSeconds(_config.RecentJoinDecay) < DateTimeOffset.Now)
+            else if (member.JoinedAt.Value.AddSeconds(_config.RecentJoinDecay) < DateTimeHelper.UtcNow)
                 expiredUserIds.Add(userId);
             else
                 recentGuildUsers.Add(member);

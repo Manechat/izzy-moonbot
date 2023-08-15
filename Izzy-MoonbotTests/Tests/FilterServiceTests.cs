@@ -10,7 +10,7 @@ namespace Izzy_Moonbot_Tests.Services;
 [TestClass()]
 public class FilterServiceTests
 {
-    public static void SetupFilterService(Config cfg, StubGuild guild, StubClient client, TestUser sunny)
+    public static void SetupFilterService(Config cfg, StubGuild guild, StubClient client, IIzzyUser sunny)
     {
         DiscordHelper.DefaultGuildId = guild.Id;
         DiscordHelper.DevUserIds = new List<ulong>();

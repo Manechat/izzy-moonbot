@@ -166,6 +166,7 @@ public interface IIzzyClient
     event Func<IIzzySocketMessageComponent, Task> ButtonExecuted;
 
     event Func<ulong, IIzzyMessage?, ulong, IIzzyMessageChannel?, Task>? MessageDeleted;
+    event Func<IIzzyGuildUser, Task> UserJoined;
 
     IIzzyContext MakeContext(IIzzyUserMessage message);
     Task<IIzzyUser?> GetUserAsync(ulong userId);
