@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord;
@@ -28,6 +27,7 @@ public class ScheduleService
     private readonly List<ScheduledJob> _scheduledJobs;
 
     private bool _alreadyInitiated;
+    private Action<ScheduledEndRaidJob, IIzzyGuild>? _endRaidCallback = null;
 
     public ScheduleService(Config config, ModService mod, ModLoggingService modLogging, LoggingService logger, List<ScheduledJob> scheduledJobs)
     {
@@ -42,6 +42,8 @@ public class ScheduleService
     {
         client.ButtonExecuted += async (component) => await DiscordHelper.LeakOrAwaitTask(ButtonEvent(component));
     }
+
+    public void RegisterEndRaidCallback(Action<ScheduledEndRaidJob, IIzzyGuild>? callback) => _endRaidCallback = callback;
 
     public void BeginUnicycleLoop(IIzzyClient client)
     {
@@ -541,6 +543,12 @@ public class ScheduleService
 
     public async Task Unicycle_EndRaid(ScheduledEndRaidJob job, IIzzyGuild guild, IIzzyClient _client)
     {
+        if (_endRaidCallback == null)
+        {
+            _logger.Log($"_endRaidCallback was never registered. Unable to execute end raid job.");
+            return;
+        }
 
+        _endRaidCallback(job, guild);
     }
 }
