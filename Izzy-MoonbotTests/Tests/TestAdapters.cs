@@ -30,15 +30,20 @@ public class TestGuildUser : IIzzyGuildUser
     public string? Nickname => Username;
     public string DisplayName => Username;
     public bool IsBot { get; }
+    public DateTimeOffset? JoinedAt { get; }
 
     private readonly StubGuild _guildBackref;
+    private readonly StubClient _clientBackref;
+    public IIzzyGuild Guild { get => new TestGuild(_guildBackref, _clientBackref); }
 
-    public TestGuildUser(string username, ulong id, StubGuild guild, bool isBot = false)
+    public TestGuildUser(string username, ulong id, StubGuild guild, StubClient client, bool isBot = false, DateTimeOffset? joinedAt = null)
     {
         Id = id;
         Username = username;
         _guildBackref = guild;
+        _clientBackref = client;
         IsBot = isBot;
+        JoinedAt = joinedAt;
     }
 
     public IReadOnlyCollection<IIzzyRole> Roles =>
@@ -465,7 +470,7 @@ public class TestGuild : IIzzyGuild
     }
 
     public IIzzyGuildUser? GetUser(ulong userId) =>
-        _stubGuild.Users.Where(user => user.Id == userId).Select(user => new TestGuildUser(user.Username, user.Id, _stubGuild)).SingleOrDefault();
+        _stubGuild.Users.Where(user => user.Id == userId).Select(user => new TestGuildUser(user.Username, user.Id, _stubGuild, _clientBackref)).SingleOrDefault();
     public IIzzyRole? GetRole(ulong roleId) => Roles.Where(role => role.Id == roleId).SingleOrDefault();
     public IIzzySocketGuildChannel? GetChannel(ulong channelId)
     {
@@ -555,7 +560,7 @@ public class StubClient : IIzzyClient
                     testMessage,
                     // note: runtime type must be IIzzyGuildUser whenever possible, not just IIzzyUser
                     // since we don't support DMs yet, that means it's always a *GuildUser
-                    new TestGuildUser(user.Username, user.Id, guild)
+                    new TestGuildUser(user.Username, user.Id, guild, this)
                 );
             }
             else
@@ -641,7 +646,7 @@ public class StubClient : IIzzyClient
             message,
             // note: runtime type must be IIzzyGuildUser whenever possible, not just IIzzyUser
             // since we don't support DMs yet, that means it's always a *GuildUser
-            new TestGuildUser(message.Author.Username, message.Author.Id, stubGuild)
+            new TestGuildUser(message.Author.Username, message.Author.Id, stubGuild, this)
         );
     }
 

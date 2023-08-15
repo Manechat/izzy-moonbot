@@ -47,15 +47,15 @@ public class SocketGuildUserAdapter : IIzzyGuildUser
     public string DisplayName { get => _user.DisplayName; }
     public int Hierarchy { get => _user.Hierarchy; }
     public bool IsBot => _user.IsBot;
-    public async Task<IIzzyUserMessage> SendMessageAsync(string text) =>
-        new DiscordNetUserMessageAdapter(await _user.SendMessageAsync(text));
+    public IReadOnlyCollection<IIzzyRole> Roles => _user.Roles.Select(r => new DiscordNetRoleAdapter(r)).ToList();
+    public IIzzyGuild Guild { get => new SocketGuildAdapter(_user.Guild); }
+    public DateTimeOffset? JoinedAt { get => _user.JoinedAt; }
 
     public override string? ToString()
     {
         return _user.ToString();
     }
 
-    public IReadOnlyCollection<IIzzyRole> Roles => _user.Roles.Select(r => new DiscordNetRoleAdapter(r)).ToList();
     public async Task AddRoleAsync(ulong roleId, RequestOptions? requestOptions) =>
         await _user.AddRoleAsync(roleId, requestOptions);
     public async Task AddRolesAsync(IEnumerable<ulong> roles, RequestOptions? requestOptions) =>

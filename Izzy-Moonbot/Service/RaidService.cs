@@ -43,14 +43,14 @@ public class RaidService
 
     public void RegisterEvents(DiscordSocketClient client)
     {
-        client.UserJoined += (member) => Task.Run(async () => { await ProcessMemberJoin(member); });
+        client.UserJoined += (member) => Task.Run(async () => { await ProcessMemberJoin(new SocketGuildUserAdapter(member)); });
     }
 
     // This method proactively checks that the joins still are recent and updates _state if any expired,
     // so call sites should only call this once and reuse the result as much as possible.
-    public List<SocketGuildUser> GetRecentJoins(IIzzyGuild guild)
+    public List<IIzzyGuildUser> GetRecentJoins(IIzzyGuild guild)
     {
-        var recentGuildUsers = new List<SocketGuildUser>();
+        var recentGuildUsers = new List<IIzzyGuildUser>();
         var expiredUserIds = new List<ulong>();
 
         _state.RecentJoins.ForEach(userId =>
@@ -83,7 +83,7 @@ public class RaidService
     public static string ALARMS_ACTIVE = "Any future spike in recent joins will generate a new alarm.";
     public static string PLEASE_ASSOFF = "Please run `.assoff` when you believe the raid is over, so I know to start alarming on join spikes again.";
 
-    private string RaidersDescription(List<SocketGuildUser> recentJoins)
+    private string RaidersDescription(List<IIzzyGuildUser> recentJoins)
     {
         var raiderDescriptions = new List<string>();
         recentJoins.ForEach(member =>
@@ -94,7 +94,7 @@ public class RaidService
         });
         return string.Join($"\n", raiderDescriptions);
     }
-    private async Task TripSmallRaid(SocketGuild guild, List<SocketGuildUser> recentJoins)
+    private async Task TripSmallRaid(IIzzyGuild guild, List<IIzzyGuildUser> recentJoins)
     {
         _log.Log("Small raid detected!");
 
@@ -156,7 +156,7 @@ public class RaidService
         }
     }
 
-    private async Task TripLargeRaid(SocketGuild guild, List<SocketGuildUser> recentJoins)
+    private async Task TripLargeRaid(IIzzyGuild guild, List<IIzzyGuildUser> recentJoins)
     {
         _log.Log("Large raid detected!");
 
@@ -228,7 +228,7 @@ public class RaidService
         }
     }
 
-    public async Task ProcessMemberJoin(SocketGuildUser member)
+    public async Task ProcessMemberJoin(IIzzyGuildUser member)
     {
         if (member.Guild.Id != DiscordHelper.DefaultGuild()) return; // Don't process non-default server.
         if (!_config.RaidProtectionEnabled) return;

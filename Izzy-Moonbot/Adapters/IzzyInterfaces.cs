@@ -19,6 +19,8 @@ public interface IIzzyGuildUser : IIzzyUser
     string? Nickname { get; }
     int Hierarchy => DisplayName.Contains("Izzy") ? 1 : 0; // not used enough to be worth accurately imitating in tests
     IReadOnlyCollection<IIzzyRole> Roles { get; }
+    IIzzyGuild Guild { get; }
+    DateTimeOffset? JoinedAt { get; }
 
     Task AddRoleAsync(ulong roleId, RequestOptions? requestOptions);
     Task AddRolesAsync(IEnumerable<ulong> roles, RequestOptions? requestOptions);
