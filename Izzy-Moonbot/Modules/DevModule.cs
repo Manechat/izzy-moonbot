@@ -158,53 +158,6 @@ public class DevModule : ModuleBase<SocketCommandContext>
                     $"\n```Your faithful Bot,\nIzzy Moonbot");
 
                 break;
-            case "raid":
-                {
-                    // Simulates a raid.
-                    // args[0] is time in seconds between joins
-                    // rest is user ids.
-                    var timePeriod = Convert.ToInt32(args[0]) * 1000;
-                    var users = args.Skip(1).Select(user =>
-                    {
-                        if (ulong.TryParse(user, out var id)) return Context.Guild.GetUser(id);
-                        return null;
-                    }).Where(user => user != null) as IEnumerable<SocketGuildUser>; // cast away nullability
-
-                    var raidMsg = await ReplyAsync(
-                        $"Confirm: Simulate {users.Count()} users joining {timePeriod} milliseconds apart? Checking reactions in 10 seconds.");
-                    await raidMsg.AddReactionAsync(Emoji.Parse("✅"));
-                    var _ = Task.Factory.StartNew(async () =>
-                    {
-                        await Task.Delay(Convert.ToInt32(10000));
-                        var raidMsgUsers = raidMsg.GetReactionUsersAsync(Emoji.Parse("✅"), 2);
-                        if (raidMsgUsers.AnyAsync(raidMsgUsersActual =>
-                            {
-                                return raidMsgUsersActual.Any(user => user.Id == Context.User.Id) ? true : false;
-                            }).Result)
-                        {
-                            await raidMsg.RemoveAllReactionsAsync();
-                            await raidMsg.ModifyAsync(message => message.Content = "⚠  **Executing...**");
-
-                            var _ = Task.Factory.StartNew(async () =>
-                            {
-                                foreach (var user in users)
-                                {
-                                    await Task.Delay(timePeriod);
-                                    await _raidService.ProcessMemberJoin(user);
-                                }
-                            });
-
-                            await raidMsg.ModifyAsync(message =>
-                                message.Content = "⚠  **Executed. Expect raid alarms if hit.**");
-                        }
-                        else
-                        {
-                            await raidMsg.RemoveAllReactionsAsync();
-                            await raidMsg.ModifyAsync(message => message.Content = "⚠  **Cancelled.**");
-                        }
-                    });
-                    break;
-                }
             case "state":
                 _state.CurrentSmallJoinCount++;
                 await ReplyAsync($"At {_state.CurrentSmallJoinCount}.");

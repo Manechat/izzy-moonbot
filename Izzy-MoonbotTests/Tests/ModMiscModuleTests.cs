@@ -1,4 +1,4 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Settings;
 using Izzy_Moonbot.Service;
@@ -194,6 +194,17 @@ public class ModMiscModuleTests
         Assert.AreEqual(ScheduledJobActionType.Echo, job.Action.Type);
         Assert.AreEqual(generalChannel.Id, (job.Action as ScheduledEchoJob)?.ChannelOrUser);
         Assert.AreEqual("hello there", (job.Action as ScheduledEchoJob)?.Content);
+
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, $".schedule add endraid 5 minutes false");
+        await mmm.TestableScheduleCommandAsync(context, $"add endraid 5 minutes false");
+
+        description = generalChannel.Messages.Last().Content;
+        StringAssert.Contains(description, "Created scheduled job:");
+        StringAssert.Contains(description, $"End small raid");
+        job = ss.GetScheduledJobs().Last();
+        Assert.AreEqual(TestUtils.FiMEpoch.AddMinutes(5), job.ExecuteAt);
+        Assert.AreEqual(ScheduledJobActionType.EndRaid, job.Action.Type);
+        Assert.AreEqual(false, (job.Action as ScheduledEndRaidJob)?.IsLarge);
     }
 
     [TestMethod()]

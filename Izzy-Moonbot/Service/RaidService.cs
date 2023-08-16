@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
+using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Settings;
 
@@ -16,9 +17,10 @@ public class RaidService
     private readonly Config _config;
     private readonly State _state;
     private readonly GeneralStorage _generalStorage;
+    private readonly ScheduleService _schedule;
 
     public RaidService(Config config, ModService modService, LoggingService log, ModLoggingService modLog,
-        State state, GeneralStorage generalStorage)
+        State state, GeneralStorage generalStorage, ScheduleService schedule)
     {
         _config = config;
         _modService = modService;
@@ -26,18 +28,29 @@ public class RaidService
         _modLog = modLog;
         _state = state;
         _generalStorage = generalStorage;
+        _schedule = schedule;
+
+        // We want RaidService to schedule a job that runs RaidService code. That's a circular dependency, so
+        // our only option is two-phase initialization by passing a delegate/callback after normal construction.
+        _schedule.RegisterEndRaidCallback(async (ScheduledEndRaidJob job, IIzzyGuild guild) =>
+        {
+            if (job.IsLarge)
+                await EndLargeRaid(guild);
+            else
+                await EndSmallRaid(guild);
+        });
     }
 
-    public void RegisterEvents(DiscordSocketClient client)
+    public void RegisterEvents(IIzzyClient client)
     {
         client.UserJoined += (member) => Task.Run(async () => { await ProcessMemberJoin(member); });
     }
 
     // This method proactively checks that the joins still are recent and updates _state if any expired,
     // so call sites should only call this once and reuse the result as much as possible.
-    public List<SocketGuildUser> GetRecentJoins(SocketGuild guild)
+    public List<IIzzyGuildUser> GetRecentJoins(IIzzyGuild guild)
     {
-        var recentGuildUsers = new List<SocketGuildUser>();
+        var recentGuildUsers = new List<IIzzyGuildUser>();
         var expiredUserIds = new List<ulong>();
 
         _state.RecentJoins.ForEach(userId =>
@@ -46,7 +59,7 @@ public class RaidService
 
             if (member is not { JoinedAt: { } })
                 expiredUserIds.Add(userId);
-            else if (member.JoinedAt.Value.AddSeconds(_config.RecentJoinDecay) < DateTimeOffset.Now)
+            else if (member.JoinedAt.Value.AddSeconds(_config.RecentJoinDecay) < DateTimeHelper.UtcNow)
                 expiredUserIds.Add(userId);
             else
                 recentGuildUsers.Add(member);
@@ -70,7 +83,7 @@ public class RaidService
     public static string ALARMS_ACTIVE = "Any future spike in recent joins will generate a new alarm.";
     public static string PLEASE_ASSOFF = "Please run `.assoff` when you believe the raid is over, so I know to start alarming on join spikes again.";
 
-    private string RaidersDescription(List<SocketGuildUser> recentJoins)
+    private string RaidersDescription(List<IIzzyGuildUser> recentJoins)
     {
         var raiderDescriptions = new List<string>();
         recentJoins.ForEach(member =>
@@ -81,7 +94,7 @@ public class RaidService
         });
         return string.Join($"\n", raiderDescriptions);
     }
-    private async Task TripSmallRaid(SocketGuild guild, List<SocketGuildUser> recentJoins)
+    private async Task TripSmallRaid(IIzzyGuild guild, List<IIzzyGuildUser> recentJoins)
     {
         _log.Log("Small raid detected!");
 
@@ -104,41 +117,46 @@ public class RaidService
         await FileHelper.SaveGeneralStorageAsync(_generalStorage);
 
         if (_config.SmallRaidDecay != null)
-            _ = Task.Run(async () =>
-            {
-                await Task.Delay(Convert.ToInt32(_config.SmallRaidDecay * 60 * 1000));
-                if (_config.SmallRaidDecay == null) return; // Was disabled
-
-                // Either someone ran .assoff or this escalated to a large raid. Either way, we don't need a "small raid is over" message.
-                if (_generalStorage.CurrentRaidMode != RaidMode.Small) return;
-
-                var recentJoinCount = GetRecentJoins(guild).Count;
-                if (recentJoinCount >= _config.SmallRaidSize)
-                {
-                    _log.Log("Small raid is ongoing, inform mods it will have to be ended manually");
-
-                    var msg = TIME_SINCE_SMALL() + ", " + BUT_RECENT() + CONSIDER_ONGOING + "\n\n" + PLEASE_ASSOFF;
-                    await _modLog.CreateModLog(guild).SetContent(msg).SetFileLogContent(msg).Send();
-                }
-                else if (_generalStorage.ManualRaidSilence)
-                {
-                    var msg = TIME_SINCE_SMALL() + ", but `.ass` was run in the meantime" + CONSIDER_ONGOING + "\n\n" + PLEASE_ASSOFF;
-                    await _modLog.CreateModLog(guild).SetContent(msg).SetFileLogContent(msg).Send();
-                }
-                else
-                {
-                    _log.Log("Ending small raid");
-
-                    _generalStorage.CurrentRaidMode = RaidMode.None;
-                    await FileHelper.SaveGeneralStorageAsync(_generalStorage);
-
-                    var msg = TIME_SINCE_SMALL() + ", " + AND_ONLY_RECENT() + CONSIDER_OVER + " " + ALARMS_ACTIVE;
-                    await _modLog.CreateModLog(guild).SetContent(msg).SetFileLogContent(msg).Send();
-                }
-            });
+        {
+            var action = new ScheduledEndRaidJob(false /* isLarge */);
+            var job = new ScheduledJob(DateTimeHelper.UtcNow, DateTimeHelper.UtcNow.AddMinutes((double)_config.SmallRaidDecay), action);
+            await _schedule.CreateScheduledJob(job);
+        }
     }
 
-    private async Task TripLargeRaid(SocketGuild guild, List<SocketGuildUser> recentJoins)
+    public async Task EndSmallRaid(IIzzyGuild guild)
+    {
+        if (_config.SmallRaidDecay == null) return; // Was disabled
+
+        // Either someone ran .assoff or this escalated to a large raid. Either way, we don't need a "small raid is over" message.
+        if (_generalStorage.CurrentRaidMode != RaidMode.Small) return;
+
+        var recentJoinCount = GetRecentJoins(guild).Count;
+        if (recentJoinCount >= _config.SmallRaidSize)
+        {
+            _log.Log("Small raid is ongoing, inform mods it will have to be ended manually");
+
+            var msg = TIME_SINCE_SMALL() + ", " + BUT_RECENT() + CONSIDER_ONGOING + "\n\n" + PLEASE_ASSOFF;
+            await _modLog.CreateModLog(guild).SetContent(msg).SetFileLogContent(msg).Send();
+        }
+        else if (_generalStorage.ManualRaidSilence)
+        {
+            var msg = TIME_SINCE_SMALL() + ", but `.ass` was run in the meantime" + CONSIDER_ONGOING + "\n\n" + PLEASE_ASSOFF;
+            await _modLog.CreateModLog(guild).SetContent(msg).SetFileLogContent(msg).Send();
+        }
+        else
+        {
+            _log.Log("Ending small raid");
+
+            _generalStorage.CurrentRaidMode = RaidMode.None;
+            await FileHelper.SaveGeneralStorageAsync(_generalStorage);
+
+            var msg = TIME_SINCE_SMALL() + ", " + AND_ONLY_RECENT() + CONSIDER_OVER + " " + ALARMS_ACTIVE;
+            await _modLog.CreateModLog(guild).SetContent(msg).SetFileLogContent(msg).Send();
+        }
+    }
+
+    private async Task TripLargeRaid(IIzzyGuild guild, List<IIzzyGuildUser> recentJoins)
     {
         _log.Log("Large raid detected!");
 
@@ -166,46 +184,51 @@ public class RaidService
         await _modLog.CreateModLog(guild).SetContent(msg).SetFileLogContent(msg).Send();
 
         if (_config.LargeRaidDecay != null)
-            _ = Task.Run(async () =>
-            {
-                await Task.Delay(Convert.ToInt32(_config.LargeRaidDecay * 60 * 1000));
-                if (_config.SmallRaidDecay == null) return; // Was disabled
-
-                // Someone must have run.assoff already, so we don't need a "large raid is over" message.
-                if (_generalStorage.CurrentRaidMode != RaidMode.Large) return;
-
-                // Rather than "decay" separately from large to small and then to none, it's simpler to just say
-                // a large raid doesn't end until we've fallen below the threshhold for any size of raid.
-                var recentJoinCount = GetRecentJoins(guild).Count;
-                if (recentJoinCount >= _config.SmallRaidSize)
-                {
-                    _log.Log("Large raid is ongoing, inform mods it will have to be ended manually");
-
-                    var msg = TIME_SINCE_LARGE() + ", " + BUT_RECENT() + CONSIDER_ONGOING + "\n\n" + PLEASE_ASSOFF;
-                    await _modLog.CreateModLog(guild).SetContent(msg).SetFileLogContent(msg).Send();
-                }
-                else if (_generalStorage.ManualRaidSilence)
-                {
-                    var msg = TIME_SINCE_LARGE() + ", but `.ass` was run in the meantime" + CONSIDER_ONGOING + "\n\n" + PLEASE_ASSOFF;
-                    await _modLog.CreateModLog(guild).SetContent(msg).SetFileLogContent(msg).Send();
-                }
-                else
-                {
-                    _log.Log("Ending large raid");
-
-                    _generalStorage.CurrentRaidMode = RaidMode.None;
-                    await FileHelper.SaveGeneralStorageAsync(_generalStorage);
-
-                    _config.AutoSilenceNewJoins = false;
-                    await FileHelper.SaveConfigAsync(_config);
-
-                    var msg = TIME_SINCE_LARGE() + ", " + AND_ONLY_RECENT() + CONSIDER_OVER + " " + ALARMS_ACTIVE;
-                    await _modLog.CreateModLog(guild).SetContent(msg).SetFileLogContent(msg).Send();
-                }
-            });
+        {
+            var action = new ScheduledEndRaidJob(true /* isLarge */);
+            var job = new ScheduledJob(DateTimeHelper.UtcNow, DateTimeHelper.UtcNow.AddMinutes((double)_config.LargeRaidDecay), action);
+            await _schedule.CreateScheduledJob(job);
+        }
     }
 
-    public async Task ProcessMemberJoin(SocketGuildUser member)
+    public async Task EndLargeRaid(IIzzyGuild guild)
+    {
+        if (_config.LargeRaidDecay == null) return; // Was disabled
+
+        // Someone must have run.assoff already, so we don't need a "large raid is over" message.
+        if (_generalStorage.CurrentRaidMode != RaidMode.Large) return;
+
+        // Rather than "decay" separately from large to small and then to none, it's simpler to just say
+        // a large raid doesn't end until we've fallen below the threshhold for any size of raid.
+        var recentJoinCount = GetRecentJoins(guild).Count;
+        if (recentJoinCount >= _config.SmallRaidSize)
+        {
+            _log.Log("Large raid is ongoing, inform mods it will have to be ended manually");
+
+            var msg = TIME_SINCE_LARGE() + ", " + BUT_RECENT() + CONSIDER_ONGOING + "\n\n" + PLEASE_ASSOFF;
+            await _modLog.CreateModLog(guild).SetContent(msg).SetFileLogContent(msg).Send();
+        }
+        else if (_generalStorage.ManualRaidSilence)
+        {
+            var msg = TIME_SINCE_LARGE() + ", but `.ass` was run in the meantime" + CONSIDER_ONGOING + "\n\n" + PLEASE_ASSOFF;
+            await _modLog.CreateModLog(guild).SetContent(msg).SetFileLogContent(msg).Send();
+        }
+        else
+        {
+            _log.Log("Ending large raid");
+
+            _generalStorage.CurrentRaidMode = RaidMode.None;
+            await FileHelper.SaveGeneralStorageAsync(_generalStorage);
+
+            _config.AutoSilenceNewJoins = false;
+            await FileHelper.SaveConfigAsync(_config);
+
+            var msg = TIME_SINCE_LARGE() + ", " + AND_ONLY_RECENT() + CONSIDER_OVER + " " + ALARMS_ACTIVE;
+            await _modLog.CreateModLog(guild).SetContent(msg).SetFileLogContent(msg).Send();
+        }
+    }
+
+    public async Task ProcessMemberJoin(IIzzyGuildUser member)
     {
         if (member.Guild.Id != DiscordHelper.DefaultGuild()) return; // Don't process non-default server.
         if (!_config.RaidProtectionEnabled) return;

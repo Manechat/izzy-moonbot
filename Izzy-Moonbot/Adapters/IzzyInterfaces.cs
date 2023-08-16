@@ -19,6 +19,8 @@ public interface IIzzyGuildUser : IIzzyUser
     string? Nickname { get; }
     int Hierarchy => DisplayName.Contains("Izzy") ? 1 : 0; // not used enough to be worth accurately imitating in tests
     IReadOnlyCollection<IIzzyRole> Roles { get; }
+    IIzzyGuild Guild { get; }
+    DateTimeOffset? JoinedAt { get; }
 
     Task AddRoleAsync(ulong roleId, RequestOptions? requestOptions);
     Task AddRolesAsync(IEnumerable<ulong> roles, RequestOptions? requestOptions);
@@ -164,6 +166,7 @@ public interface IIzzyClient
     event Func<IIzzySocketMessageComponent, Task> ButtonExecuted;
 
     event Func<ulong, IIzzyMessage?, ulong, IIzzyMessageChannel?, Task>? MessageDeleted;
+    event Func<IIzzyGuildUser, Task> UserJoined;
 
     IIzzyContext MakeContext(IIzzyUserMessage message);
     Task<IIzzyUser?> GetUserAsync(ulong userId);

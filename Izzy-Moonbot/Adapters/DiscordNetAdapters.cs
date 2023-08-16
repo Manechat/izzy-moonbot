@@ -47,15 +47,15 @@ public class SocketGuildUserAdapter : IIzzyGuildUser
     public string DisplayName { get => _user.DisplayName; }
     public int Hierarchy { get => _user.Hierarchy; }
     public bool IsBot => _user.IsBot;
-    public async Task<IIzzyUserMessage> SendMessageAsync(string text) =>
-        new DiscordNetUserMessageAdapter(await _user.SendMessageAsync(text));
+    public IReadOnlyCollection<IIzzyRole> Roles => _user.Roles.Select(r => new DiscordNetRoleAdapter(r)).ToList();
+    public IIzzyGuild Guild { get => new SocketGuildAdapter(_user.Guild); }
+    public DateTimeOffset? JoinedAt { get => _user.JoinedAt; }
 
     public override string? ToString()
     {
         return _user.ToString();
     }
 
-    public IReadOnlyCollection<IIzzyRole> Roles => _user.Roles.Select(r => new DiscordNetRoleAdapter(r)).ToList();
     public async Task AddRoleAsync(ulong roleId, RequestOptions? requestOptions) =>
         await _user.AddRoleAsync(roleId, requestOptions);
     public async Task AddRolesAsync(IEnumerable<ulong> roles, RequestOptions? requestOptions) =>
@@ -389,6 +389,8 @@ public class DiscordSocketClientAdapter : IIzzyClient
                 channel.Id,
                 channel.Value is null ? null : new DiscordNetMessageChannelAdapter(channel.Value)
             );
+        _client.UserJoined += async (member) =>
+            UserJoined?.Invoke(new SocketGuildUserAdapter(member));
     }
 
     public IIzzyUser CurrentUser { get => new DiscordNetUserAdapter(_client.CurrentUser); }
@@ -401,6 +403,7 @@ public class DiscordSocketClientAdapter : IIzzyClient
     public event Func<string?, IIzzyMessage, IIzzyMessageChannel, Task>? MessageUpdated;
     public event Func<IIzzySocketMessageComponent, Task>? ButtonExecuted;
     public event Func<ulong, IIzzyMessage?, ulong, IIzzyMessageChannel?, Task>? MessageDeleted;
+    public event Func<IIzzyGuildUser, Task>? UserJoined;
 
     public IIzzyContext MakeContext(IIzzyUserMessage message) =>
         new ClientAndMessageContextAdapter(this, message);

@@ -327,9 +327,9 @@ public class ConfigCommandTests
     [TestMethod()]
     public async Task ConfigCommand_EditEveryItemAsync()
     {
-        var izzyHerself = new TestUser("Izzy Moonbot", 1);
-        var sunny = new TestUser("Sunny", 2);
-        var users = new List<TestUser> { izzyHerself, sunny };
+        var izzyHerself = new StubGuildUser("Izzy Moonbot", 1);
+        var sunny = new StubGuildUser("Sunny", 2);
+        var users = new List<StubGuildUser> { izzyHerself, sunny };
 
         var alicorn = new TestRole("Alicorn", 1);
         var pony = new TestRole("Pony", 2);

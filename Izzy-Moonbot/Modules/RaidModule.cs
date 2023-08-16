@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord.Commands;
+using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Attributes;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Service;
@@ -39,7 +40,7 @@ public class RaidModule : ModuleBase<SocketCommandContext>
     [DevCommand(Group = "Permissions")]
     public async Task AssAsync()
     {
-        var recentJoins = _raidService.GetRecentJoins(Context.Guild);
+        var recentJoins = _raidService.GetRecentJoins(new SocketGuildAdapter(Context.Guild));
         try
         {
             await _modService.SilenceUsers(recentJoins, await DiscordHelper.AuditLogForCommand(Context));
@@ -92,7 +93,7 @@ public class RaidModule : ModuleBase<SocketCommandContext>
     [DevCommand(Group = "Permissions")]
     public async Task GetRecentJoinsAsync()
     {
-        var recentJoins = _raidService.GetRecentJoins(Context.Guild);
+        var recentJoins = _raidService.GetRecentJoins(new SocketGuildAdapter(Context.Guild));
 
         await ReplyAsync($"The following users are recent joins:\n" +
             "```\n" +

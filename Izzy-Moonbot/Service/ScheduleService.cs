@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord;
@@ -12,7 +11,6 @@ using Izzy_Moonbot.Settings;
 using Microsoft.Extensions.Logging;
 using static Izzy_Moonbot.Settings.ScheduledJobRepeatType;
 using static Izzy_Moonbot.Adapters.IIzzyClient;
-using static System.Collections.Specialized.BitVector32;
 
 namespace Izzy_Moonbot.Service;
 
@@ -29,6 +27,7 @@ public class ScheduleService
     private readonly List<ScheduledJob> _scheduledJobs;
 
     private bool _alreadyInitiated;
+    private Action<ScheduledEndRaidJob, IIzzyGuild>? _endRaidCallback = null;
 
     public ScheduleService(Config config, ModService mod, ModLoggingService modLogging, LoggingService logger, List<ScheduledJob> scheduledJobs)
     {
@@ -43,6 +42,8 @@ public class ScheduleService
     {
         client.ButtonExecuted += async (component) => await DiscordHelper.LeakOrAwaitTask(ButtonEvent(component));
     }
+
+    public void RegisterEndRaidCallback(Action<ScheduledEndRaidJob, IIzzyGuild>? callback) => _endRaidCallback = callback;
 
     public void BeginUnicycleLoop(IIzzyClient client)
     {
@@ -114,6 +115,9 @@ public class ScheduleService
                         break;
                     case ScheduledBoredCommandsJob boredCommandsJob:
                         await Unicycle_BoredCommands(boredCommandsJob, defaultGuild, client);
+                        break;
+                    case ScheduledEndRaidJob endRaidJob:
+                        await Unicycle_EndRaid(endRaidJob, defaultGuild, client);
                         break;
                     default:
                         throw new NotSupportedException($"{job.Action.GetType().Name} is currently not supported.");
@@ -535,5 +539,16 @@ public class ScheduleService
 
         var nextJob = new ScheduledJob(DateTimeHelper.UtcNow, nextExecuteTime, new ScheduledBoredCommandsJob(), ScheduledJobRepeatType.None);
         await CreateScheduledJob(nextJob);
+    }
+
+    public async Task Unicycle_EndRaid(ScheduledEndRaidJob job, IIzzyGuild guild, IIzzyClient _client)
+    {
+        if (_endRaidCallback == null)
+        {
+            _logger.Log($"_endRaidCallback was never registered. Unable to execute end raid job.");
+            return;
+        }
+
+        _endRaidCallback(job, guild);
     }
 }

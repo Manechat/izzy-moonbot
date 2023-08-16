@@ -170,6 +170,7 @@ public static class FileHelper
                     fileJson[i]["Action"]!["Content"]!.Value<string>()!),
                 4 => new ScheduledBannerRotationJob(),
                 5 => new ScheduledBoredCommandsJob(),
+                6 => new ScheduledEndRaidJob(fileJson[i]["Action"]!["IsLarge"]!.Value<bool>()),
                 _ => throw new NotImplementedException("This scheduled job type is not implemented.")
             };
         }

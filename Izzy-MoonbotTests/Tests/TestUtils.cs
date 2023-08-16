@@ -1,4 +1,4 @@
-﻿
+
 using Discord;
 using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Describers;
@@ -14,14 +14,14 @@ public static class TestUtils
 {
     public static DateTimeOffset FiMEpoch = new DateTimeOffset(2010, 10, 10, 0, 0, 0, TimeSpan.Zero);
 
-    public static (Config, ConfigDescriber, (TestUser, TestUser), List<TestRole>, (StubChannel, StubChannel, StubChannel), StubGuild, StubClient) DefaultStubs()
+    public static (Config, ConfigDescriber, (StubGuildUser, StubGuildUser), List<TestRole>, (StubChannel, StubChannel, StubChannel), StubGuild, StubClient) DefaultStubs()
     {
-        var izzyHerself = new TestUser("Izzy Moonbot", 1);
-        var sunny = new TestUser("Sunny", 2);
-        var zipp = new TestUser("Zipp", 3);
-        var pipp = new TestUser("Pipp", 4);
-        var hitch = new TestUser("Hitch", 5);
-        var users = new List<TestUser> { izzyHerself, sunny, zipp, pipp, hitch };
+        var izzyHerself = new StubGuildUser("Izzy Moonbot", 1);
+        var sunny = new StubGuildUser("Sunny", 2);
+        var zipp = new StubGuildUser("Zipp", 3);
+        var pipp = new StubGuildUser("Pipp", 4);
+        var hitch = new StubGuildUser("Hitch", 5);
+        var users = new List<StubGuildUser> { izzyHerself, sunny, zipp, pipp, hitch };
 
         var alicorn = new TestRole("Alicorn", 1);
         var roles = new List<TestRole> { alicorn, new TestRole("Pegasus", 2) };
