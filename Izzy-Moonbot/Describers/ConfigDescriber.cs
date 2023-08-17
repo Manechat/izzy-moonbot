@@ -232,15 +232,17 @@ public class ConfigDescriber
         // Witty settings
         _config.Add("Witties",
             new ConfigItem(ConfigItemType.StringDictionary,
-                "A map from message patterns to automated Izzy responses. Also known as an 'autoresponder.'" +
-                    " For example, `.config Witties set \"izzy\" \"hi!\"` will make Izzy post \"hi!\" whenever any non-bot posts" +
+                "A map from message patterns to automated Izzy responses. Also known as an 'autoresponder.'\n" +
+                " For example, `.config Witties set \"izzy\" \"hi!\"` will make Izzy post \"hi!\" whenever any non-bot posts" +
                     " a message with \"izzy\" (in one of `WittyChannels`, at least `WittyCooldown` seconds after the last witty response).\n" +
+                "\n" +
                 "If the response contains `|`s, Izzy will treat it as multiple possible responses, and select one at random.\n" +
+                "\n" +
                 "There is no regex or wildcard syntax, but witty pattern matching is 'smart' or 'fuzzy' in the following ways:\n" +
-                " - case-insensitive: `izzy` matches `Izzy` and `IZZY`\n" +
-                " - some punctuation marks (,.'\"!) are optional: `hi, ponies!` matches `hi ponies`\n" +
-                " - spaces are optional and allow extra spaces: `hi izzy` matches `hiizzy` and `hi    izzy`\n" +
-                " - whole 'word' matches only: `test` matches `this is a test!` but does NOT match `testy` or `attest`",
+                "- case-insensitive: `izzy` matches `Izzy` and `IZZY`\n" +
+                "- some punctuation marks (,.'\"!) are optional: `hi, ponies!` matches `hi ponies`\n" +
+                "- spaces are optional and allow extra spaces: `hi izzy` matches `hiizzy` and `hi    izzy`\n" +
+                "- whole 'word' matches only: `test` matches `this is a test!` but does NOT match `testy` or `attest`",
                 ConfigItemCategory.Witty));
         _config.Add("WittyChannels",
             new ConfigItem(ConfigItemType.ChannelSet,
