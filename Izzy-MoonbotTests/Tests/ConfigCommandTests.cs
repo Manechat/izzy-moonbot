@@ -724,12 +724,12 @@ public class ConfigCommandTests
         TestUtils.AssertSetsAreEqual(new HashSet<string> { ".echo glitter!" }, cfg.BoredCommands);
         Assert.AreEqual("I added the following content to the `BoredCommands` string list:\n```\n.echo glitter!\n```", generalChannel.Messages.Last().Content);
 
-        // post ".config Witties set \"izzy\" \"that's my name!\""
+        // post ".config Witties set \"hi izzy\" \"that's my name!\""
         TestUtils.AssertDictionariesAreEqual(new Dictionary<string, string>(), cfg.Witties);
-        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config Witties set \"izzy\" \"that's my name!\"");
-        await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "Witties", "set \"izzy\" \"that's my name!\"");
-        TestUtils.AssertDictionariesAreEqual(new Dictionary<string, string> { { "izzy", "that's my name!" } }, cfg.Witties);
-        Assert.AreEqual("I added the following string to the `izzy` map key in the `Witties` map: `that's my name!`", generalChannel.Messages.Last().Content);
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config Witties set \"hi izzy\" \"that's my name!\"");
+        await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "Witties", "set \"hi izzy\" \"that's my name!\"");
+        TestUtils.AssertDictionariesAreEqual(new Dictionary<string, string> { { "hi izzy", "that's my name!" } }, cfg.Witties);
+        Assert.AreEqual("I added the following string to the `hi izzy` map key in the `Witties` map: `that's my name!`", generalChannel.Messages.Last().Content);
 
         // post ".config WittyChannels add <#2>"
         TestUtils.AssertSetsAreEqual(new HashSet<ulong>(), cfg.WittyChannels);
