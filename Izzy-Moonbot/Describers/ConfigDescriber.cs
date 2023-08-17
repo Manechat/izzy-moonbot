@@ -235,6 +235,7 @@ public class ConfigDescriber
                 "A map from message patterns to automated Izzy responses. Also known as an 'autoresponder.'" +
                     " For example, `.config Witties set \"izzy\" \"hi!\"` will make Izzy post \"hi!\" whenever any non-bot posts" +
                     " a message with \"izzy\" (in one of `WittyChannels`, at least `WittyCooldown` seconds after the last witty response).\n" +
+                "If the response contains `|`s, Izzy will treat it as multiple possible responses, and select one at random.\n" +
                 "There is no regex or wildcard syntax, but witty pattern matching is 'smart' or 'fuzzy' in the following ways:\n" +
                 " - case-insensitive: `izzy` matches `Izzy` and `IZZY`\n" +
                 " - some punctuation marks (,.'\"!) are optional: `hi, ponies!` matches `hi ponies`\n" +

@@ -80,8 +80,16 @@ public class MessageListener
         // If none of the witty patterns matched, do nothing
         if (match.Key == null) return;
 
-        _logger.Log($"Posting witty response \"{match.Value}\" in {message.Channel.Name}");
-        await message.Channel.SendMessageAsync(match.Value);
+        var response = match.Value;
+        if (match.Value.Contains('|'))
+        {
+            var responses = match.Value.Split('|');
+            var responseIndex = new Random().Next(responses.Count());
+            response = responses[responseIndex];
+            _logger.Log($"Witty response contained {responses.Count()} |-delimited responses. Chose response {responseIndex} at random: \"{response}\"");
+        }
+        _logger.Log($"Posting witty response \"{response}\" in {message.Channel.Name}");
+        await message.Channel.SendMessageAsync(response);
 
         _state.LastWittyResponse = DateTimeOffset.UtcNow;
     }
