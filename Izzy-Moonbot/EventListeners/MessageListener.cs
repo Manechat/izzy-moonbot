@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Discord;
 using Izzy_Moonbot.Adapters;
@@ -39,26 +40,47 @@ public class MessageListener
         if (author.Id == client.CurrentUser.Id) return; // Don't process self.
         if (author.IsBot) return; // Don't listen to bots
 
-        var content = message.Content.ToLower();
-        var match = _config.Witties.FirstOrDefault(pair => content.Contains(pair.Key.ToLower()));
-        if (match.Key == null)
-            return;
-
+        // Ignore messages outside the listed channels
         var channelId = message.Channel.Id;
-        if (!_config.WittyChannels.Contains(channelId))
-        {
-            _logger.Log($"Ignoring message {message.Id} matching witty pattern \"{match.Key}\" because it wasn't in one of the WittyChannels");
-            return;
-        }
+        if (!_config.WittyChannels.Contains(channelId)) return;
 
+        // Ignore messages posted during the cooldown
         var secondsSinceWitty = (DateTimeOffset.UtcNow - _state.LastWittyResponse).TotalSeconds;
-        if (secondsSinceWitty <= _config.WittyCooldown)
-        {
-            _logger.Log($"Ignoring message {message.Id} matching witty pattern \"{match.Key}\" because it's only been {secondsSinceWitty} seconds since the last witty response");
-            return;
-        }
+        if (secondsSinceWitty <= _config.WittyCooldown) return;
 
-        _logger.Log($"Received message {message.Id} matching witty pattern \"{match.Key}\". Posting witty response \"{match.Value}\" in {message.Channel.Name}");
+        var match = _config.Witties.FirstOrDefault(pair => {
+            var pattern = pair.Key;
+
+            // our use of regex here is an implementation detail, do not expose any regex syntax to the users
+            pattern = Regex.Escape(pattern);
+
+            // every space in the pattern is optional and matches any amount of whitespace
+            // annoyingly Regex.Escape() escapes whitespace, so we have to remember there's an extra \ before each space now
+            pattern = pattern.Replace(@"\ ", @"\s*");
+
+            // many punctuation marks in the pattern are optional (\? is deliberately kept mandatory)
+            pattern = pattern.Replace("'", "'?")
+                .Replace("\"", "\"?")
+                .Replace(",", ",?")
+                .Replace(@"\.", @"\.?")
+                .Replace("!", "!?");
+
+            // last but not least, add word boundaries
+            pattern = @$"\b{pattern}\b";
+
+            var match = new Regex(pattern, RegexOptions.IgnoreCase).Match(message.Content);
+            if (match.Success)
+                _logger.Log($"Message {message.Id} in #{message.Channel.Name} matched witty pattern \"{pair.Key}\"." +
+                    $"\nRegex implementation: \"{pattern}\"." +
+                    $"\nMatching substring: \"{match.Value}\"" +
+                    $"\nmessage.Content: \"{message.Content}\"");
+            return match.Success;
+        });
+
+        // If none of the witty patterns matched, do nothing
+        if (match.Key == null) return;
+
+        _logger.Log($"Posting witty response \"{match.Value}\" in {message.Channel.Name}");
         await message.Channel.SendMessageAsync(match.Value);
 
         _state.LastWittyResponse = DateTimeOffset.UtcNow;
