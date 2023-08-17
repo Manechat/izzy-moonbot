@@ -674,15 +674,15 @@ public class ConfigCommand
                 }
                 else if (action == "set")
                 {
-                    var key = value.Split(' ')[0].ToLower();
-                    value = value.Replace(key + " ", "");
+                    var (key, setValue) = DiscordHelper.GetArgument(value);
+                    key = key ?? "";
+                    value = setValue ?? "";
                     
                     switch (configItem.Type)
                     {
                         case ConfigItemType.StringDictionary:
                             try
                             {
-                                key = DiscordHelper.StripQuotes(key);
                                 value = DiscordHelper.StripQuotes(value);
 
                                 (string, string?, string?) result = ("", null, null);
