@@ -89,8 +89,8 @@ public class RaidServiceTests
         Assert.AreEqual(1, modChat.Messages.Count);
         Assert.AreEqual(3, state.RecentJoins.Count);
 
-        // Raid's over after 5 minutes.
-        DateTimeHelper.FakeUtcNow = DateTimeHelper.FakeUtcNow?.AddMinutes(1);
+        // Raid's over after 5 minutes, and now it's been 6 minutes.
+        DateTimeHelper.FakeUtcNow = DateTimeHelper.FakeUtcNow?.AddMinutes(2);
         await ss.Unicycle(client);
         Assert.AreEqual(0, ss.GetScheduledJobs().Count);
         Assert.AreEqual(2, modChat.Messages.Count);
