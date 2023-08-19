@@ -48,6 +48,13 @@ public class MessageListener
         var secondsSinceWitty = (DateTimeOffset.UtcNow - _state.LastWittyResponse).TotalSeconds;
         if (secondsSinceWitty <= _config.WittyCooldown) return;
 
+        // Ignore messages that are possible commands
+        if (
+            message.Content.StartsWith(_config.Prefix) &&
+            message.Content.Length > 1 &&
+            !(message.Content.StartsWith($"{_config.Prefix}{_config.Prefix}"))
+        ) return;
+
         var match = _config.Witties.FirstOrDefault(pair => {
             var pattern = pair.Key;
 
