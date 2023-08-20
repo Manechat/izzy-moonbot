@@ -62,7 +62,11 @@ public class ConfigCommandTests
         var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config misc");
         await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "misc", "");
 
-        Assert.IsTrue(generalChannel.Messages.Last().Content.Contains("Here's a list of all the config items I could find in the Misc category!"));
+        StringAssert.Contains(generalChannel.Messages.Last().Content, "Here's a list of all the config items I could find in the Misc category!");
+        StringAssert.Contains(generalChannel.Messages.Last().Content, "\nUnicycleInterval = 100\n");
+        StringAssert.Contains(generalChannel.Messages.Last().Content, "\nMentionResponseEnabled = False\n");
+        StringAssert.Contains(generalChannel.Messages.Last().Content, "\nDiscordActivityName = you all soon\n");
+        StringAssert.Contains(generalChannel.Messages.Last().Content, "\nAliases\n");
 
         // TODO: pagination testing
     }
