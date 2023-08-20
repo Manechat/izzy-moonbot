@@ -773,10 +773,51 @@ public class ConfigCommand
                             break;
                     }
                 }
+                else if (action == "clear")
+                {
+                    switch (configItem.Type)
+                    {
+                        case ConfigItemType.StringDictionary:
+                            try
+                            {
+                                var output = await ConfigHelper.ClearDictionary<string>(config, configItemKey);
+
+                                await context.Channel.SendMessageAsync(
+                                    $"I've cleared the `{configItemKey}` string map, so it's now empty.\n\nIt used to contain:```\n{string.Join('\n', output)}\n```",
+                                    allowedMentions: AllowedMentions.None);
+                            }
+                            catch (ArgumentException)
+                            {
+                                await context.Channel.SendMessageAsync(
+                                    $"I couldn't clear the `{configItemKey}` map because the `{configItemKey}` config item isn't a map. There is likely a misconfiguration in the config item describer.");
+                            }
+
+                            break;
+                        case ConfigItemType.StringSetDictionary:
+                            try
+                            {
+                                var output = await ConfigHelper.ClearDictionary<HashSet<string>>(config, configItemKey);
+
+                                await context.Channel.SendMessageAsync(
+                                    $"I've cleared the `{configItemKey}` map, so it's now empty.\n\nIt used to contain:\n{string.Join('\n', output.Select(r => $"<@&{r}>"))}",
+                                    allowedMentions: AllowedMentions.None);
+                            }
+                            catch (ArgumentException)
+                            {
+                                await context.Channel.SendMessageAsync(
+                                    $"I couldn't clear the `{configItemKey}` map because the `{configItemKey}` config item isn't a map. There is likely a misconfiguration in the config item describer.");
+                            }
+
+                            break;
+                        default:
+                            await context.Channel.SendMessageAsync("I seem to have encountered a setting type that I do not know about.");
+                            break;
+                    }
+                }
                 else
                 {
                     await context.Channel.SendMessageAsync(
-                        "The action you wanted to take isn't supported for this type of config item, the available actions are `list`, `get`, `set`, and `delete`.");
+                        "The action you wanted to take isn't supported for this type of config item, the available actions are `list`, `get`, `set`, `delete` and `clear`.");
                     return;
                 }
             }
@@ -1031,7 +1072,8 @@ public class ConfigCommand
                        $"Run `{config.Prefix}config {configItemKey} list` to view a list of keys in this map.\n" +
                        $"Run `{config.Prefix}config {configItemKey} get <key>` to get the current value of a key in this map.\n" +
                        $"Run `{config.Prefix}config {configItemKey} set <key> <value>` to set a key to a value in this map, creating the key if need be.\n" +
-                       $"Run `{config.Prefix}config {configItemKey} delete <key>` to delete a key from this map.";
+                       $"Run `{config.Prefix}config {configItemKey} delete <key>` to delete a key from this map.\n" +
+                       $"Run `{config.Prefix}config {configItemKey} clear` to clear this map of all values.";
             case ConfigItemType.StringSetDictionary:
                 return $"**{configItemKey}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category\n" +
                        $"*{configItem.Description}*\n" +
@@ -1039,7 +1081,8 @@ public class ConfigCommand
                        $"Run `{config.Prefix}config {configItemKey} get <key>` to get the values of a key in this map.\n" +
                        $"Run `{config.Prefix}config {configItemKey} add <key> <value>` to add a value to a key in this map, creating the key if need be.\n" +
                        $"Run `{config.Prefix}config {configItemKey} deleteitem <key> <value>` to remove a value from a key from this map.\n" +
-                       $"Run `{config.Prefix}config {configItemKey} deletelist <key>` to delete a key from this map.";
+                       $"Run `{config.Prefix}config {configItemKey} deletelist <key>` to delete a key from this map.\n" +
+                       $"Run `{config.Prefix}config {configItemKey} clear` to clear this map of all values.";
             default:
                 return "I seem to have encountered a setting type that I do not know about.";
         }
