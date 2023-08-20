@@ -322,6 +322,15 @@ public class ConfigCommandTests
         StringAssert.Contains(description, "Aliases");
         StringAssert.Contains(description, "I removed the");
         StringAssert.Contains(description, ": `echogeneral`");
+
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config Aliases clear");
+        await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "Aliases", "clear");
+        TestUtils.AssertDictionariesAreEqual(cfg.Aliases, new Dictionary<string, string> { });
+
+        description = generalChannel.Messages.Last().Content;
+        StringAssert.Contains(description, "Aliases");
+        StringAssert.Contains(description, "I've cleared");
+        StringAssert.Contains(description, $"```\n[moonlaser, addquote theothermoon]\n```");
     }
 
     [TestMethod()]

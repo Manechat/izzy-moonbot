@@ -614,6 +614,26 @@ public static class ConfigHelper
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config!");
     }
 
+    public static async Task<IDictionary<string, VALUE>> ClearDictionary<VALUE>(Config settings, string key)
+    {
+        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        {
+            var configValue = pinfo.GetValue(settings);
+            if (configValue is IDictionary<string, VALUE> dict)
+            {
+                var value = new Dictionary<string, VALUE>(dict);
+                dict.Clear();
+
+                pinfo.SetValue(settings, dict);
+                await FileHelper.SaveConfigAsync(settings);
+                return value;
+            }
+            throw new ArgumentException($"'{key}' is not a Dictionary.");
+        }
+
+        throw new KeyNotFoundException($"Cannot set a nonexistent value ('{key}') from Config!");
+    }
+
     public static async Task<(string, string?, string)> SetStringDictionaryValue(Config settings, string key,
         string dictionaryKey, string value)
     {
