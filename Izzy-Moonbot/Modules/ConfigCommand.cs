@@ -68,12 +68,31 @@ public class ConfigCommand
                 // .config <category>
                 var category = configCategory.Value;
 
-                var itemList = configDescriber.GetSettableConfigItemsByCategory(category);
+                var itemNameList = configDescriber.GetSettableConfigItemsByCategory(category);
+
+                var itemShortDescriptionsList = itemNameList.Select(itemName => {
+                    var configItem = configDescriber.GetItem(itemName);
+                    if (configItem == null)
+                        throw new InvalidOperationException($"Failed to get configItem for key {itemName}");
+
+                    switch (configItem.Type)
+                    {
+                        case ConfigItemType.String: case ConfigItemType.Char: case ConfigItemType.Boolean:
+                        case ConfigItemType.Integer: case ConfigItemType.UnsignedInteger: case ConfigItemType.Double:
+                        case ConfigItemType.Enum: case ConfigItemType.Role: case ConfigItemType.Channel:
+                            return itemName + " = " + ConfigHelper.GetValue(config, itemName);
+                        case ConfigItemType.StringSet: case ConfigItemType.RoleSet: case ConfigItemType.ChannelSet:
+                        case ConfigItemType.StringDictionary: case ConfigItemType.StringSetDictionary:
+                            return itemName;
+                        default:
+                            throw new InvalidOperationException($"I seem to have encountered a setting type that I do not know about.");
+                    }
+                }).ToList();
 
                 PaginationHelper.PaginateIfNeededAndSendMessage(
                     context,
                     $"Hii!! Here's a list of all the config items I could find in the {configDescriber.CategoryToString(category)} category!",
-                    itemList,
+                    itemShortDescriptionsList,
                     $"Run `{config.Prefix}config <item>` to view information about an item! Please note that config items are *case sensitive*."
                 );
                 return;
