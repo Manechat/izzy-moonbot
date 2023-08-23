@@ -338,7 +338,7 @@ public static class DiscordHelper
         return $"Command `{context.Message.Content}` " +
             $"was run by {DisplayName(user, context.Guild)} ({user.Username}/{user.Id}) " +
             $"in #{channel.Name} (<#{channel.Id}>) " +
-            $"at {now} (<t:{now.ToUnixTimeMilliseconds()}>)";
+            $"at {now} (<t:{now.ToUnixTimeSeconds()}>)";
     }
 
     // For a GuildUser, the .DisplayName property appears to use
