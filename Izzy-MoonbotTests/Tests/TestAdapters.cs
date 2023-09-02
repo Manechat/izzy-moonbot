@@ -226,6 +226,7 @@ public class TestAttachment : IAttachment
     public bool Ephemeral => throw new NotImplementedException();
     public string Description => _fileAttachment.Description;
     public string ContentType => throw new NotImplementedException();
+    public AttachmentFlags Flags => throw new NotImplementedException();
     double? IAttachment.Duration => throw new NotImplementedException();
     string IAttachment.Waveform => throw new NotImplementedException();
 }
