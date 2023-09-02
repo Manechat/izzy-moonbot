@@ -27,7 +27,7 @@ public class ScheduleService
     private readonly List<ScheduledJob> _scheduledJobs;
 
     private bool _alreadyInitiated;
-    private Action<ScheduledEndRaidJob, IIzzyGuild>? _endRaidCallback = null;
+    private Func<ScheduledEndRaidJob, IIzzyGuild, Task>? _endRaidCallback = null;
 
     public ScheduleService(Config config, ModService mod, ModLoggingService modLogging, LoggingService logger, List<ScheduledJob> scheduledJobs)
     {
@@ -43,7 +43,7 @@ public class ScheduleService
         client.ButtonExecuted += async (component) => await DiscordHelper.LeakOrAwaitTask(ButtonEvent(component));
     }
 
-    public void RegisterEndRaidCallback(Action<ScheduledEndRaidJob, IIzzyGuild>? callback) => _endRaidCallback = callback;
+    public void RegisterEndRaidCallback(Func<ScheduledEndRaidJob, IIzzyGuild, Task>? callback) => _endRaidCallback = callback;
 
     public void BeginUnicycleLoop(IIzzyClient client)
     {
@@ -549,6 +549,6 @@ public class ScheduleService
             return;
         }
 
-        _endRaidCallback(job, guild);
+        await _endRaidCallback(job, guild);
     }
 }
