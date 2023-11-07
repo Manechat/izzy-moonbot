@@ -401,9 +401,9 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
     [ModCommand(Group = "Permissions")]
     [DevCommand(Group = "Permissions")]
     [Parameter("role", ParameterType.Role, "The role to assign.")]
-    [Parameter("user", ParameterType.UnambiguousUser, "The user to assign the role.")]
     [Parameter("duration", ParameterType.DateTime, "How long the role should last, e.g. \"2 weeks\" or \"6 months\". Omit for an indefinite role assignment.", true)]
-    [Example(".assignrole @Best Pony @Izzy Moonbot 24 hours")]
+    [Parameter("user", ParameterType.UnambiguousUser, "The user to assign the role.")]
+    [Example(".assignrole @Best Pony 24 hours @Izzy Moonbot")]
     public async Task AssignRoleCommandAsync(
         [Remainder] string argsString = "")
     {
@@ -430,28 +430,38 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
         }
         var role = context.Guild?.GetRole(roleId);
 
-        if (ParseHelper.TryParseUnambiguousUser(argsAfterRole, out var userErrorString) is not var (userId, argsAfterUser))
+        ParseDateTimeResult? time = null;
+        string? argsAfterTime = null;
+        if (argsAfterRole.Trim() != "")
         {
-            await Context.Channel.SendMessageAsync($"Failed to get a user id from the second argument: {userErrorString}");
+            var timeResult = ParseHelper.TryParseDateTime(argsAfterRole, out var parseError);
+            if (timeResult is null)
+            {
+                argsAfterTime = argsAfterRole;
+            }
+            else
+            {
+                time = timeResult?.Item1;
+                argsAfterTime = timeResult?.Item2;
+                if (time?.RepeatType is not ScheduledJobRepeatType.None)
+                {
+                    await context.Channel.SendMessageAsync("I can't assign a role repeatedly! Please give me a time that isn't repeating.");
+                    return;
+                }
+            }
+        }
+
+        if (argsAfterTime is null)
+        {
+            await context.Channel.SendMessageAsync("I need a user to assign the role to.");
+            return;
+        }
+        if (ParseHelper.TryParseUnambiguousUser(argsAfterTime, out var userErrorString) is not var (userId, argsAfterUser))
+        {
+            await Context.Channel.SendMessageAsync($"Failed to get a user id from the last argument: {userErrorString}");
             return;
         }
         var maybeMember = context.Guild?.GetUser(userId);
-
-        ParseDateTimeResult? time = null;
-        if (argsAfterUser.Trim() != "")
-        {
-            time = ParseHelper.TryParseDateTime(argsAfterUser, out var parseError)?.Item1;
-            if (time is null)
-            {
-                await Context.Channel.SendMessageAsync($"Failed to comprehend time: {parseError}");
-                return;
-            }
-            if (time.RepeatType is not ScheduledJobRepeatType.None)
-            {
-                await context.Channel.SendMessageAsync("I can't assign a role repeatedly! Please give me a time that isn't repeating.");
-                return;
-            }
-        }
 
         if (maybeMember is IIzzyGuildUser member)
         {

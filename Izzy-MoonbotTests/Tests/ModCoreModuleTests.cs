@@ -148,8 +148,8 @@ public class ModCoreModuleTests
 
         // .assignrole with duration
 
-        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, $".assignrole <@&{alicornId}> <@{pippId}> 5 minutes");
-        await mcm.TestableAssignRoleCommandAsync(context, $"<@&{alicornId}> <@{pippId}> 5 minutes");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, $".assignrole <@&{alicornId}> 5 minutes <@{pippId}>");
+        await mcm.TestableAssignRoleCommandAsync(context, $"<@&{alicornId}> 5 minutes <@{pippId}>");
 
         Assert.AreEqual(generalChannel.Messages.Last().Content, $"I've given <@&{alicornId}> to <@{pippId}>. I've scheduled a removal <t:1286669100:R>.");
         TestUtils.AssertListsAreEqual(new List<ulong> { alicornId }, guild.UserRoles[pippId]);
@@ -158,8 +158,8 @@ public class ModCoreModuleTests
 
         // changing an existing role assignment from indefinite to finite
 
-        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, $".assignrole <@&{alicornId}> {hitchId} 10 minutes");
-        await mcm.TestableAssignRoleCommandAsync(context, $"<@&{alicornId}> {hitchId} 10 minutes");
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, $".assignrole <@&{alicornId}> 10 minutes {hitchId}");
+        await mcm.TestableAssignRoleCommandAsync(context, $"<@&{alicornId}> 10 minutes {hitchId}");
 
         StringAssert.Contains(generalChannel.Messages.Last().Content, $"<@{hitchId}> already has that role. I've scheduled a removal <t:1286669400:R>.");
         TestUtils.AssertListsAreEqual(new List<ulong> { alicornId }, guild.UserRoles[pippId]);
@@ -197,8 +197,8 @@ public class ModCoreModuleTests
         DateTimeHelper.FakeUtcNow = TestUtils.FiMEpoch;
         Assert.IsFalse(guild.UserRoles.ContainsKey(pippId));
 
-        var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, $".assignrole <@&{alicornId}>   <@{pippId}>   5 minutes");
-        await mcm.TestableAssignRoleCommandAsync(context, $"<@&{alicornId}>   <@{pippId}>   5 minutes");
+        var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, $".assignrole <@&{alicornId}>   5 minutes   <@{pippId}>");
+        await mcm.TestableAssignRoleCommandAsync(context, $"<@&{alicornId}>   5 minutes   <@{pippId}>");
 
         Assert.AreEqual(generalChannel.Messages.Last().Content, $"I've given <@&{alicornId}> to <@{pippId}>. I've scheduled a removal <t:1286669100:R>.");
         TestUtils.AssertListsAreEqual(new List<ulong> { alicornId }, guild.UserRoles[pippId]);
