@@ -354,7 +354,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
             if (quoteUser == null)
                 throw new TargetException("The user this alias referenced to cannot be found.");
 
-            await _quoteService.RemoveQuote(quoteUser, number.Value - 1);
+            await _quoteService.RemoveQuote(quoteUser.Id, number.Value - 1);
 
             await context.Channel.SendMessageAsync(
                 $"Removed quote #{number.Value} from **{quoteUser.DisplayName}** ({quoteUser.Username}).", allowedMentions: AllowedMentions.None);
@@ -368,17 +368,10 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
             return;
         }
 
-        var member = context.Guild.GetUser(userId);
-        if (member == null)
-        {
-            await context.Channel.SendMessageAsync($"Sorry, I couldn't find that user");
-            return;
-        }
-
-        var newUserQuote = await _quoteService.RemoveQuote(member, number.Value - 1);
+        await _quoteService.RemoveQuote(userId, number.Value - 1);
 
         await context.Channel.SendMessageAsync(
-            $"Removed quote #{number.Value} from **{newUserQuote.Name}**.", allowedMentions: AllowedMentions.None);
+            $"Removed quote #{number.Value} from **<@{userId}>**.", allowedMentions: AllowedMentions.None);
         return;
     }
 

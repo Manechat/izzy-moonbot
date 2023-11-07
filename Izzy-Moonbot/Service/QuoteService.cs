@@ -163,34 +163,19 @@ public class QuoteService
         return new Quote(quoteId, quoteName, content);
     }
 
-    /// <summary>
-    /// Remove a quote from a user.
-    /// </summary>
-    /// <param name="user">The user to remove the quote from.</param>
-    /// <param name="id">The id of the quote to remove.</param>
-    /// <returns>The Quote that was removed.</returns>
-    /// <exception cref="NullReferenceException">If the user doesn't have any quotes.</exception>
-    /// <exception cref="IndexOutOfRangeException">If the quote id provided doesn't exist.</exception>
-    public async Task<Quote> RemoveQuote(IIzzyUser user, int id)
+    public async Task RemoveQuote(ulong userId, int id)
     {
-        if (!_quoteStorage.Quotes.TryGetValue(user.Id.ToString(), out var quotes))
+        if (!_quoteStorage.Quotes.TryGetValue(userId.ToString(), out var quotes))
             throw new NullReferenceException("That user does not have any quotes.");
-        
+
         if (quotes.Count <= id) throw new IndexOutOfRangeException("That quote ID does not exist.");
-        
-        var quoteName = user.Username;
-        if (user is IGuildUser guildUser) quoteName = guildUser.DisplayName;
 
-        var quoteContent = quotes[id];
-        
-        _quoteStorage.Quotes[user.Id.ToString()].RemoveAt(id);
+        _quoteStorage.Quotes[userId.ToString()].RemoveAt(id);
 
-        if (_quoteStorage.Quotes[user.Id.ToString()].Count == 0)
-            _quoteStorage.Quotes.Remove(user.Id.ToString());
-        
+        if (_quoteStorage.Quotes[userId.ToString()].Count == 0)
+            _quoteStorage.Quotes.Remove(userId.ToString());
+
         await FileHelper.SaveQuoteStorageAsync(_quoteStorage);
-        
-        return new Quote(id, quoteName, quoteContent);
     }
 }
 

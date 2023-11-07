@@ -41,7 +41,7 @@ public class QuoteServiceTests
             "eat more vegetables"
         }, qs.GetQuotes(sunny.Id));
 
-        await qs.RemoveQuote(sunny, 0);
+        await qs.RemoveQuote(sunny.Id, 0);
 
         TestUtils.AssertListsAreEqual(new List<string> {
             "eat more vegetables"

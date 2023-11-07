@@ -306,10 +306,38 @@ public class QuoteModuleTests
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, $".removequote <@{sunny.Id}> 1");
         await qm.TestableRemoveQuoteCommandAsync(context, $"<@{sunny.Id}> 1");
 
-        Assert.AreEqual($"Removed quote #1 from **{sunny.GlobalName}**.", generalChannel.Messages.Last().Content);
+        Assert.AreEqual($"Removed quote #1 from **<@{sunny.Id}>**.", generalChannel.Messages.Last().Content);
         TestUtils.AssertListsAreEqual(quotes.Quotes[sunny.Id.ToString()], new List<string> {
             "eat more vegetables"
         });
+    }
+
+    // Regression test: This used to incorrectly produce "Sorry, I couldn't find that user",
+    // making a user's quotes effectively impossible to remove after they left the server.
+    [TestMethod()]
+    public async Task RemoveQuote_AncientUser_Test()
+    {
+        // setup
+
+        var (cfg, _, (_, sunny), _, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
+        DiscordHelper.DefaultGuildId = guild.Id;
+
+        // Celestia hasn't been seen since G4
+        var celestiaId = 7;
+        var quotes = new QuoteStorage();
+        quotes.Quotes.Add(celestiaId.ToString(), new List<string> { "my little ponies" });
+
+        var userinfo = new Dictionary<ulong, User>();
+        var qs = new QuoteService(quotes, userinfo);
+        var qm = new QuotesModule(cfg, qs, userinfo);
+
+        // setup end
+
+        var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, $".removequote {celestiaId} 1");
+        await qm.TestableRemoveQuoteCommandAsync(context, $"{celestiaId} 1");
+
+        Assert.AreEqual($"Removed quote #1 from **<@{celestiaId}>**.", generalChannel.Messages.Last().Content);
+        Assert.IsFalse(quotes.Quotes.ContainsKey(celestiaId.ToString()));
     }
 
     // TODO: .quotealias command, and aliases in general
