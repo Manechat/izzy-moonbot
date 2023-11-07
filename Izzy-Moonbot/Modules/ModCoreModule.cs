@@ -227,7 +227,23 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
         if (!hasExistingBan)
         {
             // No ban exists, very serious Izzy time.
-            await Context.Guild.AddBanAsync(userId, pruneDays: 0, reason: reason );
+            try
+            {
+                await Context.Guild.AddBanAsync(userId, pruneDays: 0, reason: reason );
+            }
+            catch (Exception ex)
+            {
+                _logger.Log(
+                    $"AddBanAsync() threw an exception when trying to ban userId {userId}\n" +
+                    $"Type: {ex.GetType().Name}\n" +
+                    $"Message: {ex.Message}\n" +
+                    $"Stack Trace: {ex.StackTrace}");
+
+                await Context.Channel.SendMessageAsync(
+                    $":warning: Failed to ban userId {userId}\n" +
+                    $"Error was: [{ex.GetType().Name}] {ex.Message}\n" +
+                    $"(Check Izzy's logs for a full stack trace)");
+            }
 
             if (time != null)
             {
