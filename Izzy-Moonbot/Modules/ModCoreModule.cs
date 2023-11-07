@@ -243,6 +243,8 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
                     $":warning: Failed to ban userId {userId}\n" +
                     $"Error was: [{ex.GetType().Name}] {ex.Message}\n" +
                     $"(Check Izzy's logs for a full stack trace)");
+
+                return;
             }
 
             if (time != null)
