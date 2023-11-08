@@ -17,10 +17,10 @@ public class RaidModule : ModuleBase<SocketCommandContext>
     private readonly RaidService _raidService;
     private readonly ScheduleService _scheduleService;
     private readonly Config _config;
-    private readonly TransientState _state;
+    private readonly State _state;
     private readonly GeneralStorage _generalStorage;
 
-    public RaidModule(Config config, RaidService raidService, TransientState state,
+    public RaidModule(Config config, RaidService raidService, State state,
         ScheduleService scheduleService, ModService modService, GeneralStorage generalStorage)
     {
         _config = config;

@@ -37,7 +37,7 @@ namespace Izzy_Moonbot
         private readonly ScheduleService _scheduleService;
         private readonly IServiceCollection _services;
         private readonly Config _config;
-        private readonly TransientState _state;
+        private readonly State _state;
         private readonly Dictionary<ulong, User> _users;
         private readonly QuoteService _quoteService;
         private readonly ConfigListener _configListener;
@@ -49,7 +49,7 @@ namespace Izzy_Moonbot
 
         public Worker(ILogger<Worker> logger, ModLoggingService modLog, IServiceCollection services, ModService modService, RaidService raidService,
             FilterService filterService, ScheduleService scheduleService, IOptions<DiscordSettings> discordSettings,
-            Config config, TransientState state, Dictionary<ulong, User> users, UserListener userListener, SpamService spamService, QuoteService quoteService,
+            Config config, State state, Dictionary<ulong, User> users, UserListener userListener, SpamService spamService, QuoteService quoteService,
             ConfigListener configListener, MessageListener messageListener)
         {
             _logger = logger;

@@ -19,7 +19,7 @@ public class SettingsTests
         new DiscordSettings();
         new GeneralStorage();
         new QuoteStorage();
-        new TransientState();
+        new State();
 
         new User();
         new Dictionary<ulong, User>();
@@ -58,9 +58,9 @@ public class SettingsTests
         fileContents2 = JsonConvert.SerializeObject(quoteStorage2, Formatting.Indented);
         Assert.AreEqual(fileContents, fileContents2);
 
-        var state = new TransientState();
+        var state = new State();
         fileContents = JsonConvert.SerializeObject(state, Formatting.Indented);
-        var state2 = JsonConvert.DeserializeObject<TransientState>(fileContents);
+        var state2 = JsonConvert.DeserializeObject<State>(fileContents);
         fileContents2 = JsonConvert.SerializeObject(state2, Formatting.Indented);
         Assert.AreEqual(fileContents, fileContents2);
     }
