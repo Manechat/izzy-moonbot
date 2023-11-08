@@ -17,6 +17,4 @@ public class TransientState
 
     // RaidService
     public List<ulong> RecentJoins = new();
-
-    public Dictionary<ulong, List<(DateTimeOffset, string)>> RecentMessages = new();
 }
