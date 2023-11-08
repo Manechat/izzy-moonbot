@@ -27,12 +27,12 @@ public class DevModule : ModuleBase<SocketCommandContext>
     private readonly RaidService _raidService;
     private readonly ScheduleService _scheduleService;
     private readonly Config _config;
-    private readonly State _state;
+    private readonly TransientState _state;
     private readonly Dictionary<ulong, User> _users;
 
     public DevModule(Config config, Dictionary<ulong, User> users, FilterService filterService,
         LoggingService loggingService, ModLoggingService modLoggingService, ModService modService,
-        SpamService pressureService, RaidService raidService, ScheduleService scheduleService, State state)
+        SpamService pressureService, RaidService raidService, ScheduleService scheduleService, TransientState state)
     {
         _config = config;
         _users = users;

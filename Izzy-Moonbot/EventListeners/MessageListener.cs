@@ -15,9 +15,9 @@ public class MessageListener
     private readonly LoggingService _logger;
     private readonly Config _config;
     private readonly ModLoggingService _modLogger;
-    private readonly State _state;
+    private readonly TransientState _state;
 
-    public MessageListener(LoggingService logger, Config config, ModLoggingService modLogger, State state)
+    public MessageListener(LoggingService logger, Config config, ModLoggingService modLogger, TransientState state)
     {
         _logger = logger;
         _config = config;
@@ -36,7 +36,27 @@ public class MessageListener
         IIzzyMessage message,
         IIzzyClient client)
     {
+        // RecentMessages updating
+
         var author = message.Author;
+        if (!_state.RecentMessages.ContainsKey(author.Id))
+            _state.RecentMessages[author.Id] = new();
+        var recentMessages = _state.RecentMessages[author.Id];
+        recentMessages.Add((message.Timestamp, message.Content));
+
+        if (recentMessages.Count > 5)
+        {
+            var secondsUntilIrrelevant = _config.SpamPressureDecay * (_config.SpamMaxPressure / _config.SpamBasePressure);
+            while (
+                (DateTimeOffset.UtcNow - recentMessages[0].Item1).TotalSeconds > secondsUntilIrrelevant &&
+                recentMessages.Count > 5
+            ) {
+                recentMessages.RemoveAt(0);
+            }
+        }
+
+        // Witty processing
+
         if (author.Id == client.CurrentUser.Id) return; // Don't process self.
         if (author.IsBot) return; // Don't listen to bots
 
