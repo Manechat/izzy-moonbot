@@ -10,13 +10,13 @@ namespace Izzy_Moonbot_Tests.Services;
 [TestClass()]
 public class RaidServiceTests
 {
-    public static (RaidService, ScheduleService, State) SetupRaidService(Config cfg, Dictionary<ulong, User> users)
+    public static (RaidService, ScheduleService, TransientState) SetupRaidService(Config cfg, Dictionary<ulong, User> users)
     {
         var mod = new ModService(cfg, users);
         var modLog = new ModLoggingService(cfg);
         var logger = new LoggingService(new TestLogger<Worker>());
         var gs = new GeneralStorage();
-        var s = new State();
+        var s = new TransientState();
 
         var scheduledJobs = new List<ScheduledJob>();
         var ss = new ScheduleService(cfg, mod, modLog, logger, scheduledJobs);

@@ -67,7 +67,7 @@ public class Program
             services.AddSingleton(scheduledTasks);
             var generalStorage = FileHelper.LoadGeneralStorageAsync().GetAwaiter().GetResult();
             services.AddSingleton(generalStorage);
-            var stateStorage = new State();
+            var stateStorage = new TransientState();
             services.AddSingleton(stateStorage);
             var quoteStorage = FileHelper.LoadQuoteStorageAsync().GetAwaiter().GetResult();
             services.AddSingleton(quoteStorage);

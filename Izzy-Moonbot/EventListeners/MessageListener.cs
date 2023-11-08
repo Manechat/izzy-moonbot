@@ -15,9 +15,9 @@ public class MessageListener
     private readonly LoggingService _logger;
     private readonly Config _config;
     private readonly ModLoggingService _modLogger;
-    private readonly State _state;
+    private readonly TransientState _state;
 
-    public MessageListener(LoggingService logger, Config config, ModLoggingService modLogger, State state)
+    public MessageListener(LoggingService logger, Config config, ModLoggingService modLogger, TransientState state)
     {
         _logger = logger;
         _config = config;

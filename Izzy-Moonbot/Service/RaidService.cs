@@ -15,12 +15,12 @@ public class RaidService
     private readonly ModLoggingService _modLog;
     private readonly ModService _modService;
     private readonly Config _config;
-    private readonly State _state;
+    private readonly TransientState _state;
     private readonly GeneralStorage _generalStorage;
     private readonly ScheduleService _schedule;
 
     public RaidService(Config config, ModService modService, LoggingService log, ModLoggingService modLog,
-        State state, GeneralStorage generalStorage, ScheduleService schedule)
+        TransientState state, GeneralStorage generalStorage, ScheduleService schedule)
     {
         _config = config;
         _modService = modService;
