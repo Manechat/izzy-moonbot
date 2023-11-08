@@ -167,10 +167,13 @@ public class UserListener
         
         var msg = $"{(catchingUp ? "Catching up on " : "")}Join: <@{member.Id}> (`{member.Id}`), created <t:{member.CreatedAt.ToUnixTimeSeconds()}:R>{autoSilence}{joinedBefore}{rolesAutoappliedString}";
         _logger.Log($"Generated moderation log for user join: ${msg}");
-        await _modLogger.CreateModLog(member.Guild)
-            .SetContent(msg)
-            .SetFileLogContent(msg)
-            .Send();
+        if (!catchingUp)
+        {
+            await _modLogger.CreateModLog(member.Guild)
+                .SetContent(msg)
+                .SetFileLogContent(msg)
+                .Send();
+        }
     }
     
     private async Task MemberLeaveEvent(SocketGuild guild, SocketUser user)
