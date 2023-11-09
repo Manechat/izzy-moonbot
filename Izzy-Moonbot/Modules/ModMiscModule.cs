@@ -873,13 +873,15 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
             !_state.RecentMessages.TryGetValue((ulong)userId, out var recentMessages) ||
             recentMessages.Count == 0
         ) {
-            await ReplyAsync($"I haven't seen any messages from <@{userId}> since my last restart. Sorry.");
+            await ReplyAsync($"I haven't seen any messages from <@{userId}> since my last restart. Sorry.", allowedMentions: AllowedMentions.None);
             return;
         }
 
-        await ReplyAsync($"These are all the recent messages (without edits or deletions) I have cached from <@{userId}>:\n" +
+        await ReplyAsync(
+            $"These are all the recent messages (without edits or deletions) I have cached from <@{userId}>:\n" +
             "\n" +
-            String.Join("\n", recentMessages.Select(rm => $"[<t:{rm.Item1.ToUnixTimeSeconds()}:R>] {rm.Item2}"))
+            String.Join("\n", recentMessages.Select(rm => $"[<t:{rm.Item1.ToUnixTimeSeconds()}:R>] {rm.Item2}")),
+            allowedMentions: AllowedMentions.None
         );
     }
 }
