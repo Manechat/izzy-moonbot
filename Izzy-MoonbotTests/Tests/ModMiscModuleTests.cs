@@ -21,7 +21,8 @@ public class ModMiscModuleTests
         var ss = new ScheduleService(cfg, mod, modLog, logger, scheduledJobs);
 
         var users = new Dictionary<ulong, User>();
-        return (ss, new ModMiscModule(cfg, users, ss, logger));
+        var state = new TransientState();
+        return (ss, new ModMiscModule(cfg, users, ss, logger, state));
     }
 
     [TestMethod()]
