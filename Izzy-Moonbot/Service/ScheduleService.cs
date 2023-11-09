@@ -300,12 +300,12 @@ public class ScheduleService
             $"Removing {role.Name} ({role.Id}) from {user.DisplayName} ({user.Username}/{user.Id})", level: LogLevel.Debug);
         
         await _mod.RemoveRole(user, role.Id, reason);
-        //await _modLogging.CreateModLog(guild)
-        //    .SetContent(
-        //        $"Removed <@&{role.Id}> from <@{user.Id}> (`{user.Id}`)")
-        //    .SetFileLogContent(
-        //        $"Removed {role.Name} ({role.Id}) from {user.DisplayName} ({user.Username}/{user.Id}). {(reason != null ? $"Reason: {reason}." : "")}")
-        //    .Send();
+        await _modLogging.CreateModLog(guild)
+            .SetContent(
+                $"Removed <@&{role.Id}> from <@{user.Id}> (`{user.Id}`)")
+            .SetFileLogContent(
+                $"Removed {role.Name} ({role.Id}) from {user.DisplayName} ({user.Username}/{user.Id}). {(reason != null ? $"Reason: {reason}." : "")}")
+            .Send();
     }
 
     private async Task Unicycle_Unban(ScheduledUnbanJob job, IIzzyGuild guild, IIzzyClient client)
