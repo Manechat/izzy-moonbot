@@ -33,7 +33,7 @@ public class MiscModuleTests
         services.AddSingleton(new Dictionary<ulong, User>());
         services.AddSingleton(new List<ScheduledJob>());
         services.AddSingleton(new GeneralStorage());
-        services.AddSingleton(new State());
+        services.AddSingleton(new TransientState());
         services.AddSingleton(new QuoteStorage());
 
         services.AddSingleton<ConfigDescriber>();
