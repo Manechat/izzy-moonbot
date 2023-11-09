@@ -854,7 +854,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
 
     [Command("recentmessages")]
     [Summary("Dump all of the recent messages Izzy has cached for a specific user.")]
-    [Remarks("Izzy records at least 5 messages for each user, and will not throw away a message until it becomes irrelevant for spam pressure (see SpamPressureDecay, SpamMaxPressure and SpamBasePressure). Edits and deletes are ignored; only the original version of the message is cached. Restarting Izzy clears this cache.")]
+    [Remarks("Izzy caches at least 5 messages for each user, and will not throw away a message until it becomes irrelevant for spam pressure (see SpamPressureDecay, SpamMaxPressure and SpamBasePressure). Thus, this includes deleted messages that Izzy can't log in LogChannel because Discord doesn't produce a MessageDeleted event for them (e.g. deletions as part of a ban). Edits and deletes are ignored; only the original version of the message is cached. Restarting Izzy clears this cache.")]
     [RequireContext(ContextType.Guild)]
     [ModCommand(Group = "Permissions")]
     [DevCommand(Group = "Permissions")]
@@ -869,9 +869,10 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
             return;
         }
 
-        var recentMessages = _state.RecentMessages[(ulong)userId];
-        if (recentMessages == null || recentMessages.Count == 0)
-        {
+        if (
+            !_state.RecentMessages.TryGetValue((ulong)userId, out var recentMessages) ||
+            recentMessages.Count == 0
+        ) {
             await ReplyAsync($"I haven't seen any messages from <@{userId}> since my last restart. Sorry.");
             return;
         }
