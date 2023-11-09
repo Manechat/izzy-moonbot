@@ -27,13 +27,15 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
     private readonly ScheduleService _schedule;
     private readonly Dictionary<ulong, User> _users;
     private readonly LoggingService _logger;
+    private readonly TransientState _state;
 
-    public ModMiscModule(Config config, Dictionary<ulong, User> users, ScheduleService schedule, LoggingService logger)
+    public ModMiscModule(Config config, Dictionary<ulong, User> users, ScheduleService schedule, LoggingService logger, TransientState state)
     {
         _config = config;
         _schedule = schedule;
         _users = users;
         _logger = logger;
+        _state = state;
     }
 
     [Command("panic")]
@@ -848,5 +850,35 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
             msg += " and reset BannerMode to None so it won't change back";
         }
         await ReplyAsync(msg);
+    }
+
+    [Command("recentmessages")]
+    [Summary("Dump all of the recent messages Izzy has cached for a specific user.")]
+    [Remarks("Izzy records at least 5 messages for each user, and will not throw away a message until it becomes irrelevant for spam pressure (see SpamPressureDecay, SpamMaxPressure and SpamBasePressure). Edits and deletes are ignored; only the original version of the message is cached. Restarting Izzy clears this cache.")]
+    [RequireContext(ContextType.Guild)]
+    [ModCommand(Group = "Permissions")]
+    [DevCommand(Group = "Permissions")]
+    [Parameter("user", ParameterType.UserResolvable, "The user to show messages for")]
+    [Example(".recentmessages @Izzy Moonbot")]
+    public async Task RecentMessagesCommandAsync([Remainder] string user = "")
+    {
+        var (userId, userError) = await ParseHelper.TryParseUserResolvable(user, new SocketGuildAdapter(Context.Guild));
+        if (userId == null)
+        {
+            await ReplyAsync($"I couldn't find that user's id: {userError}");
+            return;
+        }
+
+        var recentMessages = _state.RecentMessages[(ulong)userId];
+        if (recentMessages == null || recentMessages.Count == 0)
+        {
+            await ReplyAsync($"I haven't seen any messages from <@{userId}> since my last restart. Sorry.");
+            return;
+        }
+
+        await ReplyAsync($"These are all the recent messages (without edits or deletions) I have cached from <@{userId}>:\n" +
+            "\n" +
+            String.Join("\n", recentMessages.Select(rm => $"[<t:{rm.Item1.ToUnixTimeSeconds()}:R>] {rm.Item2}"))
+        );
     }
 }
