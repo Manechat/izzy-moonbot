@@ -36,22 +36,27 @@ public class MessageListener
         IIzzyMessage message,
         IIzzyClient client)
     {
+        var author = message.Author;
+
         // RecentMessages updating
 
-        var author = message.Author;
-        if (!_state.RecentMessages.ContainsKey(author.Id))
-            _state.RecentMessages[author.Id] = new();
-        var recentMessages = _state.RecentMessages[author.Id];
-        recentMessages.Add((message.Timestamp, message.Content));
-
-        if (recentMessages.Count > 5)
+        if (message.Channel.Id != _config.ModChannel)
         {
-            var secondsUntilIrrelevant = _config.SpamPressureDecay * (_config.SpamMaxPressure / _config.SpamBasePressure);
-            while (
-                (DateTimeOffset.UtcNow - recentMessages[0].Item1).TotalSeconds > secondsUntilIrrelevant &&
-                recentMessages.Count > 5
-            ) {
-                recentMessages.RemoveAt(0);
+            if (!_state.RecentMessages.ContainsKey(author.Id))
+                _state.RecentMessages[author.Id] = new();
+            var recentMessages = _state.RecentMessages[author.Id];
+            recentMessages.Add((message.GetJumpUrl(), message.Timestamp, message.Content));
+
+            if (recentMessages.Count > 5)
+            {
+                var secondsUntilIrrelevant = _config.SpamPressureDecay * (_config.SpamMaxPressure / _config.SpamBasePressure);
+                while (
+                    (DateTimeOffset.UtcNow - recentMessages[0].Item2).TotalSeconds > secondsUntilIrrelevant &&
+                    recentMessages.Count > 5
+                )
+                {
+                    recentMessages.RemoveAt(0);
+                }
             }
         }
 

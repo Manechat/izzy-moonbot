@@ -854,7 +854,14 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
 
     [Command("recentmessages")]
     [Summary("Dump all of the recent messages Izzy has cached for a specific user.")]
-    [Remarks("Izzy caches at least 5 messages for each user, and will not throw away a message until it becomes irrelevant for spam pressure (see SpamPressureDecay, SpamMaxPressure and SpamBasePressure). Thus, this includes deleted messages that Izzy can't log in LogChannel because Discord doesn't produce a MessageDeleted event for them (e.g. deletions as part of a ban). Edits and deletes are ignored; only the original version of the message is cached. Restarting Izzy clears this cache.")]
+    [Remarks(
+        "This command is useful because some Discord message deletions (most importantly: banning with deletions) do not produce DeletedMessage events, and thus Izzy won't know to log them in LogChannel. This cache is also an implementation detail of some of Izzy's other systems.\n" +
+        "- Izzy will cache at least 5 messages for each user\n" +
+        "- Izzy will not throw away a message while it remains relevant for spam pressure calculations (see SpamPressureDecay, SpamMaxPressure and SpamBasePressure)\n" +
+        "- Edits and deletes are ignored; only the original version of the message is cached\n" +
+        "- Restarting Izzy clears this cache\n" +
+        "- Messages in `ModChannel` are ignored"
+    )]
     [RequireContext(ContextType.Guild)]
     [ModCommand(Group = "Permissions")]
     [DevCommand(Group = "Permissions")]
@@ -873,13 +880,15 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
             !_state.RecentMessages.TryGetValue((ulong)userId, out var recentMessages) ||
             recentMessages.Count == 0
         ) {
-            await ReplyAsync($"I haven't seen any messages from <@{userId}> since my last restart. Sorry.");
+            await ReplyAsync($"I haven't seen any messages from <@{userId}> since my last restart. Sorry.", allowedMentions: AllowedMentions.None);
             return;
         }
 
-        await ReplyAsync($"These are all the recent messages (without edits or deletions) I have cached from <@{userId}>:\n" +
+        await ReplyAsync(
+            $"These are all the recent messages (without edits or deletions) I have cached from <@{userId}>:\n" +
             "\n" +
-            String.Join("\n", recentMessages.Select(rm => $"[<t:{rm.Item1.ToUnixTimeSeconds()}:R>] {rm.Item2}"))
+            String.Join("\n", recentMessages.Select(rm => $"[{rm.Item1} <t:{rm.Item2.ToUnixTimeSeconds()}:R>] {rm.Item3}")),
+            allowedMentions: AllowedMentions.None
         );
     }
 }
