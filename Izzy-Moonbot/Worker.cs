@@ -312,43 +312,45 @@ namespace Izzy_Moonbot
             // There's probably a better way to factor all this, but again, proof of concept
             else if (command.CommandName == MOON_CMD_NAME)
             {
+                string log = "UserCommandHandler received invalid user object. Did nothing.";
                 if (command.Data.Member is SocketGuildUser)
                 {
                     var member = (SocketGuildUser)command.Data.Member;
                     var alreadyHasRole = member.Roles.Select(role => role.Id).Contains(banishedRoleId);
                     if (alreadyHasRole)
                     {
-                        var log = $"ignored context command '{MOON_CMD_NAME}' used by `{command.User.Username}` ({command.User.Id}) because the target user <@{member.Id}> already has the Banished role";
+                        log = $"ignored context command '{MOON_CMD_NAME}' used by `{command.User.Username}` ({command.User.Id}) because the target user <@{member.Id}> already has the Banished role";
                         await _modLog.CreateModLog(_client.GetGuild((ulong)guildId)).SetContent(log).SetFileLogContent(log).Send();
                     }
                     else
                     {
-                        var log = $"context command '{MOON_CMD_NAME}' used by `{command.User.Username}` ({command.User.Id}) on target user <@{member.Id}>";
+                        log = $"context command '{MOON_CMD_NAME}' used by `{command.User.Username}` ({command.User.Id}) on target user <@{member.Id}>";
                         await _modService.AddRole(member, banishedRoleId, log);
                         await _modLog.CreateModLog(_client.GetGuild((ulong)guildId)).SetContent(log).SetFileLogContent(log).Send();
                     }
                 }
-                await command.RespondAsync(null);
+                await command.RespondAsync(log);
             }
             else if (command.CommandName == UNMOON_CMD_NAME)
             {
+                string log = "UserCommandHandler received invalid user object. Did nothing.";
                 if (command.Data.Member is SocketGuildUser)
                 {
                     var member = (SocketGuildUser)command.Data.Member;
                     var alreadyHasRole = member.Roles.Select(role => role.Id).Contains(banishedRoleId);
                     if (!alreadyHasRole)
                     {
-                        var log = $"ignored context command '{UNMOON_CMD_NAME}' used by `{command.User.Username}` ({command.User.Id}) because the target user <@{member.Id}> is already lacking the Banished role";
+                        log = $"ignored context command '{UNMOON_CMD_NAME}' used by `{command.User.Username}` ({command.User.Id}) because the target user <@{member.Id}> is already lacking the Banished role";
                         await _modLog.CreateModLog(_client.GetGuild((ulong)guildId)).SetContent(log).SetFileLogContent(log).Send();
                     }
                     else
                     {
-                        var log = $"context command '{UNMOON_CMD_NAME}' used by `{command.User.Username}` ({command.User.Id}) on target user <@{member.Id}>";
+                        log = $"context command '{UNMOON_CMD_NAME}' used by `{command.User.Username}` ({command.User.Id}) on target user <@{member.Id}>";
                         await _modService.RemoveRole(member, banishedRoleId, log);
                         await _modLog.CreateModLog(_client.GetGuild((ulong)guildId)).SetContent(log).SetFileLogContent(log).Send();
                     }
                 }
-                await command.RespondAsync(null);
+                await command.RespondAsync(log);
             }
             else
             {
