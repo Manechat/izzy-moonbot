@@ -60,7 +60,7 @@ public class QuoteModuleTests
         // Zipp has no quotes because she never appeared on the pippcast
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".quote Zipp");
         await qm.TestableQuoteCommandAsync(context, "Zipp");
-        Assert.AreEqual("I couldn't find any quotes for that user.", generalChannel.Messages.Last().Content);
+        Assert.AreEqual("I couldn't find any quotes for <@3>.", generalChannel.Messages.Last().Content);
 
         //
 
@@ -144,7 +144,7 @@ public class QuoteModuleTests
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".listquotes Zipp");
         await qm.TestableListQuotesCommandAsync(context, "Zipp");
 
-        Assert.AreEqual("I couldn't find any quotes for that user.", generalChannel.Messages.Last().Content);
+        Assert.AreEqual("I couldn't find any quotes for <@3>.", generalChannel.Messages.Last().Content);
 
         //
 
