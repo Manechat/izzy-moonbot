@@ -260,7 +260,7 @@ public class ConfigCommand
                             Enum? output = null;
                             if (value != null)
                             {
-                                if (!Enum.TryParse(enumType, value, out var res))
+                                if (!Enum.TryParse(enumType, value, true /* ignoreCase */, out var res))
                                     throw new FormatException(); // Trip "invalid content" catch below.
                                 output = res as Enum;
                             }
@@ -273,7 +273,8 @@ public class ConfigCommand
                         catch (FormatException)
                         {
                             await context.Channel.SendMessageAsync(
-                                $"I couldn't set `{configItemKey}` to the content provided because you provided content that I couldn't turn into this specific enum type ({enumType.Name}). Please try again.",
+                                $"I couldn't set `{configItemKey}` to `{value}` because that's not a possible value for the {enumType.Name} enum type.\n" +
+                                $"Possible values are: {String.Join(", ", enumType.GetEnumNames().Select(n => $"`{n}`"))}",
                                 allowedMentions: AllowedMentions.None);
                         }
                         break;
