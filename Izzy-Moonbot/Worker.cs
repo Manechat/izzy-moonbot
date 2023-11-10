@@ -189,6 +189,8 @@ namespace Izzy_Moonbot
         private readonly string ADDQUOTE_CMD_NAME = ".addquote";
         private readonly string MOON_CMD_NAME = "moon";
         private readonly string UNMOON_CMD_NAME = "unmoon";
+        private readonly string WELCOME_CMD_NAME = "welcome";
+        private readonly string UNWELCOME_CMD_NAME = "unwelcome";
 
         public async Task ReadyEvent()
         {
@@ -224,29 +226,41 @@ namespace Izzy_Moonbot
 
             var userinfoCommand = new UserCommandBuilder()
                 .WithName(USERINFO_CMD_NAME)
-                .WithDefaultMemberPermissions(GuildPermission.Administrator);
+                .WithDefaultMemberPermissions(GuildPermission.SendMessages);
             var permanpCommand = new UserCommandBuilder()
                 .WithName(PERMANP_CMD_NAME)
                 .WithDefaultMemberPermissions(GuildPermission.Administrator);
+            var addquoteCommand = new MessageCommandBuilder()
+                .WithName(ADDQUOTE_CMD_NAME)
+                .WithDefaultMemberPermissions(GuildPermission.Administrator);
+
             var moonCommand = new UserCommandBuilder()
                 .WithName(MOON_CMD_NAME)
                 .WithDefaultMemberPermissions(GuildPermission.Administrator);
             var unmoonCommand = new UserCommandBuilder()
                 .WithName(UNMOON_CMD_NAME)
                 .WithDefaultMemberPermissions(GuildPermission.Administrator);
-            var addquoteCommand = new MessageCommandBuilder()
-                .WithName(ADDQUOTE_CMD_NAME)
+            var welcomeCommand = new UserCommandBuilder()
+                .WithName(WELCOME_CMD_NAME)
+                .WithDefaultMemberPermissions(GuildPermission.Administrator);
+            var unwelcomeCommand = new UserCommandBuilder()
+                .WithName(UNWELCOME_CMD_NAME)
                 .WithDefaultMemberPermissions(GuildPermission.Administrator);
 
             try
             {
-                await guild.BulkOverwriteApplicationCommandAsync(new ApplicationCommandProperties[]
+                await _client.BulkOverwriteGlobalApplicationCommandsAsync(new ApplicationCommandProperties[]
                 {
                     userinfoCommand.Build(),
                     permanpCommand.Build(),
                     addquoteCommand.Build(),
+                });
+                await guild.BulkOverwriteApplicationCommandAsync(new ApplicationCommandProperties[]
+                {
                     moonCommand.Build(),
                     unmoonCommand.Build(),
+                    welcomeCommand.Build(),
+                    unwelcomeCommand.Build(),
                 });
             }
             catch (HttpException exception)
@@ -287,6 +301,7 @@ namespace Izzy_Moonbot
 
             // for proof of concept, we're hardcoding Manechat specific role ids
             ulong banishedRoleId = 368961099925553153;
+            ulong memberRoleId = 552450130633031700;
 
             var guildId = command.GuildId;
             if (guildId == null)
@@ -347,6 +362,48 @@ namespace Izzy_Moonbot
                     {
                         log = $"context command '{UNMOON_CMD_NAME}' used by `{command.User.Username}` ({command.User.Id}) on target user <@{member.Id}>";
                         await _modService.RemoveRole(member, banishedRoleId, log);
+                        await _modLog.CreateModLog(_client.GetGuild((ulong)guildId)).SetContent(log).SetFileLogContent(log).Send();
+                    }
+                }
+                await command.RespondAsync(log, ephemeral: true);
+            }
+            else if (command.CommandName == UNWELCOME_CMD_NAME)
+            {
+                string log = "UserCommandHandler received invalid user object. Did nothing.";
+                if (command.Data.Member is SocketGuildUser)
+                {
+                    var member = (SocketGuildUser)command.Data.Member;
+                    var alreadyHasRole = member.Roles.Select(role => role.Id).Contains(memberRoleId);
+                    if (alreadyHasRole)
+                    {
+                        log = $"ignored context command '{UNWELCOME_CMD_NAME}' used by `{command.User.Username}` ({command.User.Id}) because the target user <@{member.Id}> already has the member role";
+                        await _modLog.CreateModLog(_client.GetGuild((ulong)guildId)).SetContent(log).SetFileLogContent(log).Send();
+                    }
+                    else
+                    {
+                        log = $"context command '{UNWELCOME_CMD_NAME}' used by `{command.User.Username}` ({command.User.Id}) on target user <@{member.Id}>";
+                        await _modService.AddRole(member, memberRoleId, log);
+                        await _modLog.CreateModLog(_client.GetGuild((ulong)guildId)).SetContent(log).SetFileLogContent(log).Send();
+                    }
+                }
+                await command.RespondAsync(log, ephemeral: true);
+            }
+            else if (command.CommandName == WELCOME_CMD_NAME)
+            {
+                string log = "UserCommandHandler received invalid user object. Did nothing.";
+                if (command.Data.Member is SocketGuildUser)
+                {
+                    var member = (SocketGuildUser)command.Data.Member;
+                    var alreadyHasRole = member.Roles.Select(role => role.Id).Contains(memberRoleId);
+                    if (!alreadyHasRole)
+                    {
+                        log = $"ignored context command '{WELCOME_CMD_NAME}' used by `{command.User.Username}` ({command.User.Id}) because the target user <@{member.Id}> is already lacking the member role";
+                        await _modLog.CreateModLog(_client.GetGuild((ulong)guildId)).SetContent(log).SetFileLogContent(log).Send();
+                    }
+                    else
+                    {
+                        log = $"context command '{WELCOME_CMD_NAME}' used by `{command.User.Username}` ({command.User.Id}) on target user <@{member.Id}>";
+                        await _modService.RemoveRole(member, memberRoleId, log);
                         await _modLog.CreateModLog(_client.GetGuild((ulong)guildId)).SetContent(log).SetFileLogContent(log).Send();
                     }
                 }
