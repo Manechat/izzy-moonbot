@@ -137,6 +137,18 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
                 return;
             }
 
+            var quoteCount = _quoteService.GetQuoteCount((ulong)userId);
+            if (quoteCount is null)
+            {
+                await context.Channel.SendMessageAsync($"<@{userId}> doesn't have any quotes", allowedMentions: AllowedMentions.None);
+                return;
+            }
+            if (number.Value > quoteCount)
+            {
+                await context.Channel.SendMessageAsync($"<@{userId}> only has {quoteCount} quote(s)", allowedMentions: AllowedMentions.None);
+                return;
+            }
+
             var quote = _quoteService.GetQuote((ulong)userId, number.Value - 1);
             if (quote == null)
             {

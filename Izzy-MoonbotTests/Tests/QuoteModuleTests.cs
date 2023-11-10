@@ -53,7 +53,7 @@ public class QuoteModuleTests
 
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, $".quote <@{sunny.Id}> 2");
         await qm.TestableQuoteCommandAsync(context, $"<@{sunny.Id}> 2");
-        Assert.AreEqual("I couldn't find that quote, sorry!", generalChannel.Messages.Last().Content);
+        Assert.AreEqual($"<@{sunny.Id}> only has 1 quote(s)", generalChannel.Messages.Last().Content);
 
         //
 
