@@ -880,7 +880,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
         await ReplyAsync(
             $"These are all the recent messages (without edits or deletions) I have cached from <@{userId}>:\n" +
             "\n" +
-            String.Join("\n", recentMessages.Select(rm => $"[<t:{rm.Item1.ToUnixTimeSeconds()}:R>] {rm.Item2}")),
+            String.Join("\n", recentMessages.Select(rm => $"[{rm.Item1} <t:{rm.Item2.ToUnixTimeSeconds()}:R>] {rm.Item3}")),
             allowedMentions: AllowedMentions.None
         );
     }
