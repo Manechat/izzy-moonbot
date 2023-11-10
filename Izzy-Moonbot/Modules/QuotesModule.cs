@@ -122,7 +122,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
             var result = _quoteService.GetRandomQuote((ulong)userId);
             if (result == null)
             {
-                await context.Channel.SendMessageAsync($"I couldn't find any quotes for that user.");
+                await context.Channel.SendMessageAsync($"I couldn't find any quotes for <@{userId}>.", allowedMentions: AllowedMentions.None);
                 return;
             }
 
@@ -208,7 +208,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
         var quotes = _quoteService.GetQuotes((ulong)userId);
         if (quotes == null)
         {
-            await context.Channel.SendMessageAsync($"I couldn't find any quotes for that user.");
+            await context.Channel.SendMessageAsync($"I couldn't find any quotes for <@{userId}>.", allowedMentions: AllowedMentions.None);
             return;
         }
 

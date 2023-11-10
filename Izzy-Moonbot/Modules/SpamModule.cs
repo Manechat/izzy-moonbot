@@ -1,5 +1,6 @@
 using System.Linq;
 using System.Threading.Tasks;
+using Discord;
 using Discord.Commands;
 using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Attributes;
@@ -48,7 +49,7 @@ public class SpamModule : ModuleBase<SocketCommandContext>
         var user = context.Guild?.GetUser((ulong)userId);
         if (user == null)
         {
-            await context.Channel.SendMessageAsync("Couldn't find that user in this server");
+            await context.Channel.SendMessageAsync($"Couldn't find <@{userId}> in this server", allowedMentions: AllowedMentions.None);
         }
         else
         {
@@ -89,7 +90,7 @@ public class SpamModule : ModuleBase<SocketCommandContext>
         var user = context.Guild?.GetUser((ulong)userId);
         if (user == null)
         {
-            await context.Channel.SendMessageAsync("Couldn't find that user in this server");
+            await context.Channel.SendMessageAsync($"Couldn't find <@{userId}> in this server", allowedMentions: AllowedMentions.None);
         }
         else
         {
