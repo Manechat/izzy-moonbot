@@ -21,6 +21,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
+using Serilog;
 
 namespace Izzy_Moonbot
 {
@@ -183,8 +184,12 @@ namespace Izzy_Moonbot
         // Application command Names have a hard limit of 32 characters,
         // and they seem to get truncated on desktop at ~18-20.
         private readonly string USERINFO_CMD_NAME = ".userinfo (ephemeral)";
-        private readonly string PERMANP_CMD_NAME =  ".permanp (ModChannel)";
+        private readonly string PERMANP_CMD_NAME =  ".permanp";
         private readonly string ADDQUOTE_CMD_NAME = ".addquote";
+        private readonly string MOON_CMD_NAME = "moon";
+        private readonly string UNMOON_CMD_NAME = "unmoon";
+        private readonly string WELCOME_CMD_NAME = "welcome";
+        private readonly string UNWELCOME_CMD_NAME = "unwelcome";
 
         public async Task ReadyEvent()
         {
@@ -224,16 +229,33 @@ namespace Izzy_Moonbot
             var permanpCommand = new UserCommandBuilder()
                 .WithName(PERMANP_CMD_NAME)
                 .WithDefaultMemberPermissions(GuildPermission.Administrator);
+            var moonCommand = new UserCommandBuilder()
+                .WithName(MOON_CMD_NAME)
+                .WithDefaultMemberPermissions(GuildPermission.Administrator);
+            var unmoonCommand = new UserCommandBuilder()
+                .WithName(UNMOON_CMD_NAME)
+                .WithDefaultMemberPermissions(GuildPermission.Administrator);
+            var welcomeCommand = new UserCommandBuilder()
+                .WithName(WELCOME_CMD_NAME)
+                .WithDefaultMemberPermissions(GuildPermission.Administrator);
+            var unwelcomeCommand = new UserCommandBuilder()
+                .WithName(UNWELCOME_CMD_NAME)
+                .WithDefaultMemberPermissions(GuildPermission.Administrator);
             var addquoteCommand = new MessageCommandBuilder()
                 .WithName(ADDQUOTE_CMD_NAME)
                 .WithDefaultMemberPermissions(GuildPermission.Administrator);
+
             try
             {
                 await guild.BulkOverwriteApplicationCommandAsync(new ApplicationCommandProperties[]
                 {
                     userinfoCommand.Build(),
                     permanpCommand.Build(),
-                    addquoteCommand.Build()
+                    addquoteCommand.Build(),
+                    moonCommand.Build(),
+                    unmoonCommand.Build(),
+                    welcomeCommand.Build(),
+                    unwelcomeCommand.Build(),
                 });
             }
             catch (HttpException exception)
@@ -272,6 +294,10 @@ namespace Izzy_Moonbot
         {
             _logger.LogInformation($"UserCommandHandler received {command.CommandId} {command.CommandName}");
 
+            // for proof of concept, we're hardcoding Manechat specific role ids
+            ulong memberRoleId = 552450130633031700;
+            ulong banishedRoleId = 368961099925553153;
+
             var guildId = command.GuildId;
             if (guildId == null)
             {
@@ -292,6 +318,83 @@ namespace Izzy_Moonbot
                 var modchatMessage = $"{command.User.Mention} used the '{command.CommandName}' context command on {command.Data.Member.Mention}:\n\n{output}";
 
                 await _modLog.CreateModLog(_client.GetGuild((ulong)guildId)).SetContent(modchatMessage).SetFileLogContent(modchatMessage).Send();
+            }
+            // There's probably a better way to factor all this, but again, proof of concept
+            else if (command.CommandName == MOON_CMD_NAME)
+            {
+                if (command.Data.Member is SocketGuildUser)
+                {
+                    var member = (SocketGuildUser)command.Data.Member;
+                    var alreadyHasRole = member.Roles.Select(role => role.Id).Contains(banishedRoleId);
+                    if (alreadyHasRole)
+                    {
+                        var log = $"ignored context command '{MOON_CMD_NAME}' used by `{command.User.Username}` ({command.User.Id}) because the target user <@{member.Id}> already has the Banished role";
+                        await _modLog.CreateModLog(_client.GetGuild((ulong)guildId)).SetContent(log).SetFileLogContent(log).Send();
+                    }
+                    else
+                    {
+                        var log = $"context command '{MOON_CMD_NAME}' used by `{command.User.Username}` ({command.User.Id}) on target user <@{member.Id}>";
+                        await _modService.AddRole(member, banishedRoleId, log);
+                        await _modLog.CreateModLog(_client.GetGuild((ulong)guildId)).SetContent(log).SetFileLogContent(log).Send();
+                    }
+                }
+            }
+            else if (command.CommandName == UNMOON_CMD_NAME)
+            {
+                if (command.Data.Member is SocketGuildUser)
+                {
+                    var member = (SocketGuildUser)command.Data.Member;
+                    var alreadyHasRole = member.Roles.Select(role => role.Id).Contains(banishedRoleId);
+                    if (!alreadyHasRole)
+                    {
+                        var log = $"ignored context command '{UNMOON_CMD_NAME}' used by `{command.User.Username}` ({command.User.Id}) because the target user <@{member.Id}> is already lacking the Banished role";
+                        await _modLog.CreateModLog(_client.GetGuild((ulong)guildId)).SetContent(log).SetFileLogContent(log).Send();
+                    }
+                    else
+                    {
+                        var log = $"context command '{UNMOON_CMD_NAME}' used by `{command.User.Username}` ({command.User.Id}) on target user <@{member.Id}>";
+                        await _modService.RemoveRole(member, banishedRoleId, log);
+                        await _modLog.CreateModLog(_client.GetGuild((ulong)guildId)).SetContent(log).SetFileLogContent(log).Send();
+                    }
+                }
+            }
+            else if (command.CommandName == WELCOME_CMD_NAME)
+            {
+                if (command.Data.Member is SocketGuildUser)
+                {
+                    var member = (SocketGuildUser)command.Data.Member;
+                    var alreadyHasRole = member.Roles.Select(role => role.Id).Contains(memberRoleId);
+                    if (!alreadyHasRole)
+                    {
+                        var log = $"ignored context command '{WELCOME_CMD_NAME}' used by `{command.User.Username}` ({command.User.Id}) because the target user <@{member.Id}> is already lacking the member role";
+                        await _modLog.CreateModLog(_client.GetGuild((ulong)guildId)).SetContent(log).SetFileLogContent(log).Send();
+                    }
+                    else
+                    {
+                        var log = $"context command '{WELCOME_CMD_NAME}' used by `{command.User.Username}` ({command.User.Id}) on target user <@{member.Id}>";
+                        await _modService.RemoveRole(member, memberRoleId, log);
+                        await _modLog.CreateModLog(_client.GetGuild((ulong)guildId)).SetContent(log).SetFileLogContent(log).Send();
+                    }
+                }
+            }
+            else if (command.CommandName == UNWELCOME_CMD_NAME)
+            {
+                if (command.Data.Member is SocketGuildUser)
+                {
+                    var member = (SocketGuildUser)command.Data.Member;
+                    var alreadyHasRole = member.Roles.Select(role => role.Id).Contains(memberRoleId);
+                    if (alreadyHasRole)
+                    {
+                        var log = $"ignored context command '{UNWELCOME_CMD_NAME}' used by `{command.User.Username}` ({command.User.Id}) because the target user <@{member.Id}> already has the member role";
+                        await _modLog.CreateModLog(_client.GetGuild((ulong)guildId)).SetContent(log).SetFileLogContent(log).Send();
+                    }
+                    else
+                    {
+                        var log = $"context command '{UNWELCOME_CMD_NAME}' used by `{command.User.Username}` ({command.User.Id}) on target user <@{member.Id}>";
+                        await _modService.AddRoles(member, new[] { memberRoleId }, log);
+                        await _modLog.CreateModLog(_client.GetGuild((ulong)guildId)).SetContent(log).SetFileLogContent(log).Send();
+                    }
+                }
             }
             else
             {
