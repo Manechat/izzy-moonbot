@@ -854,7 +854,14 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
 
     [Command("recentmessages")]
     [Summary("Dump all of the recent messages Izzy has cached for a specific user.")]
-    [Remarks("Izzy caches at least 5 messages for each user, and will not throw away a message until it becomes irrelevant for spam pressure (see SpamPressureDecay, SpamMaxPressure and SpamBasePressure). Thus, this includes deleted messages that Izzy can't log in LogChannel because Discord doesn't produce a MessageDeleted event for them (e.g. deletions as part of a ban). Edits and deletes are ignored; only the original version of the message is cached. Restarting Izzy clears this cache.")]
+    [Remarks(
+        "This command is useful because some Discord message deletions (most importantly: banning with deletions) do not produce DeletedMessage events, and thus Izzy won't know to log them in LogChannel. This cache is also an implementation detail of some of Izzy's other systems.\n" +
+        "- Izzy will cache at least 5 messages for each user\n" +
+        "- Izzy will not throw away a message while it remains relevant for spam pressure calculations (see SpamPressureDecay, SpamMaxPressure and SpamBasePressure)\n" +
+        "- Edits and deletes are ignored; only the original version of the message is cached\n" +
+        "- Restarting Izzy clears this cache\n" +
+        "- Messages in `ModChannel` are ignored"
+    )]
     [RequireContext(ContextType.Guild)]
     [ModCommand(Group = "Permissions")]
     [DevCommand(Group = "Permissions")]
