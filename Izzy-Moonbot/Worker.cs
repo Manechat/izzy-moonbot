@@ -329,7 +329,7 @@ namespace Izzy_Moonbot
                         await _modLog.CreateModLog(_client.GetGuild((ulong)guildId)).SetContent(log).SetFileLogContent(log).Send();
                     }
                 }
-                await command.RespondAsync(log);
+                await command.RespondAsync(log, ephemeral: true);
             }
             else if (command.CommandName == UNMOON_CMD_NAME)
             {
@@ -350,7 +350,7 @@ namespace Izzy_Moonbot
                         await _modLog.CreateModLog(_client.GetGuild((ulong)guildId)).SetContent(log).SetFileLogContent(log).Send();
                     }
                 }
-                await command.RespondAsync(log);
+                await command.RespondAsync(log, ephemeral: true);
             }
             else
             {
