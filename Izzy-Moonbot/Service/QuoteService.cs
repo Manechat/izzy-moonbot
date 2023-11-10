@@ -94,6 +94,14 @@ public class QuoteService
         }).ToArray();
     }
 
+    public int? GetQuoteCount(ulong userId)
+    {
+        if (!_quoteStorage.Quotes.TryGetValue(userId.ToString(), out var quotes))
+            return null;
+
+        return quotes.Count;
+    }
+
     public string? GetQuote(ulong userId, int index)
     {
         if (!_quoteStorage.Quotes.TryGetValue(userId.ToString(), out var quotes))
