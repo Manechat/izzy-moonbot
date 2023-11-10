@@ -163,9 +163,17 @@ public class ConfigListener
 
         var scheduledJobs = _schedule.GetScheduledJobs(job => job.Action is ScheduledBoredCommandsJob);
 
-        _logger.Log($"Updating all scheduled jobs for bored commands to occur {current} seconds after creation instead of after {original} seconds.", level: LogLevel.Debug);
+        if (!scheduledJobs.Any())
+        {
+            _logger.Log($"BoredCooldown changed, but no bored job exists. Creating a bored commands job.");
+            var nextJob = new ScheduledJob(DateTimeHelper.UtcNow, DateTimeHelper.UtcNow, new ScheduledBoredCommandsJob(), ScheduledJobRepeatType.None);
+            await _schedule.CreateScheduledJob(nextJob);
+            scheduledJobs.Add(nextJob);
+        }
+
         foreach (var scheduledJob in scheduledJobs)
         {
+            _logger.Log($"Updating bored commands job(s) to execute after {current} seconds instead of {original} seconds.");
             scheduledJob.ExecuteAt = scheduledJob.CreatedAt.AddSeconds(current);
             await _schedule.ModifyScheduledJob(scheduledJob.Id, scheduledJob);
         }
