@@ -99,16 +99,16 @@ public class ScheduleService
                 switch (job.Action)
                 {
                     case ScheduledRoleRemovalJob roleRemovalJob:
-                        await Unicycle_RemoveRole(roleRemovalJob, defaultGuild);
+                        await Unicycle_RemoveRole(roleRemovalJob, defaultGuild, job.ExecuteAt);
                         break;
                     case ScheduledRoleAdditionJob roleAdditionJob:
-                        await Unicycle_AddRole(roleAdditionJob, defaultGuild);
+                        await Unicycle_AddRole(roleAdditionJob, defaultGuild, job.ExecuteAt);
                         break;
                     case ScheduledUnbanJob unbanJob:
-                        await Unicycle_Unban(unbanJob, defaultGuild, client);
+                        await Unicycle_Unban(unbanJob, defaultGuild, client, job.ExecuteAt);
                         break;
                     case ScheduledEchoJob echoJob:
-                        await Unicycle_Echo(echoJob, defaultGuild, client, job.RepeatType, job.Id);
+                        await Unicycle_Echo(echoJob, defaultGuild, client, job.RepeatType, job.Id, job.ExecuteAt);
                         break;
                     case ScheduledBannerRotationJob bannerRotationJob:
                         await Unicycle_BannerRotation(bannerRotationJob, defaultGuild, client);
@@ -211,6 +211,7 @@ public class ScheduleService
             
                     // Get the timestamp of next execution.
                     var nextExecuteAt = executeAt + repeatEvery;
+                    while (nextExecuteAt <= DateTimeHelper.UtcNow) nextExecuteAt += repeatEvery;
             
                     // Set previous execution time and new execution time
                     job.LastExecutedAt = executeAt;
@@ -220,16 +221,19 @@ public class ScheduleService
                     // Just add a single day to the execute at time lol
                     job.LastExecutedAt = executeAt;
                     job.ExecuteAt = executeAt.AddDays(1);
+                    while (job.ExecuteAt <= DateTimeHelper.UtcNow) job.ExecuteAt.AddDays(1);
                     break;
                 case Weekly:
                     // Add 7 days to the execute at time
                     job.LastExecutedAt = executeAt;
                     job.ExecuteAt = executeAt.AddDays(7);
+                    while (job.ExecuteAt <= DateTimeHelper.UtcNow) job.ExecuteAt.AddDays(7);
                     break;
                 case Yearly:
                     // Add a year to the execute at time
                     job.LastExecutedAt = executeAt;
                     job.ExecuteAt = executeAt.AddYears(1);
+                    while (job.ExecuteAt <= DateTimeHelper.UtcNow) job.ExecuteAt.AddYears(1);
                     break;
             }
 
@@ -244,7 +248,7 @@ public class ScheduleService
     }
     
     // Executors for different types.
-    private async Task Unicycle_AddRole(ScheduledRoleAdditionJob job, IIzzyGuild guild)
+    private async Task Unicycle_AddRole(ScheduledRoleAdditionJob job, IIzzyGuild guild, DateTimeOffset executeAt)
     {
         var role = guild.GetRole(job.Role);
         if (role == null)
@@ -266,17 +270,21 @@ public class ScheduleService
         
         _logger.Log(
             $"Adding {role.Name} ({role.Id}) to {user.DisplayName} ({user.Username}/{user.Id})", level: LogLevel.Debug);
-        
+
+        var modMessage = $"Gave <@&{role.Id}> to <@{user.Id}> (`{user.Id}`).";
+
+        if ((DateTimeHelper.UtcNow - executeAt).TotalDays > 1)
+            modMessage = TimeTravelWarning(executeAt) + "\n\n" + modMessage;
+
         await _mod.AddRole(user, role.Id, reason);
         await _modLogging.CreateModLog(guild)
-            .SetContent(
-                $"Gave <@&{role.Id}> to <@{user.Id}> (`{user.Id}`).")
+            .SetContent(modMessage)
             .SetFileLogContent(
                 $"Gave {role.Name} ({role.Id}) to {user.DisplayName} ({user.Username}/{user.Id}). {(reason != null ? $"Reason: {reason}." : "")}")
             .Send();
     }
     
-    private async Task Unicycle_RemoveRole(ScheduledRoleRemovalJob job, IIzzyGuild guild)
+    private async Task Unicycle_RemoveRole(ScheduledRoleRemovalJob job, IIzzyGuild guild, DateTimeOffset executeAt)
     {
         var role = guild.GetRole(job.Role);
         if (role == null)
@@ -298,17 +306,21 @@ public class ScheduleService
         
         _logger.Log(
             $"Removing {role.Name} ({role.Id}) from {user.DisplayName} ({user.Username}/{user.Id})", level: LogLevel.Debug);
-        
+
+        var modMessage = $"Removed <@&{role.Id}> from <@{user.Id}> (`{user.Id}`)";
+
+        if ((DateTimeHelper.UtcNow - executeAt).TotalDays > 1)
+            modMessage = TimeTravelWarning(executeAt) + "\n\n" + modMessage;
+
         await _mod.RemoveRole(user, role.Id, reason);
         await _modLogging.CreateModLog(guild)
-            .SetContent(
-                $"Removed <@&{role.Id}> from <@{user.Id}> (`{user.Id}`)")
+            .SetContent(modMessage)
             .SetFileLogContent(
                 $"Removed {role.Name} ({role.Id}) from {user.DisplayName} ({user.Username}/{user.Id}). {(reason != null ? $"Reason: {reason}." : "")}")
             .Send();
     }
 
-    private async Task Unicycle_Unban(ScheduledUnbanJob job, IIzzyGuild guild, IIzzyClient client)
+    private async Task Unicycle_Unban(ScheduledUnbanJob job, IIzzyGuild guild, IIzzyClient client, DateTimeOffset executeAt)
     {
         if (!await guild.GetIsBannedAsync(job.User)) return;
 
@@ -326,16 +338,24 @@ public class ScheduleService
             .WithColor(16737792)
             .WithDescription($"Gasp! Does this mean I can invite <@{job.User}> to our next traditional unicorn sleepover?")
             .Build();
-        
-        await _modLogging.CreateModLog(guild)
+
+        var modLog = _modLogging.CreateModLog(guild)
             .SetEmbed(embed)
-            .SetFileLogContent($"Unbanned {job.User}")
-            .Send();
+            .SetFileLogContent($"Unbanned {job.User}");
+
+        if ((DateTimeHelper.UtcNow - executeAt).TotalDays > 1)
+            modLog.SetContent(TimeTravelWarning(executeAt));
+
+        await modLog.Send();
     }
 
-    private async Task Unicycle_Echo(ScheduledEchoJob job, IIzzyGuild guild, IIzzyClient client, ScheduledJobRepeatType repeatType, string jobId)
+    private async Task Unicycle_Echo(ScheduledEchoJob job, IIzzyGuild guild, IIzzyClient client, ScheduledJobRepeatType repeatType, string jobId, DateTimeOffset executeAt)
     {
         if (job.Content == "") return;
+
+        var message = job.Content;
+        if ((DateTimeHelper.UtcNow - executeAt).TotalDays > 1)
+            message = TimeTravelWarning(executeAt) + "\n\n" + message;
 
         var channel = guild.GetTextChannel(job.ChannelOrUser);
         if (channel == null)
@@ -348,11 +368,11 @@ public class ScheduleService
                     style: ButtonStyle.Primary
                 ).Build();
 
-            await client.SendDirectMessageAsync(job.ChannelOrUser, job.Content, components: components);
+            await client.SendDirectMessageAsync(job.ChannelOrUser, message, components: components);
             return;
         }
 
-        await channel.SendMessageAsync(job.Content);
+        await channel.SendMessageAsync(message);
     }
 
     public async Task Unicycle_BannerRotation(ScheduledBannerRotationJob job, IIzzyGuild guild,
@@ -533,7 +553,8 @@ public class ScheduleService
         else
         {
             nextExecuteTime = lastMessage.AddSeconds(_config.BoredCooldown);
-            _logger.Log($"BoredChannel has recent activity at {lastMessage}, not executing anything." +
+            if (nextExecuteTime < DateTimeOffset.UtcNow) nextExecuteTime = DateTimeOffset.UtcNow.AddSeconds(_config.BoredCooldown);
+            _logger.Log($"BoredChannel has recent activity at {lastMessage}, not executing anything. " +
                 $"Scheduling next BoredCommands job for {nextExecuteTime}");
         }
 
@@ -550,5 +571,14 @@ public class ScheduleService
         }
 
         await _endRaidCallback(job, guild);
+    }
+
+    private string TimeTravelWarning(DateTimeOffset intendedExecutionTime)
+    {
+        return $":warning: Oopsie! <:izzynothoughtsheadempty:910198222255972382> I was supposed to do this " +
+            $"<t:{intendedExecutionTime.ToUnixTimeSeconds()}:R> but didn't see it in my todo list until just now. " +
+            "Maybe someone asked me to time travel... or ran me with old config files, or I had an outage, " +
+            "both of which are _like_ time travel... <a:izzyearflop:892858128641687572> " +
+            "Anyway, better late than never! :warning:";
     }
 }
