@@ -320,6 +320,10 @@ public class UserListener
             }
         }
 
-        if(changed) await FileHelper.SaveUsersAsync(_users);
+        if (changed)
+        {
+            await FileHelper.SaveUsersAsync(_users);
+            _logger.Log($"in the {(DateTimeOffset.UtcNow - FileHelper.firstFileAccess!).Value.TotalMinutes} minutes since first file access, I've made {FileHelper.usersSaves} usersSaves, {FileHelper.configSaves} configSaves, {FileHelper.scheduleSaves} scheduleSaves, {FileHelper.generalStorageSaves} generalStorageSaves, {FileHelper.quoteSaves} quoteSaves");
+        }
     }
 }
