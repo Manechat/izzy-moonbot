@@ -114,7 +114,7 @@ public class MiscModule : ModuleBase<SocketCommandContext>
     [Parameter("message", ParameterType.String, "The reminder message to DM.")]
     [ExternalUsageAllowed]
     [Example(".remindme in 2 hours join stream")]
-    [Example(".remindme at 4:30pm go shopping")]
+    [Example(".remindme at 4:30pm UTC-7 go shopping")]
     [Example(".remindme on 1 jan 2020 12:00 UTC+0 rethink life")]
     public async Task RemindMeCommandAsync([Remainder] string argsString = "")
     {

@@ -673,7 +673,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
     [Parameter("time", ParameterType.DateTime, "When to send the message, whether it repeats, etc. See `.help remindme` for supported formats.")]
     [Parameter("message", ParameterType.String, "The reminder message to send.")]
     [Example(".remind #manechat in 2 hours join stream")]
-    [Example(".remind #tailchat at 4:30pm go shopping")]
+    [Example(".remind #tailchat at 4:30pm UTC-7 go shopping")]
     [Example(".remind #modchat on 1 jan 2020 12:00 UTC+0 rethink life")]
     public async Task RemindCommandAsync([Remainder] string argsString = "")
     {
