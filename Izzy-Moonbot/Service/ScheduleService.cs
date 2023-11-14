@@ -211,6 +211,7 @@ public class ScheduleService
             
                     // Get the timestamp of next execution.
                     var nextExecuteAt = executeAt + repeatEvery;
+                    while (nextExecuteAt <= DateTimeOffset.UtcNow) nextExecuteAt += repeatEvery;
             
                     // Set previous execution time and new execution time
                     job.LastExecutedAt = executeAt;
@@ -220,16 +221,19 @@ public class ScheduleService
                     // Just add a single day to the execute at time lol
                     job.LastExecutedAt = executeAt;
                     job.ExecuteAt = executeAt.AddDays(1);
+                    while (job.ExecuteAt <= DateTimeOffset.UtcNow) job.ExecuteAt.AddDays(1);
                     break;
                 case Weekly:
                     // Add 7 days to the execute at time
                     job.LastExecutedAt = executeAt;
                     job.ExecuteAt = executeAt.AddDays(7);
+                    while (job.ExecuteAt <= DateTimeOffset.UtcNow) job.ExecuteAt.AddDays(7);
                     break;
                 case Yearly:
                     // Add a year to the execute at time
                     job.LastExecutedAt = executeAt;
                     job.ExecuteAt = executeAt.AddYears(1);
+                    while (job.ExecuteAt <= DateTimeOffset.UtcNow) job.ExecuteAt.AddYears(1);
                     break;
             }
 
