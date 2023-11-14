@@ -12,9 +12,18 @@ namespace Izzy_Moonbot.Helpers;
 
 public static class FileHelper
 {
+    public static DateTimeOffset? firstFileAccess = null;
+    public static int configSaves = 0;
+    public static int usersSaves = 0;
+    public static int scheduleSaves = 0;
+    public static int generalStorageSaves = 0;
+    public static int quoteSaves = 0;
+
     public static string SetUpFilepath(FilePathType type, string filename, string extension,
         SocketCommandContext? context = null, string logChannel = "", string date = "")
     {
+        if (firstFileAccess is null) firstFileAccess = DateTimeOffset.UtcNow;
+
         //Root
         var filepath = DevSettings.RootPath;
         CreateDirectoryIfNotExists(filepath);
@@ -87,6 +96,7 @@ public static class FileHelper
         var filepath = SetUpFilepath(FilePathType.Root, "config", "conf");
         var fileContents = JsonConvert.SerializeObject(settings, Formatting.Indented).Replace("\r\n", "\n");
         await File.WriteAllTextAsync(filepath, fileContents);
+        configSaves++;
     }
 
     public static async Task<Dictionary<ulong, User>> LoadUsersAsync()
@@ -114,6 +124,7 @@ public static class FileHelper
         var filepath = SetUpFilepath(FilePathType.Root, "users", "conf");
         var fileContents = JsonConvert.SerializeObject(users, Formatting.Indented).Replace("\r\n", "\n");
         await File.WriteAllTextAsync(filepath, fileContents);
+        usersSaves++;
     }
 
     public static async Task<List<ScheduledJob>> LoadScheduleAsync()
@@ -183,6 +194,7 @@ public static class FileHelper
         var filepath = SetUpFilepath(FilePathType.Root, "scheduled-tasks", "conf");
         var fileContents = TestableSerializeSchedule(scheduledTasks);
         await File.WriteAllTextAsync(filepath, fileContents);
+        scheduleSaves++;
     }
 
     public static string TestableSerializeSchedule(List<ScheduledJob> scheduledTasks)
@@ -215,6 +227,7 @@ public static class FileHelper
         var filepath = SetUpFilepath(FilePathType.Root, "general-storage", "conf");
         var fileContents = JsonConvert.SerializeObject(settings, Formatting.Indented).Replace("\r\n", "\n");
         await File.WriteAllTextAsync(filepath, fileContents);
+        generalStorageSaves++;
     }
     
     public static async Task<QuoteStorage> LoadQuoteStorageAsync()
@@ -242,6 +255,7 @@ public static class FileHelper
         var filepath = SetUpFilepath(FilePathType.Root, "quotes", "conf");
         var fileContents = JsonConvert.SerializeObject(settings, Formatting.Indented).Replace("\r\n", "\n");
         await File.WriteAllTextAsync(filepath, fileContents);
+        quoteSaves++;
     }
 
     private static void CreateDirectoryIfNotExists(string path)
