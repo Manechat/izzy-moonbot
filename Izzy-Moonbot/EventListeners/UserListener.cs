@@ -102,7 +102,7 @@ public class UserListener
             rolesReappliedString = $", Reapplied roles (from `RolesToReapplyOnRejoin`): {string.Join(", ", reappliedRoles.Select(r => $"<&{r}>"))}";
 
         var msg = $"Join: <@{member.Id}> (`{member.Id}`), created <t:{member.CreatedAt.ToUnixTimeSeconds()}:R>{autoSilence}{joinedBefore}{rolesReappliedString}";
-        _logger.Log($"Generated moderation log for user join: ${msg}");
+        _logger.Log($"Generated moderation log for user join: {msg}");
         await _modLogger.CreateModLog(member.Guild)
             .SetContent(msg)
             .SetFileLogContent(msg)
