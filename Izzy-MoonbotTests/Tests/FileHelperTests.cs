@@ -110,7 +110,18 @@ public class FileHelperTests
 
         var generalStorage = JsonConvert.DeserializeObject<GeneralStorage>(testGeneralStorage);
         var serialized = JsonConvert.SerializeObject(generalStorage, Formatting.Indented).Replace("\r\n", "\n");
-        Assert.AreEqual(testGeneralStorage, serialized);
+        Assert.AreEqual("""
+            {
+              "CurrentRaidMode": 0,
+              "ManualRaidSilence": false,
+              "SuspectedRaiders": [],
+              "CurrentBooruFeaturedImage": null,
+              "LastRollTime": "2023-05-01T10:09:04.7142987Z",
+              "UsersWhoRolledToday": [
+                283037539755884554
+              ]
+            }
+            """, serialized);
     }
 
     [TestMethod()]
