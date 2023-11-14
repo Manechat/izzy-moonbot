@@ -32,7 +32,7 @@ public class RaidModule : ModuleBase<SocketCommandContext>
     }
 
     [Command("ass")]
-    [Summary("Set `AutoSilenceNewJoins` to `true` and silence recent joins (as defined by `.config RecentJoinDecay`).")]
+    [Summary("Set `AutoSilenceNewJoins` to `true`, then silence recent joins (as defined by `.config RecentJoinDecay`) and suspected raiders (if there's an ongoing join spike / possible raid).")]
     [Remarks("This is usually used after Izzy detects a spike of recent joins, but it can be used at any time since 'slow trickle raids' occasionally happen too.\n" +
         "Using this command also ensures Izzy will not change `AutoSilenceNewJoins` to `false` until a moderator runs `.assoff`.")]
     [RequireContext(ContextType.Guild)]
@@ -41,9 +41,14 @@ public class RaidModule : ModuleBase<SocketCommandContext>
     public async Task AssAsync()
     {
         var recentJoins = _raidService.GetRecentJoins(new SocketGuildAdapter(Context.Guild));
+        var suspectedRaiders = _generalStorage.SuspectedRaiders
+            .Where(srId => !recentJoins.Any(rj => rj.Id == srId))
+            .Select(id => Context.Guild.GetUser(id))
+            .Select(u => new SocketGuildUserAdapter(u));
+        var allUsersToSilence = recentJoins.Concat(suspectedRaiders);
         try
         {
-            await _modService.SilenceUsers(recentJoins, await DiscordHelper.AuditLogForCommand(Context));
+            await _modService.SilenceUsers(allUsersToSilence, await DiscordHelper.AuditLogForCommand(Context));
         }
         catch (Exception ex)
         {
@@ -58,8 +63,10 @@ public class RaidModule : ModuleBase<SocketCommandContext>
         await FileHelper.SaveGeneralStorageAsync(_generalStorage);
 
         var msg = $"I've set `AutoSilenceNewJoins` to `true`";
-        if (recentJoins.Any())
-            msg += $" and silenced the following recent joins: {string.Join(' ', recentJoins.Select(u => $"<@{u.Id}>"))}\n" + RaidService.PLEASE_ASSOFF;
+        if (suspectedRaiders.Any())
+            msg += $" and silenced the following recent joins and/or suspected raiders: {string.Join(' ', allUsersToSilence.Select(u => $"<@{u.Id}>"))}\n" + RaidService.PLEASE_ASSOFF;
+        else if (recentJoins.Any())
+            msg += $" and silenced the following recent joins: {string.Join(' ', allUsersToSilence.Select(u => $"<@{u.Id}>"))}\n" + RaidService.PLEASE_ASSOFF;
         else
             // "users must have users in them" is a poorly chosen error message that this
             // command once produced, and was so funny we felt the need to keep it around.

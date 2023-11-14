@@ -15,7 +15,8 @@ public class GeneralStorage
         // Antiraid
         CurrentRaidMode = RaidMode.None;
         ManualRaidSilence = false;
-        
+        SuspectedRaiders = new HashSet<ulong>();
+
         // Banner management
         CurrentBooruFeaturedImage = null;
 
@@ -27,7 +28,8 @@ public class GeneralStorage
     // Antiraid
     public RaidMode CurrentRaidMode { get; set; }
     public bool ManualRaidSilence { get; set; }
-    
+    public HashSet<ulong> SuspectedRaiders { get; set; }
+
     // Banner management
     public BooruImage? CurrentBooruFeaturedImage { get; set; }
 

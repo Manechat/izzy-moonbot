@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
@@ -114,6 +115,7 @@ public class RaidService
             .Send();
 
         _generalStorage.CurrentRaidMode = RaidMode.Small;
+        _generalStorage.SuspectedRaiders = recentJoins.Select(j => j.Id).ToHashSet();
         await FileHelper.SaveGeneralStorageAsync(_generalStorage);
 
         if (_config.SmallRaidDecay != null)
@@ -149,6 +151,7 @@ public class RaidService
             _log.Log("Ending small raid");
 
             _generalStorage.CurrentRaidMode = RaidMode.None;
+            _generalStorage.SuspectedRaiders.Clear();
             await FileHelper.SaveGeneralStorageAsync(_generalStorage);
 
             var msg = TIME_SINCE_SMALL() + ", " + AND_ONLY_RECENT() + CONSIDER_OVER + " " + ALARMS_ACTIVE;
@@ -161,6 +164,7 @@ public class RaidService
         _log.Log("Large raid detected!");
 
         _generalStorage.CurrentRaidMode = RaidMode.Large;
+        _generalStorage.SuspectedRaiders = recentJoins.Select(j => j.Id).ToHashSet();
         await FileHelper.SaveGeneralStorageAsync(_generalStorage);
 
         var autoSilenceValueBefore = _config.AutoSilenceNewJoins;
@@ -218,6 +222,7 @@ public class RaidService
             _log.Log("Ending large raid");
 
             _generalStorage.CurrentRaidMode = RaidMode.None;
+            _generalStorage.SuspectedRaiders.Clear();
             await FileHelper.SaveGeneralStorageAsync(_generalStorage);
 
             _config.AutoSilenceNewJoins = false;
