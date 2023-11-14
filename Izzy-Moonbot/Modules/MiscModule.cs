@@ -536,7 +536,6 @@ public class MiscModule : ModuleBase<SocketCommandContext>
     [Command("rollforbestpony")]
     [Alias("roll")]
     [Summary("Roll a random number from 1 to 100 at most once per day (as defined by UTC midnight). A roll of 100 will inform the moderators that you've won Best Pony.")]
-    [Remarks("For testing purposes only, moderators may pass a 'cheat' number to be the result of their roll.")]
     [BotsAllowed]
     public async Task RollCommandAsync([Remainder] string cheatArg = "")
     {
@@ -552,22 +551,6 @@ public class MiscModule : ModuleBase<SocketCommandContext>
         var userId = Context.User.Id;
         var rollResult = new Random().Next(100);
         rollResult += 1; // 0-99 -> 1-100
-
-        if (Int32.TryParse(cheatArg, out var cheatNumber))
-        {
-            var isMod = (Context.User is SocketGuildUser guildUser) && (guildUser.Roles.Any(r => r.Id == _config.ModRole));
-            if (isMod)
-            {
-                _logger.Log($"Cheat argument of {cheatArg} provided by a moderator, replacing {rollResult} with {cheatNumber} and removing {userId} from UsersWhoRolledToday");
-                _generalStorage.UsersWhoRolledToday.Remove(userId);
-                rollResult = cheatNumber;
-            }
-            else
-            {
-                await ReplyAsync($"Only moderators may use the cheat argument for Best Pony rolls", allowedMentions: AllowedMentions.None);
-                return;
-            }
-        }
 
         if (!_generalStorage.UsersWhoRolledToday.Contains(userId))
         {
