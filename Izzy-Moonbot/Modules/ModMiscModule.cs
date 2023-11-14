@@ -16,6 +16,7 @@ using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Service;
 using Izzy_Moonbot.Settings;
 using Microsoft.Extensions.Logging;
+using Serilog.Core;
 using static Izzy_Moonbot.EventListeners.ConfigListener;
 
 namespace Izzy_Moonbot.Modules;
@@ -28,14 +29,16 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
     private readonly Dictionary<ulong, User> _users;
     private readonly LoggingService _logger;
     private readonly TransientState _state;
+    private readonly ModService _mod;
 
-    public ModMiscModule(Config config, Dictionary<ulong, User> users, ScheduleService schedule, LoggingService logger, TransientState state)
+    public ModMiscModule(Config config, Dictionary<ulong, User> users, ScheduleService schedule, LoggingService logger, TransientState state, ModService modService)
     {
         _config = config;
         _schedule = schedule;
         _users = users;
         _logger = logger;
         _state = state;
+        _mod = modService;
     }
 
     [Command("panic")]
@@ -106,127 +109,25 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
     [DevCommand(Group = "Permissions")]
     public async Task ScanCommandAsync()
     {
-        var _ = Task.Run(async () =>
-        {
-            if (!Context.Guild.HasAllMembers) await Context.Guild.DownloadUsersAsync();
+        var result = await UserHelper.scanAllUsers(
+            Context.Guild,
+            _users,
+            _config,
+            _mod,
+            _schedule,
+            _logger
+        );
 
-            var newUserCount = 0;
-            var reloadUserCount = 0;
-            var knownUserCount = 0;
+        var reply = $"Done! I found {result.totalUsersCount} users in this server. " +
+            $"{result.updatedUserCount} required a userinfo update, of which {result.newUserCount} were new to me. " +
+            $"The other {result.totalUsersCount - result.updatedUserCount} were up to date.";
+        if (result.roleAddedCounts.Count > 0)
+            reply += $"\nAdded {string.Join(", ", result.roleAddedCounts.Select(rac => $"{rac.Value} <@&{rac.Key}>(s)"))}";
+        if (result.newMemberRemovalsScheduled.Count > 0)
+            reply += $"\nScheduled <@&{_config.NewMemberRole!.Value}> removal(s) for {string.Join(", ", result.newMemberRemovalsScheduled.Select(u => $"<@{u}>"))}";
 
-            await foreach (var socketGuildUser in Context.Guild.Users.ToAsyncEnumerable())
-            {
-                var skip = false;
-                if (!_users.ContainsKey(socketGuildUser.Id))
-                {
-                    var newUser = new User();
-                    newUser.Username = $"{socketGuildUser.Username}#{socketGuildUser.Discriminator}";
-                    newUser.Aliases.Add(socketGuildUser.Username);
-                    if (socketGuildUser.JoinedAt.HasValue) newUser.Joins.Add(socketGuildUser.JoinedAt.Value);
-                    _users.Add(socketGuildUser.Id, newUser);
-                    newUserCount += 1;
-                    skip = true;
-                }
-                else
-                {
-                    if (_users[socketGuildUser.Id].Username !=
-                        $"{socketGuildUser.Username}#{socketGuildUser.Discriminator}")
-                    {
-                        _users[socketGuildUser.Id].Username =
-                            $"{socketGuildUser.Username}#{socketGuildUser.Discriminator}";
-                        if (!skip) reloadUserCount += 1;
-                        skip = true;
-                    }
-
-                    if (!_users[socketGuildUser.Id].Aliases.Contains(socketGuildUser.DisplayName))
-                    {
-                        _users[socketGuildUser.Id].Aliases.Add(socketGuildUser.DisplayName);
-                        if (!skip) reloadUserCount += 1;
-                        skip = true;
-                    }
-
-                    if (socketGuildUser.JoinedAt.HasValue &&
-                        !_users[socketGuildUser.Id].Joins.Contains(socketGuildUser.JoinedAt.Value))
-                    {
-                        _users[socketGuildUser.Id].Joins.Add(socketGuildUser.JoinedAt.Value);
-                        if (!skip) reloadUserCount += 1;
-                        skip = true;
-                    }
-
-                    if (_config.MemberRole != null)
-                    {
-                        if (_users[socketGuildUser.Id].Silenced &&
-                            socketGuildUser.Roles.Select(role => role.Id).Contains((ulong)_config.MemberRole))
-                        {
-                            // Unsilenced, Remove the flag.
-                            _users[socketGuildUser.Id].Silenced = false;
-                            if (!skip) reloadUserCount += 1;
-                            skip = true;
-                        }
-
-                        if (!_users[socketGuildUser.Id].Silenced &&
-                            !socketGuildUser.Roles.Select(role => role.Id).Contains((ulong)_config.MemberRole))
-                        {
-                            // Silenced, add the flag
-                            _users[socketGuildUser.Id].Silenced = true;
-                            if (!skip) reloadUserCount += 1;
-                            skip = true;
-                        }
-                    }
-
-                    foreach (var roleId in _config.RolesToReapplyOnRejoin)
-                    {
-                        if (!_users[socketGuildUser.Id].RolesToReapplyOnRejoin.Contains(roleId) &&
-                            socketGuildUser.Roles.Select(role => role.Id).Contains(roleId))
-                        {
-                            _users[socketGuildUser.Id].RolesToReapplyOnRejoin.Add(roleId);
-                            if (!skip) reloadUserCount += 1;
-                            skip = true;
-                        }
-
-                        if (_users[socketGuildUser.Id].RolesToReapplyOnRejoin.Contains(roleId) &&
-                            !socketGuildUser.Roles.Select(role => role.Id).Contains(roleId))
-                        {
-                            _users[socketGuildUser.Id].RolesToReapplyOnRejoin.Remove(roleId);
-                            if (!skip) reloadUserCount += 1;
-                            skip = true;
-                        }
-                    }
-
-                    foreach (var roleId in _users[socketGuildUser.Id].RolesToReapplyOnRejoin)
-                    {
-                        if (!socketGuildUser.Guild.Roles.Select(role => role.Id).Contains(roleId))
-                        {
-                            _users[socketGuildUser.Id].RolesToReapplyOnRejoin.Remove(roleId);
-                            _config.RolesToReapplyOnRejoin.Remove(roleId);
-                            await FileHelper.SaveConfigAsync(_config);
-                            if (!skip) reloadUserCount += 1;
-                            skip = true;
-                        }
-                        else
-                        {
-
-                            if (!_config.RolesToReapplyOnRejoin.Contains(roleId))
-                            {
-                                _users[socketGuildUser.Id].RolesToReapplyOnRejoin.Remove(roleId);
-                                if (!skip) reloadUserCount += 1;
-                                skip = true;
-                            }
-                        }
-                    }
-
-                    if (!skip) knownUserCount += 1;
-                }
-            }
-
-            await FileHelper.SaveUsersAsync(_users);
-
-            await Context.Message.ReplyAsync(
-                $"Done! I discovered {Context.Guild.Users.Count} members, of which\n" +
-                $"{newUserCount} were unknown to me until now,\n" +
-                $"{reloadUserCount} had out of date information,\n" +
-                $"and {knownUserCount} didn't need to be updated.");
-        });
+        _logger.Log(reply);
+        await Context.Message.ReplyAsync(reply, allowedMentions: AllowedMentions.None);
     }
 
     [Command("echo")]

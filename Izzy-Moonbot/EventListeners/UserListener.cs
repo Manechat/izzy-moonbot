@@ -58,114 +58,50 @@ public class UserListener
             await _schedule.DeleteScheduledJob(scheduledJob);
     }
 
-    public async Task MemberJoinEvent(SocketGuildUser member, bool catchingUp = false)
+    public async Task MemberJoinEvent(SocketGuildUser member)
     {
         if (member.Guild.Id != DiscordHelper.DefaultGuild()) return;
-        
-        _logger.Log($"New member join{(catchingUp ? " found after reboot" : "")}: {member.DisplayName} ({member.Username}/{member.Id})");
+
+        bool userInfoChanged = false;
+        bool configChanged = false;
+
+        User userInfo;
         if (!_users.ContainsKey(member.Id))
         {
-            User newUser = new User();
-            newUser.Username = $"{member.Username}#{member.Discriminator}";
-            newUser.Aliases.Add(member.Username);
-            if (member.JoinedAt is DateTimeOffset join) newUser.Joins.Add(join);
-            _users.Add(member.Id, newUser);
-            await FileHelper.SaveUsersAsync(_users);
-        }
-        else if (!catchingUp)
-        {
-            if (member.JoinedAt is DateTimeOffset join) _users[member.Id].Joins.Add(join);
-            await FileHelper.SaveUsersAsync(_users);
-        }
-        
-        List<ulong> roles = new List<ulong>();
-        string expiresString = "";
-
-        if (!_config.ManageNewUserRoles)
-        {
-            _logger.Log($"Skipping role management for new user join because ManageNewUserRoles is false");
+            userInfo = new User();
+            _users.Add(member.Id, userInfo);
+            userInfoChanged = true;
         }
         else
         {
-            if (_config.MemberRole == null || _config.MemberRole <= 0)
-                _logger.Log($"ManageNewUserRoles is true but MemberRole is {_config.MemberRole}", level: LogLevel.Warning);
-            else if (!(_config.AutoSilenceNewJoins || _users[member.Id].Silenced))
-            {
-                roles.Add((ulong)_config.MemberRole);
-            }
-
-            if (_config.NewMemberRole == null || _config.NewMemberRole <= 0)
-                _logger.Log($"ManageNewUserRoles is true but NewMemberRole is {_config.NewMemberRole}", level: LogLevel.Warning);
-            else if ((!_config.AutoSilenceNewJoins || !_users[member.Id].Silenced))
-            {
-                roles.Add((ulong)_config.NewMemberRole);
-                expiresString = $"\nNew Member role expires in <t:{(DateTimeOffset.UtcNow + TimeSpan.FromMinutes(_config.NewMemberRoleDecay)).ToUnixTimeSeconds()}:R>";
-
-                var action = new ScheduledRoleRemovalJob(_config.NewMemberRole.Value, member.Id,
-                    $"New member role removal, {_config.NewMemberRoleDecay} minutes (`NewMemberRoleDecay`) passed.");
-                var task = new ScheduledJob(DateTimeOffset.UtcNow,
-                    (DateTimeOffset.UtcNow + TimeSpan.FromMinutes(_config.NewMemberRoleDecay)), action);
-                await _schedule.CreateScheduledJob(task);
-            }
+            userInfo = _users[member.Id];
         }
 
-        string autoSilence = $" (User autosilenced, `AutoSilenceNewJoins` is true.)";
-        
-        if (roles.Count != 0)
-        {
-            if (!_config.AutoSilenceNewJoins) autoSilence = "";
-            if (_users[member.Id].Silenced)
-                autoSilence = ", silenced (attempted silence bypass)";
+        bool changed = UserHelper.updateUserInfoFromDiscord(userInfo, member, _config);
+        if (changed) userInfoChanged = true;
 
-            await _mod.AddRoles(member, roles, $"New user join{autoSilence}.{expiresString}");
-        }
+        var result = await UserHelper.applyJoinRolesToUser(userInfo, member, _config, _mod, _schedule);
+        userInfoChanged |= result.userInfoChanged;
+        configChanged |= result.configChanged;
 
-        autoSilence = ", silenced (`AutoSilenceNewJoins` is on)";
-        if (!_config.AutoSilenceNewJoins) autoSilence = "";
-        if (_users[member.Id].Silenced)
-            autoSilence = ", silenced (attempted silence bypass)";
+        if (configChanged) await FileHelper.SaveConfigAsync(_config);
+        if (userInfoChanged) await FileHelper.SaveUsersAsync(_users);
+
+        _logger.Log($"New member join: {member.DisplayName} ({member.Username}/{member.Id})");
+
+        string autoSilence = "";
+        if (_config.AutoSilenceNewJoins) autoSilence = ", silenced (`AutoSilenceNewJoins` is on)";
+        if (_users[member.Id].Silenced) autoSilence = ", silenced (attempted silence bypass)";
+
         string joinedBefore = $", Joined {_users[member.Id].Joins.Count - 1} times before";
         if (_users[member.Id].Joins.Count <= 1) joinedBefore = "";
 
-        var rolesAutoapplied = new List<string>();
+        var rolesReappliedString = "";
+        var reappliedRoles = result.rolesAdded.Where(r => _config.RolesToReapplyOnRejoin.Contains(r)).ToHashSet();
+        if (reappliedRoles.Count > 0)
+            rolesReappliedString = $", Reapplied roles (from `RolesToReapplyOnRejoin`): {string.Join(", ", reappliedRoles.Select(r => $"<&{r}>"))}";
 
-        foreach (var roleId in _users[member.Id].RolesToReapplyOnRejoin)
-        {
-            var shouldAdd = true;
-            
-            if (!member.Guild.Roles.Select(role => role.Id).Contains(roleId))
-            {
-                _logger.Log($"{member.DisplayName} ({member.Username}/{member.Id}) had role which I would have reapplied on join but no longer exists: role id {roleId}");
-                _users[member.Id].RolesToReapplyOnRejoin.Remove(roleId);
-                _config.RolesToReapplyOnRejoin.Remove(roleId);
-                await FileHelper.SaveConfigAsync(_config);
-                await FileHelper.SaveUsersAsync(_users);
-                shouldAdd = false;
-            }
-            else
-            {
-
-                if (!_config.RolesToReapplyOnRejoin.Contains(roleId))
-                {
-                    _logger.Log($"{member.DisplayName} ({member.Username}/{member.Id}) has role which will no longer reapply on join, role {member.Guild.Roles.Single(role => role.Id == roleId).Name} ({roleId})");
-                    _users[member.Id].RolesToReapplyOnRejoin.Remove(roleId);
-                    await FileHelper.SaveUsersAsync(_users);
-                    shouldAdd = false;
-                }
-            }
-            
-            if(shouldAdd) rolesAutoapplied.Add($"<@&{roleId}>");
-        }
-
-        if(_users[member.Id].RolesToReapplyOnRejoin.Count != 0) 
-            await _mod.AddRoles(member, _users[member.Id].RolesToReapplyOnRejoin,
-                "Roles reapplied due to having them before leaving.");
-
-        var rolesAutoappliedString = $", Reapplied roles (from `RolesToReapplyOnRejoin`): {string.Join(", ", rolesAutoapplied)}";
-
-        if (rolesAutoapplied.Count == 0) rolesAutoappliedString = "";
-        
-        var msg = $"{(catchingUp ? "Catching up on " : "")}Join: <@{member.Id}> (`{member.Id}`), created <t:{member.CreatedAt.ToUnixTimeSeconds()}:R>{autoSilence}{joinedBefore}{rolesAutoappliedString}";
+        var msg = $"Join: <@{member.Id}> (`{member.Id}`), created <t:{member.CreatedAt.ToUnixTimeSeconds()}:R>{autoSilence}{joinedBefore}{rolesReappliedString}";
         _logger.Log($"Generated moderation log for user join: ${msg}");
         await _modLogger.CreateModLog(member.Guild)
             .SetContent(msg)
