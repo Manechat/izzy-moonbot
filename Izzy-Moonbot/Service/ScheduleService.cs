@@ -553,6 +553,7 @@ public class ScheduleService
         else
         {
             nextExecuteTime = lastMessage.AddSeconds(_config.BoredCooldown);
+            if (nextExecuteTime < DateTimeOffset.UtcNow) nextExecuteTime = DateTimeOffset.UtcNow.AddSeconds(_config.BoredCooldown);
             _logger.Log($"BoredChannel has recent activity at {lastMessage}, not executing anything." +
                 $"Scheduling next BoredCommands job for {nextExecuteTime}");
         }
