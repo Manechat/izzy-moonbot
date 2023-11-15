@@ -29,7 +29,8 @@ public class SpamServiceTests
         var mod = new ModService(cfg, users);
         var modLog = new ModLoggingService(cfg);
         var logger = new LoggingService(new TestLogger<Worker>());
-        var ss = new SpamService(logger, mod, modLog, cfg, users);
+        var state = new TransientState();
+        var ss = new SpamService(logger, mod, modLog, cfg, users, state);
 
         ss.RegisterEvents(client);
     }

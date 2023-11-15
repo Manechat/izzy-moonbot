@@ -37,31 +37,6 @@ public class MessageListener
         IIzzyClient client)
     {
         var author = message.Author;
-
-        // RecentMessages updating
-
-        if ((message.Channel.Id != _config.ModChannel) && DiscordHelper.IsInGuild(message))
-        {
-            if (!_state.RecentMessages.ContainsKey(author.Id))
-                _state.RecentMessages[author.Id] = new();
-            var recentMessages = _state.RecentMessages[author.Id];
-            recentMessages.Add((message.GetJumpUrl(), message.Timestamp, message.Content));
-
-            if (recentMessages.Count > 5)
-            {
-                var secondsUntilIrrelevant = _config.SpamPressureDecay * (_config.SpamMaxPressure / _config.SpamBasePressure);
-                while (
-                    (DateTimeOffset.UtcNow - recentMessages[0].Item2).TotalSeconds > secondsUntilIrrelevant &&
-                    recentMessages.Count > 5
-                )
-                {
-                    recentMessages.RemoveAt(0);
-                }
-            }
-        }
-
-        // Witty processing
-
         if (author.Id == client.CurrentUser.Id) return; // Don't process self.
         if (author.IsBot) return; // Don't listen to bots
 

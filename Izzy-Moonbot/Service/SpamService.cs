@@ -31,16 +31,13 @@ namespace Izzy_Moonbot.Service;
  */
 public class SpamService
 {
-    // Required services
     private readonly LoggingService _logger;
     private readonly ModService _mod;
     private readonly ModLoggingService _modLogger;
-    
-    // Configuation
     private readonly Config _config;
     private readonly Dictionary<ulong, User> _users;
+    private readonly TransientState _state;
     
-    // Utility parameters
     private readonly Regex _mention = new("<@&?[0-9]+>");
     private readonly Regex _url = new("https?://(.+\\.)*(.+)\\.([A-z]+)(/?.+)*", RegexOptions.IgnoreCase);
     private readonly Regex _noUnfurlUrl = new("<{1}https?://(.+\\.)*(.+)\\.([A-z]+)(/?.+)*>{1}", RegexOptions.IgnoreCase);
@@ -50,17 +47,16 @@ public class SpamService
      */
     public static readonly string _testString = "=+i7B3s+#(-{×jn6Ga3F~lA:IZZY_PRESSURE_TEST:H4fgd3!#!";
     
-    // Pull services from the service system
-    public SpamService(LoggingService logger, ModService mod, ModLoggingService modLogger, Config config, Dictionary<ulong, User> users)
+    public SpamService(LoggingService logger, ModService mod, ModLoggingService modLogger, Config config, Dictionary<ulong, User> users, TransientState state)
     {
         _logger = logger;
         _mod = mod;
         _modLogger = modLogger;
         _config = config;
         _users = users;
+        _state = state;
     }
     
-    // Register required events
     public void RegisterEvents(IIzzyClient client)
     {
         // Register MessageReceived event
@@ -424,6 +420,9 @@ public class SpamService
 
     private async Task MessageReceiveEvent(IIzzyMessage messageParam, IIzzyClient client)
     {
+        // the RecentMessages cache needs updating even if we aren't doing spam detection
+        await UpdateRecentMessages(messageParam, client);
+
         if (!_config.SpamEnabled) return; // anti-spam is off
         if (messageParam.Author.IsBot) return; // Don't listen to bots
         if (!DiscordHelper.IsInGuild(messageParam)) return; // Not in guild (in dm/group)
@@ -440,5 +439,29 @@ public class SpamService
         if (_config.SpamIgnoredChannels.Contains(context.Channel.Id)) return; // Don't process ignored channels
 
         await ProcessPressure(guildUser.Id, context.Message, guildUser, context);
+    }
+
+    private async Task UpdateRecentMessages(IIzzyMessage message, IIzzyClient client)
+    {
+        var author = message.Author;
+        if ((message.Channel.Id != _config.ModChannel) && DiscordHelper.IsInGuild(message))
+        {
+            if (!_state.RecentMessages.ContainsKey(author.Id))
+                _state.RecentMessages[author.Id] = new();
+            var recentMessages = _state.RecentMessages[author.Id];
+            recentMessages.Add((message.GetJumpUrl(), message.Timestamp, message.Content));
+
+            if (recentMessages.Count > 5)
+            {
+                var secondsUntilIrrelevant = _config.SpamPressureDecay * (_config.SpamMaxPressure / _config.SpamBasePressure);
+                while (
+                    (DateTimeOffset.UtcNow - recentMessages[0].Item2).TotalSeconds > secondsUntilIrrelevant &&
+                    recentMessages.Count > 5
+                )
+                {
+                    recentMessages.RemoveAt(0);
+                }
+            }
+        }
     }
 }
