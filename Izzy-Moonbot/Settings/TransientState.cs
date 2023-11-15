@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Izzy_Moonbot.Helpers;
 
 namespace Izzy_Moonbot.Settings;
 
@@ -18,6 +19,25 @@ public class TransientState
     // RaidService
     public List<ulong> RecentJoins = new();
 
-    // (string, DateTimeOffset, string) = (jump URL, timestamp, content)
-    public Dictionary<ulong, List<(string, DateTimeOffset, string)>> RecentMessages = new();
+    public class RecentMessage
+    {
+        public ulong MessageId;
+        public ulong ChannelId;
+        public DateTimeOffset Timestamp;
+        public string Content;
+        public int EmbedsCount;
+
+        public RecentMessage(ulong messageId, ulong channelId, DateTimeOffset timestamp, string content, int embedsCount)
+        {
+            MessageId = messageId;
+            ChannelId = channelId;
+            Timestamp = timestamp;
+            Content = content;
+            EmbedsCount = embedsCount;
+        }
+
+        public string GetJumpUrl() => $"https://discord.com/channels/{DiscordHelper.DefaultGuild()}/{ChannelId}/{MessageId}";
+    }
+
+    public Dictionary<ulong, List<RecentMessage>> RecentMessages = new();
 }
