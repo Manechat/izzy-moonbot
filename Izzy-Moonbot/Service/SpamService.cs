@@ -70,8 +70,6 @@ public class SpamService
     /// <returns>The pressure of the user.</returns>
     public double GetPressure(ulong id) => _users[id].Pressure; // Just return the user's pressure
 
-    public List<PreviousMessageItem> GetPreviousMessages(ulong id) => _users[id].PreviousMessages; // Just return the user's previous messages
-
     private async Task<double> GetAndDecayPressure(ulong id)
     {
         // Get current time, calculate pressure loss per second and time difference between now and last pressure task then calculate full pressure loss
