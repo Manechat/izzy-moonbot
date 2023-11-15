@@ -261,6 +261,7 @@ public class DiscordNetMessageChannelAdapter : IIzzyMessageChannel
         return new DiscordNetUserMessageAdapter(sentMesssage);
     }
 
+    public ChannelType? GetChannelType() => _channel.GetChannelType();
     public override string? ToString()
     {
         return _channel.ToString();

@@ -438,6 +438,8 @@ public class TestMessageChannel : IIzzyMessageChannel
                 throw new KeyNotFoundException($"This channel is somehow not in its own guild");
     }
 
+    // Izzy only checks the channel type to avoid processing unusual ones
+    public ChannelType? GetChannelType() => ChannelType.Text;
 }
 
 public class StubGuild
