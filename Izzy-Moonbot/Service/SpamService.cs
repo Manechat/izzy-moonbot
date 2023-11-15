@@ -309,23 +309,30 @@ public class SpamService
         var bulkDeletionLog = new List<(DateTimeOffset, string)>();
         var bulkDeletionCount = 0;
         var alreadyDeletedMessages = 0;
-        
+
+        var secondsUntilIrrelevant = _config.SpamPressureDecay * (_config.SpamMaxPressure / _config.SpamBasePressure);
+
         // Remove all messages considered part of spam.
-        foreach (var previousMessageItem in _users[id].PreviousMessages)
+        foreach (var recentMessageItem in _state.RecentMessages[id])
         {
+            if ((DateTimeHelper.UtcNow - recentMessageItem.Item2).TotalSeconds > secondsUntilIrrelevant) continue;
+
+            var ids = recentMessageItem.Item1.Split('/').TakeLast(2).ToArray();
+            var channelId = ulong.Parse(ids[0]);
+            var messageId = ulong.Parse(ids[1]);
             try
             {
-                var channel = context.Guild.GetTextChannel(previousMessageItem.ChannelId);
+                var channel = context.Guild.GetTextChannel(channelId);
                 if (channel == null)
-                    throw new InvalidOperationException($"{id}'s PreviousMessages are somehow from a non-existent channel");
+                    throw new InvalidOperationException($"{id}'s RecentMessages are somehow from a non-existent channel");
 
-                var previousMessage = channel is null ? null : await channel.GetMessageAsync(previousMessageItem.Id);
-                if (previousMessage is not null)
+                var recentMessage = channel is null ? null : await channel.GetMessageAsync(messageId);
+                if (recentMessage is not null)
                 {
-                    if (previousMessage.Content != "")
-                        bulkDeletionLog.Add((previousMessageItem.Timestamp,
-                            $"[{previousMessageItem.Timestamp}] in #{channel?.Name}: {previousMessage.Content}"));
-                    await previousMessage.DeleteAsync();
+                    if (recentMessage.Content != "")
+                        bulkDeletionLog.Add((recentMessageItem.Item2,
+                            $"[{recentMessageItem.Item2}] in #{channel?.Name}: {recentMessage.Content}"));
+                    await recentMessage.DeleteAsync();
                     bulkDeletionCount++;
                 }
                 else
@@ -343,7 +350,7 @@ public class SpamService
             {
                 // Something funky is going on here
                 _logger.Log($"Exception occured while trying to delete message, assuming deleted.", level: LogLevel.Warning);
-                _logger.Log($"Message ID: {previousMessageItem.Id}", level: LogLevel.Warning);
+                _logger.Log($"Message Link: {recentMessageItem.Item1}", level: LogLevel.Warning);
                 _logger.Log($"Message: {ex.Message}", level: LogLevel.Warning);
                 _logger.Log($"Source: {ex.Source}", level: LogLevel.Warning);
                 _logger.Log($"Method: {ex.TargetSite}", level: LogLevel.Warning);
@@ -453,7 +460,7 @@ public class SpamService
             {
                 var secondsUntilIrrelevant = _config.SpamPressureDecay * (_config.SpamMaxPressure / _config.SpamBasePressure);
                 while (
-                    (DateTimeOffset.UtcNow - recentMessages[0].Item2).TotalSeconds > secondsUntilIrrelevant &&
+                    (DateTimeHelper.UtcNow - recentMessages[0].Item2).TotalSeconds > secondsUntilIrrelevant &&
                     recentMessages.Count > 5
                 )
                 {
