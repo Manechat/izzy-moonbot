@@ -40,7 +40,7 @@ public class MessageListener
 
         // RecentMessages updating
 
-        if (message.Channel.Id != _config.ModChannel)
+        if (message.Channel.Id != _config.ModChannel && DiscordHelper.IsInGuild(message))
         {
             if (!_state.RecentMessages.ContainsKey(author.Id))
                 _state.RecentMessages[author.Id] = new();
