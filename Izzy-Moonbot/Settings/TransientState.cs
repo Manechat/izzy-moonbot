@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Izzy_Moonbot.Helpers;
 
@@ -39,5 +40,5 @@ public class TransientState
     // RaidService
     public List<ulong> RecentJoins = new();
 
-    public Dictionary<ulong, List<RecentMessage>> RecentMessages = new();
+    public ConcurrentDictionary<ulong, ConcurrentQueue<RecentMessage>> RecentMessages = new();
 }

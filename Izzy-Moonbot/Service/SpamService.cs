@@ -448,17 +448,17 @@ public class SpamService
                 _state.RecentMessages[author.Id] = new();
 
             var recentMessages = _state.RecentMessages[author.Id];
-            recentMessages.Add(new RecentMessage(message.Id, message.Channel.Id, message.Timestamp, message.Content, embedsCount));
+            recentMessages.Enqueue(new RecentMessage(message.Id, message.Channel.Id, message.Timestamp, message.Content, embedsCount));
 
             if (recentMessages.Count > 5)
             {
                 var secondsUntilIrrelevant = _config.SpamPressureDecay * (_config.SpamMaxPressure / _config.SpamBasePressure);
                 while (
-                    (DateTimeHelper.UtcNow - recentMessages[0].Timestamp).TotalSeconds > secondsUntilIrrelevant &&
+                    (DateTimeHelper.UtcNow - recentMessages.First().Timestamp).TotalSeconds > secondsUntilIrrelevant &&
                     recentMessages.Count > 5
                 )
                 {
-                    recentMessages.RemoveAt(0);
+                    recentMessages.TryDequeue(out _);
                 }
             }
         }
