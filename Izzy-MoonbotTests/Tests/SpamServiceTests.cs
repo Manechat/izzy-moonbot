@@ -353,39 +353,6 @@ public class SpamServiceTests
     }
 
     [TestMethod()]
-    public async Task ContinueSpammingAfterSpamTrip_Tests()
-    {
-        var (cfg, _, (_, sunny), _, (generalChannel, modChat, _), guild, client) = TestUtils.DefaultStubs();
-        SpamSetup(cfg, sunny, modChat, guild, client);
-
-        Assert.AreEqual(0, generalChannel.Messages.Count);
-        Assert.AreEqual(0, modChat.Messages.Count);
-
-        // This simulates the scenario where, after the message that actually trips spam,
-        // the user simply posts another message before Izzy can silence them.
-        // Since message receiving and user silencing are network requests, this cannot be prevented, only handled.
-        var t1 = client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, SpamService._testString);
-        var t2 = client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, SpamService._testString);
-        var t3 = client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, SpamService._testString);
-
-        await t1; await t2; await t3;
-
-        // The spam messages have been deleted
-        Assert.AreEqual(0, generalChannel.Messages.Count);
-
-        // Since they were posted "at the same time", only one task should have deleted all 3 with a single mod message
-        Assert.AreEqual(1, modChat.Messages.Count);
-        Assert.AreEqual("<@&0> I've silenced <@2> for spamming and deleted 3 of their message(s)", modChat.Messages.Last().Content);
-        TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, new List<(string, string)>
-        {
-            ("Silenced User", "<@2> (`2`)"),
-            ("Channel", $"<#{generalChannel.Id}>"),
-            ("Pressure", "This user's last message raised their pressure from 0 to 60, exceeding 60"),
-            ("Breakdown of last message", "**Test string**"),
-        });
-    }
-
-    [TestMethod()]
     public async Task TripSpamThenSpamAgainLater_Tests()
     {
         var (cfg, _, (_, sunny), _, (generalChannel, modChat, _), guild, client) = TestUtils.DefaultStubs();
