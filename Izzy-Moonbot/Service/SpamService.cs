@@ -32,7 +32,9 @@ public class SpamService
      * The test string is programmed to immediately set pressure to Config.SpamMaxPressure.
      */
     public static readonly string _testString = "=+i7B3s+#(-{×jn6Ga3F~lA:IZZY_PRESSURE_TEST:H4fgd3!#!";
-    
+
+    private List<ulong> usersCurrentlyTrippingSpam = new();
+
     public SpamService(LoggingService logger, ModService mod, ModLoggingService modLogger, Config config, Dictionary<ulong, User> users, TransientState state)
     {
         _logger = logger;
@@ -251,7 +253,21 @@ public class SpamService
             else
             {
                 // User is not immune to spam punishments, process trip.
-                _logger.Log("Silence, executing trip method.", context, level: LogLevel.Debug);
+                _logger.Log($"Message {message.Id} task attempting to acquire lock on usersCurrentlyTrippingSpam.", context);
+                lock (usersCurrentlyTrippingSpam)
+                {
+                    if (usersCurrentlyTrippingSpam.Contains(id))
+                    {
+                        _logger.Log($"User {id} already has a spam trip being processed. Message {message.Id} task returning early.", context);
+                        return;
+                    }
+                    else
+                    {
+                        _logger.Log($"No spam trip in progress for user {id}. Message {message.Id} task proceeding with ProcessTrip() call.", context);
+                        usersCurrentlyTrippingSpam.Add(id);
+                    }
+                }
+
                 await ProcessTrip(id, oldPressureAfterDecay, totalPressure, lastPressureBreakdown, message, user, context);
             }
         }
@@ -319,6 +335,19 @@ public class SpamService
                 _logger.Log($"Stack Trace: {ex.StackTrace}", level: LogLevel.Warning);
 
                 alreadyDeletedMessages++;
+            }
+        }
+
+        // We're done asking Discord to clean up this user's spam, so before we post mod logs
+        // mark the user as no longer having an in-progress spam trip.
+        lock (usersCurrentlyTrippingSpam)
+        {
+            if (!usersCurrentlyTrippingSpam.Contains(id))
+                _logger.Log($"User {id} is somehow missing from usersCurrentlyTrippingSpam in the ProcessTrip() call for them. This should be impossible.", level: LogLevel.Error);
+            else
+            {
+                _logger.Log($"ProcessTrip() call for message {message.Id} by user {id} is done cleaning up. Removing them from usersCurrentlyTrippingSpam.");
+                usersCurrentlyTrippingSpam.Remove(id);
             }
         }
 
