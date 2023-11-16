@@ -33,7 +33,7 @@ public class SpamService
      */
     public static readonly string _testString = "=+i7B3s+#(-{×jn6Ga3F~lA:IZZY_PRESSURE_TEST:H4fgd3!#!";
 
-    private List<ulong> usersCurrentlyTrippingSpam = new();
+    private readonly List<ulong> usersCurrentlyTrippingSpam = new();
 
     public SpamService(LoggingService logger, ModService mod, ModLoggingService modLogger, Config config, Dictionary<ulong, User> users, TransientState state)
     {
@@ -53,9 +53,8 @@ public class SpamService
 
     public double GetPressure(ulong id)
     {
-        if (!_state.RecentMessages.ContainsKey(id)) return 0.0;
+        if (!_state.RecentMessages.TryGetValue(id, out var recentMessages)) return 0.0;
 
-        var recentMessages = _state.RecentMessages[id];
         RecentMessage? previousRecentMessage = null;
 
         var pressureDecayPerSecond = _config.SpamBasePressure / _config.SpamPressureDecay;
