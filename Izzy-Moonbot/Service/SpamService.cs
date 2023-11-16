@@ -15,20 +15,6 @@ using Microsoft.Extensions.Logging;
 
 namespace Izzy_Moonbot.Service;
 
-/*
- * This service handles anti-spam routines.
- * The anti-spam works like this:
- * - Each user has "pressure", this is a number based on several factors including but not limitied to:
- *   - Message length
- *   - Message attachments
- *   - Whether their last message is the same as this one
- * - This pressure decays by Config.SpamBasePressure every Config.SpamPressureDecay seconds
- * - If a users pressure reaches or exceeds Config.SpamMaxPressure, the bot will automatically silence them and inform the mods of this action
- * - Users will stay silenced until either banned, kicked, or unsilenced by the mods.
- *
- * Other modules/services are capable of reading and adding pressure to users. This can be useful for increasing pressure due to a filter violation.
- * (however this is mainly implemented so that SpamModule can output the pressure of a user via command)
- */
 public class SpamService
 {
     private readonly LoggingService _logger;
@@ -63,68 +49,38 @@ public class SpamService
         client.MessageReceived += async (message) => await DiscordHelper.LeakOrAwaitTask(MessageReceiveEvent(message, client));
     }
 
-    /// <summary>
-    /// Get the last known pressure of a given user by their Discord id.
-    /// </summary>
-    /// <param name="id">User ID</param>
-    /// <returns>The pressure of the user.</returns>
-    public double GetPressure(ulong id) => _users[id].Pressure; // Just return the user's pressure
-
-    private async Task<double> GetAndDecayPressure(ulong id)
+    public double GetPressure(ulong id)
     {
-        // Get current time, calculate pressure loss per second and time difference between now and last pressure task then calculate full pressure loss
-        var now = DateTimeHelper.UtcNow;
-        var pressureLossPerSecond = _config.SpamBasePressure / _config.SpamPressureDecay;
-        var pressure = _users[id].Pressure;
-        var difference = now - _users[id].Timestamp;
-        var pressureLoss = difference.TotalSeconds * pressureLossPerSecond;
+        if (!_state.RecentMessages.ContainsKey(id)) return 0.0;
 
-        // Execute pressure loss
-        pressure -= pressureLoss;
-        if (pressure <= 0) pressure = 0; // Pressure cannot be negative
+        var recentMessages = _state.RecentMessages[id];
+        RecentMessage? previousRecentMessage = null;
 
-        // Save pressure loss
-        _users[id].Pressure = pressure;
-        _users[id].Timestamp = now;
-        
-        // Remove out of date message cache.
-        // TODO: Move to it's own method. Not sure how to without saving the users file again...
-        var messages = _users[id].PreviousMessages.ToArray().ToList(); // .NET gets angry if we modify the iterator while iterating
-        
-        foreach (var previousMessageItem in messages)
+        var pressureDecayPerSecond = _config.SpamBasePressure / _config.SpamPressureDecay;
+        double totalPressure = 0.0;
+
+        foreach (var rm in recentMessages)
         {
-            if ((previousMessageItem.Timestamp.ToUniversalTime().ToUnixTimeMilliseconds() + (_config.SpamMessageDeleteLookback * 1000)) <=
-                DateTimeHelper.UtcNow.ToUnixTimeMilliseconds())
-            {
-                // Message is out of date, remove it
-                _users[id].PreviousMessages.Remove(previousMessageItem);
-            }
+            calculateMessagePressureWithoutDecay(rm, previousRecentMessage, out var pressureForMessage, out _);
+
+            var pressureDecay = 0.0;
+            if (previousRecentMessage is not null)
+                pressureDecay = (rm.Timestamp - previousRecentMessage.Timestamp).TotalSeconds * pressureDecayPerSecond;
+            totalPressure = pressureForMessage + Math.Max(totalPressure - pressureDecay, 0);
+
+            previousRecentMessage = rm;
         }
-        
-        await FileHelper.SaveUsersAsync(_users);
 
-        // Return pressure
-        return pressure;
+        var finalPressureDecay = (DateTimeHelper.UtcNow - recentMessages.Last().Timestamp).TotalSeconds * pressureDecayPerSecond;
+        totalPressure -= finalPressureDecay;
+
+        return totalPressure;
     }
 
-    public async Task<double> IncreasePressure(ulong id, double pressure)
+    private void calculateMessagePressureWithoutDecay(RecentMessage message, RecentMessage? previousMessage, out double pressure, out List<(double, string)> pressureBreakdown)
     {
-        // Increase pressure
-        _users[id].Pressure += pressure;
-
-        // Save user
-        _users[id].Timestamp = DateTimeHelper.UtcNow;
-        await FileHelper.SaveUsersAsync(_users);
-
-        // Return new pressure
-        return _users[id].Pressure;
-    }
-
-    private async Task ProcessPressure(ulong id, IIzzyUserMessage message, IIzzyGuildUser user,
-        IIzzyContext context)
-    {
-        var pressure = 0.0;
-        var pressureBreakdown = new List<(double, string)>{};
+        pressure = 0.0;
+        pressureBreakdown = new List<(double, string)> { };
 
         var lengthPressure = Math.Round(_config.SpamLengthPressure * message.Content.Length, 2);
         if (lengthPressure > 0)
@@ -143,20 +99,20 @@ public class SpamService
 
         // Attachments, embeds, and stickers count as Image pressure
         // TODO: figure out better names for this
-        var embedsCount = message.Attachments.Count + message.Embeds.Count + message.Stickers.Count;
+        var embedsCount = message.EmbedsCount;
         if (embedsCount >= 1)
         {
             var embedPressure = Math.Round(_config.SpamImagePressure * embedsCount, 2);
             pressure += embedPressure;
-            pressureBreakdown.Add((embedPressure , $"Embeds: {embedPressure} ≈ {embedsCount} embeds × {_config.SpamImagePressure}"));
+            pressureBreakdown.Add((embedPressure, $"Embeds: {embedPressure} ≈ {embedsCount} embeds × {_config.SpamImagePressure}"));
         }
 
         // Check if there's at least one url in the message (and there's no embeds)
-        if (_url.IsMatch(message.Content) && message.Embeds.Count == 0)
+        if (_url.IsMatch(message.Content) && message.EmbedsCount == 0)
         {
             // Because url pressure can occur multiple times, we store the pressure to add here
             var totalMatches = 0;
-            
+
             // Go through each "word" because the URL regex is funky
             foreach (var content in message.Content.Split(" "))
             {
@@ -167,8 +123,8 @@ public class SpamService
                     // Check if url is in fact set to not unfurl
                     var matchToRemove = matches.Find(urlMatch => match.Value.Contains(urlMatch.Value));
                     // If not, just continue
-                    if(matchToRemove == null) continue;
-                    
+                    if (matchToRemove == null) continue;
+
                     // If it is, remove the match.
                     matches.Remove(matchToRemove);
                 }
@@ -195,7 +151,7 @@ public class SpamService
         }
 
         // Repeat pressure
-        if (message.CleanContent.ToLower() == _users[id].PreviousMessage.ToLower() && message.CleanContent != "")
+        if (previousMessage is not null && message.Content.ToLower() == previousMessage.Content.ToLower() && message.Content != "")
         {
             pressure += _config.SpamRepeatPressure;
             pressureBreakdown.Add((_config.SpamRepeatPressure, $"Repeat of Previous Message: {_config.SpamRepeatPressure}"));
@@ -233,29 +189,38 @@ public class SpamService
             pressure = _config.SpamMaxPressure;
             pressureBreakdown = new List<(double, string)> { (_config.SpamMaxPressure, "Test string") };
         }
+    }
 
-        _users[id].PreviousMessage = context.Message.CleanContent;
-
+    private async Task ProcessPressure(ulong id, IIzzyUserMessage message, IIzzyGuildUser user, IIzzyContext context)
+    {
         if (context.Guild == null)
             throw new InvalidOperationException("ProcessPressure was somehow called with a non-guild context");
 
-        var messageItem =
-            new PreviousMessageItem(message.Id, context.Channel.Id, context.Guild.Id, DateTimeHelper.UtcNow);
-        
-        _users[id].PreviousMessages.Add(messageItem);
-        
-        await FileHelper.SaveUsersAsync(_users);
+        var recentMessages = _state.RecentMessages[id];
+        RecentMessage? previousRecentMessage = null;
 
-        var oldPressureBeforeDecay = _users[id].Pressure * 1; // seperate it from the thingy
+        var pressureDecayPerSecond = _config.SpamBasePressure / _config.SpamPressureDecay;
+        List<(double, string)> lastPressureBreakdown = new();
+        double oldPressureAfterDecay = 0.0;
+        double totalPressure = 0.0;
 
-        var oldPressureAfterDecay = await GetAndDecayPressure(id);
+        foreach (var rm in recentMessages)
+        {
+            calculateMessagePressureWithoutDecay(rm, previousRecentMessage, out var pressureForMessage, out lastPressureBreakdown);
 
-        var newPressure = await IncreasePressure(id, pressure);
+            var pressureDecay = 0.0;
+            if (previousRecentMessage is not null)
+                pressureDecay = (rm.Timestamp - previousRecentMessage.Timestamp).TotalSeconds * pressureDecayPerSecond;
+            oldPressureAfterDecay = Math.Max(totalPressure - pressureDecay, 0);
+            totalPressure = pressureForMessage + oldPressureAfterDecay;
 
-        // Logging on every single server message proved too spammy, but this is indispensable for testing spam changes, so leaving as a comment for us to uncomment during manual testing.
-        // _logger.Log($"\nPressure channge: {oldPressureAfterDecay} + {pressure} = {newPressure} out of {_config.SpamMaxPressure}\n{string.Join('\n', pressureBreakdown)}", context, level: LogLevel.Debug);
+            previousRecentMessage = rm;
+        }
 
-        if (newPressure >= _config.SpamMaxPressure)
+        var finalPressureDecay = (DateTimeHelper.UtcNow - recentMessages.Last().Timestamp).TotalSeconds * pressureDecayPerSecond;
+        totalPressure -= finalPressureDecay;
+
+        if (totalPressure >= _config.SpamMaxPressure)
         {
             _logger.Log("Spam pressure trip, checking whether user should be silenced or not...", context, level: LogLevel.Debug);
             var roleIds = user.Roles.Select(roles => roles.Id).ToList();
@@ -271,15 +236,15 @@ public class SpamService
                     .WithColor(3355443)
                     .AddField("User", $"<@{context.User.Id}> (`{context.User.Id}`)", true)
                     .AddField("Channel", $"<#{context.Channel.Id}>", true)
-                    .AddField("Pressure", $"This user's last message raised their pressure from {oldPressureAfterDecay} to {newPressure}, exceeding {_config.SpamMaxPressure}")
-                    .AddField("Breakdown of last message", PonyReadableBreakdown(pressureBreakdown));
+                    .AddField("Pressure", $"This user's last message raised their pressure from {oldPressureAfterDecay} to {totalPressure}, exceeding {_config.SpamMaxPressure}")
+                    .AddField("Breakdown of last message", PonyReadableBreakdown(lastPressureBreakdown));
 
                 await _modLogger.CreateModLog(context.Guild)
                     .SetContent($"Spam detected by <@{user.Id}>")
                     .SetEmbed(embedBuilder.Build())
                     .SetFileLogContent(
-                        $"{user.DisplayName} (`{user.Username}`/`{user.Id}`) exceeded pressure max ({newPressure}/{_config.SpamMaxPressure}) in #{message.Channel.Name} (`{message.Channel.Id}`).\n" +
-                        $"Pressure breakdown: {PonyReadableBreakdown(pressureBreakdown)}\n" +
+                        $"{user.DisplayName} (`{user.Username}`/`{user.Id}`) exceeded pressure max ({totalPressure}/{_config.SpamMaxPressure}) in #{message.Channel.Name} (`{message.Channel.Id}`).\n" +
+                        $"Pressure breakdown: {PonyReadableBreakdown(lastPressureBreakdown)}\n" +
                         $"Did nothing: User has a role which bypasses punishment or has dev bypass.") 
                     .Send();
             }
@@ -287,7 +252,7 @@ public class SpamService
             {
                 // User is not immune to spam punishments, process trip.
                 _logger.Log("Silence, executing trip method.", context, level: LogLevel.Debug);
-                await ProcessTrip(id, oldPressureAfterDecay, newPressure, pressureBreakdown, message, user, context);
+                await ProcessTrip(id, oldPressureAfterDecay, totalPressure, lastPressureBreakdown, message, user, context);
             }
         }
     }
@@ -454,7 +419,7 @@ public class SpamService
                 _state.RecentMessages[author.Id] = new();
 
             var recentMessages = _state.RecentMessages[author.Id];
-            recentMessages.Add(new TransientState.RecentMessage(message.Id, message.Channel.Id, message.Timestamp, message.Content, embedsCount));
+            recentMessages.Add(new RecentMessage(message.Id, message.Channel.Id, message.Timestamp, message.Content, embedsCount));
 
             if (recentMessages.Count > 5)
             {
