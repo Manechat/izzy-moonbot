@@ -12,7 +12,7 @@ namespace Izzy_Moonbot_Tests.Services;
 [TestClass()]
 public class SpamServiceTests
 {
-    public void SpamSetup(Config cfg, IIzzyUser spammer, StubChannel modChat, StubGuild guild, StubClient client)
+    public Dictionary<ulong, User> SpamSetup(Config cfg, IIzzyUser spammer, StubChannel modChat, StubGuild guild, StubClient client)
     {
         DiscordHelper.DefaultGuildId = guild.Id;
         DiscordHelper.DevUserIds = new List<ulong>();
@@ -29,9 +29,12 @@ public class SpamServiceTests
         var mod = new ModService(cfg, users);
         var modLog = new ModLoggingService(cfg);
         var logger = new LoggingService(new TestLogger<Worker>());
-        var ss = new SpamService(logger, mod, modLog, cfg, users);
+        var state = new TransientState();
+        var ss = new SpamService(logger, mod, modLog, cfg, users, state);
 
         ss.RegisterEvents(client);
+
+        return users;
     }
 
     [TestMethod()]
@@ -348,4 +351,81 @@ public class SpamServiceTests
                 $"Length: 2.7 ≈ 432 characters × 0.00625"),
         });
     }
+
+    [TestMethod()]
+    public async Task TripSpamThenSpamAgainLater_Tests()
+    {
+        var (cfg, _, (_, sunny), _, (generalChannel, modChat, _), guild, client) = TestUtils.DefaultStubs();
+        var users = SpamSetup(cfg, sunny, modChat, guild, client);
+
+        Assert.AreEqual(0, generalChannel.Messages.Count);
+        Assert.AreEqual(0, modChat.Messages.Count);
+
+        await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, SpamService._testString);
+
+        Assert.AreEqual(0, generalChannel.Messages.Count);
+        Assert.AreEqual(1, modChat.Messages.Count);
+        Assert.AreEqual("<@&0> I've silenced <@2> for spamming and deleted 1 of their message(s)", modChat.Messages.Last().Content);
+        TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, new List<(string, string)>
+        {
+            ("Silenced User", "<@2> (`2`)"),
+            ("Channel", $"<#{generalChannel.Id}>"),
+            ("Pressure", "This user's last message raised their pressure from 0 to 60, exceeding 60"),
+            ("Breakdown of last message", "**Test string**"),
+        });
+
+        // Pretend we had a moon talk and let them back in
+        users[sunny.Id].Silenced = false;
+
+        await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, SpamService._testString);
+
+        Assert.AreEqual(0, generalChannel.Messages.Count);
+        Assert.AreEqual(2, modChat.Messages.Count);
+        Assert.AreEqual("<@&0> I've silenced <@2> for spamming and deleted 1 of their message(s)", modChat.Messages.Last().Content);
+        TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, new List<(string, string)>
+        {
+            ("Silenced User", "<@2> (`2`)"),
+            ("Channel", $"<#{generalChannel.Id}>"),
+            // since no fake time has passed, the second spam trip says "60 to 120"
+            ("Pressure", "This user's last message raised their pressure from 60 to 120, exceeding 60"),
+            ("Breakdown of last message", "**Test string**"),
+        });
+    }
+
+    [TestMethod()]
+    public async Task MultipleUsersSpamSimultaneously_Tests()
+    {
+        var (cfg, _, (_, sunny), _, (generalChannel, modChat, _), guild, client) = TestUtils.DefaultStubs();
+        var users = SpamSetup(cfg, sunny, modChat, guild, client);
+
+        var zippId = guild.Users[2].Id;
+        users[zippId] = new User();
+        users[zippId].Timestamp = DateTimeHelper.UtcNow;
+
+        Assert.AreEqual(0, generalChannel.Messages.Count);
+        Assert.AreEqual(0, modChat.Messages.Count);
+
+        await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, SpamService._testString);
+        await client.AddMessageAsync(guild.Id, generalChannel.Id, zippId, SpamService._testString);
+
+        Assert.AreEqual(0, generalChannel.Messages.Count);
+        Assert.AreEqual(2, modChat.Messages.Count);
+        Assert.AreEqual("<@&0> I've silenced <@2> for spamming and deleted 1 of their message(s)", modChat.Messages[0].Content);
+        TestUtils.AssertEmbedFieldsAre(modChat.Messages[0].Embeds[0].Fields, new List<(string, string)>
+        {
+            ("Silenced User", "<@2> (`2`)"),
+            ("Channel", $"<#{generalChannel.Id}>"),
+            ("Pressure", "This user's last message raised their pressure from 0 to 60, exceeding 60"),
+            ("Breakdown of last message", "**Test string**"),
+        });
+        Assert.AreEqual("<@&0> I've silenced <@3> for spamming and deleted 1 of their message(s)", modChat.Messages[1].Content);
+        TestUtils.AssertEmbedFieldsAre(modChat.Messages[1].Embeds[0].Fields, new List<(string, string)>
+        {
+            ("Silenced User", "<@3> (`3`)"),
+            ("Channel", $"<#{generalChannel.Id}>"),
+            ("Pressure", "This user's last message raised their pressure from 0 to 60, exceeding 60"),
+            ("Breakdown of last message", "**Test string**"),
+        });
+    }
+
 }

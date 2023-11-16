@@ -122,10 +122,6 @@ public class DevModule : ModuleBase<SocketCommandContext>
 
                 var paginationHelper = new PaginationHelper(Context, pages, staticParts);
                 break;
-            case "pressure-hook":
-                await Context.Message.ReplyAsync(
-                    $"**Test utility** - Pressure hookin test.\n*Other services or modules can hook into the pressure service to do specific things.*\n*An example of this is getting pressure for a user.*\n*Like, your current pressure is `{_pressureService.GetPressure(Context.User.Id)}`*");
-                break;
             case "dump-users-size":
                 await Context.Message.ReplyAsync($"UserStore size: {_users.Count}");
                 break;
