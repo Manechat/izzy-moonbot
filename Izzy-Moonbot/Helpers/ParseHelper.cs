@@ -565,7 +565,9 @@ public static class ParseHelper
         // monday -> friday = 4
         // friday -> monday = -4 (-4+7 = 3)
         var daysToAdd = weekdayInt - (int)DateTimeHelper.UtcNow.DayOfWeek;
-        if (daysToAdd <= 0)
+        if (daysToAdd < 0)
+            daysToAdd += 7;
+        if (daysToAdd == 0 && dto <= DateTimeHelper.UtcNow)
             daysToAdd += 7;
         dto = dto.AddDays(daysToAdd);
 
