@@ -394,6 +394,20 @@ public class ParseHelperTests
         Assert.IsNotNull(err);
         StringAssert.Contains(err, "\"monday\"");
         StringAssert.Contains(err, "missing a time");
+
+        // When using today's weekday and a time, the user could mean today or a week from today,
+        // so it matters whether the time is in the future
+        AssertTryParseDateTime(
+            ParseHelper.TryParseDateTime("on sunday 00:00 UTC+0", out err),
+            new DateTimeOffset(2010, 10, 17, 0, 0, 0, TimeSpan.Zero), ScheduledJobRepeatType.None, ""
+        );
+        Assert.AreEqual(err, null);
+
+        AssertTryParseDateTime(
+            ParseHelper.TryParseDateTime("on sunday 00:01 UTC+0", out err),
+            new DateTimeOffset(2010, 10, 10, 0, 1, 0, TimeSpan.Zero), ScheduledJobRepeatType.None, ""
+        );
+        Assert.AreEqual(err, null);
     }
 
     [TestMethod()]
