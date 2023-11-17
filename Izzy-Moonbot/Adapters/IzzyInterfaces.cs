@@ -61,7 +61,6 @@ public interface IIzzyMessage
     // all we ever do with these is attach them to an embed, so no point properly faking them
     DateTimeOffset CreatedAt { get; }
     DateTimeOffset Timestamp { get; }
-    DateTimeOffset? EditedTimestamp { get => null; }
 
     Task DeleteAsync();
     string GetJumpUrl();
