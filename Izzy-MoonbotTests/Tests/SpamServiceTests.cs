@@ -24,7 +24,6 @@ public class SpamServiceTests
         // a user who is already in the users Dictionary and has a timestamp
         var users = new Dictionary<ulong, User>();
         users[spammer.Id] = new User();
-        users[spammer.Id].Timestamp = DateTimeHelper.UtcNow;
 
         var mod = new ModService(cfg, users);
         var modLog = new ModLoggingService(cfg);
@@ -400,7 +399,6 @@ public class SpamServiceTests
 
         var zippId = guild.Users[2].Id;
         users[zippId] = new User();
-        users[zippId].Timestamp = DateTimeHelper.UtcNow;
 
         Assert.AreEqual(0, generalChannel.Messages.Count);
         Assert.AreEqual(0, modChat.Messages.Count);
