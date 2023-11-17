@@ -103,9 +103,6 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
             output += $"**Roles:** None (user isn't in this server)\n";
             output += "**History:** ";
             output += $"Created <t:{discordUser.CreatedAt.ToUnixTimeSeconds()}:R>";
-            output += users.ContainsKey(discordUser.Id)
-                ? $", last seen <t:{users[discordUser.Id].Timestamp.ToUnixTimeSeconds()}:R>\n"
-                : '\n';
             output += $"**Avatar(s):** \n";
             output += $"    Server: User is not in this server.\n";
             output += $"    Global: {discordUser.GetAvatarUrl() ?? "No global avatar found."}";
@@ -126,7 +123,6 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
                     $", joined <t:{member.JoinedAt.Value.ToUnixTimeSeconds()}:R>";
             }
 
-            output += $", last seen <t:{users[member.Id].Timestamp.ToUnixTimeSeconds()}:R>\n";
             output += $"**Avatar(s):** \n";
             output += $"    Server: {member.GetGuildAvatarUrl() ?? "No server avatar found."}\n";
             output += $"    Global: {member.GetAvatarUrl() ?? "No global avatar found."}";

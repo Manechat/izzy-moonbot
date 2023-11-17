@@ -23,7 +23,6 @@ public class SpamModuleTests
         // a user who is already in the users Dictionary and has a timestamp
         var users = new Dictionary<ulong, User>();
         users[sunny.Id] = new User();
-        users[sunny.Id].Timestamp = DateTimeHelper.UtcNow;
 
         var mod = new ModService(cfg, users);
         var modLog = new ModLoggingService(cfg);
@@ -92,9 +91,7 @@ public class SpamModuleTests
 
         var users = new Dictionary<ulong, User>();
         users[sunny.Id] = new User();
-        users[sunny.Id].Timestamp = DateTimeHelper.UtcNow;
         users[regularUserId] = new User();
-        users[regularUserId].Timestamp = DateTimeHelper.UtcNow;
 
         var mod = new ModService(cfg, users);
         var modLog = new ModLoggingService(cfg);

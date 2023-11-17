@@ -307,4 +307,47 @@ public class FileHelperTests
             }
             """, serialized);
     }
+
+    [TestMethod()]
+    public void UserRoundTrip()
+    {
+        var testUsers = """
+            {
+              "141016540240805888": {
+                "Username": "Sweetie#2934",
+                "Aliases": [
+                  "Sweetie"
+                ],
+                "Joins": [
+                  "2022-05-09T13:43:12.39+00:00"
+                ],
+                "Pressure": 0.0,
+                "Timestamp": "2023-11-14T19:57:38.2304674+00:00",
+                "KnownAlts": [],
+                "PreviousMessage": "",
+                "PreviousMessages": [],
+                "Silenced": false,
+                "RolesToReapplyOnRejoin": []
+              }
+            }
+            """;
+
+        var users = JsonConvert.DeserializeObject<Dictionary<ulong, User>>(testUsers);
+        var serialized = JsonConvert.SerializeObject(users, Formatting.Indented).Replace("\r\n", "\n");
+        Assert.AreEqual("""
+            {
+              "141016540240805888": {
+                "Username": "Sweetie#2934",
+                "Aliases": [
+                  "Sweetie"
+                ],
+                "Joins": [
+                  "2022-05-09T13:43:12.39+00:00"
+                ],
+                "Silenced": false,
+                "RolesToReapplyOnRejoin": []
+              }
+            }
+            """, serialized);
+    }
 }
