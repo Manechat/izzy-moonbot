@@ -56,7 +56,7 @@ public interface IIzzyMessage
     IReadOnlyCollection<IStickerItem> Stickers { get; }
 
     // Izzy only ever checks message type to avoid processing unusual ones (e.g. UserPremiumGuildSubscription messages)
-    MessageType Type => MessageType.Default;
+    MessageType Type { get; }
 
     // all we ever do with these is attach them to an embed, so no point properly faking them
     DateTimeOffset CreatedAt { get; }

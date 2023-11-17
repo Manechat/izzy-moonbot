@@ -170,6 +170,7 @@ public class TestMessage : IIzzyUserMessage
     public IReadOnlyCollection<IAttachment> Attachments => (IReadOnlyCollection<IAttachment>)_message.Attachments;
     public IReadOnlyCollection<IEmbed> Embeds => (IReadOnlyCollection<IEmbed>)_message.Embeds;
     public IReadOnlyCollection<IStickerItem> Stickers => (IReadOnlyCollection<IStickerItem>)_message.Stickers;
+    public MessageType Type => MessageType.Default;
     public DateTimeOffset CreatedAt { get => Timestamp; }
     public DateTimeOffset Timestamp { get; }
 
