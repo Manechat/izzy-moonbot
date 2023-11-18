@@ -25,8 +25,6 @@ public class SpamService
     private readonly TransientState _state;
     
     private readonly Regex _mention = new("<@&?[0-9]+>");
-    private readonly Regex _url = new("https?://(.+\\.)*(.+)\\.([A-z]+)(/?.+)*", RegexOptions.IgnoreCase);
-    private readonly Regex _noUnfurlUrl = new("<{1}https?://(.+\\.)*(.+)\\.([A-z]+)(/?.+)*>{1}", RegexOptions.IgnoreCase);
     /*
      * The test string is a way to test the spam filter without actually spamming
      * The test string is programmed to immediately set pressure to Config.SpamMaxPressure.
@@ -109,30 +107,9 @@ public class SpamService
         }
 
         // Check if there's at least one url in the message (and there's no embeds)
-        if (_url.IsMatch(message.Content) && message.EmbedsCount == 0)
+        if (DiscordHelper.UnfurlableUrl.IsMatch(message.Content) && message.EmbedsCount == 0)
         {
-            // Because url pressure can occur multiple times, we store the pressure to add here
-            var totalMatches = 0;
-
-            // Go through each "word" because the URL regex is funky
-            foreach (var content in message.Content.Split(" "))
-            {
-                // Filter out matches 
-                var matches = _url.Matches(content).ToList();
-                foreach (Match match in _noUnfurlUrl.Matches(content))
-                {
-                    // Check if url is in fact set to not unfurl
-                    var matchToRemove = matches.Find(urlMatch => match.Value.Contains(urlMatch.Value));
-                    // If not, just continue
-                    if (matchToRemove == null) continue;
-
-                    // If it is, remove the match.
-                    matches.Remove(matchToRemove);
-                }
-
-                totalMatches += matches.Count;
-            }
-
+            var totalMatches = DiscordHelper.UnfurlableUrl.Count(message.Content);
             var embedPressure = Math.Round(_config.SpamImagePressure * totalMatches, 2);
             if (embedPressure > 0.0)
             {

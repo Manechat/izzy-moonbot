@@ -220,4 +220,33 @@ public class DiscordHelperTests
         Assert.IsTrue(WithinLevenshteinDistanceOf("SpamMaxPressure", "SpamPressureMax", 6));
         Assert.IsTrue(WithinLevenshteinDistanceOf("SpamMaxPressure", "SpamPressureMax", 7));
     }
+
+    [TestMethod()]
+    public void UnfurlableUrlRegex_Tests()
+    {
+        Assert.AreEqual(UnfurlableUrl.Count(""), 0);
+        Assert.AreEqual(UnfurlableUrl.Count("this is normal text"), 0);
+
+        Assert.AreEqual(UnfurlableUrl.Count("http://stackoverflow.com/a/3809435"), 1);
+        Assert.AreEqual(UnfurlableUrl.Count("https://stackoverflow.com/a/3809435"), 1);
+        Assert.AreEqual(UnfurlableUrl.Count("<https://stackoverflow.com/a/3809435>"), 0);
+        Assert.AreEqual(UnfurlableUrl.Count("https://stackoverflow.com/a/3809435 https://stackoverflow.com/a/3809435 https://stackoverflow.com/a/3809435"), 3);
+        Assert.AreEqual(UnfurlableUrl.Count("<https://stackoverflow.com/a/3809435> https://stackoverflow.com/a/3809435 <https://stackoverflow.com/a/3809435>"), 1);
+        Assert.AreEqual(UnfurlableUrl.Count("<https://stackoverflow.com/a/3809435> <https://stackoverflow.com/a/3809435> <https://stackoverflow.com/a/3809435>"), 0);
+
+        Assert.AreEqual(UnfurlableUrl.Count("htt://stackoverflow.com/a/3809435"), 0);
+        Assert.AreEqual(UnfurlableUrl.Count("httpss://stackoverflow.com/a/3809435"), 0);
+        Assert.AreEqual(UnfurlableUrl.Count("https:/stackoverflow.com/a/3809435"), 0);
+        Assert.AreEqual(UnfurlableUrl.Count("http//stackoverflow.com/a/3809435"), 0);
+
+        Assert.AreEqual(UnfurlableUrl.Count("http://www.stackoverflow.com/a/3809435"), 1);
+        Assert.AreEqual(UnfurlableUrl.Count("http://w.stackoverflow.com/a/3809435"), 1);
+        Assert.AreEqual(UnfurlableUrl.Count("http://abc.stackoverflow.com/a/3809435"), 1);
+        Assert.AreEqual(UnfurlableUrl.Count("http://stackoverflow.com/"), 1);
+        Assert.AreEqual(UnfurlableUrl.Count("http://stackoverflow.com"), 1);
+        Assert.AreEqual(UnfurlableUrl.Count("http://stackoverflow.c"), 1);
+
+        Assert.AreEqual(UnfurlableUrl.Count("http://stackoverflow."), 0);
+        Assert.AreEqual(UnfurlableUrl.Count("http://stackoverflow"), 0);
+    }
 }

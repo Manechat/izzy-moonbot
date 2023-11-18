@@ -355,4 +355,11 @@ public static class DiscordHelper
         var member = guild?.GetUser(user.Id);
         return member != null ? member.DisplayName : user.GlobalName ?? user.Username;
     }
+
+    // In Discord, <> angle brackets around a url prevent it from being automatically unfurled.
+    // Izzy often wants to identify urls in a message that *will* unfurl, so we need a reliable way
+    // to identify urls that aren't enclosed by <>.
+    // This is essentially https://stackoverflow.com/a/3809435 with added lookaround for <>s.
+    public static Regex UnfurlableUrl =
+        new(@"(?<!<)(https?://(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&//=]*))(?!>)");
 }

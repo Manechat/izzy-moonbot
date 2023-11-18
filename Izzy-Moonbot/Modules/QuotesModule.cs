@@ -63,7 +63,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
     {
         // Find all unfurling urls in the given string and surround them with <>. If any are already non-unfurling then ignore them
         // Regex taken from https://stackoverflow.com/a/3809435
-        return Regex.Replace(quote, @"(?<!<)(https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*))(?!>)", "<$&>");
+        return DiscordHelper.UnfurlableUrl.Replace(quote, "<$&>");
     }
 
     [Command("quote")]
