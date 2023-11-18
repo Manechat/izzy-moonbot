@@ -776,13 +776,17 @@ public class ConfigCommandTests
     {
         var (cfg, cd, (izzyHerself, sunny), _, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
 
-        // mis-capitalization
+        // mis-capitalization doesn't even reach suggestions, .config is case-insensitive now
 
         var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config prefix");
         await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "prefix", "");
 
-        Assert.AreEqual("Sorry, I couldn't find a config value or category called `prefix`!" +
-            "\nDid you mean `Prefix`?",
+        Assert.AreEqual("""
+            **Prefix** - Character - Setup category
+            *The prefix I will listen to for commands.*
+            Current value: `.`
+            Run `.config Prefix <value>` to set this value. 
+            """,
             generalChannel.Messages.Last().Content);
 
         // missing letters

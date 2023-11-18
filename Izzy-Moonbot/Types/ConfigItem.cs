@@ -2,15 +2,17 @@ namespace Izzy_Moonbot.Describers;
 
 public class ConfigItem
 {
-    public ConfigItem(ConfigItemType type, string description, ConfigItemCategory category,
+    public ConfigItem(string name, ConfigItemType type, string description, ConfigItemCategory category,
         bool nullable = false)
     {
+        Name = name;
         Description = description;
         Type = type;
         Category = category;
         Nullable = nullable;
     }
 
+    public string Name { get; }
     public ConfigItemType Type { get; }
     public string Description { get; }
     public ConfigItemCategory Category { get; }
