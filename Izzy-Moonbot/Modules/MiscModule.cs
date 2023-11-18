@@ -392,6 +392,12 @@ public class MiscModule : ModuleBase<SocketCommandContext>
             await context.Channel.SendMessageAsync($"'{item}' is a quotealias for the user <@{userId}>. Use `.listquotes {item}` or `.quote {item}` to see their quotes." +
                 "\n\nSee `.help quote` and `.help quotelias` for more information.");
         }
+        else if (_configDescriber.GetItem(item) is not null)
+        {
+            // it's a config item, not a command
+            await context.Channel.SendMessageAsync($"'{item}' is a .config item, not a command. Running `{prefix}config {item}` for you:");
+            await ConfigCommand.TestableConfigCommandAsync(context, _config, _configDescriber, item, "");
+        }
         else
         {
             Func<string, bool> isSuggestable = candidate =>
