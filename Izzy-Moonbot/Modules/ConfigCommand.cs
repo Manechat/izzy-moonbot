@@ -24,17 +24,11 @@ public class ConfigCommand
             await context.Channel.SendMessageAsync(
                 $"Hii!! Here's now to use the config command!\n" +
                 $"Run `{config.Prefix}config <category>` to list the config items in a category.\n" +
-                $"Run `{config.Prefix}config <item>` to view information about an item.\n\n" +
-                $"Here's a list of all possible categories.\n```\n" +
-                $"setup - Config items that must be set for Izzy to work at all.\n" +
-                $"misc - Miscellaneous, often unique items that don't have a clear category.\n" +
-                $"banner - Config items related to the Manechat banner image.\n" +
-                $"managedroles - Config items regarding the automated management of member and new member roles.\n" +
-                $"filter - Config items regarding the filter.\n" +
-                $"spam - Config items regarding spam pressure.\n" +
-                $"raid - Config items regarding raid detection.\n" +
-                $"bored - Config items regarding bored commands.\n```\n\n" +
-                $"ℹ  **See also: `{config.Prefix}help`. Run `{config.Prefix}help` for more information.**");
+                $"Run `{config.Prefix}config <item>` to view information about an item.\n" +
+                $"\n" +
+                $"Here are all the config categories I have: `setup`, `misc`, `banner`, `managedroles`, `filter`, `spam`, `raid`, `bored`.\n" +
+                $"\n" +
+                $"ℹ Use `{config.Prefix}help` to learn about Izzy's other commands.");
 
             return;
         }

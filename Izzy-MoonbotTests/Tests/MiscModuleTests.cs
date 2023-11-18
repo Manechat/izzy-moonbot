@@ -1,4 +1,4 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Settings;
@@ -215,10 +215,9 @@ public class MiscModuleTests
         var description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "Run `.help <category>` to");
         StringAssert.Contains(description, "Run `.help <command>` to");
-        StringAssert.Contains(description, "list of all the categories");
-        StringAssert.Contains(description, "raid - ");
-        StringAssert.Contains(description, "spam - ");
-        StringAssert.Contains(description, "ℹ  **See also: `.config`");
+        StringAssert.Contains(description, "Here are all the command categories");
+        StringAssert.Contains(description, "`raid`");
+        StringAssert.Contains(description, "`spam`");
 
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".help modcore");
         await mm.TestableHelpCommandAsync(context, "modcore");
