@@ -9,6 +9,8 @@ namespace Izzy_Moonbot.Helpers;
 
 public static class ConfigHelper
 {
+    public static PropertyInfo? GetConfigProp(string key) =>
+        typeof(Config).GetProperty(key, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
     public static bool ResolveBool(string boolResolvable)
     {
         switch (boolResolvable.ToLower())
@@ -35,7 +37,7 @@ public static class ConfigHelper
 #nullable enable
     public static object? GetValue(Config settings, string key)
     {
-        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        if (GetConfigProp(key) is PropertyInfo pinfo)
             return pinfo.GetValue(settings);
 
         throw new KeyNotFoundException($"Cannot get a nonexistent value ('{key}') from Config.");
@@ -43,7 +45,7 @@ public static class ConfigHelper
 
     public static async Task<T?> SetSimpleValue<T>(Config settings, string key, T? valueResolvable)
     {
-        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        if (GetConfigProp(key) is PropertyInfo pinfo)
         {
             pinfo.SetValue(settings, valueResolvable);
             await FileHelper.SaveConfigAsync(settings);
@@ -55,7 +57,7 @@ public static class ConfigHelper
 
     public static async Task<bool?> SetBooleanValue(Config settings, string key, string? boolResolvable)
     {
-        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        if (GetConfigProp(key) is PropertyInfo pinfo)
         {
             bool? resolvedBool = boolResolvable is null ? null : ResolveBool(boolResolvable);
 
@@ -70,7 +72,7 @@ public static class ConfigHelper
     public static async Task<IIzzyRole?> SetRoleValue(Config settings, string key, string? roleResolvable,
     IIzzyContext context)
     {
-        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        if (GetConfigProp(key) is PropertyInfo pinfo)
         {
             IIzzyRole? role = null;
             if (roleResolvable is not null)
@@ -97,7 +99,7 @@ public static class ConfigHelper
     public static async Task<IIzzySocketGuildChannel?> SetChannelValue(Config settings, string key,
         string? channelResolvable, IIzzyContext context)
     {
-        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        if (GetConfigProp(key) is PropertyInfo pinfo)
         {
             IIzzySocketGuildChannel? channel = null;
             if (channelResolvable is null)
@@ -127,7 +129,7 @@ public static class ConfigHelper
 
     public static bool HasValueInSet<T>(Config settings, string key, T value)
     {
-        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        if (GetConfigProp(key) is PropertyInfo pinfo)
         {
             var configValue = pinfo.GetValue(settings);
             if (configValue is ISet<T> set
@@ -144,7 +146,7 @@ public static class ConfigHelper
 
     public static ISet<string>? GetStringSet(Config settings, string key)
     {
-        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        if (GetConfigProp(key) is PropertyInfo pinfo)
         {
             var configValue = pinfo.GetValue(settings);
             if (configValue is ISet<string> set
@@ -164,7 +166,7 @@ public static class ConfigHelper
 
     public static async Task<string> AddToStringSet(Config settings, string key, string value)
     {
-        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        if (GetConfigProp(key) is PropertyInfo pinfo)
         {
             var configValue = pinfo.GetValue(settings);
             if (configValue is ISet<string> set
@@ -185,7 +187,7 @@ public static class ConfigHelper
 
     public static async Task<string> RemoveFromStringSet(Config settings, string key, string value)
     {
-        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        if (GetConfigProp(key) is PropertyInfo pinfo)
         {
             var configValue = pinfo.GetValue(settings);
             if (configValue is ISet<string> set
@@ -206,7 +208,7 @@ public static class ConfigHelper
 
     public static async Task<ISet<string>> ClearStringSet(Config settings, string key)
     {
-        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        if (GetConfigProp(key) is PropertyInfo pinfo)
         {
             var configValue = pinfo.GetValue(settings);
             if (configValue is ISet<string> set
@@ -240,7 +242,7 @@ public static class ConfigHelper
     public static HashSet<IIzzyUser> GetUserSet(Config settings, string key,
         IIzzyContext context)
     {
-        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        if (GetConfigProp(key) is PropertyInfo pinfo)
         {
             var configValue = pinfo.GetValue(settings);
             if (configValue is HashSet<ulong> set
@@ -258,7 +260,7 @@ public static class ConfigHelper
     public static async Task<IIzzyUser?> AddToUserSet(Config settings, string key,
         string userResolvable, IIzzyContext context)
     {
-        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        if (GetConfigProp(key) is PropertyInfo pinfo)
         {
             var configValue = pinfo.GetValue(settings);
             if (configValue is HashSet<ulong> set
@@ -286,7 +288,7 @@ public static class ConfigHelper
     public static async Task<IIzzyUser?> RemoveFromUserSet(Config settings, string key,
         string userResolvable, IIzzyContext context)
     {
-        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        if (GetConfigProp(key) is PropertyInfo pinfo)
         {
             var configValue = pinfo.GetValue(settings);
             if (configValue is HashSet<ulong> set
@@ -324,7 +326,7 @@ public static class ConfigHelper
 
     public static HashSet<IIzzyRole> GetRoleSet(Config settings, string key, IIzzyContext context)
     {
-        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        if (GetConfigProp(key) is PropertyInfo pinfo)
         {
             var configValue = pinfo.GetValue(settings);
             if (configValue is HashSet<ulong> set
@@ -342,7 +344,7 @@ public static class ConfigHelper
     public static async Task<IIzzyRole?> AddToRoleSet(Config settings, string key, string roleResolvable,
         IIzzyContext context)
     {
-        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        if (GetConfigProp(key) is PropertyInfo pinfo)
         {
             var configValue = pinfo.GetValue(settings);
             if (configValue is HashSet<ulong> set
@@ -370,7 +372,7 @@ public static class ConfigHelper
     public static async Task<IIzzyRole?> RemoveFromRoleSet(Config settings, string key,
         string roleResolvable, IIzzyContext context)
     {
-        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        if (GetConfigProp(key) is PropertyInfo pinfo)
         {
             var configValue = pinfo.GetValue(settings);
             if (configValue is HashSet<ulong> set
@@ -397,7 +399,7 @@ public static class ConfigHelper
 
     public static async Task<ISet<ulong>> ClearRoleSet(Config settings, string key)
     {
-        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        if (GetConfigProp(key) is PropertyInfo pinfo)
         {
             var configValue = pinfo.GetValue(settings);
             if (configValue is ISet<ulong> set
@@ -431,7 +433,7 @@ public static class ConfigHelper
     public static HashSet<IIzzySocketGuildChannel> GetChannelSet(Config settings, string key,
         IIzzyContext context)
     {
-        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        if (GetConfigProp(key) is PropertyInfo pinfo)
         {
             var configValue = pinfo.GetValue(settings);
             if (configValue is HashSet<ulong> set
@@ -449,7 +451,7 @@ public static class ConfigHelper
     public static async Task<IIzzySocketGuildChannel?> AddToChannelSet(Config settings, string key,
         string channelResolvable, IIzzyContext context)
     {
-        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        if (GetConfigProp(key) is PropertyInfo pinfo)
         {
             var configValue = pinfo.GetValue(settings);
             if (configValue is HashSet<ulong> set
@@ -477,7 +479,7 @@ public static class ConfigHelper
     public static async Task<IIzzySocketGuildChannel?> RemoveFromChannelSet(Config settings, string key,
         string channelResolvable, IIzzyContext context)
     {
-        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        if (GetConfigProp(key) is PropertyInfo pinfo)
         {
             var configValue = pinfo.GetValue(settings);
             if (configValue is HashSet<ulong> set
@@ -504,7 +506,7 @@ public static class ConfigHelper
 
     public static async Task<ISet<ulong>> ClearChannelSet(Config settings, string key)
     {
-        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        if (GetConfigProp(key) is PropertyInfo pinfo)
         {
             var configValue = pinfo.GetValue(settings);
             if (configValue is ISet<ulong> set
@@ -526,7 +528,7 @@ public static class ConfigHelper
 
     public static IDictionary<string, VALUE> GetDictionary<VALUE>(Config settings, string key)
     {
-        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        if (GetConfigProp(key) is PropertyInfo pinfo)
         {
             if (pinfo.GetValue(settings) is IDictionary<string, VALUE> dict)
             {
@@ -540,7 +542,7 @@ public static class ConfigHelper
 
     public static bool DoesDictionaryKeyExist<VALUE>(Config settings, string key, string dictionaryKey)
     {
-        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        if (GetConfigProp(key) is PropertyInfo pinfo)
         {
             if (pinfo.GetValue(settings) is IDictionary<string, VALUE> dict)
             {
@@ -555,7 +557,7 @@ public static class ConfigHelper
     public static async Task<(string, string?, VALUE)> CreateDictionaryKey<VALUE>(Config settings, string key,
         string dictionaryKey, VALUE value)
     {
-        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        if (GetConfigProp(key) is PropertyInfo pinfo)
         {
             if (pinfo.GetValue(settings) is IDictionary<string, VALUE> dict)
             {
@@ -581,7 +583,7 @@ public static class ConfigHelper
     public static async Task<string> RemoveDictionaryKey<VALUE>(Config settings, string key,
         string dictionaryKey)
     {
-        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        if (GetConfigProp(key) is PropertyInfo pinfo)
         {
             if (pinfo.GetValue(settings) is IDictionary<string, VALUE> dict)
             {
@@ -600,7 +602,7 @@ public static class ConfigHelper
 
     public static VALUE GetDictionaryValue<VALUE>(Config settings, string key, string dictionaryKey)
     {
-        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        if (GetConfigProp(key) is PropertyInfo pinfo)
         {
             if (pinfo.GetValue(settings) is IDictionary<string, VALUE> dict)
             {
@@ -616,7 +618,7 @@ public static class ConfigHelper
 
     public static async Task<IDictionary<string, VALUE>> ClearDictionary<VALUE>(Config settings, string key)
     {
-        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        if (GetConfigProp(key) is PropertyInfo pinfo)
         {
             var configValue = pinfo.GetValue(settings);
             if (configValue is IDictionary<string, VALUE> dict)
@@ -637,7 +639,7 @@ public static class ConfigHelper
     public static async Task<(string, string?, string)> SetStringDictionaryValue(Config settings, string key,
         string dictionaryKey, string value)
     {
-        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        if (GetConfigProp(key) is PropertyInfo pinfo)
         {
             if (pinfo.GetValue(settings) is IDictionary<string, string> dict)
             {
@@ -658,7 +660,7 @@ public static class ConfigHelper
     public static async Task<(string, string?, string?)> SetNullableStringDictionaryValue(Config settings, string key,
         string dictionaryKey, string? value)
     {
-        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        if (GetConfigProp(key) is PropertyInfo pinfo)
         {
             if (pinfo.GetValue(settings) is IDictionary<string, string?> dict)
             {
@@ -679,7 +681,7 @@ public static class ConfigHelper
     public static async Task<(string, string)> CreateStringSetDictionaryKey(Config settings, string key,
         string dictionaryKey, string value)
     {
-        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        if (GetConfigProp(key) is PropertyInfo pinfo)
         {
             if (pinfo.GetValue(settings) is IDictionary<string, HashSet<string>> dict)
             {
@@ -705,7 +707,7 @@ public static class ConfigHelper
     public static async Task<(string, string)> AddToStringSetDictionaryValue(Config settings, string key,
         string dictionaryKey, string value)
     {
-        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        if (GetConfigProp(key) is PropertyInfo pinfo)
         {
             if (pinfo.GetValue(settings) is IDictionary<string, HashSet<string>> dict)
             {
@@ -724,7 +726,7 @@ public static class ConfigHelper
     public static async Task<(string, string)> RemoveFromStringSetDictionaryValue(Config settings, string key,
         string dictionaryKey, string value)
     {
-        if (typeof(Config).GetProperty(key) is PropertyInfo pinfo)
+        if (GetConfigProp(key) is PropertyInfo pinfo)
         {
             if (pinfo.GetValue(settings) is IDictionary<string, HashSet<string>> dict)
             {

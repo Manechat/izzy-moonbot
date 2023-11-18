@@ -274,16 +274,23 @@ public class MiscModule : ModuleBase<SocketCommandContext>
                 foreach (var module in _commands.Modules)
                 {
                     if (module.Name == "DevModule") continue; // Hide dev module
-                    moduleList.Add($"{module.Name.Replace("Module", "").ToLower()} - {module.Summary}");
+                    moduleList.Add($"{module.Name.Replace("Module", "").ToLower()}");
                 }
 
                 await context.Channel.SendMessageAsync(
-                    $"Hii! Here's how to use the help command!\n" +
-                    $"Run `{prefix}help <category>` to list the commands in a category.\n" +
-                    $"Run `{prefix}help <command>` to view information about a command.\n\n" +
-                    $"Here's a list of all the categories I have!\n" +
-                    $"```\n{string.Join('\n', moduleList)}\n```\n" +
-                    $"ℹ  **See also: `{prefix}config`. Run `{prefix}help config` for more information.**");
+                    $"Hii! Here's how to learn more about me!\n" +
+                    $"\n" +
+                    $"For commands:\n" +
+                    $"Run `{prefix}help <category>` to list all the commands in a command category.\n" +
+                    $"Run `{prefix}help <command>` to view information about a command.\n" +
+                    $"\n" +
+                    $"Here are all the command categories I have: {string.Join(", ", moduleList.Select(m => $"`{m}`"))}\n" +
+                    $"\n" +
+                    $"For configuration:\n" +
+                    $"Run `{prefix}config <category>` to list the config items in a config category.\n" +
+                    $"Run `{prefix}config <item>` to view information about a config item.\n" +
+                    $"\n" +
+                    $"Here are all the config categories I have: `setup`, `misc`, `banner`, `managedroles`, `filter`, `spam`, `raid`, `bored`.");
             }
             else
             {
@@ -391,6 +398,12 @@ public class MiscModule : ModuleBase<SocketCommandContext>
 
             await context.Channel.SendMessageAsync($"'{item}' is a quotealias for the user <@{userId}>. Use `.listquotes {item}` or `.quote {item}` to see their quotes." +
                 "\n\nSee `.help quote` and `.help quotelias` for more information.");
+        }
+        else if (_configDescriber.GetItem(item) is not null)
+        {
+            // it's a config item, not a command
+            await context.Channel.SendMessageAsync($"'{item}' is a .config item, not a command. Running `{prefix}config {item}` for you:");
+            await ConfigCommand.TestableConfigCommandAsync(context, _config, _configDescriber, item, "");
         }
         else
         {
