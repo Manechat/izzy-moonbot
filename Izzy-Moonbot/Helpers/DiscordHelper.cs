@@ -361,5 +361,5 @@ public static class DiscordHelper
     // to identify urls that aren't enclosed by <>.
     // This is essentially https://stackoverflow.com/a/3809435 with added lookaround for <>s.
     public static Regex UnfurlableUrl =
-        new(@"(?<!<)(https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*))(?!>)");
+        new(@"(?<!<)(https?://(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&//=]*))(?!>)");
 }
