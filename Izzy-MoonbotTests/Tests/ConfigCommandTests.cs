@@ -785,7 +785,7 @@ public class ConfigCommandTests
             **Prefix** - Character - Setup category
             *The prefix I will listen to for commands.*
             Current value: `.`
-            Run `.config Prefix <value>` to set this value. 
+            Run `.config Prefix <value>` to set this value.
             """,
             generalChannel.Messages.Last().Content);
 

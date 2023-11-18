@@ -1037,7 +1037,7 @@ public class ConfigCommand
         if (configItem == null)
             throw new InvalidOperationException($"Failed to get configItem for key {configItemKey}");
 
-        var nullableString = "(Pass `<nothing>` as the value when setting to set to nothing/null)";
+        var nullableString = " (Pass `<nothing>` as the value when setting to set to nothing/null)";
         if (!configItem.Nullable) nullableString = "";
 
         switch (configItem.Type)
@@ -1051,7 +1051,7 @@ public class ConfigCommand
                 return $"**{configItem.Name}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category\n" +
                        $"*{configItem.Description}*\n" +
                        $"Current value: `{ConfigHelper.GetValue(config, configItem.Name)}`\n" +
-                       $"Run `{config.Prefix}config {configItem.Name} <value>` to set this value. {nullableString}";
+                       $"Run `{config.Prefix}config {configItem.Name} <value>` to set this value.{nullableString}";
             case ConfigItemType.Enum:
                 // Figure out what its values are.
                 var rawValue = ConfigHelper.GetValue(config, configItem.Name);
@@ -1065,27 +1065,27 @@ public class ConfigCommand
                        $"*{configItem.Description}*\n" +
                        $"Possible values are: {string.Join(", ", possibleEnumNames)}\n" +
                        $"Current value: `{enumType.GetEnumName(enumValue)}`\n" +
-                       $"Run `{config.Prefix}config {configItem.Name} <value>` to set this value. {nullableString}";
+                       $"Run `{config.Prefix}config {configItem.Name} <value>` to set this value.{nullableString}";
             case ConfigItemType.Role:
                 return
                     $"**{configItem.Name}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category\n" +
                     $"*{configItem.Description}*\n" +
                     $"Current value: <@&{ConfigHelper.GetValue(config, configItem.Name)}>\n" +
-                    $"Run `{config.Prefix}config {configItem.Name} <value>` to set this value. {nullableString}";
+                    $"Run `{config.Prefix}config {configItem.Name} <value>` to set this value.{nullableString}";
             case ConfigItemType.Channel:
                 return $"**{configItem.Name}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category\n" +
                        $"*{configItem.Description}*\n" +
                        $"Current value: <#{ConfigHelper.GetValue(config, configItem.Name)}>\n" +
-                       $"Run `{config.Prefix}config {configItem.Name} <value>` to set this value. {nullableString}";
+                       $"Run `{config.Prefix}config {configItem.Name} <value>` to set this value.{nullableString}";
             case ConfigItemType.StringSet:
             case ConfigItemType.RoleSet:
             case ConfigItemType.ChannelSet:
                 return $"**{configItem.Name}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category\n" +
                        $"*{configItem.Description}*\n" +
                        $"Run `{config.Prefix}config {configItem.Name} list` to view the contents of this list.\n" +
-                       $"Run `{config.Prefix}config {configItem.Name} add <value>` to add a value to this list. {nullableString}\n" +
-                       $"Run `{config.Prefix}config {configItem.Name} remove <value>` to remove a value from this list. {nullableString}\n" +
-                       $"Run `{config.Prefix}config {configItem.Name} clear` to clear this list of all values. {nullableString}";
+                       $"Run `{config.Prefix}config {configItem.Name} add <value>` to add a value to this list.{nullableString}\n" +
+                       $"Run `{config.Prefix}config {configItem.Name} remove <value>` to remove a value from this list.{nullableString}\n" +
+                       $"Run `{config.Prefix}config {configItem.Name} clear` to clear this list of all values.{nullableString}";
             case ConfigItemType.StringDictionary:
                 return $"**{configItem.Name}** - {configDescriber.TypeToString(configItem.Type)} - {configDescriber.CategoryToString(configItem.Category)} category\n" +
                        $"*{configItem.Description}*\n" +
