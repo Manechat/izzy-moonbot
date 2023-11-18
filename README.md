@@ -23,10 +23,7 @@ Get started by posting `.help` and/or `.config` in one of the private bots-* cha
     - Install Ubuntu as default distro for best ease of use
   - Docker Desktop
     - After installation you likely need to go into Settings (the cog wheel icon) -> Resources -> WSL Integration -> "Enable integration with additional distros" and enable "Ubuntu"
-- Ask one of the existing devs for a copy of the following files. These contain secrets such as Discord tokens and database credentials that we don't want to store in GitHub.
-  - `Izzy-Moonbot/Docker Compose/Dev/appsettings.json`
-  - `Izzy-Moonbot/Docker Compose/Dev/mongo.env`
-  - `Izzy-Moonbot/Docker Compose/Dev/mongo_express.env`
+- Ask one of the existing devs for a copy of `Izzy-Moonbot/Docker Compose/Dev/appsettings.json`. This contains secrets such as Discord tokens and database credentials that we don't want to store in GitHub.
 - Add your Discord user id to the "DevUsers" list in `appsettings.json`, so your instance of Izzy will give you developer permissions.
 - Ask one of the existing devs to add you to the "DevUsers" list in the `appsettings.json` file on Izzy's production environment.
 - Ask one of the existing devs for an invite to our "Bot Testing" Discord server.
