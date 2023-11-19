@@ -145,7 +145,7 @@ public class QuotesModule : ModuleBase<SocketCommandContext>
             }
             if (number.Value > quoteCount)
             {
-                await context.Channel.SendMessageAsync($"<@{userId}> only has {quoteCount} {(quoteCount == 1 ? "quote" : "quotes")}, allowedMentions: AllowedMentions.None);
+                await context.Channel.SendMessageAsync($"<@{userId}> only has {quoteCount} {(quoteCount == 1 ? "quote" : "quotes")}", allowedMentions: AllowedMentions.None);
                 return;
             }
 
