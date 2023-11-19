@@ -53,7 +53,7 @@ public class QuoteModuleTests
 
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, $".quote <@{sunny.Id}> 2");
         await qm.TestableQuoteCommandAsync(context, $"<@{sunny.Id}> 2");
-        Assert.AreEqual($"<@{sunny.Id}> only has 1 quote(s)", generalChannel.Messages.Last().Content);
+        Assert.AreEqual($"<@{sunny.Id}> only has 1 quote", generalChannel.Messages.Last().Content);
 
         //
 
@@ -70,6 +70,31 @@ public class QuoteModuleTests
         StringAssert.Contains(generalChannel.Messages.Last().Content, "I was unable to find the user you asked for. Sorry!");
 
         // TODO: test cases where user left (both cached in userinfo and not)
+    }
+
+    [TestMethod()]
+    public async Task QuoteCommand_When_Mutiple_Quotes_Exist_The_Out_Of_Bounds_Response_Is_Plural()
+    {
+        // setup
+
+        var (cfg, _, (_, sunny), _, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
+        DiscordHelper.DefaultGuildId = guild.Id;
+
+        // Initialize sunny with multiple quotes
+        var quotes = new QuoteStorage();
+        quotes.Quotes.Add(sunny.Id.ToString(), new List<string> {
+            "gonna be my day",
+            "We'll do our part. Hoof to heart."
+        });
+
+        var userinfo = new Dictionary<ulong, User>();
+        var qs = new QuoteService(quotes, userinfo);
+        var qm = new QuotesModule(cfg, qs, userinfo);
+
+        // setup end
+        var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, $".quote <@{sunny.Id}> 3");
+        await qm.TestableQuoteCommandAsync(context, $"<@{sunny.Id}> 3");
+        Assert.AreEqual($"<@{sunny.Id}> only has 2 quotes", generalChannel.Messages.Last().Content);
     }
 
     [TestMethod()]
