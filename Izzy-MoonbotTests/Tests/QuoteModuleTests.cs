@@ -73,14 +73,14 @@ public class QuoteModuleTests
     }
 
     [TestMethod()]
-    public async Task QuotesCommand_Tests()
+    public async Task QuoteCommand_When_Mutiple_Quotes_Exist_The_Out_Of_Bounds_Response_Is_Plural()
     {
         // setup
 
         var (cfg, _, (_, sunny), _, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
         DiscordHelper.DefaultGuildId = guild.Id;
 
-        // only one quote so that the "random" selection is deterministic for now
+        // Initialize sunny with multiple quotes
         var quotes = new QuoteStorage();
         quotes.Quotes.Add(sunny.Id.ToString(), new List<string> {
             "gonna be my day",
