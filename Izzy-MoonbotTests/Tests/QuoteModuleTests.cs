@@ -73,6 +73,31 @@ public class QuoteModuleTests
     }
 
     [TestMethod()]
+    public async Task QuotesCommand_Tests()
+    {
+        // setup
+
+        var (cfg, _, (_, sunny), _, (generalChannel, _, _), guild, client) = TestUtils.DefaultStubs();
+        DiscordHelper.DefaultGuildId = guild.Id;
+
+        // only one quote so that the "random" selection is deterministic for now
+        var quotes = new QuoteStorage();
+        quotes.Quotes.Add(sunny.Id.ToString(), new List<string> {
+            "gonna be my day",
+            "We'll do our part. Hoof to heart."
+        });
+
+        var userinfo = new Dictionary<ulong, User>();
+        var qs = new QuoteService(quotes, userinfo);
+        var qm = new QuotesModule(cfg, qs, userinfo);
+
+        // setup end
+        var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, $".quote <@{sunny.Id}> 3");
+        await qm.TestableQuoteCommandAsync(context, $"<@{sunny.Id}> 3");
+        Assert.AreEqual($"<@{sunny.Id}> only has 2 quotes", generalChannel.Messages.Last().Content);
+    }
+
+    [TestMethod()]
     public async Task ListQuotes_Tests()
     {
         // setup
