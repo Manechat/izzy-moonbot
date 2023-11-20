@@ -190,7 +190,7 @@ public class MessageListener
         if (author.Id == client.CurrentUser.Id) return; // Don't process self.
         if (author.IsBot) return; // Don't listen to bots
 
-        var logMessageTemplate = $"Message id {messageId} by {DiscordHelper.DisplayName(author, defaultGuild)} ({author.Username}/{author.Id}) **deleted**";
+        var logMessageTemplate = $"Message id {messageId} originally posted on <t:{message.Timestamp.ToUnixTimeSeconds()}> by {DiscordHelper.DisplayName(author, defaultGuild)} ({author.Username}/{author.Id}) **deleted**";
 
         if (channel is null)
             logMessageTemplate += $" in unknown channel {channelId}:\n";
