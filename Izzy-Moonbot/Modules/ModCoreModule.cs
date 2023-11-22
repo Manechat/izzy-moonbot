@@ -58,6 +58,28 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
         );
     }
 
+    [Command("resolveuser")]
+    [Summary("Resolve a user name, id or mention/ping to a specific user, then print that user's id and mention.")]
+    [Remarks("This is designed for mobile moderation. In particular, it puts the id and mention in two separate messages with no other text so that long tap -> Copy Text just works.")]
+    [Alias("getid", "getping")]
+    [Parameter("user", ParameterType.UserResolvable, "The user to get an id and mention for, or yourself if not provided.", true)]
+    public async Task ResolveUserCommandAsync(
+        [Remainder] string user = "")
+    {
+        if (user == "") user = Context.User.Id.ToString(); // Set to user ID to target self.
+
+        var (userId, userError) = await ParseHelper.TryParseUserResolvable(user, new SocketGuildAdapter(Context.Guild));
+        if (userId == null)
+        {
+            await ReplyAsync($"I couldn't find that user's id: {userError}");
+            return;
+        }
+
+        await ReplyAsync(userId.ToString(), allowedMentions: AllowedMentions.None);
+
+        await ReplyAsync($"<@{userId}>", allowedMentions: AllowedMentions.None);
+    }
+
     [Command("userinfo")]
     [Summary("Get information about a user (or yourself)")]
     [Remarks("In the Discord UI, right-click on a user's name and go to 'Apps' for an alternative way of invoking this command.")]
