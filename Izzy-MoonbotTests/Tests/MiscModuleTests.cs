@@ -392,7 +392,7 @@ public class MiscModuleTests
         Assert.AreEqual("Sorry, I was unable to find any command, category, or alias named \"modcore\" that you have access to.\n" +
                         "\n" +
                         // .userinfo is the only public command in the 'modcore' category
-                        "I also see \"modcore\" in the output of: `.help userinfo`", generalChannel.Messages.Last().Content);
+                        "I also see \"modcore\" in the output of: `.help resolveuser` and `.help userinfo`", generalChannel.Messages.Last().Content);
 
         // So just `.help` with no args lists not categories, but the commands regular users can run
 
@@ -508,7 +508,7 @@ public class MiscModuleTests
         Assert.AreEqual("Sorry, I was unable to find any command, category, or alias named \"core\" that you have access to." +
             "\nDid you mean `.modcore`?" +
             "\n" +
-            "\nI also see \"core\" in the output of: `.help config` and `.help userinfo` and `.help ban` and `.help banall` and `.help assignrole` and `.help wipe`", generalChannel.Messages.Last().Content);
+            "\nI also see \"core\" in the output of: `.help config` and `.help resolveuser` and `.help userinfo` and `.help ban` and `.help banall` and `.help assignrole` and `.help wipe`", generalChannel.Messages.Last().Content);
 
         // regular user does not
 
@@ -517,7 +517,7 @@ public class MiscModuleTests
 
         Assert.AreEqual("Sorry, I was unable to find any command, category, or alias named \"core\" that you have access to." +
             "\n" +
-            "\nI also see \"core\" in the output of: `.help userinfo`", generalChannel.Messages.Last().Content);
+            "\nI also see \"core\" in the output of: `.help resolveuser` and `.help userinfo`", generalChannel.Messages.Last().Content);
     }
 
     [TestMethod()]
