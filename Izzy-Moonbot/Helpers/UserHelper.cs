@@ -75,7 +75,7 @@ public static class UserHelper
                 rolesToAddIfMissing.Add((ulong)config.MemberRole);
             }
 
-            if (config.NewMemberRole != null && config.NewMemberRole > 0 && !silencingUser && socketGuildUser.JoinedAt is not null)
+            if (config.NewMemberRole != null && config.NewMemberRole > 0 && socketGuildUser.JoinedAt is not null)
             {
                 var joinTime = socketGuildUser.JoinedAt.Value;
                 var newMemberExpiry = joinTime.AddMinutes(config.NewMemberRoleDecay);
