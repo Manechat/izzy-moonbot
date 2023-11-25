@@ -337,12 +337,12 @@ namespace Izzy_Moonbot
                     var alreadyHasRole = member.Roles.Select(role => role.Id).Contains(memberRoleId);
                     if (!alreadyHasRole)
                     {
-                        log = $"ignored user context command '{WELCOME_CMD_NAME}' used by `{command.User.Username}` ({command.User.Id}) because the target user <@{member.Id}> is already lacking the member role";
+                        log = $"ignored message context command '{WELCOME_CMD_NAME}' used by `{command.User.Username}` ({command.User.Id}) because the target user <@{member.Id}> is already lacking the member role";
                         await _modLog.CreateModLog(_client.GetGuild((ulong)guildId)).SetContent(log).SetFileLogContent(log).Send();
                     }
                     else
                     {
-                        log = $"user context command '{WELCOME_CMD_NAME}' used by `{command.User.Username}` ({command.User.Id}) on target user <@{member.Id}>";
+                        log = $"message context command '{WELCOME_CMD_NAME}' used by `{command.User.Username}` ({command.User.Id}) on target user <@{member.Id}>";
                         await _modService.RemoveRole(member, memberRoleId, log);
                         await _modLog.CreateModLog(_client.GetGuild((ulong)guildId)).SetContent(log).SetFileLogContent(log).Send();
                     }
@@ -475,6 +475,7 @@ namespace Izzy_Moonbot
                     await member.SetTimeOutAsync(TimeSpan.FromHours(24));
 
                     log = $"user context command '{TIMEOUT_24H_CMD_NAME}' used by `{command.User.Username}` ({command.User.Id}) on target user <@{member.Id}>";
+                    await _modLog.CreateModLog(_client.GetGuild((ulong)guildId)).SetContent(log).SetFileLogContent(log).Send();
                 }
                 await command.RespondAsync(log, ephemeral: true);
             }
