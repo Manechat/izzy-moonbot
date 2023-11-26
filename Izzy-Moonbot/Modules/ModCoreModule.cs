@@ -404,7 +404,7 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
             return;
         }
 
-        var userArgs = usersString.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var userArgs = usersString.Split(new char[] { ' ', '\r', '\n', '\t', '\v' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         foreach (var userArg in userArgs)
         {
             await TestableBanCommandAsync(context, userArg, false /* generateUserlogTemplate */);
