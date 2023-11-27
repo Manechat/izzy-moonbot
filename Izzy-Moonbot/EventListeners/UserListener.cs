@@ -221,7 +221,7 @@ public class UserListener
     private async Task MemberUpdateEvent(Cacheable<SocketGuildUser,ulong> oldUser, SocketGuildUser newUser)
     {
         if (newUser.Guild.Id != DiscordHelper.DefaultGuild()) return;
-        
+
         var changed = false;
         
         if (!_users.ContainsKey(newUser.Id))
@@ -324,6 +324,14 @@ public class UserListener
         {
             await FileHelper.SaveUsersAsync(_users);
             _logger.Log($"in the {(DateTimeOffset.UtcNow - FileHelper.firstFileAccess!).Value.TotalMinutes} minutes since first file access, I've made {FileHelper.usersSaves} usersSaves, {FileHelper.configSaves} configSaves, {FileHelper.scheduleSaves} scheduleSaves, {FileHelper.generalStorageSaves} generalStorageSaves, {FileHelper.quoteSaves} quoteSaves");
+        }
+
+        var IMABOT_ROLE_ID = 1163260573606219856u;
+        if (newUser.Guild.Roles.Any(role => role.Id == IMABOT_ROLE_ID))
+        {
+            var msg = $"While handling a GuildMemberUpdated event for user <@{newUser.Id}>, I noticed they have the <@&{IMABOT_ROLE_ID}> role." +
+                $" They joined <t:{newUser.JoinedAt?.ToUnixTimeSeconds()}:R>";
+            await _modLogger.CreateModLog(newUser.Guild).SetContent(msg).SetFileLogContent(msg).Send();
         }
     }
 }
