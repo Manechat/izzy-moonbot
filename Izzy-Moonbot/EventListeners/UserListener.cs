@@ -327,7 +327,7 @@ public class UserListener
         }
 
         var IMABOT_ROLE_ID = 1163260573606219856u;
-        if (newUser.Guild.Roles.Any(role => role.Id == IMABOT_ROLE_ID))
+        if (newUser.Roles.Any(role => role.Id == IMABOT_ROLE_ID))
         {
             var msg = $"While handling a GuildMemberUpdated event for user <@{newUser.Id}>, I noticed they have the <@&{IMABOT_ROLE_ID}> role." +
                 $" They joined <t:{newUser.JoinedAt?.ToUnixTimeSeconds()}:R>";
