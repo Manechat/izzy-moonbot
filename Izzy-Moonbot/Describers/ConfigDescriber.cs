@@ -62,6 +62,9 @@ public class ConfigDescriber
         _config.Add("BestPonyChannel",
             new ConfigItem("BestPonyChannel", ConfigItemType.Channel, "The channel for Best Pony winners. If this is set, .rollforbestpony wins will send a message here in addition to ModChannel.",
                 ConfigItemCategory.Misc));
+        _config.Add("RecentMessagesPerUser",
+            new ConfigItem("RecentMessagesPerUser", ConfigItemType.Integer, "How many of a user's messages I'll store even after they're too old to affect spam pressure. See .help recentmessages for details.",
+                ConfigItemCategory.Misc));
 
         // Banner settings
         _config.Add("BannerMode",

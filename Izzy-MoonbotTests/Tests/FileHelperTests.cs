@@ -241,6 +241,7 @@ public class FileHelperTests
                 "test": "hello"
               },
               "BestPonyChannel": 0,
+              "RecentMessagesPerUser": 10,
               "BannerMode": 0,
               "BannerInterval": 1.0,
               "BannerImages": [
