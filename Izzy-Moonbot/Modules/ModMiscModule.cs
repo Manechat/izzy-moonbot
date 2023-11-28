@@ -757,7 +757,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
     [Summary("Dump all of the recent messages Izzy has cached for a specific user.")]
     [Remarks(
         "This command is useful because some Discord message deletions (most importantly: banning with deletions) do not produce DeletedMessage events, and thus Izzy won't know to log them in LogChannel. This cache is also an implementation detail of some of Izzy's other systems.\n" +
-        "- Izzy will cache at least 5 messages for each user\n" +
+        "- Izzy will cache at least `.config RecentMessagesPerUser` messages for each user\n" +
         "- Izzy will not throw away a message while it remains relevant for spam pressure calculations (see SpamPressureDecay, SpamMaxPressure and SpamBasePressure)\n" +
         "- Edits and deletes are ignored; only the original version of the message is cached\n" +
         "- Restarting Izzy clears this cache\n" +

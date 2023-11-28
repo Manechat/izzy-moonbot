@@ -489,6 +489,13 @@ public class ConfigCommandTests
         Assert.AreEqual(cfg.BestPonyChannel, 42ul);
         Assert.AreEqual("I've set `BestPonyChannel` to the following content: <#42>", generalChannel.Messages.Last().Content);
 
+        // post ".config RecentMessagesPerUser 20"
+        Assert.AreEqual(cfg.RecentMessagesPerUser, 10);
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config RecentMessagesPerUser 20");
+        await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "RecentMessagesPerUser", "20");
+        Assert.AreEqual(cfg.RecentMessagesPerUser, 20);
+        Assert.AreEqual("I've set `RecentMessagesPerUser` to the following content: 20", generalChannel.Messages.Last().Content);
+
         // post ".config ManageNewUserRoles true"
         Assert.AreEqual(cfg.ManageNewUserRoles, false);
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config ManageNewUserRoles true");
@@ -764,7 +771,7 @@ public class ConfigCommandTests
         // Ensure we can't forget to keep this test up to date
         var configPropsCount = typeof(Config).GetProperties().Length;
 
-        Assert.AreEqual(54, configPropsCount,
+        Assert.AreEqual(55, configPropsCount,
             $"\nIf you just added or removed a config item, then this test is probably out of date");
 
         Assert.AreEqual(configPropsCount * 2, generalChannel.Messages.Count(),
