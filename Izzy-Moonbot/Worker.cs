@@ -351,7 +351,9 @@ namespace Izzy_Moonbot
             }
             else
             {
-                _logger.LogError($"MessageCommandHandler received unknown command {command.CommandName}");
+                string log = $"MessageCommandHandler received unknown command {command.CommandName}";
+                _logger.LogError(log);
+                await command.RespondAsync(log, ephemeral: true);
             }
         }
 
@@ -368,17 +370,20 @@ namespace Izzy_Moonbot
 
             if (command.CommandName == USERINFO_CMD_NAME)
             {
-                var output = await ModCoreModule.UserInfoImpl(_client, (ulong)guildId, command.Data.Member.Id, _users);
+                string uinfoOutput = await ModCoreModule.UserInfoImpl(_client, (ulong)guildId, command.Data.Member.Id, _users);
 
-                await command.RespondAsync($"You used the '{command.CommandName}' context command:\n\n{output}", allowedMentions: AllowedMentions.None, ephemeral: true);
+                string log = $"You used the '{command.CommandName}' context command:\n\n{uinfoOutput}";
+
+                await command.RespondAsync(log, allowedMentions: AllowedMentions.None, ephemeral: true);
             }
             else if (command.CommandName == PERMANP_CMD_NAME)
             {
-                var output = await ModMiscModule.PermaNpCommandIImpl(_scheduleService, _config, command.Data.Member.Id);
+                var permanpOutput = await ModMiscModule.PermaNpCommandIImpl(_scheduleService, _config, command.Data.Member.Id);
 
-                var modchatMessage = $"{command.User.Mention} used the '{command.CommandName}' context command on {command.Data.Member.Mention}:\n\n{output}";
+                var log = $"{command.User.Mention} used the '{command.CommandName}' context command on {command.Data.Member.Mention}:\n\n{permanpOutput}";
 
-                await _modLog.CreateModLog(_client.GetGuild((ulong)guildId)).SetContent(modchatMessage).SetFileLogContent(modchatMessage).Send();
+                await _modLog.CreateModLog(_client.GetGuild((ulong)guildId)).SetContent(log).SetFileLogContent(log).Send();
+                await command.RespondAsync(log, allowedMentions: AllowedMentions.None, ephemeral: true);
             }
             // There's probably a better way to factor all this, but again, proof of concept
             else if (command.CommandName == MOON_CMD_NAME)
@@ -481,12 +486,10 @@ namespace Izzy_Moonbot
             }
             else
             {
-                _logger.LogError($"UserCommandHandler received unknown command {command.CommandName}");
+                string log = $"UserCommandHandler received unknown command {command.CommandName}";
+                _logger.LogError(log);
+                await command.RespondAsync(log, ephemeral: true);
             }
-        }
-
-        private async Task MoonContextCommandHandler(SocketUser targetUser)
-        {
         }
 
 
