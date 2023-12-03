@@ -87,7 +87,7 @@ public class Config
         // Monitoring settings
         MonitoringEnabled = true;
         MonitoringChannel = 0;
-        MonitoringMessageInterval = 604800; // 7 days in seconds
+        MonitoringMessageInterval = 10080; // 7 days in minutes
         MonitoringBypassRoles = new HashSet<ulong>();
     }
 

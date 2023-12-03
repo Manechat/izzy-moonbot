@@ -782,7 +782,7 @@ public class ConfigCommandTests
         Assert.AreEqual("I've set `MonitoringChannel` to the following content: <#2>", generalChannel.Messages.Last().Content);
 
         // post .config MonitoringMessageInterval 60
-        Assert.AreEqual(cfg.MonitoringMessageInterval, 604800ul);
+        Assert.AreEqual(cfg.MonitoringMessageInterval, 10080ul);
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, "post .config MonitoringMessageInterval 60");
         await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "MonitoringMessageInterval", "60");
         Assert.AreEqual(cfg.MonitoringMessageInterval, 60ul);

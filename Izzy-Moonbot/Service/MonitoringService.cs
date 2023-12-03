@@ -49,7 +49,7 @@ public class MonitoringService
         User user = _users[guildUser.Id];
         if(user == null) return;
 
-        TimeSpan monitoringPeriod = TimeSpan.FromSeconds(_config.MonitoringMessageInterval);
+        TimeSpan monitoringPeriod = TimeSpan.FromMinutes(_config.MonitoringMessageInterval);
 
         if(context.Message.CreatedAt - user.LastMessageTimeInMonitoredChannel > monitoringPeriod)
         {

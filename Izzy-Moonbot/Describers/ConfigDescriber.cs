@@ -272,7 +272,7 @@ public class ConfigDescriber
         _config.Add("MonitoringMessageInterval",
             new ConfigItem("MonitoringMessageInterval",
                 ConfigItemType.UnsignedInteger,
-                "The interval, in seconds, after which I will allow a user to post again in the monitored channel.",
+                "The interval, in minutes, after which I will allow a user to post again in the monitored channel.",
                 ConfigItemCategory.Monitoring));
         _config.Add("MonitoringBypassRoles",
             new ConfigItem("MonitoringBypassRoles",
