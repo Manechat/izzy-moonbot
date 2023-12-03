@@ -51,10 +51,10 @@ public class MonitoringService
 
         TimeSpan monitoringPeriod = TimeSpan.FromSeconds(_config.MonitoringMessageInterval);
 
-        if(DateTimeOffset.Now - user.LastMessageTimeInMonitoredChannel > monitoringPeriod)
+        if(context.Message.CreatedAt - user.LastMessageTimeInMonitoredChannel > monitoringPeriod)
         {
             // user has waited long enough, allow
-            user.LastMessageTimeInMonitoredChannel = DateTimeOffset.Now;
+            user.LastMessageTimeInMonitoredChannel = context.Message.CreatedAt;
             await FileHelper.SaveUsersAsync(_users);
         }
         else
