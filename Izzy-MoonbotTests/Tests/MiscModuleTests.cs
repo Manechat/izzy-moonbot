@@ -561,6 +561,6 @@ public class MiscModuleTests
 
         Assert.AreEqual("Sorry, I was unable to find any command, category, or alias named \"100\" that you have access to." +
             "\n" +
-            "\nI also see \"100\" in the output of: `.help rollforbestpony` and `.config UnicycleInterval`", generalChannel.Messages.Last().Content);
+            "\nI also see \"100\" in the output of: `.help rollforbestpony` and `.config UnicycleInterval` and `.config MonitoringMessageInterval`", generalChannel.Messages.Last().Content);
     }
 }
