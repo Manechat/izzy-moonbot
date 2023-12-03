@@ -482,7 +482,7 @@ namespace Izzy_Moonbot
                     log = $"user context command '{TIMEOUT_24H_CMD_NAME}' used by `{command.User.Username}` ({command.User.Id}) on target user <@{member.Id}>\n" +
                         $"\n" +
                         $"Here's a userlog I unicycled that you can use if you want to!\n```\n" +
-                        $"Type: Ban (Indefinite)\n" +
+                        $"Type: Timeout (24 hours)\n" +
                         $"User: <@{member.Id}> ({member.Username}/{member.Id})\n" +
                         $"Names: {(_users.ContainsKey(member.Id) ? string.Join(", ", _users[member.Id].Aliases) : "None (user isn't known by Izzy)")}\n" +
                         $"```";
