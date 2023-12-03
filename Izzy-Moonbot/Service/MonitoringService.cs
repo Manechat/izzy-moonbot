@@ -61,7 +61,7 @@ public class MonitoringService
         {
             // too soon, smack them
             await context.Message.DeleteAsync();
-            await context.Message.Channel.SendMessageAsync($"<@{guildUser.Id}> sorry that I had removed your post, but it hasn't been {GetReadableString(monitoringPeriod)} since your last one yet!");
+            await context.Message.Channel.SendMessageAsync($"<@{guildUser.Id}> sorry that I had to remove your post, but it hasn't been {GetReadableString(monitoringPeriod)} since your last one yet!");
         }
     }
 
