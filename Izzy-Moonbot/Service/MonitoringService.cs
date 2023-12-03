@@ -61,20 +61,20 @@ public class MonitoringService
         {
             // too soon, smack them
             await context.Message.DeleteAsync();
-            await context.Message.Channel.SendMessageAsync($"<@{guildUser.Id}> sorry that I had to remove your post, but it hasn't been {GetReadableString(monitoringPeriod)} since your last one yet!");
+            await context.Message.Channel.SendMessageAsync($"<@{guildUser.Id}> sorry that I had to remove your post, but it hasn't been {GetReadableTimeSpanString(monitoringPeriod)} since your last one yet!");
         }
     }
 
-    private static string GetReadableString(TimeSpan timeSpan)
+    private static string GetReadableTimeSpanString(TimeSpan timeSpan)
     {
-        List<string> timeUnits = new();
+        List<string> timeStringParts = new();
 
-        if(timeSpan.Days > 0) timeUnits.Add(PluralizeSimple(timeSpan.Days, "day"));
-        if(timeSpan.Hours > 0) timeUnits.Add(PluralizeSimple(timeSpan.Hours, "hour"));
-        if(timeSpan.Minutes > 0) timeUnits.Add(PluralizeSimple(timeSpan.Minutes, "minute"));
-        if(timeSpan.Seconds > 0) timeUnits.Add(PluralizeSimple(timeSpan.Seconds, "second"));
+        if(timeSpan.Days > 0) timeStringParts.Add(PluralizeSimple(timeSpan.Days, "day"));
+        if(timeSpan.Hours > 0) timeStringParts.Add(PluralizeSimple(timeSpan.Hours, "hour"));
+        if(timeSpan.Minutes > 0) timeStringParts.Add(PluralizeSimple(timeSpan.Minutes, "minute"));
+        if(timeSpan.Seconds > 0) timeStringParts.Add(PluralizeSimple(timeSpan.Seconds, "second"));
 
-        return string.Join(" ", timeUnits);
+        return string.Join(" ", timeStringParts);
     }
 
     private static string PluralizeSimple(int amount, string noun)
