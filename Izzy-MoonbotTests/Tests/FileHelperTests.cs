@@ -307,7 +307,7 @@ public class FileHelperTests
               "WittyCooldown": 300.0,
               "MonitoringEnabled": true,
               "MonitoringChannel": 0,
-              "MonitoringMessageInterval": 604800,
+              "MonitoringMessageInterval": 10080,
               "MonitoringBypassRoles": []
             }
             """, serialized);
