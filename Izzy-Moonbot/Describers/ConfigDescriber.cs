@@ -256,6 +256,29 @@ public class ConfigDescriber
             new ConfigItem("WittyCooldown", ConfigItemType.Double,
                 "After posting a witty response, I will not respond to any witty patterns for this many seconds.",
                 ConfigItemCategory.Witty));
+
+        // Monitoring settings
+        _config.Add("MonitoringEnabled",
+            new ConfigItem(
+                "MonitoringEnabled",
+                ConfigItemType.Boolean,
+                "Whether I will monitor a specified channel and remove messages if a user has exceeded the limit of 1 message per the specified time interval.",
+                ConfigItemCategory.Monitoring));
+        _config.Add("MonitoringChannel",
+            new ConfigItem("MonitoringChannel",
+                ConfigItemType.Channel,
+                "The channel where I will monitor and potentially remove messages.",
+                ConfigItemCategory.Monitoring));
+        _config.Add("MonitoringMessageInterval",
+            new ConfigItem("MonitoringMessageInterval",
+                ConfigItemType.UnsignedInteger,
+                "The interval, in minutes, after which I will allow a user to post again in the monitored channel.",
+                ConfigItemCategory.Monitoring));
+        _config.Add("MonitoringBypassRoles",
+            new ConfigItem("MonitoringBypassRoles",
+                ConfigItemType.RoleSet,
+                "The roles I will not take action against when I detect a limit trip.",
+                ConfigItemCategory.Monitoring));
     }
 
     public List<string> GetSettableConfigItems()
@@ -307,6 +330,8 @@ public class ConfigDescriber
                 return ConfigItemCategory.Bored;
             case "witty":
                 return ConfigItemCategory.Witty;
+            case "monitoring":
+                return ConfigItemCategory.Monitoring;
             default:
                 return null;
         }
@@ -334,6 +359,8 @@ public class ConfigDescriber
                 return "Bored";
             case ConfigItemCategory.Witty:
                 return "Witty";
+            case ConfigItemCategory.Monitoring:
+                return "Monitoring";
             default:
                 return "<UNKNOWN>";
         }

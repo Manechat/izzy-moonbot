@@ -26,7 +26,7 @@ public class ConfigCommand
                 $"Run `{config.Prefix}config <category>` to list the config items in a category.\n" +
                 $"Run `{config.Prefix}config <item>` to view information about an item.\n" +
                 $"\n" +
-                $"Here are all the config categories I have: `setup`, `misc`, `banner`, `managedroles`, `filter`, `spam`, `raid`, `bored`.\n" +
+                $"Here are all the config categories I have: `setup`, `misc`, `banner`, `managedroles`, `filter`, `spam`, `raid`, `bored`, `witty`, `monitoring`.\n" +
                 $"\n" +
                 $"ℹ Use `{config.Prefix}help` to learn about Izzy's other commands.");
 

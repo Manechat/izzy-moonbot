@@ -44,6 +44,7 @@ namespace Izzy_Moonbot
         private readonly ConfigListener _configListener;
         private readonly UserListener _userListener;
         private readonly MessageListener _messageListener;
+        private readonly MonitoringService _monitoringService;
         private DiscordSocketClient _client;
         public bool hasProgrammingSocks = true;
         public int LaserCount = 10;
@@ -51,7 +52,7 @@ namespace Izzy_Moonbot
         public Worker(ILogger<Worker> logger, ModLoggingService modLog, IServiceCollection services, ModService modService, RaidService raidService,
             FilterService filterService, ScheduleService scheduleService, IOptions<DiscordSettings> discordSettings,
             Config config, TransientState state, Dictionary<ulong, User> users, UserListener userListener, SpamService spamService, QuoteService quoteService,
-            ConfigListener configListener, MessageListener messageListener)
+            ConfigListener configListener, MessageListener messageListener, MonitoringService monitoringService)
         {
             _logger = logger;
             _modLog = modLog;
@@ -72,6 +73,7 @@ namespace Izzy_Moonbot
             _quoteService = quoteService;
             _configListener = configListener;
             _messageListener = messageListener;
+            _monitoringService = monitoringService;
 
             var discordConfig = new DiscordSocketConfig {
                 GatewayIntents = GatewayIntents.Guilds | GatewayIntents.GuildMembers | GatewayIntents.GuildMessages | GatewayIntents.DirectMessages | GatewayIntents.MessageContent,
@@ -116,6 +118,7 @@ namespace Izzy_Moonbot
                 _raidService.RegisterEvents(clientAdapter);
                 _filterService.RegisterEvents(clientAdapter);
                 _scheduleService.RegisterEvents(clientAdapter);
+                _monitoringService.RegisterEvents(clientAdapter);
 
                 _client.LatencyUpdated += async (int old, int value) =>
                 {

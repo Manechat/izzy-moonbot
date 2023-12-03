@@ -83,6 +83,12 @@ public class Config
         Witties = new Dictionary<string, string>();
         WittyChannels = new HashSet<ulong>();
         WittyCooldown = 300;
+
+        // Monitoring settings
+        MonitoringEnabled = true;
+        MonitoringChannel = 0;
+        MonitoringMessageInterval = 10080; // 7 days in minutes
+        MonitoringBypassRoles = new HashSet<ulong>();
     }
 
     // Core settings
@@ -197,4 +203,10 @@ public class Config
     public Dictionary<string, string> Witties { get; set; }
     public HashSet<ulong> WittyChannels { get; set; }
     public double WittyCooldown { get; set; }
+
+    // Monitoring settings
+    public bool MonitoringEnabled { get; set; }
+    public ulong MonitoringChannel { get; set; }
+    public ulong MonitoringMessageInterval { get; set; }
+    public HashSet<ulong> MonitoringBypassRoles { get; set; }
 }

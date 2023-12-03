@@ -304,7 +304,11 @@ public class FileHelperTests
               "BoredCommands": [],
               "Witties": {},
               "WittyChannels": [],
-              "WittyCooldown": 300.0
+              "WittyCooldown": 300.0,
+              "MonitoringEnabled": true,
+              "MonitoringChannel": 0,
+              "MonitoringMessageInterval": 10080,
+              "MonitoringBypassRoles": []
             }
             """, serialized);
     }
@@ -346,7 +350,8 @@ public class FileHelperTests
                   "2022-05-09T13:43:12.39+00:00"
                 ],
                 "Silenced": false,
-                "RolesToReapplyOnRejoin": []
+                "RolesToReapplyOnRejoin": [],
+                "LastMessageTimeInMonitoredChannel": "0001-01-01T00:00:00+00:00"
               }
             }
             """, serialized);

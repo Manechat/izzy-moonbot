@@ -12,6 +12,7 @@ public class User
         Joins = new List<DateTimeOffset>();
         Silenced = false;
         RolesToReapplyOnRejoin = new HashSet<ulong>();
+        LastMessageTimeInMonitoredChannel = DateTimeOffset.MinValue;
     }
 
     public string Username { get; set; }
@@ -19,6 +20,7 @@ public class User
     public List<DateTimeOffset> Joins { get; set; }
     public bool Silenced { get; set; }
     public HashSet<ulong> RolesToReapplyOnRejoin { get; set; }
+    public DateTimeOffset LastMessageTimeInMonitoredChannel { get; set; }
 }
 
 public class PreviousMessageItem
