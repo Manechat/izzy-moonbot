@@ -29,7 +29,8 @@ public enum ConfigItemCategory
     Spam,
     Raid,
     Bored,
-    Witty
+    Witty,
+    Monitoring
 }
 
 public enum ConfigItemType
