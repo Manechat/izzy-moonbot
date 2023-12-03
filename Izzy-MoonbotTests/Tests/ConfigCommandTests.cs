@@ -772,7 +772,7 @@ public class ConfigCommandTests
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, "post .config MonitoringEnabled false");
         await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "MonitoringEnabled", "false");
         Assert.AreEqual(cfg.MonitoringEnabled, false);
-        Assert.AreEqual("I've set `MonitoringEnabled` to the following content: false", generalChannel.Messages.Last().Content);
+        Assert.AreEqual("I've set `MonitoringEnabled` to the following content: False", generalChannel.Messages.Last().Content);
 
         // post .config MonitoringChannel <#2>
         Assert.AreEqual(cfg.MonitoringChannel, 0ul);
