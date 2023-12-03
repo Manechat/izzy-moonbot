@@ -767,11 +767,40 @@ public class ConfigCommandTests
         Assert.AreEqual(cfg.WittyCooldown, 50);
         Assert.AreEqual("I've set `WittyCooldown` to the following content: 50", generalChannel.Messages.Last().Content);
 
+        // post .config MonitoringEnabled false
+        Assert.AreEqual(cfg.MonitoringEnabled, true);
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, "post .config MonitoringEnabled false");
+        await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "MonitoringEnabled", "false");
+        Assert.AreEqual(cfg.MonitoringEnabled, false);
+        Assert.AreEqual("I've set `MonitoringEnabled` to the following content: false", generalChannel.Messages.Last().Content);
+
+        // post .config MonitoringChannel <#2>
+        Assert.AreEqual(cfg.MonitoringChannel, 0ul);
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config MonitoringChannel <#2>");
+        await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "MonitoringChannel", "<#2>");
+        Assert.AreEqual(cfg.MonitoringChannel, 2ul);
+        Assert.AreEqual("I've set `MonitoringChannel` to the following content: <#2>", generalChannel.Messages.Last().Content);
+
+        // post .config MonitoringMessageInterval 60
+        Assert.AreEqual(cfg.MonitoringMessageInterval, 604800ul);
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, "post .config MonitoringMessageInterval 60");
+        await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "MonitoringMessageInterval", "60");
+        Assert.AreEqual(cfg.MonitoringMessageInterval, 60ul);
+        Assert.AreEqual("I've set `MonitoringMessageInterval` to the following content: 60", generalChannel.Messages.Last().Content);
+
+        // post .config MonitoringBypassRoles add <@&1>
+        TestUtils.AssertSetsAreEqual(new HashSet<ulong>(), cfg.MonitoringBypassRoles);
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config MonitoringBypassRoles add <@&1>");
+        await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "MonitoringBypassRoles", "add <@&1>");
+        TestUtils.AssertSetsAreEqual(new HashSet<ulong> { 1ul }, cfg.MonitoringBypassRoles);
+        Assert.AreEqual($"I added the following content to the `MonitoringBypassRoles` role list:\n" +
+            $"Alicorn",
+            generalChannel.Messages.Last().Content);
 
         // Ensure we can't forget to keep this test up to date
         var configPropsCount = typeof(Config).GetProperties().Length;
 
-        Assert.AreEqual(55, configPropsCount,
+        Assert.AreEqual(59, configPropsCount,
             $"\nIf you just added or removed a config item, then this test is probably out of date");
 
         Assert.AreEqual(configPropsCount * 2, generalChannel.Messages.Count(),

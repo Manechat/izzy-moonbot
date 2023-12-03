@@ -308,8 +308,8 @@ public class FileHelperTests
               "MonitoringEnabled": true,
               "MonitoringChannel": 0,
               "MonitoringMessageInterval": 604800,
-              "MonitoringBypassRoles": [],
-              }
+              "MonitoringBypassRoles": []
+            }
             """, serialized);
     }
 
