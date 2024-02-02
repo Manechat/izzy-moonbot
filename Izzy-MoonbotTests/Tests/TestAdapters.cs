@@ -231,6 +231,10 @@ public class TestAttachment : IAttachment
     public AttachmentFlags Flags => throw new NotImplementedException();
     double? IAttachment.Duration => throw new NotImplementedException();
     string IAttachment.Waveform => throw new NotImplementedException();
+    IReadOnlyCollection<IUser> IAttachment.ClipParticipants => throw new NotImplementedException();
+    string IAttachment.Title => throw new NotImplementedException();
+    DateTimeOffset? IAttachment.ClipCreatedAt => throw new NotImplementedException();
+    DateTimeOffset ISnowflakeEntity.CreatedAt => throw new NotImplementedException();
 }
 
 public class StubChannel
