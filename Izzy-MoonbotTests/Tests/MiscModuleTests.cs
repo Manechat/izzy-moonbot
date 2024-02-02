@@ -166,13 +166,12 @@ public class MiscModuleTests
         cfg.ModChannel = modChat.Id;
         var (ss, mm) = await SetupMiscModule(cfg);
 
-        guild.RulesChannel = new StubChannel(9999, "rules", new List<StubMessage>
-        {
+        guild.RulesChannel = new StubChannel(9999, "rules", [
             new StubMessage(0, "Welcome to Maretime Bay!", sunny.Id), // the non-rule message in #rules, so FirstRuleMessageId serves a purpose
             new StubMessage(1, "something about harmony", sunny.Id),
             new StubMessage(2, "\n\nfree smoothies for everypony", sunny.Id),
             new StubMessage(3, ":blank:\n:blank:\nobey the alicorns", sunny.Id),
-        });
+        ]);
         cfg.FirstRuleMessageId = 1;
 
         var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".rule");

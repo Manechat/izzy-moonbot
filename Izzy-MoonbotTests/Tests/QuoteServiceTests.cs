@@ -16,7 +16,7 @@ public class QuoteServiceTests
 
         // only one quote so that the "random" selection is deterministic for now
         var quotes = new QuoteStorage();
-        quotes.Quotes.Add(sunny.Id.ToString(), new List<string> { "gonna be my day" });
+        quotes.Quotes.Add(sunny.Id.ToString(), [ "gonna be my day" ]);
 
         var users = new Dictionary<ulong, User>();
         var s = new User(); s.Username = "Sunny Starscout"; users.Add(1, s);

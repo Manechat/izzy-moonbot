@@ -240,11 +240,11 @@ public static class DiscordHelper
     // Where "Discord whitespace" refers to Char.IsWhiteSpace as well as the ":blank:" emoji
     public static string TrimDiscordWhitespace(string wholeString)
     {
-        var singleCharacterOrEmojiOfWhitespace = new List<string> {
+        List<string> singleCharacterOrEmojiOfWhitespace = [
             @"\s",
             @":blank:",
             @"<:blank:[0-9]+>"
-        };
+        ];
         var runOfDiscordWhitespace = $"({ string.Join("|", singleCharacterOrEmojiOfWhitespace)})+";
 
         var leadingWhitespaceRegex = new Regex($"^{runOfDiscordWhitespace}");

@@ -55,7 +55,7 @@ public class PaginationHelper
             pages[pageNumber] += lineItems[i];
         }
 
-        new PaginationHelper(context, pages.ToArray(), new string[] { header, footer }, codeblock: codeblock, allowedMentions: allowedMentions);
+        new PaginationHelper(context, pages.ToArray(), [ header, footer ], codeblock: codeblock, allowedMentions: allowedMentions);
     }
 
     public PaginationHelper(SocketCommandContext context, string[] pages, string[] staticParts,

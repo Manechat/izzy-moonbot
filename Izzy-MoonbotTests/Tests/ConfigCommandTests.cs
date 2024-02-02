@@ -342,21 +342,21 @@ public class ConfigCommandTests
     {
         var izzyHerself = new StubGuildUser("Izzy Moonbot", 1);
         var sunny = new StubGuildUser("Sunny", 2);
-        var users = new List<StubGuildUser> { izzyHerself, sunny };
+        List<StubGuildUser> users = [ izzyHerself, sunny ];
 
         var alicorn = new TestRole("Alicorn", 1);
         var pony = new TestRole("Pony", 2);
         var newPony = new TestRole("New Pony", 3);
-        var roles = new List<TestRole> { alicorn, pony, newPony };
+        List<TestRole> roles = [ alicorn, pony, newPony ];
 
         var generalChannel = new StubChannel(1, "general");
         var modChannel = new StubChannel(2, "modchat");
         var logChannel = new StubChannel(3, "bot-logs");
         var bestPonyChannel = new StubChannel(42, "best-pony-queue");
-        var channels = new List<StubChannel> { generalChannel, modChannel, logChannel, bestPonyChannel };
+        List<StubChannel> channels = [ generalChannel, modChannel, logChannel, bestPonyChannel ];
 
         var guild = new StubGuild(1, "Maretime Bay", roles, users, channels);
-        var client = new StubClient(izzyHerself, new List<StubGuild> { guild });
+        var client = new StubClient(izzyHerself, [ guild ]);
 
         var cfg = new Config();
         var cd = new ConfigDescriber();
