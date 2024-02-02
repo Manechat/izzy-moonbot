@@ -73,7 +73,7 @@ public class TestGuildUser : IIzzyGuildUser
         if (ur.ContainsKey(Id))
             ur[Id].Add(roleId);
         else
-            ur[Id] = new List<ulong> { roleId };
+            ur[Id] = [ roleId ];
     }
     public async Task AddRolesAsync(IEnumerable<ulong> roles, RequestOptions? _requestOptions)
     {
@@ -705,7 +705,7 @@ public class StubClient : IIzzyClient
         if (DirectMessages.ContainsKey(userId))
             DirectMessages[userId].Add(dm);
         else
-            DirectMessages[userId] = new List<StubMessage> { dm };
+            DirectMessages[userId] = [ dm ];
     }
 
     public async Task JoinUser(string username, ulong userId, StubGuild stubGuild)

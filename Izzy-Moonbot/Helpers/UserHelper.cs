@@ -121,7 +121,7 @@ public static class UserHelper
             rolesToAddIfMissing.UnionWith(userInfo.RolesToReapplyOnRejoin);
 
         if (rolesToAddIfMissing.Count == 0)
-            return new JoinRoleResult(userInfoChanged, configChanged, new HashSet<ulong> { }, newMemberRemovalJob);
+            return new JoinRoleResult(userInfoChanged, configChanged, [], newMemberRemovalJob);
 
         HashSet<ulong> existingRoleIds = socketGuildUser.Roles.Select(r => r.Id).ToHashSet();
         HashSet<ulong> rolesToActuallyAdd = rolesToAddIfMissing.Where(r => !existingRoleIds.Contains(r)).ToHashSet();

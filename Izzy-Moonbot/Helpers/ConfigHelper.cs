@@ -687,7 +687,7 @@ public static class ConfigHelper
             {
                 try
                 {
-                    dict.Add(dictionaryKey, new HashSet<string> { value });
+                    dict.Add(dictionaryKey, [ value ]);
 
                     pinfo.SetValue(settings, dict);
                     await FileHelper.SaveConfigAsync(settings);

@@ -19,7 +19,7 @@ public class QuoteModuleTests
 
         // only one quote so that the "random" selection is deterministic for now
         var quotes = new QuoteStorage();
-        quotes.Quotes.Add(sunny.Id.ToString(), new List<string> { "gonna be my day" });
+        quotes.Quotes.Add(sunny.Id.ToString(), [ "gonna be my day" ]);
 
         var userinfo = new Dictionary<ulong, User>();
         var qs = new QuoteService(quotes, userinfo);
@@ -82,10 +82,10 @@ public class QuoteModuleTests
 
         // Initialize sunny with multiple quotes
         var quotes = new QuoteStorage();
-        quotes.Quotes.Add(sunny.Id.ToString(), new List<string> {
+        quotes.Quotes.Add(sunny.Id.ToString(), [
             "gonna be my day",
             "We'll do our part. Hoof to heart."
-        });
+        ]);
 
         var userinfo = new Dictionary<ulong, User>();
         var qs = new QuoteService(quotes, userinfo);
@@ -107,12 +107,12 @@ public class QuoteModuleTests
         DiscordHelper.DefaultGuildId = guild.Id;
 
         var quotes = new QuoteStorage();
-        quotes.Quotes.Add(sunny.Id.ToString(), new List<string> { "gonna be my day", "eat more vegetables" });
-        quotes.Quotes.Add(izzy.Id.ToString(), new List<string> { "let's unicycle it" });
-        quotes.Quotes.Add(pipp.Id.ToString(), new List<string> {
+        quotes.Quotes.Add(sunny.Id.ToString(), [ "gonna be my day", "eat more vegetables" ]);
+        quotes.Quotes.Add(izzy.Id.ToString(), [ "let's unicycle it" ]);
+        quotes.Quotes.Add(pipp.Id.ToString(), [
             "Heeeey pippsqueaks! <https://youtu.be/CLT4aSurqCg> Check out my latest sooong!",
             "It may looks scary but don't be afraid~ cuz nothin's what it seems at a monster par-tay! https://youtu.be/CLT4aSurqCg"
-         });
+         ]);
 
         var userinfo = new Dictionary<ulong, User>();
         var qs = new QuoteService(quotes, userinfo);
@@ -205,7 +205,7 @@ public class QuoteModuleTests
 
         // Test with a quote from a user id that is no longer in our guild
         var quotes = new QuoteStorage();
-        quotes.Quotes.Add("1234", new List<string> { "minty was here" });
+        quotes.Quotes.Add("1234", [ "minty was here" ]);
 
         var userinfo = new Dictionary<ulong, User>();
         var qs = new QuoteService(quotes, userinfo);
@@ -235,7 +235,7 @@ public class QuoteModuleTests
         DiscordHelper.DefaultGuildId = guild.Id;
 
         var quotes = new QuoteStorage();
-        quotes.Quotes.Add(sunny.Id.ToString(), new List<string> { "gonna be my day", "gonna be my day" });
+        quotes.Quotes.Add(sunny.Id.ToString(), [ "gonna be my day", "gonna be my day" ]);
 
         var userinfo = new Dictionary<ulong, User>();
         var qs = new QuoteService(quotes, userinfo);
@@ -268,7 +268,7 @@ public class QuoteModuleTests
         DiscordHelper.DefaultGuildId = guild.Id;
 
         var quotes = new QuoteStorage();
-        quotes.Quotes.Add(sunny.Id.ToString(), new List<string> { "gonna be my day" });
+        quotes.Quotes.Add(sunny.Id.ToString(), [ "gonna be my day" ]);
 
         var userinfo = new Dictionary<ulong, User>();
         var qs = new QuoteService(quotes, userinfo);
@@ -280,9 +280,9 @@ public class QuoteModuleTests
         await qm.TestableAddQuoteCommandAsync(context, "");
 
         Assert.AreEqual("You need to tell me the user you want to add the quote to, and the content of the quote.", generalChannel.Messages.Last().Content);
-        TestUtils.AssertListsAreEqual(quotes.Quotes[sunny.Id.ToString()], new List<string> {
+        TestUtils.AssertListsAreEqual(quotes.Quotes[sunny.Id.ToString()], [
             "gonna be my day"
-        });
+        ]);
 
         //
 
@@ -292,10 +292,10 @@ public class QuoteModuleTests
         Assert.AreEqual($"Added quote #2 to **{sunny.GlobalName}**:\n" +
             "\n" +
             ">>> eat more vegetables", generalChannel.Messages.Last().Content);
-        TestUtils.AssertListsAreEqual(quotes.Quotes[sunny.Id.ToString()], new List<string> {
+        TestUtils.AssertListsAreEqual(quotes.Quotes[sunny.Id.ToString()], [
             "gonna be my day",
             "eat more vegetables"
-        });
+        ]);
 
         //
 
@@ -321,10 +321,10 @@ public class QuoteModuleTests
         await qm.TestableRemoveQuoteCommandAsync(context, "");
 
         Assert.AreEqual("You need to tell me the user you want to remove the quote from, and the quote number to remove.", generalChannel.Messages.Last().Content);
-        TestUtils.AssertListsAreEqual(quotes.Quotes[sunny.Id.ToString()], new List<string> {
+        TestUtils.AssertListsAreEqual(quotes.Quotes[sunny.Id.ToString()], [
             "gonna be my day",
             "eat more vegetables"
-        });
+        ]);
 
         //
 
@@ -332,9 +332,9 @@ public class QuoteModuleTests
         await qm.TestableRemoveQuoteCommandAsync(context, $"<@{sunny.Id}> 1");
 
         Assert.AreEqual($"Removed quote #1 from **<@{sunny.Id}>**.", generalChannel.Messages.Last().Content);
-        TestUtils.AssertListsAreEqual(quotes.Quotes[sunny.Id.ToString()], new List<string> {
+        TestUtils.AssertListsAreEqual(quotes.Quotes[sunny.Id.ToString()], [
             "eat more vegetables"
-        });
+        ]);
     }
 
     // Regression test: This used to incorrectly produce "Sorry, I couldn't find that user",
@@ -350,7 +350,7 @@ public class QuoteModuleTests
         // Celestia hasn't been seen since G4
         var celestiaId = 7;
         var quotes = new QuoteStorage();
-        quotes.Quotes.Add(celestiaId.ToString(), new List<string> { "my little ponies" });
+        quotes.Quotes.Add(celestiaId.ToString(), [ "my little ponies" ]);
 
         var userinfo = new Dictionary<ulong, User>();
         var qs = new QuoteService(quotes, userinfo);

@@ -34,7 +34,7 @@ public class FilterServiceTests
     {
         var (cfg, _, (_, sunny), _, (generalChannel, modChat, _), guild, client) = TestUtils.DefaultStubs();
         cfg.ModChannel = modChat.Id;
-        cfg.FilterWords = new HashSet<string> { "magic", "wing", "feather", "mayonnaise" };
+        cfg.FilterWords = [ "magic", "wing", "feather", "mayonnaise" ];
         SetupFilterService(cfg, guild, client, sunny);
 
         await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, "this is a completely ordinary chat message");
@@ -50,8 +50,7 @@ public class FilterServiceTests
         Assert.AreEqual(1, modChat.Messages.Count);
         Assert.AreEqual($"<@&{cfg.ModRole}> Filter Violation for <@{sunny.Id}>", modChat.Messages.Last().Content);
 
-        TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, new List<(string, string)>
-        {
+        TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, [
             ("User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
             ("Channel", $"<#{generalChannel.Id}>"),
             ("Trigger Word", "magic"),
@@ -59,7 +58,7 @@ public class FilterServiceTests
             ("What have I done in response?", ":x: - **I've deleted the offending message.**\n" +
                                               ":mute: - **I've silenced the user.**\n" +
                                               ":exclamation: - **I've pinged all moderators.**"),
-        });
+        ]);
     }
 
     [TestMethod()]
@@ -67,7 +66,7 @@ public class FilterServiceTests
     {
         var (cfg, _, (_, sunny), _, (generalChannel, modChat, _), guild, client) = TestUtils.DefaultStubs();
         cfg.ModChannel = modChat.Id;
-        cfg.FilterWords = new HashSet<string> { "magic", "wing", "feather", "mayonnaise" };
+        cfg.FilterWords = [ "magic", "wing", "feather", "mayonnaise" ];
         SetupFilterService(cfg, guild, client, sunny);
 
         Assert.AreEqual(0, modChat.Messages.Count);
@@ -77,8 +76,7 @@ public class FilterServiceTests
         Assert.AreEqual(1, modChat.Messages.Count);
         Assert.AreEqual($"<@&{cfg.ModRole}> Filter Violation for <@{sunny.Id}>", modChat.Messages.Last().Content);
 
-        TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, new List<(string, string)>
-        {
+        TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, [
             ("User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
             ("Channel", $"<#{generalChannel.Id}>"),
             ("Trigger Word", "magic"),
@@ -86,7 +84,7 @@ public class FilterServiceTests
             ("What have I done in response?", ":x: - **I've deleted the offending message.**\n" +
                                               ":mute: - **I've silenced the user.**\n" +
                                               ":exclamation: - **I've pinged all moderators.**"),
-        });
+        ]);
 
         // The user's second filter trip earns them a timeout instead of a silence and mod ping
 
@@ -95,14 +93,13 @@ public class FilterServiceTests
         Assert.AreEqual(2, modChat.Messages.Count);
         Assert.AreEqual($" Filter Violation for <@{sunny.Id}>", modChat.Messages.Last().Content);
 
-        TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, new List<(string, string)>
-        {
+        TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, [
             ("User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
             ("Channel", $"<#{generalChannel.Id}>"),
             ("Trigger Word", "feather"),
             ("Filtered Message", "fEatHer"),
             ("What have I done in response?", ":x: - **I've deleted the offending message.**\n" +
                                               ":stopwatch: - Since the user was already silenced, **I've given them a one-hour timeout.**"),
-        });
+        ]);
     }
 }

@@ -79,7 +79,7 @@ public class SpamService
     private void calculateMessagePressureWithoutDecay(RecentMessage message, RecentMessage? previousMessage, out double pressure, out List<(double, string)> pressureBreakdown)
     {
         pressure = 0.0;
-        pressureBreakdown = new List<(double, string)> { };
+        pressureBreakdown = [];
 
         var lengthPressure = Math.Round(_config.SpamLengthPressure * message.Content.Length, 2);
         if (lengthPressure > 0)
@@ -138,7 +138,7 @@ public class SpamService
         // Unusual character pressure
 
         // If you change this list of categories, be sure to update the config item's documentation too
-        var usualCategories = new List<UnicodeCategory> {
+        List<UnicodeCategory> usualCategories = [
             UnicodeCategory.UppercaseLetter,
             UnicodeCategory.LowercaseLetter,
             UnicodeCategory.SpaceSeparator,
@@ -147,7 +147,7 @@ public class SpamService
             UnicodeCategory.ClosePunctuation,
             UnicodeCategory.OtherPunctuation,
             UnicodeCategory.FinalQuotePunctuation
-        };
+        ];
         var unusualCharactersCount = message.Content.ToCharArray().Where(c => c != '\r' && c != '\n' && !usualCategories.Contains(CharUnicodeInfo.GetUnicodeCategory(c))).Count();
         var unusualCharacterPressure = Math.Round(unusualCharactersCount * _config.SpamUnusualCharacterPressure, 2);
         if (unusualCharacterPressure > 0)
@@ -165,7 +165,7 @@ public class SpamService
         if (message.Content == _testString)
         {
             pressure = _config.SpamMaxPressure;
-            pressureBreakdown = new List<(double, string)> { (_config.SpamMaxPressure, "Test string") };
+            pressureBreakdown = [ (_config.SpamMaxPressure, "Test string") ];
         }
     }
 

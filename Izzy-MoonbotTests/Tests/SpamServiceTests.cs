@@ -52,13 +52,12 @@ public class SpamServiceTests
 
         Assert.AreEqual(1, modChat.Messages.Count);
         Assert.AreEqual("<@&0> I've silenced <@2> for spamming and deleted 1 of their message(s)", modChat.Messages.Last().Content);
-        TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, new List<(string, string)>
-        {
+        TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, [
             ("Silenced User", "<@2> (`2`)"),
             ("Channel", $"<#{generalChannel.Id}>"),
             ("Pressure", "This user's last message raised their pressure from 0 to 60, exceeding 60"),
             ("Breakdown of last message", "**Test string**"),
-        });
+        ]);
     }
 
     [TestMethod()]
@@ -94,13 +93,12 @@ public class SpamServiceTests
         Assert.AreEqual(1, modChat.Messages.Count);
 
         Assert.AreEqual($"<@&0> I've silenced <@{sunny.Id}> for spamming and deleted 6 of their message(s)", modChat.Messages.Last().Content);
-        TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, new List<(string, string)>
-        {
+        TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, [
             ("Silenced User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
             ("Channel", $"<#{generalChannel.Id}>"),
             ("Pressure", "This user's last message raised their pressure from 50 to 60, exceeding 60"),
             ("Breakdown of last message", "**Base: 10**"),
-        });
+        ]);
 
         // since Izzy tries to avoid duplicate alarms, we have to post one ordinary message
         // to let pressure fall back below 60 before trying to raise it again
@@ -122,13 +120,12 @@ public class SpamServiceTests
 
         Assert.AreEqual(2, modChat.Messages.Count);
         Assert.AreEqual($"I've given <@{sunny.Id}> a one-hour timeout for spamming after being silenced and deleted 1 of their message(s)", modChat.Messages.Last().Content);
-        TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, new List<(string, string)>
-        {
+        TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, [
             ("Timeout User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
             ("Channel", $"<#{generalChannel.Id}>"),
             ("Pressure", "This user's last message raised their pressure from 0 to 60, exceeding 60"),
             ("Breakdown of last message", $"**Lines: 50 ≈ 25 line breaks × 2**\nBase: 10"),
-        });
+        ]);
 
         DateTimeHelper.FakeUtcNow = DateTimeHelper.FakeUtcNow?.AddHours(1);
         await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, "sorry");
@@ -149,13 +146,12 @@ public class SpamServiceTests
 
         Assert.AreEqual(3, modChat.Messages.Count);
         Assert.AreEqual($"I've given <@{sunny.Id}> a one-hour timeout for spamming after being silenced and deleted 1 of their message(s)", modChat.Messages.Last().Content);
-        TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, new List<(string, string)>
-        {
+        TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, [
             ("Timeout User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
             ("Channel", $"<#{generalChannel.Id}>"),
             ("Pressure", "This user's last message raised their pressure from 0 to 68.4, exceeding 60"),
             ("Breakdown of last message", $"**Length: 58.4 ≈ 584 characters × 0.1**\nBase: 10"),
-        });
+        ]);
 
         DateTimeHelper.FakeUtcNow = DateTimeHelper.FakeUtcNow?.AddHours(1);
         await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, "sorry");
@@ -172,13 +168,12 @@ public class SpamServiceTests
 
         Assert.AreEqual(4, modChat.Messages.Count);
         Assert.AreEqual($"I've given <@{sunny.Id}> a one-hour timeout for spamming after being silenced and deleted 1 of their message(s)", modChat.Messages.Last().Content);
-        TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, new List<(string, string)>
-        {
+        TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, [
             ("Timeout User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
             ("Channel", $"<#{generalChannel.Id}>"),
             ("Pressure", "This user's last message raised their pressure from 0 to 60, exceeding 60"),
             ("Breakdown of last message", $"**Mentions: 50 ≈ 20 mentions × 2.5**\nBase: 10"),
-        });
+        ]);
 
         DateTimeHelper.FakeUtcNow = DateTimeHelper.FakeUtcNow?.AddHours(1);
         await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, "sorry");
@@ -201,13 +196,12 @@ public class SpamServiceTests
 
         Assert.AreEqual(5, modChat.Messages.Count);
         Assert.AreEqual($"I've given <@{sunny.Id}> a one-hour timeout for spamming after being silenced and deleted 1 of their message(s)", modChat.Messages.Last().Content);
-        TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, new List<(string, string)>
-        {
+        TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, [
             ("Timeout User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
             ("Channel", $"<#{generalChannel.Id}>"),
             ("Pressure", "This user's last message raised their pressure from 0 to 68.1, exceeding 60"),
             ("Breakdown of last message", $"**Embeds: 58.1 ≈ 7 embeds × 8.3**\nBase: 10"),
-        });
+        ]);
 
         DateTimeHelper.FakeUtcNow = DateTimeHelper.FakeUtcNow?.AddHours(1);
         await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, "sorry");
@@ -225,13 +219,12 @@ public class SpamServiceTests
 
         Assert.AreEqual(6, modChat.Messages.Count);
         Assert.AreEqual($"I've given <@{sunny.Id}> a one-hour timeout for spamming after being silenced and deleted 3 of their message(s)", modChat.Messages.Last().Content);
-        TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, new List<(string, string)>
-        {
+        TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, [
             ("Timeout User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
             ("Channel", $"<#{generalChannel.Id}>"),
             ("Pressure", "This user's last message raised their pressure from 40 to 70, exceeding 60"),
             ("Breakdown of last message", $"**Repeat of Previous Message: 20**\nBase: 10"),
-        });
+        ]);
 
         DateTimeHelper.FakeUtcNow = DateTimeHelper.FakeUtcNow?.AddHours(1);
         await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, "sorry");
@@ -255,13 +248,12 @@ public class SpamServiceTests
 
         Assert.AreEqual(7, modChat.Messages.Count);
         Assert.AreEqual($"I've given <@{sunny.Id}> a one-hour timeout for spamming after being silenced and deleted 1 of their message(s)", modChat.Messages.Last().Content);
-        TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, new List<(string, string)>
-        {
+        TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, [
             ("Timeout User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
             ("Channel", $"<#{generalChannel.Id}>"),
             ("Pressure", "This user's last message raised their pressure from 0 to 64, exceeding 60"),
             ("Breakdown of last message", $"**Unusual Characters: 54 ≈ 540 unusual characters × 0.1**\nBase: 10"),
-        });
+        ]);
     }
 
     [TestMethod()]
@@ -287,8 +279,7 @@ public class SpamServiceTests
         Assert.AreEqual(1, modChat.Messages.Count);
 
         Assert.AreEqual($"<@&0> I've silenced <@{sunny.Id}> for spamming and deleted 2 of their message(s)", modChat.Messages.Last().Content);
-        TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, new List<(string, string)>
-        {
+        TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, [
             ("Silenced User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
             ("Channel", $"<#{generalChannel.Id}>"),
             ("Pressure", "This user's last message raised their pressure from 24.8 to 77.89999999999999, exceeding 60"),
@@ -300,7 +291,7 @@ public class SpamServiceTests
                 $"Length: 5 ≈ 50 characters × 0.1\n" +
                 $"Lines: 2 ≈ 1 line breaks × 2\n" +
                 $"Unusual Characters: 0.3 ≈ 6 unusual characters × 0.05"),
-        });
+        ]);
     }
 
     [TestMethod()]
@@ -338,8 +329,7 @@ public class SpamServiceTests
 
         Assert.AreEqual(1, modChat.Messages.Count);
         Assert.AreEqual($"<@&0> I've silenced <@{sunny.Id}> for spamming and deleted 1 of their message(s)", modChat.Messages.Last().Content);
-        TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, new List<(string, string)>
-        {
+        TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, [
             ("Silenced User", $"<@{sunny.Id}> (`{sunny.Id}`)"),
             ("Channel", $"<#{generalChannel.Id}>"),
             ("Pressure", "This user's last message raised their pressure from 0 to 69.55000000000001, exceeding 60"),
@@ -348,7 +338,7 @@ public class SpamServiceTests
                 $"Unusual Characters: 14.85 ≈ 297 unusual characters × 0.05\n" +
                 $"Base: 10\n" +
                 $"Length: 2.7 ≈ 432 characters × 0.00625"),
-        });
+        ]);
     }
 
     [TestMethod()]
@@ -365,13 +355,12 @@ public class SpamServiceTests
         Assert.AreEqual(0, generalChannel.Messages.Count);
         Assert.AreEqual(1, modChat.Messages.Count);
         Assert.AreEqual("<@&0> I've silenced <@2> for spamming and deleted 1 of their message(s)", modChat.Messages.Last().Content);
-        TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, new List<(string, string)>
-        {
+        TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, [
             ("Silenced User", "<@2> (`2`)"),
             ("Channel", $"<#{generalChannel.Id}>"),
             ("Pressure", "This user's last message raised their pressure from 0 to 60, exceeding 60"),
             ("Breakdown of last message", "**Test string**"),
-        });
+        ]);
 
         // Pretend we had a moon talk and let them back in
         users[sunny.Id].Silenced = false;
@@ -381,14 +370,13 @@ public class SpamServiceTests
         Assert.AreEqual(0, generalChannel.Messages.Count);
         Assert.AreEqual(2, modChat.Messages.Count);
         Assert.AreEqual("<@&0> I've silenced <@2> for spamming and deleted 1 of their message(s)", modChat.Messages.Last().Content);
-        TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, new List<(string, string)>
-        {
+        TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, [
             ("Silenced User", "<@2> (`2`)"),
             ("Channel", $"<#{generalChannel.Id}>"),
             // since no fake time has passed, the second spam trip says "60 to 120"
             ("Pressure", "This user's last message raised their pressure from 60 to 120, exceeding 60"),
             ("Breakdown of last message", "**Test string**"),
-        });
+        ]);
     }
 
     [TestMethod()]
@@ -409,21 +397,19 @@ public class SpamServiceTests
         Assert.AreEqual(0, generalChannel.Messages.Count);
         Assert.AreEqual(2, modChat.Messages.Count);
         Assert.AreEqual("<@&0> I've silenced <@2> for spamming and deleted 1 of their message(s)", modChat.Messages[0].Content);
-        TestUtils.AssertEmbedFieldsAre(modChat.Messages[0].Embeds[0].Fields, new List<(string, string)>
-        {
+        TestUtils.AssertEmbedFieldsAre(modChat.Messages[0].Embeds[0].Fields, [
             ("Silenced User", "<@2> (`2`)"),
             ("Channel", $"<#{generalChannel.Id}>"),
             ("Pressure", "This user's last message raised their pressure from 0 to 60, exceeding 60"),
             ("Breakdown of last message", "**Test string**"),
-        });
+        ]);
         Assert.AreEqual("<@&0> I've silenced <@3> for spamming and deleted 1 of their message(s)", modChat.Messages[1].Content);
-        TestUtils.AssertEmbedFieldsAre(modChat.Messages[1].Embeds[0].Fields, new List<(string, string)>
-        {
+        TestUtils.AssertEmbedFieldsAre(modChat.Messages[1].Embeds[0].Fields, [
             ("Silenced User", "<@3> (`3`)"),
             ("Channel", $"<#{generalChannel.Id}>"),
             ("Pressure", "This user's last message raised their pressure from 0 to 60, exceeding 60"),
             ("Breakdown of last message", "**Test string**"),
-        });
+        ]);
     }
 
 }
