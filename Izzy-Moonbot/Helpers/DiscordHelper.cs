@@ -315,7 +315,7 @@ public static class DiscordHelper
     public static async Task SetBannerToUrlImage(string url, IIzzyGuild guild)
     {
         Stream stream = await url
-            .WithHeader("user-agent", $"Izzy-Moonbot (Linux x86_64) Flurl.Http/3.2.4 DotNET/7.0")
+            .WithHeader("user-agent", $"Izzy-Moonbot (Linux x86_64) Flurl.Http/3.2.4 DotNET/8.0")
             .GetStreamAsync();
 
         var image = new Image(stream);
