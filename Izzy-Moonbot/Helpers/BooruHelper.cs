@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Flurl.Http;
+using Flurl.Http.Newtonsoft;
 using Izzy_Moonbot.Settings;
 using Microsoft.Extensions.Configuration;
 
