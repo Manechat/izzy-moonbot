@@ -255,21 +255,21 @@ public class UserListener
         if (_config.MemberRole != null)
         {
             if (_users[newUser.Id].Silenced &&
-                newUser.Roles.Select(role => role.Id).Contains((ulong)_config.MemberRole))
+                !newUser.Roles.Select(role => role.Id).Contains(DiscordHelper.BanishedRoleId))
             {
                 // Unsilenced, Remove the flag.
                 _logger.Log(
-                    $"{newUser.DisplayName} ({newUser.Username}/{newUser.Id}) unsilenced, removing silence flag...");
+                    $"{newUser.DisplayName} ({newUser.Username}/{newUser.Id}) unbanished, removing silence flag...");
                 _users[newUser.Id].Silenced = false;
                 changed = true;
             }
 
             if (!_users[newUser.Id].Silenced &&
-                !newUser.Roles.Select(role => role.Id).Contains((ulong)_config.MemberRole))
+                newUser.Roles.Select(role => role.Id).Contains(DiscordHelper.BanishedRoleId))
             {
                 // Silenced, add the flag
                 _logger.Log(
-                    $"{newUser.DisplayName} ({newUser.Username}/{newUser.Id}) silenced, adding silence flag...");
+                    $"{newUser.DisplayName} ({newUser.Username}/{newUser.Id}) banished, adding silence flag...");
                 _users[newUser.Id].Silenced = true;
                 changed = true;
             }

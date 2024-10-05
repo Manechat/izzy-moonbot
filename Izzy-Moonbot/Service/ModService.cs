@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -27,9 +27,7 @@ public class ModService
     }
     public async Task SilenceUser(IIzzyGuildUser user, string? reason)
     {
-        if (_config.MemberRole == null) throw new TargetException("MemberRole config value is null (not set)");
-        
-        await user.RemoveRoleAsync((ulong) _config.MemberRole, reason is null ? null : new Discord.RequestOptions { AuditLogReason = reason });
+        await user.RemoveRoleAsync(DiscordHelper.BanishedRoleId, reason is null ? null : new Discord.RequestOptions { AuditLogReason = reason });
             
         _users[user.Id].Silenced = true;
         await FileHelper.SaveUsersAsync(_users);
@@ -41,11 +39,9 @@ public class ModService
     }
     public async Task SilenceUsers(IEnumerable<IIzzyGuildUser> users, string? reason)
     {
-        if (_config.MemberRole == null) throw new TargetException("MemberRole config value is null (not set)");
-
         foreach (var user in users)
         {
-            await user.RemoveRoleAsync((ulong)_config.MemberRole, reason is null ? null : new Discord.RequestOptions { AuditLogReason = reason });
+            await user.AddRoleAsync(DiscordHelper.BanishedRoleId, reason is null ? null : new Discord.RequestOptions { AuditLogReason = reason });
 
             _users[user.Id].Silenced = true;
             await FileHelper.SaveUsersAsync(_users);

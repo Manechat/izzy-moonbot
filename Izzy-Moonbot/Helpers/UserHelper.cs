@@ -52,7 +52,7 @@ public static class UserHelper
     // - MemberRole (depending on whether the user was silenced when they left)
     // - NewMemberRole ("applying" this includes scheduling its automated removal)
     // - RolesToReapplyOnRejoin (varies by config)
-    public record JoinRoleResult(bool userInfoChanged, bool configChanged, HashSet<ulong> rolesAdded, ScheduledJob? newMemberRemovalJob = null);
+    public record JoinRoleResult(bool userInfoChanged, bool configChanged, HashSet<ulong> rolesAdded, ScheduledJob? newUserRoleUpdateJob = null);
 
     public static async Task<JoinRoleResult> applyJoinRolesToUser(
         User userInfo,
@@ -65,31 +65,54 @@ public static class UserHelper
         bool userInfoChanged = false;
         bool configChanged = false;
         HashSet<ulong> rolesToAddIfMissing = new HashSet<ulong>();
-        ScheduledJob? newMemberRemovalJob = null;
+        ScheduledJob? newUserRoleUpdateJob = null;
 
         if (config.ManageNewUserRoles)
         {
             bool silencingUser = config.AutoSilenceNewJoins || userInfo.Silenced;
-            if (config.MemberRole != null && config.MemberRole > 0 && !silencingUser)
+            if (silencingUser)
             {
-                rolesToAddIfMissing.Add((ulong)config.MemberRole);
+                rolesToAddIfMissing.Add(DiscordHelper.BanishedRoleId);
             }
 
-            if (config.NewMemberRole != null && config.NewMemberRole > 0 && socketGuildUser.JoinedAt is not null)
+            if (config.ZeroJoinRoles)
             {
-                var joinTime = socketGuildUser.JoinedAt.Value;
-                var newMemberExpiry = joinTime.AddMinutes(config.NewMemberRoleDecay);
-
-                if (DateTimeOffset.UtcNow < newMemberExpiry)
+                if (config.MemberRole != null && config.MemberRole > 0 && socketGuildUser.JoinedAt is not null)
                 {
-                    rolesToAddIfMissing.Add((ulong)config.NewMemberRole);
+                    var joinTime = socketGuildUser.JoinedAt.Value;
+                    var memberAcceptanceTime = joinTime.AddMinutes(config.NewMemberRoleDecay);
 
-                    var action = new ScheduledRoleRemovalJob(config.NewMemberRole.Value, socketGuildUser.Id,
-                        $"New member role removal, {config.NewMemberRoleDecay} minutes (`NewMemberRoleDecay`) passed.");
-                    var task = new ScheduledJob(DateTimeOffset.UtcNow, newMemberExpiry, action);
-                    await scheduleService.CreateScheduledJob(task);
+                    if (DateTimeOffset.UtcNow < memberAcceptanceTime)
+                    {
+                        // no change to rolesToAddIfMissing
 
-                    newMemberRemovalJob = task;
+                        var action = new ScheduledRoleAdditionJob(config.MemberRole.Value, socketGuildUser.Id,
+                            $"Member role added, {config.NewMemberRoleDecay} minutes (`NewMemberRoleDecay`) passed.");
+                        var task = new ScheduledJob(DateTimeOffset.UtcNow, memberAcceptanceTime, action);
+                        await scheduleService.CreateScheduledJob(task);
+
+                        newUserRoleUpdateJob = task;
+                    }
+                }
+            }
+            else
+            {
+                if (config.NewMemberRole != null && config.NewMemberRole > 0 && socketGuildUser.JoinedAt is not null)
+                {
+                    var joinTime = socketGuildUser.JoinedAt.Value;
+                    var newMemberExpiry = joinTime.AddMinutes(config.NewMemberRoleDecay);
+
+                    if (DateTimeOffset.UtcNow < newMemberExpiry)
+                    {
+                        rolesToAddIfMissing.Add((ulong)config.NewMemberRole);
+
+                        var action = new ScheduledRoleRemovalJob(config.NewMemberRole.Value, socketGuildUser.Id,
+                            $"New member role removal, {config.NewMemberRoleDecay} minutes (`NewMemberRoleDecay`) passed.");
+                        var task = new ScheduledJob(DateTimeOffset.UtcNow, newMemberExpiry, action);
+                        await scheduleService.CreateScheduledJob(task);
+
+                        newUserRoleUpdateJob = task;
+                    }
                 }
             }
         }
@@ -121,15 +144,15 @@ public static class UserHelper
             rolesToAddIfMissing.UnionWith(userInfo.RolesToReapplyOnRejoin);
 
         if (rolesToAddIfMissing.Count == 0)
-            return new JoinRoleResult(userInfoChanged, configChanged, [], newMemberRemovalJob);
+            return new JoinRoleResult(userInfoChanged, configChanged, [], newUserRoleUpdateJob);
 
         HashSet<ulong> existingRoleIds = socketGuildUser.Roles.Select(r => r.Id).ToHashSet();
         HashSet<ulong> rolesToActuallyAdd = rolesToAddIfMissing.Where(r => !existingRoleIds.Contains(r)).ToHashSet();
         await modService.AddRoles(socketGuildUser, rolesToActuallyAdd, auditLogMessage);
-        return new JoinRoleResult(userInfoChanged, configChanged, rolesToActuallyAdd, newMemberRemovalJob);
+        return new JoinRoleResult(userInfoChanged, configChanged, rolesToActuallyAdd, newUserRoleUpdateJob);
     }
 
-    public record UserScanResult(int totalUsersCount, int updatedUserCount, int newUserCount, Dictionary<ulong, int> roleAddedCounts, HashSet<ulong> newMemberRemovalsScheduled);
+    public record UserScanResult(int totalUsersCount, int updatedUserCount, int newUserCount, Dictionary<ulong, int> roleAddedCounts, HashSet<ulong> newUserRoleUpdatesScheduled);
 
     public static async Task<UserScanResult> scanAllUsers(
         SocketGuild guild,
@@ -156,7 +179,7 @@ public static class UserHelper
         var newUserCount = 0;
         var updatedUserCount = 0;
         Dictionary<ulong, int> roleAddedCounts = new();
-        HashSet<ulong> newMemberRemovalsScheduled = new();
+        HashSet<ulong> newUserRoleUpdatesScheduled = new();
 
         bool userInfoChanged = false;
         bool configChanged = false;
@@ -174,8 +197,8 @@ public static class UserHelper
                 var result = await applyJoinRolesToUser(userInfo, socketGuildUser, config, modService, scheduleService);
                 userInfoChanged |= result.userInfoChanged;
                 configChanged |= result.configChanged;
-                if (result.newMemberRemovalJob != null)
-                    newMemberRemovalsScheduled.Add(socketGuildUser.Id);
+                if (result.newUserRoleUpdateJob != null)
+                    newUserRoleUpdatesScheduled.Add(socketGuildUser.Id);
                 foreach (var roleId in result.rolesAdded)
                     if (roleAddedCounts.ContainsKey(roleId)) roleAddedCounts[roleId] += 1;
                     else                                     roleAddedCounts[roleId] = 1;
@@ -203,6 +226,6 @@ public static class UserHelper
         if (userInfoChanged) await FileHelper.SaveUsersAsync(allUserInfo);
         // we don't save the schedule file here because scheduling the job already does that; it's likely not worth batching that
 
-        return new UserScanResult(totalUsersCount, updatedUserCount, newUserCount, roleAddedCounts, newMemberRemovalsScheduled);
+        return new UserScanResult(totalUsersCount, updatedUserCount, newUserCount, roleAddedCounts, newUserRoleUpdatesScheduled);
     }
 }

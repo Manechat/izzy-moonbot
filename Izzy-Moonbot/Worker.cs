@@ -517,14 +517,15 @@ namespace Izzy_Moonbot
                     new LoggingService(_logger)
                 );
 
-                if (result.newUserCount > 0 || result.roleAddedCounts.Count > 0 || result.newMemberRemovalsScheduled.Count > 0)
+                if (result.newUserCount > 0 || result.roleAddedCounts.Count > 0 || result.newUserRoleUpdatesScheduled.Count > 0)
                 {
                     var msg = $"After rebooting I found {result.newUserCount} user(s) who were new to me.";
                     if (result.roleAddedCounts.Count > 0)
                         msg += $"\nAdded {string.Join(", ", result.roleAddedCounts.Select(rac => $"{rac.Value} {guild.GetRole(rac.Key).Name}(s)"))}";
-                    if (result.newMemberRemovalsScheduled.Count > 0)
-                        msg += $"\nScheduled `NewMemberRole` removal(s) for {string.Join(", ", result.newMemberRemovalsScheduled.Select(u => $"<@{u}>"))}";
-                    if (result.roleAddedCounts.Count == 0 && result.newMemberRemovalsScheduled.Count == 0)
+                    if (result.newUserRoleUpdatesScheduled.Count > 0)
+                        // TODO: change after ZJR
+                        msg += $"\nScheduled `NewMemberRole` removal(s) for {string.Join(", ", result.newUserRoleUpdatesScheduled.Select(u => $"<@{u}>"))}";
+                    if (result.roleAddedCounts.Count == 0 && result.newUserRoleUpdatesScheduled.Count == 0)
                         msg += " They required no role changes.";
 
                     _logger.LogInformation(msg);

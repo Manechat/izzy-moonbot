@@ -123,8 +123,9 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
             $"The other {result.totalUsersCount - result.updatedUserCount} were up to date.";
         if (result.roleAddedCounts.Count > 0)
             reply += $"\nAdded {string.Join(", ", result.roleAddedCounts.Select(rac => $"{rac.Value} <@&{rac.Key}>(s)"))}";
-        if (result.newMemberRemovalsScheduled.Count > 0)
-            reply += $"\nScheduled <@&{_config.NewMemberRole!.Value}> removal(s) for {string.Join(", ", result.newMemberRemovalsScheduled.Select(u => $"<@{u}>"))}";
+        if (result.newUserRoleUpdatesScheduled.Count > 0)
+            // TODO: change after ZJR
+            reply += $"\nScheduled <@&{_config.NewMemberRole!.Value}> removal(s) for {string.Join(", ", result.newUserRoleUpdatesScheduled.Select(u => $"<@{u}>"))}";
 
         _logger.Log(reply);
         await Context.Message.ReplyAsync(reply, allowedMentions: AllowedMentions.None);
@@ -198,13 +199,6 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
     [DevCommand(Group = "Permissions")]
     public async Task StowawaysCommandAsync()
     {
-        if (_config.MemberRole == null)
-        {
-            await ReplyAsync(
-                "I'm unable to detect stowaways because the `MemberRole` config value is set to nothing.");
-            return;
-        }
-            
         await Task.Run(async () =>
         {
             if (!Context.Guild.HasAllMembers) await Context.Guild.DownloadUsersAsync();
@@ -216,7 +210,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                 if (socketGuildUser.IsBot) continue; // Bots aren't stowaways
                 if (socketGuildUser.Roles.Select(role => role.Id).Contains(_config.ModRole)) continue; // Mods aren't stowaways
 
-                if (!socketGuildUser.Roles.Select(role => role.Id).Contains((ulong)_config.MemberRole))
+                if (socketGuildUser.Roles.Select(role => role.Id).Contains(DiscordHelper.BanishedRoleId))
                 {
                     // Doesn't have member role, add to stowaway set.
                     stowawaySet.Add(socketGuildUser);

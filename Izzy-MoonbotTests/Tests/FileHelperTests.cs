@@ -260,6 +260,7 @@ public class FileHelperTests
               "NewMemberRole": 1039194817231601695,
               "NewMemberRoleDecay": 120.0,
               "RolesToReapplyOnRejoin": [],
+              "ZeroJoinRoles": false,
               "FilterEnabled": true,
               "FilterIgnoredChannels": [
                 964283764240973844
