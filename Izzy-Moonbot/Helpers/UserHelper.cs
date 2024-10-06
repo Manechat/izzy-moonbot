@@ -70,6 +70,10 @@ public static class UserHelper
         if (config.ManageNewUserRoles)
         {
             bool silencingUser = config.AutoSilenceNewJoins || userInfo.Silenced;
+            if (!silencingUser && !config.ZeroJoinRoles && config.MemberRole != null && config.MemberRole > 0)
+            {
+                rolesToAddIfMissing.Add((ulong)config.MemberRole);
+            }
             if (silencingUser)
             {
                 rolesToAddIfMissing.Add(DiscordHelper.BanishedRoleId);
