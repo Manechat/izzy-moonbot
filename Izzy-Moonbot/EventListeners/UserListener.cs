@@ -255,7 +255,7 @@ public class UserListener
         if (_config.MemberRole != null)
         {
             if (_users[newUser.Id].Silenced &&
-                !newUser.Roles.Select(role => role.Id).Contains(DiscordHelper.BanishedRoleId))
+                !newUser.Roles.Select(role => role.Id).Contains(DiscordHelper.TartarusRoleId))
             {
                 // Unsilenced, Remove the flag.
                 _logger.Log(
@@ -265,7 +265,7 @@ public class UserListener
             }
 
             if (!_users[newUser.Id].Silenced &&
-                newUser.Roles.Select(role => role.Id).Contains(DiscordHelper.BanishedRoleId))
+                newUser.Roles.Select(role => role.Id).Contains(DiscordHelper.TartarusRoleId))
             {
                 // Silenced, add the flag
                 _logger.Log(

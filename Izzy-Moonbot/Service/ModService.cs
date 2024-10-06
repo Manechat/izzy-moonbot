@@ -27,7 +27,7 @@ public class ModService
     }
     public async Task SilenceUser(IIzzyGuildUser user, string? reason)
     {
-        await user.AddRoleAsync(DiscordHelper.BanishedRoleId, reason is null ? null : new Discord.RequestOptions { AuditLogReason = reason });
+        await user.AddRoleAsync(DiscordHelper.TartarusRoleId, reason is null ? null : new Discord.RequestOptions { AuditLogReason = reason });
             
         _users[user.Id].Silenced = true;
         await FileHelper.SaveUsersAsync(_users);
@@ -41,7 +41,7 @@ public class ModService
     {
         foreach (var user in users)
         {
-            await user.AddRoleAsync(DiscordHelper.BanishedRoleId, reason is null ? null : new Discord.RequestOptions { AuditLogReason = reason });
+            await user.AddRoleAsync(DiscordHelper.TartarusRoleId, reason is null ? null : new Discord.RequestOptions { AuditLogReason = reason });
 
             _users[user.Id].Silenced = true;
             await FileHelper.SaveUsersAsync(_users);

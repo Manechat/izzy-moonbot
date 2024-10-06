@@ -199,8 +199,8 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
     }
 
     [Command("stowaways")]
-    [Summary("List non-bot, non-mod users who either have the banished role or do not have the member role, and have no scheduled role changes.")]
-    [Remarks("These are most likely users that Izzy or a human moderator banished or permanp'd, but no one ever got around to kicking, banning, unbanishing or member role'ing them.")]
+    [Summary("List non-bot, non-mod users who either have the banished role or the tartarus role or do not have the member role, and have no scheduled role changes.")]
+    [Remarks("These are most likely users that Izzy or a human moderator banished or permanp'd, but no one ever got around to kicking, banning, unbanishing, untartarusing or member role'ing them.")]
     [RequireContext(ContextType.Guild)]
     [ModCommand(Group = "Permissions")]
     [DevCommand(Group = "Permissions")]
@@ -219,6 +219,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
 
                 if (
                     socketGuildUser.Roles.Select(role => role.Id).Contains(DiscordHelper.BanishedRoleId) ||
+                    socketGuildUser.Roles.Select(role => role.Id).Contains(DiscordHelper.TartarusRoleId) ||
                     (_config.MemberRole is ulong memberRoleId && !socketGuildUser.Roles.Select(role => role.Id).Contains(memberRoleId))
                 )
                 {

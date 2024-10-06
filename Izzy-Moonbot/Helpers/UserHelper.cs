@@ -72,7 +72,7 @@ public static class UserHelper
             bool silencingUser = config.AutoSilenceNewJoins || userInfo.Silenced;
             if (silencingUser)
             {
-                rolesToAddIfMissing.Add(DiscordHelper.BanishedRoleId);
+                rolesToAddIfMissing.Add(DiscordHelper.TartarusRoleId);
             }
 
             if (config.MemberRole != null && config.MemberRole > 0 && socketGuildUser.JoinedAt is not null)

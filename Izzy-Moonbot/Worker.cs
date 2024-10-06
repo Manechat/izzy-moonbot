@@ -546,6 +546,7 @@ namespace Izzy_Moonbot
 
                     if (
                         socketGuildUser.Roles.Select(role => role.Id).Contains(DiscordHelper.BanishedRoleId) ||
+                        socketGuildUser.Roles.Select(role => role.Id).Contains(DiscordHelper.TartarusRoleId) ||
                         (_config.MemberRole is ulong memberRoleId && !socketGuildUser.Roles.Select(role => role.Id).Contains(memberRoleId))
                     )
                     {
