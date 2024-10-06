@@ -199,8 +199,8 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
     }
 
     [Command("stowaways")]
-    [Summary("List non-bot, non-mod users who do not have the member role.")]
-    [Remarks("These are most likely users that Izzy or a human moderator silenced or banished, but no one ever got around to kicking, banning, unsilencing or unbanishing them.")]
+    [Summary("List non-bot, non-mod users who either have the banished role or do not have the member role, and have no scheduled role changes.")]
+    [Remarks("These are most likely users that Izzy or a human moderator banished or permanp'd, but no one ever got around to kicking, banning, unbanishing or member role'ing them.")]
     [RequireContext(ContextType.Guild)]
     [ModCommand(Group = "Permissions")]
     [DevCommand(Group = "Permissions")]
@@ -217,10 +217,20 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                 if (socketGuildUser.IsBot) continue; // Bots aren't stowaways
                 if (socketGuildUser.Roles.Select(role => role.Id).Contains(_config.ModRole)) continue; // Mods aren't stowaways
 
-                if (socketGuildUser.Roles.Select(role => role.Id).Contains(DiscordHelper.BanishedRoleId))
+                if (
+                    socketGuildUser.Roles.Select(role => role.Id).Contains(DiscordHelper.BanishedRoleId) ||
+                    (_config.MemberRole is ulong memberRoleId && !socketGuildUser.Roles.Select(role => role.Id).Contains(memberRoleId))
+                )
                 {
-                    // Doesn't have member role, add to stowaway set.
-                    stowawaySet.Add(socketGuildUser);
+                    var getRoleChange = new Func<ScheduledJob, bool>(job =>
+                        (job.Action is ScheduledRoleAdditionJob additionJob && additionJob.User == socketGuildUser.Id) ||
+                        (job.Action is ScheduledRoleRemovalJob removalJob && removalJob.User == socketGuildUser.Id));
+                    var roleChangeJob = _schedule.GetScheduledJob(getRoleChange);
+                    if (roleChangeJob == null)
+                    {
+                        // No scheduled role changes, and either has Banished role or doesn't have Member role -> add to stowaway set
+                        stowawaySet.Add(socketGuildUser);
+                    }
                 }
             }
 

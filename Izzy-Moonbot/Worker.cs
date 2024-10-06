@@ -537,16 +537,27 @@ namespace Izzy_Moonbot
 
                 // Get stowaways
                 var stowawaySet = new HashSet<SocketGuildUser>();
-        
+
+                // copy-pasted from .stowaways comamnd impl, ideally these would share an impl method
                 await foreach (var socketGuildUser in guild.Users.ToAsyncEnumerable())
                 {
                     if (socketGuildUser.IsBot) continue; // Bots aren't stowaways
                     if (socketGuildUser.Roles.Select(role => role.Id).Contains(_config.ModRole)) continue; // Mods aren't stowaways
 
-                    if (_config.MemberRole is ulong roleId && !socketGuildUser.Roles.Select(role => role.Id).Contains(roleId))
+                    if (
+                        socketGuildUser.Roles.Select(role => role.Id).Contains(DiscordHelper.BanishedRoleId) ||
+                        (_config.MemberRole is ulong memberRoleId && !socketGuildUser.Roles.Select(role => role.Id).Contains(memberRoleId))
+                    )
                     {
-                        // Doesn't have member role, add to stowaway list.
-                        stowawaySet.Add(socketGuildUser);
+                        var getRoleChange = new Func<ScheduledJob, bool>(job =>
+                            (job.Action is ScheduledRoleAdditionJob additionJob && additionJob.User == socketGuildUser.Id) ||
+                            (job.Action is ScheduledRoleRemovalJob removalJob && removalJob.User == socketGuildUser.Id));
+                        var roleChangeJob = _scheduleService.GetScheduledJob(getRoleChange);
+                        if (roleChangeJob == null)
+                        {
+                            // No scheduled role changes, and either has Banished role or doesn't have Member role -> add to stowaway set
+                            stowawaySet.Add(socketGuildUser);
+                        }
                     }
                 }
 
@@ -556,9 +567,9 @@ namespace Izzy_Moonbot
                     var stowawayStringFileList = stowawaySet.Select(user => $"{user.DisplayName} ({user.Username}/{user.Id})");
                     
                     await _modLog.CreateModLog(guild)
-                        .SetContent($"I found these stowaways after I rebooted, cannot tell if they're new users:\n" +
+                        .SetContent($"I found these stowaways (as defined by `.help stowaways`) after I rebooted, cannot tell if they're new users:\n" +
                                     string.Join(", ", stowawayStringList))
-                        .SetFileLogContent($"I found these stowaways after I rebooted, cannot tell if they're new users:\n" +
+                        .SetFileLogContent($"I found these stowaways (as defined by `.help stowaways`) after I rebooted, cannot tell if they're new users:\n" +
                                            string.Join(", ", stowawayStringFileList))
                         .Send();
                 }
