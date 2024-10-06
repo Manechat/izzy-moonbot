@@ -381,7 +381,7 @@ namespace Izzy_Moonbot
             }
             else if (command.CommandName == PERMANP_CMD_NAME)
             {
-                var permanpOutput = await ModMiscModule.PermaNpCommandIImpl(_scheduleService, _config, command.Data.Member.Id);
+                var permanpOutput = await ModMiscModule.PermaNpCommandIImpl(_client, (ulong)guildId, _scheduleService, _config, command.Data.Member.Id);
 
                 var log = $"{command.User.Mention} used the '{command.CommandName}' context command on {command.Data.Member.Mention}:\n\n{permanpOutput}";
 

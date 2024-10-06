@@ -77,13 +77,20 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
             return;
         }
 
-        var output = await PermaNpCommandIImpl(_schedule, _config, userId);
+        var output = await PermaNpCommandIImpl(Context.Client, Context.Guild.Id, _schedule, _config, userId);
 
         await ReplyAsync(output);
     }
 
-    static public async Task<string> PermaNpCommandIImpl(ScheduleService scheduleService, Config config, ulong userId)
+    static public async Task<string> PermaNpCommandIImpl(DiscordSocketClient client, ulong guildId, ScheduleService scheduleService, Config config, ulong userId)
     {
+        var guild = client.GetGuild(guildId);
+        var member = guild.GetUser(userId);
+        if (member.Roles.Any(role => role.Id == config.MemberRole))
+        {
+            return $"<@{userId}> already has the member role / is no longer a 'new pony'. Doing nothing.";
+        }
+
         var getSingleMemberAddition = new Func<ScheduledJob, bool>(job =>
             job.Action is ScheduledRoleAdditionJob memberAdditionJob &&
             memberAdditionJob.User == userId &&
@@ -98,7 +105,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
         }
         else
         {
-            return $"I couldn't find a scheduled member role addition for <@{userId}>. It either already occured or they already have permanent 'new pony'/non-member status.";
+            return $"I couldn't find a scheduled member role addition for <@{userId}>. They already have permanent 'new pony'/non-member status.";
         }
     }
 
