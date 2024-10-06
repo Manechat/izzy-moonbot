@@ -55,7 +55,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
     }
 
     [Command("permanp")]
-    [Summary("Remove the scheduled new pony role removal for this user, essentially meaning they keep the new pony role until manually removed.")]
+    [Summary("Remove the scheduled member role additon for this user, essentially meaning they remain a 'new pony' with limited permissions until it's manually added.")]
     [Remarks("In the Discord UI, right-click on a user's name and go to 'Apps' for an alternative way of invoking this command.")]
     [RequireContext(ContextType.Guild)]
     [ModCommand(Group = "Permissions")]
@@ -67,7 +67,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
         if (argsString == "")
         {
             await ReplyAsync(
-                "Hey uhh... I can't remove the scheduled new pony role removal for a user if you haven't given me the user to remove it from...");
+                "Hey uhh... I can't remove the scheduled member role addition for a user if you haven't given me the user to remove it from...");
             return;
         }
 
@@ -84,21 +84,21 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
 
     static public async Task<string> PermaNpCommandIImpl(ScheduleService scheduleService, Config config, ulong userId)
     {
-        var getSingleNewPonyRemoval = new Func<ScheduledJob, bool>(job =>
-            job.Action is ScheduledRoleRemovalJob removalJob &&
-            removalJob.User == userId &&
-            removalJob.Role == config.NewMemberRole);
+        var getSingleMemberAddition = new Func<ScheduledJob, bool>(job =>
+            job.Action is ScheduledRoleAdditionJob memberAdditionJob &&
+            memberAdditionJob.User == userId &&
+            memberAdditionJob.Role == config.MemberRole);
 
-        var job = scheduleService.GetScheduledJob(getSingleNewPonyRemoval);
+        var job = scheduleService.GetScheduledJob(getSingleMemberAddition);
         if (job != null)
         {
             await scheduleService.DeleteScheduledJob(job);
 
-            return $"Removed the scheduled new pony role removal from <@{userId}>.";
+            return $"Removed the scheduled member role addition from <@{userId}>.";
         }
         else
         {
-            return $"I couldn't find a scheduled new pony role removal for <@{userId}>. It either already occured or they already have permanent new pony.";
+            return $"I couldn't find a scheduled member role addition for <@{userId}>. It either already occured or they already have permanent 'new pony'/non-member status.";
         }
     }
 
