@@ -127,6 +127,7 @@ public class FileHelperTests
     [TestMethod()]
     public void ConfigRoundTrip()
     {
+        // has ZeroJoinRoles added, since we wanted removal of that to work
         var testConfig = """
             {
               "Prefix": ".",
@@ -168,6 +169,7 @@ public class FileHelperTests
               "NewMemberRole": 1039194817231601695,
               "NewMemberRoleDecay": 120.0,
               "RolesToReapplyOnRejoin": [],
+              "ZeroJoinRoles": false,
               "FilterEnabled": true,
               "FilterIgnoredChannels": [
                 964283764240973844
@@ -260,7 +262,6 @@ public class FileHelperTests
               "NewMemberRole": 1039194817231601695,
               "NewMemberRoleDecay": 120.0,
               "RolesToReapplyOnRejoin": [],
-              "ZeroJoinRoles": false,
               "FilterEnabled": true,
               "FilterIgnoredChannels": [
                 964283764240973844

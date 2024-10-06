@@ -70,53 +70,26 @@ public static class UserHelper
         if (config.ManageNewUserRoles)
         {
             bool silencingUser = config.AutoSilenceNewJoins || userInfo.Silenced;
-            if (!silencingUser && !config.ZeroJoinRoles && config.MemberRole != null && config.MemberRole > 0)
-            {
-                rolesToAddIfMissing.Add((ulong)config.MemberRole);
-            }
             if (silencingUser)
             {
                 rolesToAddIfMissing.Add(DiscordHelper.BanishedRoleId);
             }
 
-            if (config.ZeroJoinRoles)
+            if (config.MemberRole != null && config.MemberRole > 0 && socketGuildUser.JoinedAt is not null)
             {
-                if (config.MemberRole != null && config.MemberRole > 0 && socketGuildUser.JoinedAt is not null)
+                var joinTime = socketGuildUser.JoinedAt.Value;
+                var memberAcceptanceTime = joinTime.AddMinutes(config.NewMemberRoleDecay);
+
+                if (DateTimeOffset.UtcNow < memberAcceptanceTime)
                 {
-                    var joinTime = socketGuildUser.JoinedAt.Value;
-                    var memberAcceptanceTime = joinTime.AddMinutes(config.NewMemberRoleDecay);
+                    // no change to rolesToAddIfMissing
 
-                    if (DateTimeOffset.UtcNow < memberAcceptanceTime)
-                    {
-                        // no change to rolesToAddIfMissing
+                    var action = new ScheduledRoleAdditionJob(config.MemberRole.Value, socketGuildUser.Id,
+                        $"Member role added, {config.NewMemberRoleDecay} minutes (`NewMemberRoleDecay`) passed.");
+                    var task = new ScheduledJob(DateTimeOffset.UtcNow, memberAcceptanceTime, action);
+                    await scheduleService.CreateScheduledJob(task);
 
-                        var action = new ScheduledRoleAdditionJob(config.MemberRole.Value, socketGuildUser.Id,
-                            $"Member role added, {config.NewMemberRoleDecay} minutes (`NewMemberRoleDecay`) passed.");
-                        var task = new ScheduledJob(DateTimeOffset.UtcNow, memberAcceptanceTime, action);
-                        await scheduleService.CreateScheduledJob(task);
-
-                        newUserRoleUpdateJob = task;
-                    }
-                }
-            }
-            else
-            {
-                if (config.NewMemberRole != null && config.NewMemberRole > 0 && socketGuildUser.JoinedAt is not null)
-                {
-                    var joinTime = socketGuildUser.JoinedAt.Value;
-                    var newMemberExpiry = joinTime.AddMinutes(config.NewMemberRoleDecay);
-
-                    if (DateTimeOffset.UtcNow < newMemberExpiry)
-                    {
-                        rolesToAddIfMissing.Add((ulong)config.NewMemberRole);
-
-                        var action = new ScheduledRoleRemovalJob(config.NewMemberRole.Value, socketGuildUser.Id,
-                            $"New member role removal, {config.NewMemberRoleDecay} minutes (`NewMemberRoleDecay`) passed.");
-                        var task = new ScheduledJob(DateTimeOffset.UtcNow, newMemberExpiry, action);
-                        await scheduleService.CreateScheduledJob(task);
-
-                        newUserRoleUpdateJob = task;
-                    }
+                    newUserRoleUpdateJob = task;
                 }
             }
         }

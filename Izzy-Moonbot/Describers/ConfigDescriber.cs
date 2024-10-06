@@ -108,10 +108,6 @@ public class ConfigDescriber
             new ConfigItem("RolesToReapplyOnRejoin", ConfigItemType.RoleSet,
                 "The roles I'll reapply to a user when they join **if they had that role when they left**.",
                 ConfigItemCategory.ManagedRoles));
-        _config.Add("ZeroJoinRoles",
-            new ConfigItem("ZeroJoinRoles", ConfigItemType.Boolean,
-                "TEMPORARY, I HOPE I HOPE.",
-                ConfigItemCategory.ManagedRoles));
 
 
         // Filter settings

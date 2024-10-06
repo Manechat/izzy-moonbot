@@ -533,13 +533,6 @@ public class ConfigCommandTests
             $"New Pony",
             generalChannel.Messages.Last().Content);
 
-        // post ".config ZeroJoinRoles true"
-        Assert.AreEqual(cfg.ZeroJoinRoles, false);
-        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config ZeroJoinRoles true");
-        await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "ZeroJoinRoles", "true");
-        Assert.AreEqual(cfg.ZeroJoinRoles, true);
-        Assert.AreEqual("I've set `ZeroJoinRoles` to the following content: True", generalChannel.Messages.Last().Content);
-
         // post ".config FilterEnabled false"
         Assert.AreEqual(cfg.FilterEnabled, true);
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config FilterEnabled false");
@@ -807,7 +800,7 @@ public class ConfigCommandTests
         // Ensure we can't forget to keep this test up to date
         var configPropsCount = typeof(Config).GetProperties().Length;
 
-        Assert.AreEqual(60, configPropsCount,
+        Assert.AreEqual(59, configPropsCount,
             $"\nIf you just added or removed a config item, then this test is probably out of date");
 
         Assert.AreEqual(configPropsCount * 2, generalChannel.Messages.Count(),
