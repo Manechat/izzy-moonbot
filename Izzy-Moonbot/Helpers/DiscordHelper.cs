@@ -364,5 +364,5 @@ public static class DiscordHelper
         new(@"(?<!<)(https?://(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&//=]*))(?!>)");
 
     public static ulong BanishedRoleId = 368961099925553153ul;
-    public static ulong TartarusRoleId = 139498527297503232ul;
+    public static ulong TartarusRoleId = 1343381219769061376ul;
 }
