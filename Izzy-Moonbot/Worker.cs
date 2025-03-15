@@ -289,7 +289,7 @@ namespace Izzy_Moonbot
 
         // hardcoding Manechat specific role ids
         private ulong banishedRoleId = 368961099925553153;
-        private ulong tartarusRoleId = 139498527297503232;
+        private ulong tartarusRoleId = 1343381219769061376;
 
         private async Task MessageCommandHandler(SocketMessageCommand command)
         {
