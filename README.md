@@ -1,6 +1,6 @@
 # Izzy Moonbot
 
-![dotnet](https://github.com/Manechat/izzy-moonbot/actions/workflows/dotnet-nobuild.yml/badge.svg)
+![dotnet](https://github.com/Manechat/izzy-moonbot/actions/workflows/dotnet.yml/badge.svg)
 ![docker-build-deploy](https://github.com/Manechat/izzy-moonbot/actions/workflows/docker-build-deploy.yml/badge.svg)
 ![package-prune](https://github.com/Manechat/izzy-moonbot/actions/workflows/package-prune.yml/badge.svg)
 

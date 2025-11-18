@@ -1,4 +1,4 @@
-﻿using Izzy_Moonbot.Adapters;
+using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Service;
 using Izzy_Moonbot.Settings;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -23,7 +23,7 @@ public class ModLoggingServiceTests
             // can't meaningfully test .SetFileLogContent()
             .Send();
 
-        Assert.AreEqual(1, modChat.Messages.Count);
+        Assert.HasCount(1, modChat.Messages);
         Assert.AreEqual("Attention: It's T.U.E.S. Day!", modChat.Messages.Last().Content);
     }
 

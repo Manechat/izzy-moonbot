@@ -44,57 +44,57 @@ public class RaidServiceTests
         cfg.SmallRaidDecay = 5; // minutes
 
         // Initial state
-        Assert.AreEqual(0, ss.GetScheduledJobs().Count);
-        Assert.AreEqual(0, modChat.Messages.Count);
-        Assert.AreEqual(0, state.RecentJoins.Count);
+        Assert.IsEmpty(ss.GetScheduledJobs());
+        Assert.IsEmpty(modChat.Messages);
+        Assert.IsEmpty(state.RecentJoins);
 
         DateTimeHelper.FakeUtcNow = TestUtils.FiMEpoch;
 
         await ss.Unicycle(client);
-        Assert.AreEqual(0, ss.GetScheduledJobs().Count);
-        Assert.AreEqual(0, modChat.Messages.Count);
-        Assert.AreEqual(0, state.RecentJoins.Count);
+        Assert.IsEmpty(ss.GetScheduledJobs());
+        Assert.IsEmpty(modChat.Messages);
+        Assert.IsEmpty(state.RecentJoins);
 
         // Users start joining
         DateTimeHelper.FakeUtcNow = DateTimeHelper.FakeUtcNow?.AddMinutes(1);
         await client.JoinUser("Peach Fizz", 101, guild);
 
         await ss.Unicycle(client);
-        Assert.AreEqual(0, ss.GetScheduledJobs().Count);
-        Assert.AreEqual(0, modChat.Messages.Count);
-        Assert.AreEqual(1, state.RecentJoins.Count);
+        Assert.IsEmpty(ss.GetScheduledJobs());
+        Assert.IsEmpty(modChat.Messages);
+        Assert.HasCount(1, state.RecentJoins);
 
         DateTimeHelper.FakeUtcNow = DateTimeHelper.FakeUtcNow?.AddMinutes(1);
         await client.JoinUser("Seashell", 102, guild);
 
         await ss.Unicycle(client);
-        Assert.AreEqual(0, ss.GetScheduledJobs().Count);
-        Assert.AreEqual(0, modChat.Messages.Count);
-        Assert.AreEqual(2, state.RecentJoins.Count);
+        Assert.IsEmpty(ss.GetScheduledJobs());
+        Assert.IsEmpty(modChat.Messages);
+        Assert.HasCount(2, state.RecentJoins);
 
         DateTimeHelper.FakeUtcNow = DateTimeHelper.FakeUtcNow?.AddMinutes(1);
         await client.JoinUser("Glory", 103, guild);
 
         // All three pippsqueaks at once is too many. Raid message sent to modchat.
         await ss.Unicycle(client);
-        Assert.AreEqual(1, ss.GetScheduledJobs().Count);
-        Assert.AreEqual(1, modChat.Messages.Count);
-        Assert.AreEqual(3, state.RecentJoins.Count);
+        Assert.HasCount(1, ss.GetScheduledJobs());
+        Assert.HasCount(1, modChat.Messages);
+        Assert.HasCount(3, state.RecentJoins);
         StringAssert.Contains(modChat.Messages.Last().Content, "Possible raid detected!");
 
         // Only 4 minutes, raid's not over yet.
         DateTimeHelper.FakeUtcNow = DateTimeHelper.FakeUtcNow?.AddMinutes(4);
         await ss.Unicycle(client);
-        Assert.AreEqual(1, ss.GetScheduledJobs().Count);
-        Assert.AreEqual(1, modChat.Messages.Count);
-        Assert.AreEqual(3, state.RecentJoins.Count);
+        Assert.HasCount(1, ss.GetScheduledJobs());
+        Assert.HasCount(1, modChat.Messages);
+        Assert.HasCount(3, state.RecentJoins);
 
         // Raid's over after 5 minutes, and now it's been 6 minutes.
         DateTimeHelper.FakeUtcNow = DateTimeHelper.FakeUtcNow?.AddMinutes(2);
         await ss.Unicycle(client);
-        Assert.AreEqual(0, ss.GetScheduledJobs().Count);
-        Assert.AreEqual(2, modChat.Messages.Count);
-        Assert.AreEqual(0, state.RecentJoins.Count);
+        Assert.IsEmpty(ss.GetScheduledJobs());
+        Assert.HasCount(2, modChat.Messages);
+        Assert.IsEmpty(state.RecentJoins);
         StringAssert.Contains(modChat.Messages.Last().Content, "I consider the raid to be over");
     }
 }

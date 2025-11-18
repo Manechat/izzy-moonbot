@@ -39,15 +39,15 @@ public class FilterServiceTests
 
         await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, "this is a completely ordinary chat message");
 
-        Assert.AreEqual(1, generalChannel.Messages.Count);
+        Assert.HasCount(1, generalChannel.Messages);
         Assert.AreEqual("this is a completely ordinary chat message", generalChannel.Messages.Last().Content);
-        Assert.AreEqual(0, modChat.Messages.Count);
+        Assert.IsEmpty(modChat.Messages);
 
         await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, "magic wings of mayonnaise");
 
-        Assert.AreEqual(1, generalChannel.Messages.Count);
+        Assert.HasCount(1, generalChannel.Messages);
         Assert.AreEqual("this is a completely ordinary chat message", generalChannel.Messages.Last().Content);
-        Assert.AreEqual(1, modChat.Messages.Count);
+        Assert.HasCount(1, modChat.Messages);
         Assert.AreEqual($"<@&{cfg.ModRole}> Filter Violation for <@{sunny.Id}>", modChat.Messages.Last().Content);
 
         TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, [
@@ -69,11 +69,11 @@ public class FilterServiceTests
         cfg.FilterWords = [ "magic", "wing", "feather", "mayonnaise" ];
         SetupFilterService(cfg, guild, client, sunny);
 
-        Assert.AreEqual(0, modChat.Messages.Count);
+        Assert.IsEmpty(modChat.Messages);
 
         await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, "MaGiC");
 
-        Assert.AreEqual(1, modChat.Messages.Count);
+        Assert.HasCount(1, modChat.Messages);
         Assert.AreEqual($"<@&{cfg.ModRole}> Filter Violation for <@{sunny.Id}>", modChat.Messages.Last().Content);
 
         TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, [
@@ -90,7 +90,7 @@ public class FilterServiceTests
 
         await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, "fEatHer");
 
-        Assert.AreEqual(2, modChat.Messages.Count);
+        Assert.HasCount(2, modChat.Messages);
         Assert.AreEqual($" Filter Violation for <@{sunny.Id}>", modChat.Messages.Last().Content);
 
         TestUtils.AssertEmbedFieldsAre(modChat.Messages.Last().Embeds[0].Fields, [

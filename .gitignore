@@ -354,7 +354,7 @@ botsettings/
 devsettings/
 
 # User Secrets
-**/appsettings*.json*
+**/appsettings.json*
 !appsettings*sample.json
 **/*.env*
 !*example.env

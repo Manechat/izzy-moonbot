@@ -2,6 +2,7 @@
 using Discord;
 using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Describers;
+using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Settings;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -24,7 +25,7 @@ public static class TestUtils
         var users = new List<StubGuildUser> { izzyHerself, sunny, zipp, pipp, hitch };
 
         var alicorn = new TestRole("Alicorn", 1);
-        List<TestRole> roles = [ alicorn, new TestRole("Pegasus", 2) ];
+        List<TestRole> roles = [ alicorn, new TestRole("Pegasus", 2), new TestRole("Tartarus", DiscordHelper.TartarusRoleId)];
 
         // because user ids are also Direct Message channel ids, regular channels must have different ids
         var generalChannel = new StubChannel(1001, "general");
@@ -69,7 +70,7 @@ public static class TestUtils
         if (expected.Count() != actual.Count())
             Assert.AreEqual(expected, actual, $"\nCount() mismatch: {expected.Count()} != {actual.Count()}");
         foreach (var value in expected)
-            Assert.IsTrue(actual.Contains(value), $"\nValue {value}" + message);
+            Assert.Contains(value, actual, $"\nValue {value}" + message);
     }
 
     // The built-in Assert.AreEqual and CollectionsAssert.AreEqual don't even work on Dictionaries, so everyone has to write their own
@@ -105,7 +106,7 @@ public static class TestUtils
     public static void AssertEmbedFieldsAre(IList<EmbedField> actual, IList<(string, string)> expected)
     {
         if (expected.Count() != actual.Count())
-            Assert.IsTrue(false, $"\nCount() mismatch: {expected.Count()} != {actual.Count()}");
+            Assert.Fail($"\nCount() mismatch: {expected.Count()} != {actual.Count()}");
 
         foreach (var ((name, value), embedField) in expected.Zip(actual, Tuple.Create))
         {
