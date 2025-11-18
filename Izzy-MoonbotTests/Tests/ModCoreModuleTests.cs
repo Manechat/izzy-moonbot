@@ -113,9 +113,9 @@ public class ModCoreModuleTests
         await mcm.TestableBanAllCommandAsync(context, $"{zippId} {pippId} {hitchId}");
 
         Assert.AreEqual(4, generalChannel.Messages.Count);
-        Assert.AreEqual(generalChannel.Messages[1].Content, "<:izzydeletethis:1028964499723661372> I've banned Zipp (3).");
-        Assert.AreEqual(generalChannel.Messages[2].Content, "<:izzydeletethis:1028964499723661372> I've banned Pipp (4).");
-        Assert.AreEqual(generalChannel.Messages[3].Content, "<:izzydeletethis:1028964499723661372> I've banned Hitch (5).");
+        Assert.AreEqual("<:izzydeletethis:1028964499723661372> I've banned Zipp (3).", generalChannel.Messages[1].Content);
+        Assert.AreEqual("<:izzydeletethis:1028964499723661372> I've banned Pipp (4).", generalChannel.Messages[2].Content);
+        Assert.AreEqual("<:izzydeletethis:1028964499723661372> I've banned Hitch (5).", generalChannel.Messages[3].Content);
         TestUtils.AssertSetsAreEqual(new HashSet<ulong> { zippId, pippId, hitchId }, guild.BannedUserIds);
         Assert.AreEqual(0, ss.GetScheduledJobs().Count);
     }
