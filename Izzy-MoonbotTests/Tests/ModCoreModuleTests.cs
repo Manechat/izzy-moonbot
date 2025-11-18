@@ -47,7 +47,7 @@ public class ModCoreModuleTests
 
         StringAssert.Contains(generalChannel.Messages.Last().Content, "I've banned Hitch (5)");
         TestUtils.AssertSetsAreEqual(new HashSet<ulong> { hitchId }, guild.BannedUserIds);
-        Assert.AreEqual(0, ss.GetScheduledJobs().Count);
+        Assert.IsEmpty(ss.GetScheduledJobs());
 
         // .ban with duration
 
@@ -57,7 +57,7 @@ public class ModCoreModuleTests
 
         StringAssert.Contains(generalChannel.Messages.Last().Content, "I've banned Pipp (4)");
         TestUtils.AssertSetsAreEqual(new HashSet<ulong> { hitchId, pippId }, guild.BannedUserIds);
-        Assert.AreEqual(1, ss.GetScheduledJobs().Count);
+        Assert.HasCount(1, ss.GetScheduledJobs());
 
         // changing an existing ban from indefinite to finite
 
@@ -66,23 +66,23 @@ public class ModCoreModuleTests
 
         StringAssert.Contains(generalChannel.Messages.Last().Content, "This user is already banned. I have scheduled an unban");
         TestUtils.AssertSetsAreEqual(new HashSet<ulong> { hitchId, pippId }, guild.BannedUserIds);
-        Assert.AreEqual(2, ss.GetScheduledJobs().Count);
+        Assert.HasCount(2, ss.GetScheduledJobs());
 
         DateTimeHelper.FakeUtcNow = DateTimeHelper.FakeUtcNow?.AddMinutes(5);
         await ss.Unicycle(client);
 
-        Assert.AreEqual(1, modChat.Messages.Last().Embeds.Count);
+        Assert.HasCount(1, modChat.Messages.Last().Embeds);
         Assert.AreEqual("Unbanned Pipp (Pipp/4)", modChat.Messages.Last().Embeds.Last().Title);
         TestUtils.AssertSetsAreEqual(new HashSet<ulong> { hitchId }, guild.BannedUserIds);
-        Assert.AreEqual(1, ss.GetScheduledJobs().Count);
+        Assert.HasCount(1, ss.GetScheduledJobs());
 
         DateTimeHelper.FakeUtcNow = DateTimeHelper.FakeUtcNow?.AddMinutes(5);
         await ss.Unicycle(client);
 
-        Assert.AreEqual(1, modChat.Messages.Last().Embeds.Count);
+        Assert.HasCount(1, modChat.Messages.Last().Embeds);
         Assert.AreEqual("Unbanned Hitch (Hitch/5)", modChat.Messages.Last().Embeds.Last().Title);
         TestUtils.AssertSetsAreEqual(new HashSet<ulong>(), guild.BannedUserIds);
-        Assert.AreEqual(0, ss.GetScheduledJobs().Count);
+        Assert.IsEmpty(ss.GetScheduledJobs());
 
         // .ban myself easter egg
 
@@ -91,7 +91,7 @@ public class ModCoreModuleTests
 
         // randomly selected emoji, but no actual banning
         TestUtils.AssertSetsAreEqual(new HashSet<ulong>(), guild.BannedUserIds);
-        Assert.AreEqual(0, ss.GetScheduledJobs().Count);
+        Assert.IsEmpty(ss.GetScheduledJobs());
     }
 
     [TestMethod()]
@@ -112,12 +112,12 @@ public class ModCoreModuleTests
         var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, $".banall {zippId} {pippId} {hitchId}");
         await mcm.TestableBanAllCommandAsync(context, $"{zippId} {pippId} {hitchId}");
 
-        Assert.AreEqual(4, generalChannel.Messages.Count);
+        Assert.HasCount(4, generalChannel.Messages);
         Assert.AreEqual("<:izzydeletethis:1028964499723661372> I've banned Zipp (3).", generalChannel.Messages[1].Content);
         Assert.AreEqual("<:izzydeletethis:1028964499723661372> I've banned Pipp (4).", generalChannel.Messages[2].Content);
         Assert.AreEqual("<:izzydeletethis:1028964499723661372> I've banned Hitch (5).", generalChannel.Messages[3].Content);
         TestUtils.AssertSetsAreEqual(new HashSet<ulong> { zippId, pippId, hitchId }, guild.BannedUserIds);
-        Assert.AreEqual(0, ss.GetScheduledJobs().Count);
+        Assert.IsEmpty(ss.GetScheduledJobs());
     }
 
     [TestMethod()]
@@ -144,7 +144,7 @@ public class ModCoreModuleTests
         Assert.AreEqual(generalChannel.Messages.Last().Content, $"I've given <@&{alicornId}> to <@{hitchId}>.");
         Assert.IsFalse(guild.UserRoles.ContainsKey(pippId));
         TestUtils.AssertListsAreEqual(new List<ulong> { alicornId }, guild.UserRoles[hitchId]);
-        Assert.AreEqual(0, ss.GetScheduledJobs().Count);
+        Assert.IsEmpty(ss.GetScheduledJobs());
 
         // .assignrole with duration
 
@@ -154,7 +154,7 @@ public class ModCoreModuleTests
         Assert.AreEqual(generalChannel.Messages.Last().Content, $"I've given <@&{alicornId}> to <@{pippId}>. I've scheduled a removal <t:1286669100:R>.");
         TestUtils.AssertListsAreEqual(new List<ulong> { alicornId }, guild.UserRoles[pippId]);
         TestUtils.AssertListsAreEqual(new List<ulong> { alicornId }, guild.UserRoles[hitchId]);
-        Assert.AreEqual(1, ss.GetScheduledJobs().Count);
+        Assert.HasCount(1, ss.GetScheduledJobs());
 
         // changing an existing role assignment from indefinite to finite
 
@@ -164,7 +164,7 @@ public class ModCoreModuleTests
         StringAssert.Contains(generalChannel.Messages.Last().Content, $"<@{hitchId}> already has that role. I've scheduled a removal <t:1286669400:R>.");
         TestUtils.AssertListsAreEqual(new List<ulong> { alicornId }, guild.UserRoles[pippId]);
         TestUtils.AssertListsAreEqual(new List<ulong> { alicornId }, guild.UserRoles[hitchId]);
-        Assert.AreEqual(2, ss.GetScheduledJobs().Count);
+        Assert.HasCount(2, ss.GetScheduledJobs());
 
         DateTimeHelper.FakeUtcNow = DateTimeHelper.FakeUtcNow?.AddMinutes(5);
         await ss.Unicycle(client);
@@ -172,7 +172,7 @@ public class ModCoreModuleTests
         Assert.AreEqual($"Removed <@&{alicornId}> from <@{pippId}> (`{pippId}`)", modChat.Messages.Last().Content);
         TestUtils.AssertListsAreEqual(new List<ulong>(), guild.UserRoles[pippId]);
         TestUtils.AssertListsAreEqual(new List<ulong> { alicornId }, guild.UserRoles[hitchId]);
-        Assert.AreEqual(1, ss.GetScheduledJobs().Count);
+        Assert.HasCount(1, ss.GetScheduledJobs());
 
         DateTimeHelper.FakeUtcNow = DateTimeHelper.FakeUtcNow?.AddMinutes(5);
         await ss.Unicycle(client);
@@ -180,7 +180,7 @@ public class ModCoreModuleTests
         Assert.AreEqual($"Removed <@&{alicornId}> from <@{hitchId}> (`{hitchId}`)", modChat.Messages.Last().Content);
         TestUtils.AssertListsAreEqual(new List<ulong>(), guild.UserRoles[pippId]);
         TestUtils.AssertListsAreEqual(new List<ulong>(), guild.UserRoles[hitchId]);
-        Assert.AreEqual(0, ss.GetScheduledJobs().Count);
+        Assert.IsEmpty(ss.GetScheduledJobs());
     }
 
     [TestMethod()]
@@ -202,13 +202,13 @@ public class ModCoreModuleTests
 
         Assert.AreEqual(generalChannel.Messages.Last().Content, $"I've given <@&{alicornId}> to <@{pippId}>. I've scheduled a removal <t:1286669100:R>.");
         TestUtils.AssertListsAreEqual(new List<ulong> { alicornId }, guild.UserRoles[pippId]);
-        Assert.AreEqual(1, ss.GetScheduledJobs().Count);
+        Assert.HasCount(1, ss.GetScheduledJobs());
 
         DateTimeHelper.FakeUtcNow = DateTimeHelper.FakeUtcNow?.AddMinutes(5);
         await ss.Unicycle(client);
 
         Assert.AreEqual($"Removed <@&{alicornId}> from <@{pippId}> (`{pippId}`)", modChat.Messages.Last().Content);
         TestUtils.AssertListsAreEqual(new List<ulong>(), guild.UserRoles[pippId]);
-        Assert.AreEqual(0, ss.GetScheduledJobs().Count);
+        Assert.IsEmpty(ss.GetScheduledJobs());
     }
 }

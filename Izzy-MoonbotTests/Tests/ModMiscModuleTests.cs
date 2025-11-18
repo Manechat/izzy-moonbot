@@ -38,18 +38,18 @@ public class ModMiscModuleTests
         var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".echo test");
         await mmm.TestableEchoCommandAsync(context, "test");
 
-        Assert.AreEqual(2, generalChannel.Messages.Count);
+        Assert.HasCount(2, generalChannel.Messages);
         Assert.AreEqual("test", generalChannel.Messages.Last().Content);
-        Assert.AreEqual(0, modChat.Messages.Count);
+        Assert.IsEmpty(modChat.Messages);
 
         // .echo'ing to another channel
 
         context = await client.AddMessageAsync(guild.Id, modChat.Id, sunny.Id, $".echo <#{generalChannel.Id}> hello from mod chat");
         await mmm.TestableEchoCommandAsync(context, $"<#{generalChannel.Id}> hello from mod chat");
 
-        Assert.AreEqual(3, generalChannel.Messages.Count);
+        Assert.HasCount(3, generalChannel.Messages);
         Assert.AreEqual("hello from mod chat", generalChannel.Messages.Last().Content);
-        Assert.AreEqual(1, modChat.Messages.Count);
+        Assert.HasCount(1, modChat.Messages);
     }
 
     [TestMethod()]
@@ -205,7 +205,7 @@ public class ModMiscModuleTests
         job = ss.GetScheduledJobs().Last();
         Assert.AreEqual(TestUtils.FiMEpoch.AddMinutes(5), job.ExecuteAt);
         Assert.AreEqual(ScheduledJobActionType.EndRaid, job.Action.Type);
-        Assert.AreEqual(false, (job.Action as ScheduledEndRaidJob)?.IsLarge);
+        Assert.IsFalse((job.Action as ScheduledEndRaidJob)?.IsLarge);
     }
 
     [TestMethod()]
@@ -226,7 +226,7 @@ public class ModMiscModuleTests
         StringAssert.Contains(description, "Created scheduled job:");
         StringAssert.Contains(description, $"Send \"do the pony ony ony\" to (<#{generalChannel.Id}>/<@{generalChannel.Id}>) (`{generalChannel.Id}`) <t:1286668810:R>, repeating Relative.");
         Assert.AreEqual(1, ss.GetScheduledJobs().Count());
-        Assert.AreEqual(2, generalChannel.Messages.Count);
+        Assert.HasCount(2, generalChannel.Messages);
 
         await ss.Unicycle(client);
         DateTimeHelper.FakeUtcNow = DateTimeHelper.FakeUtcNow?.AddSeconds(10);
@@ -236,7 +236,7 @@ public class ModMiscModuleTests
         DateTimeHelper.FakeUtcNow = DateTimeHelper.FakeUtcNow?.AddSeconds(10);
         await ss.Unicycle(client);
 
-        Assert.AreEqual(5, generalChannel.Messages.Count);
+        Assert.HasCount(5, generalChannel.Messages);
         Assert.AreEqual("do the pony ony ony", generalChannel.Messages[2].Content);
         Assert.AreEqual("do the pony ony ony", generalChannel.Messages[3].Content);
         Assert.AreEqual("do the pony ony ony", generalChannel.Messages[4].Content);
@@ -249,7 +249,7 @@ public class ModMiscModuleTests
 
         Assert.AreEqual("Successfully deleted scheduled job.", generalChannel.Messages.Last().Content);
         Assert.AreEqual(0, ss.GetScheduledJobs().Count());
-        Assert.AreEqual(7, generalChannel.Messages.Count);
+        Assert.HasCount(7, generalChannel.Messages);
 
         await ss.Unicycle(client);
         DateTimeHelper.FakeUtcNow = DateTimeHelper.FakeUtcNow?.AddSeconds(10);
@@ -258,7 +258,7 @@ public class ModMiscModuleTests
         await ss.Unicycle(client);
         DateTimeHelper.FakeUtcNow = DateTimeHelper.FakeUtcNow?.AddSeconds(10);
         await ss.Unicycle(client);
-        Assert.AreEqual(7, generalChannel.Messages.Count);
+        Assert.HasCount(7, generalChannel.Messages);
     }
 
     [TestMethod()]
@@ -275,16 +275,16 @@ public class ModMiscModuleTests
         var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".remind");
         await mmm.TestableRemindCommandAsync(context, "");
         Assert.AreEqual("Remind you of what now? (see `.help remind`)", generalChannel.Messages.Last().Content);
-        Assert.AreEqual(2, generalChannel.Messages.Count);
-        Assert.AreEqual(0, ss.GetScheduledJobs().Count);
+        Assert.HasCount(2, generalChannel.Messages);
+        Assert.IsEmpty(ss.GetScheduledJobs());
 
         await ss.Unicycle(client);
 
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, $".remind <#{generalChannel.Id}> 1 minute test");
         await mmm.TestableRemindCommandAsync(context, $"<#{generalChannel.Id}> 1 minute test");
         Assert.AreEqual($"Okay! I'll send that reminder to <#{generalChannel.Id}> <t:1286668860:R>.", generalChannel.Messages.Last().Content);
-        Assert.AreEqual(4, generalChannel.Messages.Count);
-        Assert.AreEqual(1, ss.GetScheduledJobs().Count);
+        Assert.HasCount(4, generalChannel.Messages);
+        Assert.HasCount(1, ss.GetScheduledJobs());
 
         await ss.Unicycle(client);
 
@@ -292,8 +292,8 @@ public class ModMiscModuleTests
 
         await ss.Unicycle(client);
 
-        Assert.AreEqual(5, generalChannel.Messages.Count);
+        Assert.HasCount(5, generalChannel.Messages);
         Assert.AreEqual("test", generalChannel.Messages.Last().Content);
-        Assert.AreEqual(0, ss.GetScheduledJobs().Count);
+        Assert.IsEmpty(ss.GetScheduledJobs());
     }
 }

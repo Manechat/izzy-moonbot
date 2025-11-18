@@ -23,7 +23,7 @@ public class ConfigCommandTests
         await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "asdf", "*");
         Assert.AreEqual('.', cfg.Prefix);
 
-        Assert.AreEqual(2, generalChannel.Messages.Count);
+        Assert.HasCount(2, generalChannel.Messages);
 
         Assert.AreEqual(sunny.Id, generalChannel.Messages[0].AuthorId);
         Assert.AreEqual(".config asdf *", generalChannel.Messages[0].Content);
@@ -39,7 +39,7 @@ public class ConfigCommandTests
         await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "Prefix", "*");
         Assert.AreEqual('*', cfg.Prefix);
 
-        Assert.AreEqual(4, generalChannel.Messages.Count);
+        Assert.HasCount(4, generalChannel.Messages);
 
         Assert.AreEqual(sunny.Id, generalChannel.Messages[0].AuthorId);
         Assert.AreEqual(".config asdf *", generalChannel.Messages[0].Content);
@@ -377,10 +377,10 @@ public class ConfigCommandTests
         Assert.AreEqual("I've set `UnicycleInterval` to the following content: 42", generalChannel.Messages.Last().Content);
 
         // post ".config MentionResponseEnabled true"
-        Assert.AreEqual(false, cfg.MentionResponseEnabled);
+        Assert.IsFalse(cfg.MentionResponseEnabled);
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config MentionResponseEnabled true");
         await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "MentionResponseEnabled", "true");
-        Assert.AreEqual(true, cfg.MentionResponseEnabled);
+        Assert.IsTrue(cfg.MentionResponseEnabled);
         Assert.AreEqual("I've set `MentionResponseEnabled` to the following content: True", generalChannel.Messages.Last().Content);
 
         // post ".config MentionResponses add yes i am bot"
@@ -409,10 +409,10 @@ public class ConfigCommandTests
         Assert.AreEqual("I've set `DiscordActivityName` to the following content: buckball", generalChannel.Messages.Last().Content);
 
         // post ".config DiscordActivityWatching false"
-        Assert.AreEqual(true, cfg.DiscordActivityWatching);
+        Assert.IsTrue(cfg.DiscordActivityWatching);
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config DiscordActivityWatching false");
         await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "DiscordActivityWatching", "false");
-        Assert.AreEqual(false, cfg.DiscordActivityWatching);
+        Assert.IsFalse(cfg.DiscordActivityWatching);
         Assert.AreEqual("I've set `DiscordActivityWatching` to the following content: False", generalChannel.Messages.Last().Content);
 
         // post ".config Aliases set moonlaser addquote moon"
@@ -497,10 +497,10 @@ public class ConfigCommandTests
         Assert.AreEqual("I've set `RecentMessagesPerUser` to the following content: 20", generalChannel.Messages.Last().Content);
 
         // post ".config ManageNewUserRoles true"
-        Assert.AreEqual(false, cfg.ManageNewUserRoles);
+        Assert.IsFalse(cfg.ManageNewUserRoles);
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config ManageNewUserRoles true");
         await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "ManageNewUserRoles", "true");
-        Assert.AreEqual(true, cfg.ManageNewUserRoles);
+        Assert.IsTrue(cfg.ManageNewUserRoles);
         Assert.AreEqual("I've set `ManageNewUserRoles` to the following content: True", generalChannel.Messages.Last().Content);
 
         // post ".config MemberRole <@&2>"
@@ -534,10 +534,10 @@ public class ConfigCommandTests
             generalChannel.Messages.Last().Content);
 
         // post ".config FilterEnabled false"
-        Assert.AreEqual(true, cfg.FilterEnabled);
+        Assert.IsTrue(cfg.FilterEnabled);
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config FilterEnabled false");
         await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "FilterEnabled", "false");
-        Assert.AreEqual(false, cfg.FilterEnabled);
+        Assert.IsFalse(cfg.FilterEnabled);
         Assert.AreEqual("I've set `FilterEnabled` to the following content: False", generalChannel.Messages.Last().Content);
 
         // post ".config FilterIgnoredChannels add <#2>"
@@ -559,10 +559,10 @@ public class ConfigCommandTests
             generalChannel.Messages.Last().Content);
 
         // post ".config FilterDevBypass false"
-        Assert.AreEqual(true, cfg.FilterDevBypass);
+        Assert.IsTrue(cfg.FilterDevBypass);
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config FilterDevBypass false");
         await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "FilterDevBypass", "false");
-        Assert.AreEqual(false, cfg.FilterDevBypass);
+        Assert.IsFalse(cfg.FilterDevBypass);
         Assert.AreEqual("I've set `FilterDevBypass` to the following content: False", generalChannel.Messages.Last().Content);
 
         // post ".config FilterWords add mudpony"
@@ -573,10 +573,10 @@ public class ConfigCommandTests
         Assert.AreEqual("I added the following content to the `FilterWords` string list:\n```\nmudpony\n```", generalChannel.Messages.Last().Content);
 
         // post ".config SpamEnabled false"
-        Assert.AreEqual(true, cfg.SpamEnabled);
+        Assert.IsTrue(cfg.SpamEnabled);
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config SpamEnabled false");
         await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "SpamEnabled", "false");
-        Assert.AreEqual(false, cfg.SpamEnabled);
+        Assert.IsFalse(cfg.SpamEnabled);
         Assert.AreEqual("I've set `SpamEnabled` to the following content: False", generalChannel.Messages.Last().Content);
 
         // post ".config SpamBypassRoles add <@&1>"
@@ -598,10 +598,10 @@ public class ConfigCommandTests
             generalChannel.Messages.Last().Content);
 
         // post ".config SpamDevBypass false"
-        Assert.AreEqual(true, cfg.SpamDevBypass);
+        Assert.IsTrue(cfg.SpamDevBypass);
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config SpamDevBypass false");
         await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "SpamDevBypass", "false");
-        Assert.AreEqual(false, cfg.SpamDevBypass);
+        Assert.IsFalse(cfg.SpamDevBypass);
         Assert.AreEqual("I've set `SpamDevBypass` to the following content: False", generalChannel.Messages.Last().Content);
 
         // post ".config SpamBasePressure 15"
@@ -675,17 +675,17 @@ public class ConfigCommandTests
         Assert.AreEqual("I've set `SpamMessageDeleteLookback` to the following content: 15", generalChannel.Messages.Last().Content);
 
         // post ".config RaidProtectionEnabled false"
-        Assert.AreEqual(true, cfg.RaidProtectionEnabled);
+        Assert.IsTrue(cfg.RaidProtectionEnabled);
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config RaidProtectionEnabled false");
         await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "RaidProtectionEnabled", "false");
-        Assert.AreEqual(false, cfg.RaidProtectionEnabled);
+        Assert.IsFalse(cfg.RaidProtectionEnabled);
         Assert.AreEqual("I've set `RaidProtectionEnabled` to the following content: False", generalChannel.Messages.Last().Content);
 
         // post ".config AutoSilenceNewJoins true"
-        Assert.AreEqual(false, cfg.AutoSilenceNewJoins);
+        Assert.IsFalse(cfg.AutoSilenceNewJoins);
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config AutoSilenceNewJoins true");
         await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "AutoSilenceNewJoins", "true");
-        Assert.AreEqual(true, cfg.AutoSilenceNewJoins);
+        Assert.IsTrue(cfg.AutoSilenceNewJoins);
         Assert.AreEqual("I've set `AutoSilenceNewJoins` to the following content: True", generalChannel.Messages.Last().Content);
 
         // post ".config SmallRaidSize 5"
@@ -768,10 +768,10 @@ public class ConfigCommandTests
         Assert.AreEqual("I've set `WittyCooldown` to the following content: 50", generalChannel.Messages.Last().Content);
 
         // post .config MonitoringEnabled false
-        Assert.AreEqual(true, cfg.MonitoringEnabled);
+        Assert.IsTrue(cfg.MonitoringEnabled);
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, "post .config MonitoringEnabled false");
         await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "MonitoringEnabled", "false");
-        Assert.AreEqual(false, cfg.MonitoringEnabled);
+        Assert.IsFalse(cfg.MonitoringEnabled);
         Assert.AreEqual("I've set `MonitoringEnabled` to the following content: False", generalChannel.Messages.Last().Content);
 
         // post .config MonitoringChannel <#2>

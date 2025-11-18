@@ -70,7 +70,7 @@ public static class TestUtils
         if (expected.Count() != actual.Count())
             Assert.AreEqual(expected, actual, $"\nCount() mismatch: {expected.Count()} != {actual.Count()}");
         foreach (var value in expected)
-            Assert.IsTrue(actual.Contains(value), $"\nValue {value}" + message);
+            Assert.Contains(value, actual, $"\nValue {value}" + message);
     }
 
     // The built-in Assert.AreEqual and CollectionsAssert.AreEqual don't even work on Dictionaries, so everyone has to write their own

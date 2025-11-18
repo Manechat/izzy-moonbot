@@ -13,7 +13,7 @@ public class ParseHelperTests
     {
         string? err;
 
-        Assert.AreEqual(null, ParseHelper.TryParseUnambiguousUser("", out err));
+        Assert.IsNull(ParseHelper.TryParseUnambiguousUser("", out err));
         Assert.IsNotNull(err);
 
         Assert.AreEqual((1234ul, ""), ParseHelper.TryParseUnambiguousUser("1234", out err));
@@ -22,10 +22,10 @@ public class ParseHelperTests
         Assert.AreEqual((1234ul, ""), ParseHelper.TryParseUnambiguousUser("<@1234>", out err));
         Assert.IsNull(err);
 
-        Assert.AreEqual(null, ParseHelper.TryParseUnambiguousUser("<@>", out err));
+        Assert.IsNull(ParseHelper.TryParseUnambiguousUser("<@>", out err));
         Assert.IsNotNull(err);
 
-        Assert.AreEqual(null, ParseHelper.TryParseUnambiguousUser("foo <@1234> bar", out err));
+        Assert.IsNull(ParseHelper.TryParseUnambiguousUser("foo <@1234> bar", out err));
         Assert.IsNotNull(err);
 
         Assert.AreEqual((1234ul, "foo bar"), ParseHelper.TryParseUnambiguousUser("<@1234> foo bar", out err));
@@ -37,7 +37,7 @@ public class ParseHelperTests
     {
         string? err;
 
-        Assert.AreEqual(null, ParseHelper.TryParseUnambiguousRole("", out err));
+        Assert.IsNull(ParseHelper.TryParseUnambiguousRole("", out err));
         Assert.IsNotNull(err);
 
         Assert.AreEqual((1234ul, ""), ParseHelper.TryParseUnambiguousRole("1234", out err));
@@ -46,10 +46,10 @@ public class ParseHelperTests
         Assert.AreEqual((1234ul, ""), ParseHelper.TryParseUnambiguousRole("<@&1234>", out err));
         Assert.IsNull(err);
 
-        Assert.AreEqual(null, ParseHelper.TryParseUnambiguousRole("<@&>", out err));
+        Assert.IsNull(ParseHelper.TryParseUnambiguousRole("<@&>", out err));
         Assert.IsNotNull(err);
 
-        Assert.AreEqual(null, ParseHelper.TryParseUnambiguousRole("foo <@&1234> bar", out err));
+        Assert.IsNull(ParseHelper.TryParseUnambiguousRole("foo <@&1234> bar", out err));
         Assert.IsNotNull(err);
 
         Assert.AreEqual((1234ul, "foo bar"), ParseHelper.TryParseUnambiguousRole("<@&1234> foo bar", out err));
@@ -61,7 +61,7 @@ public class ParseHelperTests
     {
         string? err;
 
-        Assert.AreEqual(null, ParseHelper.TryParseUnambiguousChannel("", out err));
+        Assert.IsNull(ParseHelper.TryParseUnambiguousChannel("", out err));
         Assert.IsNotNull(err);
 
         Assert.AreEqual((1234ul, ""), ParseHelper.TryParseUnambiguousChannel("1234", out err));
@@ -70,10 +70,10 @@ public class ParseHelperTests
         Assert.AreEqual((1234ul, ""), ParseHelper.TryParseUnambiguousChannel("<#1234>", out err));
         Assert.IsNull(err);
 
-        Assert.AreEqual(null, ParseHelper.TryParseUnambiguousChannel("<#>", out err));
+        Assert.IsNull(ParseHelper.TryParseUnambiguousChannel("<#>", out err));
         Assert.IsNotNull(err);
 
-        Assert.AreEqual(null, ParseHelper.TryParseUnambiguousChannel("foo <#1234> bar", out err));
+        Assert.IsNull(ParseHelper.TryParseUnambiguousChannel("foo <#1234> bar", out err));
         Assert.IsNotNull(err);
 
         Assert.AreEqual((1234ul, "foo bar"), ParseHelper.TryParseUnambiguousChannel("<#1234> foo bar", out err));
@@ -96,7 +96,7 @@ public class ParseHelperTests
         Assert.AreEqual((2ul, null), await ParseHelper.TryParseUserResolvable("Sunny", guild));
 
         var failureResult = await ParseHelper.TryParseUserResolvable("other", guild);
-        Assert.AreEqual(null, failureResult.Item1);
+        Assert.IsNull(failureResult.Item1);
         StringAssert.Contains(failureResult.Item2, "0 users");
         StringAssert.Contains(failureResult.Item2, "other");
     }
@@ -112,7 +112,7 @@ public class ParseHelperTests
         Assert.AreEqual((1ul, ""), ParseHelper.TryParseRoleResolvable("1", guild, out err));
         Assert.IsNull(err);
 
-        Assert.AreEqual(null, ParseHelper.TryParseRoleResolvable("999", guild, out err));
+        Assert.IsNull(ParseHelper.TryParseRoleResolvable("999", guild, out err));
         Assert.IsNotNull(err);
         StringAssert.Contains(err, "role with id");
         StringAssert.Contains(err, "999");
@@ -120,7 +120,7 @@ public class ParseHelperTests
         Assert.AreEqual((1ul, ""), ParseHelper.TryParseRoleResolvable("<@&1>", guild, out err));
         Assert.IsNull(err);
 
-        Assert.AreEqual(null, ParseHelper.TryParseRoleResolvable("<@&999>", guild, out err));
+        Assert.IsNull(ParseHelper.TryParseRoleResolvable("<@&999>", guild, out err));
         Assert.IsNotNull(err);
         StringAssert.Contains(err, "role with id");
         StringAssert.Contains(err, "999");
@@ -128,7 +128,7 @@ public class ParseHelperTests
         Assert.AreEqual((1ul, ""), ParseHelper.TryParseRoleResolvable("Alicorn", guild, out err));
         Assert.IsNull(err);
 
-        Assert.AreEqual(null, ParseHelper.TryParseRoleResolvable("other", guild, out err));
+        Assert.IsNull(ParseHelper.TryParseRoleResolvable("other", guild, out err));
         Assert.IsNotNull(err);
         StringAssert.Contains(err, "role with name");
         StringAssert.Contains(err, "other");
@@ -145,7 +145,7 @@ public class ParseHelperTests
         Assert.AreEqual((generalChannel.Id, ""), ParseHelper.TryParseChannelResolvable($"{generalChannel.Id}", context, out err));
         Assert.IsNull(err);
 
-        Assert.AreEqual(null, ParseHelper.TryParseChannelResolvable("999", context, out err));
+        Assert.IsNull(ParseHelper.TryParseChannelResolvable("999", context, out err));
         Assert.IsNotNull(err);
         StringAssert.Contains(err, "channel with id");
         StringAssert.Contains(err, "999");
@@ -153,7 +153,7 @@ public class ParseHelperTests
         Assert.AreEqual((generalChannel.Id, ""), ParseHelper.TryParseChannelResolvable($"<#{generalChannel.Id}>", context, out err));
         Assert.IsNull(err);
 
-        Assert.AreEqual(null, ParseHelper.TryParseChannelResolvable("<#999>", context, out err));
+        Assert.IsNull(ParseHelper.TryParseChannelResolvable("<#999>", context, out err));
         Assert.IsNotNull(err);
         StringAssert.Contains(err, "channel with id");
         StringAssert.Contains(err, "999");
@@ -161,7 +161,7 @@ public class ParseHelperTests
         Assert.AreEqual((generalChannel.Id, ""), ParseHelper.TryParseChannelResolvable("general", context, out err));
         Assert.IsNull(err);
 
-        Assert.AreEqual(null, ParseHelper.TryParseChannelResolvable("other", context, out err));
+        Assert.IsNull(ParseHelper.TryParseChannelResolvable("other", context, out err));
         Assert.IsNotNull(err);
         StringAssert.Contains(err, "channel with name");
         StringAssert.Contains(err, "other");
@@ -200,44 +200,44 @@ public class ParseHelperTests
             ParseHelper.TryParseDateTime("in 10 minutes", out err),
             DateTimeHelper.UtcNow.AddMinutes(10), ScheduledJobRepeatType.None, ""
         );
-        Assert.AreEqual(null, err);
+        Assert.IsNull(err);
 
         AssertTryParseDateTime(
             ParseHelper.TryParseDateTime("in 1 hour", out err),
             DateTimeHelper.UtcNow.AddHours(1), ScheduledJobRepeatType.None, ""
         );
-        Assert.AreEqual(null, err);
+        Assert.IsNull(err);
 
         AssertTryParseDateTime(
             ParseHelper.TryParseDateTime("in 37 seconds", out err),
             DateTimeHelper.UtcNow.AddSeconds(37), ScheduledJobRepeatType.None, ""
         );
-        Assert.AreEqual(null, err);
+        Assert.IsNull(err);
 
         AssertTryParseDateTime(
             ParseHelper.TryParseDateTime("in 7 days", out err),
             DateTimeHelper.UtcNow.AddDays(7), ScheduledJobRepeatType.None, ""
         );
-        Assert.AreEqual(null, err);
+        Assert.IsNull(err);
 
         AssertTryParseDateTime(
             ParseHelper.TryParseDateTime("in 6 months", out err),
             DateTimeHelper.UtcNow.AddMonths(6), ScheduledJobRepeatType.None, ""
         );
-        Assert.AreEqual(null, err);
+        Assert.IsNull(err);
 
 
         AssertTryParseDateTime(
             ParseHelper.TryParseDateTime("in 1 hour here's some text", out err),
             DateTimeHelper.UtcNow.AddHours(1), ScheduledJobRepeatType.None, "here's some text"
         );
-        Assert.AreEqual(null, err);
+        Assert.IsNull(err);
 
         AssertTryParseDateTime(
             ParseHelper.TryParseDateTime("1 hour here's some text", out err),
             DateTimeHelper.UtcNow.AddHours(1), ScheduledJobRepeatType.None, "here's some text"
         );
-        Assert.AreEqual(null, err);
+        Assert.IsNull(err);
 
 
         Assert.IsNull(ParseHelper.TryParseDateTime("in one hour", out err));
@@ -282,19 +282,19 @@ public class ParseHelperTests
             ParseHelper.TryParseDateTime("in 123 seconds", out err),
             DateTimeHelper.UtcNow.AddSeconds(123), ScheduledJobRepeatType.None, ""
         );
-        Assert.AreEqual(null, err);
+        Assert.IsNull(err);
 
         AssertTryParseDateTime(
             ParseHelper.TryParseDateTime("in 1234 seconds", out err),
             DateTimeHelper.UtcNow.AddSeconds(1234), ScheduledJobRepeatType.None, ""
         );
-        Assert.AreEqual(null, err);
+        Assert.IsNull(err);
 
         AssertTryParseDateTime(
             ParseHelper.TryParseDateTime("in 12345 seconds", out err),
             DateTimeHelper.UtcNow.AddSeconds(12345), ScheduledJobRepeatType.None, ""
         );
-        Assert.AreEqual(null, err);
+        Assert.IsNull(err);
     }
 
     [TestMethod()]
@@ -307,19 +307,19 @@ public class ParseHelperTests
             ParseHelper.TryParseDateTime("<t:123456789>", out err),
             DateTimeOffset.FromUnixTimeSeconds(123456789), ScheduledJobRepeatType.None, ""
         );
-        Assert.AreEqual(null, err);
+        Assert.IsNull(err);
 
         AssertTryParseDateTime(
             ParseHelper.TryParseDateTime("<t:123456789:R>", out err),
             DateTimeOffset.FromUnixTimeSeconds(123456789), ScheduledJobRepeatType.None, ""
         );
-        Assert.AreEqual(null, err);
+        Assert.IsNull(err);
 
         AssertTryParseDateTime(
             ParseHelper.TryParseDateTime("<t:0:x>", out err),
             DateTimeOffset.FromUnixTimeSeconds(0), ScheduledJobRepeatType.None, ""
         );
-        Assert.AreEqual(null, err);
+        Assert.IsNull(err);
 
         Assert.IsNull(ParseHelper.TryParseDateTime("123456789", out err));
         Assert.IsNotNull(err);
@@ -337,13 +337,13 @@ public class ParseHelperTests
             ParseHelper.TryParseDateTime("at 03:15 UTC+0", out err),
             new DateTimeOffset(2010, 10, 10, 3, 15, 0, TimeSpan.Zero), ScheduledJobRepeatType.None, ""
         );
-        Assert.AreEqual(null, err);
+        Assert.IsNull(err);
 
         AssertTryParseDateTime(
             ParseHelper.TryParseDateTime("03:15 UTC+0", out err),
             new DateTimeOffset(2010, 10, 10, 3, 15, 0, TimeSpan.Zero), ScheduledJobRepeatType.None, ""
         );
-        Assert.AreEqual(null, err);
+        Assert.IsNull(err);
 
         Assert.IsNull(ParseHelper.TryParseDateTime("at 03:15", out err));
         Assert.IsNotNull(err);
@@ -367,13 +367,13 @@ public class ParseHelperTests
             ParseHelper.TryParseDateTime("on monday 03:15 UTC+0", out err),
             new DateTimeOffset(2010, 10, 11, 3, 15, 0, TimeSpan.Zero), ScheduledJobRepeatType.None, ""
         );
-        Assert.AreEqual(null, err);
+        Assert.IsNull(err);
 
         AssertTryParseDateTime(
             ParseHelper.TryParseDateTime("monday 03:15 UTC+0", out err),
             new DateTimeOffset(2010, 10, 11, 3, 15, 0, TimeSpan.Zero), ScheduledJobRepeatType.None, ""
         );
-        Assert.AreEqual(null, err);
+        Assert.IsNull(err);
 
         Assert.IsNull(ParseHelper.TryParseDateTime("on monday 03:15", out err));
         Assert.IsNotNull(err);
@@ -401,13 +401,13 @@ public class ParseHelperTests
             ParseHelper.TryParseDateTime("on sunday 00:00 UTC+0", out err),
             new DateTimeOffset(2010, 10, 17, 0, 0, 0, TimeSpan.Zero), ScheduledJobRepeatType.None, ""
         );
-        Assert.AreEqual(null, err);
+        Assert.IsNull(err);
 
         AssertTryParseDateTime(
             ParseHelper.TryParseDateTime("on sunday 00:01 UTC+0", out err),
             new DateTimeOffset(2010, 10, 10, 0, 1, 0, TimeSpan.Zero), ScheduledJobRepeatType.None, ""
         );
-        Assert.AreEqual(null, err);
+        Assert.IsNull(err);
     }
 
     [TestMethod()]
@@ -420,13 +420,13 @@ public class ParseHelperTests
             ParseHelper.TryParseDateTime("on 1 jan 2020 12:00 UTC+0", out err),
             new DateTimeOffset(2020, 1, 1, 12, 0, 0, 0, TimeSpan.Zero), ScheduledJobRepeatType.None, ""
         );
-        Assert.AreEqual(null, err);
+        Assert.IsNull(err);
 
         AssertTryParseDateTime(
             ParseHelper.TryParseDateTime("1 jan 2020 12:00 UTC+0", out err),
             new DateTimeOffset(2020, 1, 1, 12, 0, 0, 0, TimeSpan.Zero), ScheduledJobRepeatType.None, ""
         );
-        Assert.AreEqual(null, err);
+        Assert.IsNull(err);
 
         Assert.IsNull(ParseHelper.TryParseDateTime("on 1 jan 2020 12:00", out err));
         Assert.IsNotNull(err);
@@ -443,20 +443,20 @@ public class ParseHelperTests
             ParseHelper.TryParseDateTime("1st jan 2020 12:00 UTC+0", out err),
             new DateTimeOffset(2020, 1, 1, 12, 0, 0, 0, TimeSpan.Zero), ScheduledJobRepeatType.None, ""
         );
-        Assert.AreEqual(null, err);
+        Assert.IsNull(err);
 
         // regression test that two-digit days also work
         AssertTryParseDateTime(
             ParseHelper.TryParseDateTime("on 15 jan 2020 12:00 UTC+0", out err),
             new DateTimeOffset(2020, 1, 15, 12, 0, 0, 0, TimeSpan.Zero), ScheduledJobRepeatType.None, ""
         );
-        Assert.AreEqual(null, err);
+        Assert.IsNull(err);
 
         AssertTryParseDateTime(
             ParseHelper.TryParseDateTime("on 15th jan 2020 12:00 UTC+0", out err),
             new DateTimeOffset(2020, 1, 15, 12, 0, 0, 0, TimeSpan.Zero), ScheduledJobRepeatType.None, ""
         );
-        Assert.AreEqual(null, err);
+        Assert.IsNull(err);
     }
 
     [TestMethod()]
@@ -469,7 +469,7 @@ public class ParseHelperTests
             ParseHelper.TryParseDateTime("every 1 hour", out err),
             DateTimeHelper.UtcNow.AddHours(1), ScheduledJobRepeatType.Relative, ""
         );
-        Assert.AreEqual(null, err);
+        Assert.IsNull(err);
     }
 
     [TestMethod()]
@@ -482,13 +482,13 @@ public class ParseHelperTests
             ParseHelper.TryParseDateTime("every 12:30 UTC+0", out err),
             new DateTimeOffset(2010, 10, 10, 12, 30, 0, TimeSpan.Zero), ScheduledJobRepeatType.Daily, ""
         );
-        Assert.AreEqual(null, err);
+        Assert.IsNull(err);
 
         AssertTryParseDateTime(
             ParseHelper.TryParseDateTime("every day 12:30 UTC+0", out err),
             new DateTimeOffset(2010, 10, 10, 12, 30, 0, TimeSpan.Zero), ScheduledJobRepeatType.Daily, ""
         );
-        Assert.AreEqual(null, err);
+        Assert.IsNull(err);
     }
 
     [TestMethod()]
@@ -502,13 +502,13 @@ public class ParseHelperTests
             ParseHelper.TryParseDateTime("every monday 12:30 UTC+0", out err),
             new DateTimeOffset(2010, 10, 11, 12, 30, 0, TimeSpan.Zero), ScheduledJobRepeatType.Weekly, ""
         );
-        Assert.AreEqual(null, err);
+        Assert.IsNull(err);
 
         AssertTryParseDateTime(
             ParseHelper.TryParseDateTime("every week monday 12:30 UTC+0", out err),
             new DateTimeOffset(2010, 10, 11, 12, 30, 0, TimeSpan.Zero), ScheduledJobRepeatType.Weekly, ""
         );
-        Assert.AreEqual(null, err);
+        Assert.IsNull(err);
     }
 
     [TestMethod()]
@@ -521,13 +521,13 @@ public class ParseHelperTests
             ParseHelper.TryParseDateTime("every 1 jan 12:00 UTC+0", out err),
             new DateTimeOffset(2011, 1, 1, 12, 0, 0, TimeSpan.Zero), ScheduledJobRepeatType.Yearly, ""
         );
-        Assert.AreEqual(null, err);
+        Assert.IsNull(err);
 
         AssertTryParseDateTime(
             ParseHelper.TryParseDateTime("every year 1 jan 12:00 UTC+0", out err),
             new DateTimeOffset(2011, 1, 1, 12, 0, 0, TimeSpan.Zero), ScheduledJobRepeatType.Yearly, ""
         );
-        Assert.AreEqual(null, err);
+        Assert.IsNull(err);
 
         Assert.IsNull(ParseHelper.TryParseDateTime("every 1 jan 2020 12:00", out err));
         Assert.IsNotNull(err);
@@ -550,30 +550,30 @@ public class ParseHelperTests
         Assert.IsNotNull(response);
         Assert.AreEqual(DateTimeHelper.UtcNow.AddMinutes(-10), response?.Item1);
         Assert.AreEqual("", response?.Item2);
-        Assert.AreEqual(null, err);
+        Assert.IsNull(err);
 
         response = ParseHelper.TryParseInterval("1 hour", out err, inThePast: true);
         Assert.IsNotNull(response);
         Assert.AreEqual(DateTimeHelper.UtcNow.AddHours(-1), response?.Item1);
         Assert.AreEqual("", response?.Item2);
-        Assert.AreEqual(null, err);
+        Assert.IsNull(err);
 
         response = ParseHelper.TryParseInterval("37 seconds", out err, inThePast: true);
         Assert.IsNotNull(response);
         Assert.AreEqual(DateTimeHelper.UtcNow.AddSeconds(-37), response?.Item1);
         Assert.AreEqual("", response?.Item2);
-        Assert.AreEqual(null, err);
+        Assert.IsNull(err);
 
         response = ParseHelper.TryParseInterval("7 days", out err, inThePast: true);
         Assert.IsNotNull(response);
         Assert.AreEqual(DateTimeHelper.UtcNow.AddDays(-7), response?.Item1);
         Assert.AreEqual("", response?.Item2);
-        Assert.AreEqual(null, err);
+        Assert.IsNull(err);
 
         response = ParseHelper.TryParseInterval("6 months", out err, inThePast: true);
         Assert.IsNotNull(response);
         Assert.AreEqual(DateTimeHelper.UtcNow.AddMonths(-6), response?.Item1);
         Assert.AreEqual("", response?.Item2);
-        Assert.AreEqual(null, err);
+        Assert.IsNull(err);
     }
 }

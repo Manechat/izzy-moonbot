@@ -92,7 +92,7 @@ public class MiscModuleTests
         await mm.TestableRemindMeCommandAsync(context, "");
         Assert.AreEqual("Hey uhh... I think you forgot something... (Missing `time` and `message` parameters, see `.help remindme`)", generalChannel.Messages.Last().Content);
         Assert.IsFalse(client.DirectMessages.ContainsKey(sunny.Id));
-        Assert.AreEqual(0, ss.GetScheduledJobs().Count);
+        Assert.IsEmpty(ss.GetScheduledJobs());
 
         await ss.Unicycle(client);
 
@@ -100,7 +100,7 @@ public class MiscModuleTests
         await mm.TestableRemindMeCommandAsync(context, "1 minute test");
         Assert.AreEqual("Okay! I'll DM you a reminder <t:1286668860:R>.", generalChannel.Messages.Last().Content);
         Assert.IsFalse(client.DirectMessages.ContainsKey(sunny.Id));
-        Assert.AreEqual(1, ss.GetScheduledJobs().Count);
+        Assert.HasCount(1, ss.GetScheduledJobs());
 
         await ss.Unicycle(client);
 
@@ -108,9 +108,9 @@ public class MiscModuleTests
 
         await ss.Unicycle(client);
 
-        Assert.AreEqual(1, client.DirectMessages[sunny.Id].Count);
+        Assert.HasCount(1, client.DirectMessages[sunny.Id]);
         Assert.AreEqual("test", client.DirectMessages[sunny.Id].Last().Content);
-        Assert.AreEqual(0, ss.GetScheduledJobs().Count);
+        Assert.IsEmpty(ss.GetScheduledJobs());
     }
 
     [TestMethod()]
@@ -128,15 +128,15 @@ public class MiscModuleTests
         await mm.TestableRemindMeCommandAsync(context, "1     minute test");
         Assert.AreEqual("Okay! I'll DM you a reminder <t:1286668860:R>.", generalChannel.Messages.Last().Content);
         Assert.IsFalse(client.DirectMessages.ContainsKey(sunny.Id));
-        Assert.AreEqual(1, ss.GetScheduledJobs().Count);
+        Assert.HasCount(1, ss.GetScheduledJobs());
 
         DateTimeHelper.FakeUtcNow = DateTimeHelper.FakeUtcNow?.AddMinutes(1);
         await ss.Unicycle(client);
 
         // regression test: the DM would end up saying "ute test" because the extra spaces confused argument parsing
-        Assert.AreEqual(1, client.DirectMessages[sunny.Id].Count);
+        Assert.HasCount(1, client.DirectMessages[sunny.Id]);
         Assert.AreEqual("test", client.DirectMessages[sunny.Id].Last().Content);
-        Assert.AreEqual(0, ss.GetScheduledJobs().Count);
+        Assert.IsEmpty(ss.GetScheduledJobs());
     }
 
     [TestMethod()]
@@ -252,7 +252,7 @@ public class MiscModuleTests
         await mm.TestableHelpCommandAsync(context, "addquote");
 
         var baseAddQuoteDescription = generalChannel.Messages.Last().Content;
-        Assert.IsFalse(baseAddQuoteDescription.Contains("Relevant aliases:"));
+        Assert.DoesNotContain("Relevant aliases:", baseAddQuoteDescription);
 
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".help moonlaser");
         await mm.TestableHelpCommandAsync(context, "moonlaser");
@@ -285,7 +285,7 @@ public class MiscModuleTests
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".help ass");
         await mm.TestableHelpCommandAsync(context, "ass");
 
-        Assert.IsFalse(generalChannel.Messages.Last().Content.Contains("Relevant aliases:"));
+        Assert.DoesNotContain("Relevant aliases:", generalChannel.Messages.Last().Content);
     }
 
     [TestMethod()]

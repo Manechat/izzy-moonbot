@@ -33,12 +33,12 @@ public class ScheduleServiceTests
 
         var ss = SetupScheduleService(cfg, users);
 
-        Assert.AreEqual(0, generalChannel.Messages.Count);
+        Assert.IsEmpty(generalChannel.Messages);
 
         DateTimeHelper.FakeUtcNow = TestUtils.FiMEpoch;
 
         await ss.Unicycle(client);
-        Assert.AreEqual(0, generalChannel.Messages.Count);
+        Assert.IsEmpty(generalChannel.Messages);
 
         var action = new ScheduledEchoJob(generalChannel.Id, "test echo");
         await ss.CreateScheduledJob(new ScheduledJob(DateTimeHelper.UtcNow, DateTimeHelper.UtcNow.AddMinutes(2), action));
@@ -46,12 +46,12 @@ public class ScheduleServiceTests
         DateTimeHelper.FakeUtcNow = DateTimeHelper.FakeUtcNow?.AddMinutes(1);
 
         await ss.Unicycle(client);
-        Assert.AreEqual(0, generalChannel.Messages.Count);
+        Assert.IsEmpty(generalChannel.Messages);
 
         DateTimeHelper.FakeUtcNow = DateTimeHelper.FakeUtcNow?.AddMinutes(1);
 
         await ss.Unicycle(client);
-        Assert.AreEqual(1, generalChannel.Messages.Count);
+        Assert.HasCount(1, generalChannel.Messages);
         Assert.AreEqual("test echo", generalChannel.Messages.Last().Content);
     }
 
@@ -150,22 +150,22 @@ public class ScheduleServiceTests
 
         DateTimeHelper.FakeUtcNow = new DateTimeOffset(2010, 10, 10, 0, 0, 0, TimeSpan.Zero);
         await ss.Unicycle(client);
-        Assert.AreEqual(0, generalChannel.Messages.Count);
+        Assert.IsEmpty(generalChannel.Messages);
 
         var action = new ScheduledEchoJob(generalChannel.Id, "test echo");
         await ss.CreateScheduledJob(new ScheduledJob(DateTimeHelper.UtcNow, DateTimeHelper.UtcNow, action, ScheduledJobRepeatType.Daily));
 
         await ss.Unicycle(client);
-        Assert.AreEqual(1, generalChannel.Messages.Count);
+        Assert.HasCount(1, generalChannel.Messages);
         Assert.AreEqual("test echo", generalChannel.Messages.Last().Content);
 
         DateTimeHelper.FakeUtcNow = new DateTimeOffset(2010, 10, 10, 23, 59, 59, TimeSpan.Zero);
         await ss.Unicycle(client);
-        Assert.AreEqual(1, generalChannel.Messages.Count);
+        Assert.HasCount(1, generalChannel.Messages);
 
         DateTimeHelper.FakeUtcNow = new DateTimeOffset(2010, 10, 11, 0, 0, 0, TimeSpan.Zero);
         await ss.Unicycle(client);
-        Assert.AreEqual(2, generalChannel.Messages.Count);
+        Assert.HasCount(2, generalChannel.Messages);
         Assert.AreEqual("test echo", generalChannel.Messages.Last().Content);
     }
 
@@ -179,22 +179,22 @@ public class ScheduleServiceTests
 
         DateTimeHelper.FakeUtcNow = new DateTimeOffset(2010, 10, 10, 0, 0, 0, TimeSpan.Zero);
         await ss.Unicycle(client);
-        Assert.AreEqual(0, generalChannel.Messages.Count);
+        Assert.IsEmpty(generalChannel.Messages);
 
         var action = new ScheduledEchoJob(generalChannel.Id, "test echo");
         await ss.CreateScheduledJob(new ScheduledJob(DateTimeHelper.UtcNow, DateTimeHelper.UtcNow, action, ScheduledJobRepeatType.Weekly));
 
         await ss.Unicycle(client);
-        Assert.AreEqual(1, generalChannel.Messages.Count);
+        Assert.HasCount(1, generalChannel.Messages);
         Assert.AreEqual("test echo", generalChannel.Messages.Last().Content);
 
         DateTimeHelper.FakeUtcNow = new DateTimeOffset(2010, 10, 16, 23, 59, 59, TimeSpan.Zero);
         await ss.Unicycle(client);
-        Assert.AreEqual(1, generalChannel.Messages.Count);
+        Assert.HasCount(1, generalChannel.Messages);
 
         DateTimeHelper.FakeUtcNow = new DateTimeOffset(2010, 10, 17, 0, 0, 0, TimeSpan.Zero);
         await ss.Unicycle(client);
-        Assert.AreEqual(2, generalChannel.Messages.Count);
+        Assert.HasCount(2, generalChannel.Messages);
         Assert.AreEqual("test echo", generalChannel.Messages.Last().Content);
     }
 
@@ -209,13 +209,13 @@ public class ScheduleServiceTests
         // start the yearly echo on Oct 10th 2011
         DateTimeHelper.FakeUtcNow = new DateTimeOffset(2011, 10, 10, 0, 0, 0, TimeSpan.Zero);
         await ss.Unicycle(client);
-        Assert.AreEqual(0, generalChannel.Messages.Count);
+        Assert.IsEmpty(generalChannel.Messages);
 
         var action = new ScheduledEchoJob(generalChannel.Id, "test echo");
         await ss.CreateScheduledJob(new ScheduledJob(DateTimeHelper.UtcNow, DateTimeHelper.UtcNow, action, ScheduledJobRepeatType.Yearly));
 
         await ss.Unicycle(client);
-        Assert.AreEqual(1, generalChannel.Messages.Count);
+        Assert.HasCount(1, generalChannel.Messages);
         Assert.AreEqual("test echo", generalChannel.Messages.Last().Content);
 
 
@@ -224,24 +224,24 @@ public class ScheduleServiceTests
         await ss.Unicycle(client);
         // 2012 was a leap year, so if yearly repeats were naively mis-implemented as
         // 365 days/8760 hours/etc, the second echo would happen here prematurely
-        Assert.AreEqual(1, generalChannel.Messages.Count);
+        Assert.HasCount(1, generalChannel.Messages);
 
         // second echo happens on Oct 10th 2012
         DateTimeHelper.FakeUtcNow = new DateTimeOffset(2012, 10, 10, 0, 0, 0, TimeSpan.Zero);
         await ss.Unicycle(client);
-        Assert.AreEqual(2, generalChannel.Messages.Count);
+        Assert.HasCount(2, generalChannel.Messages);
         Assert.AreEqual("test echo", generalChannel.Messages.Last().Content);
 
 
         // nothing happens on Oct 9th 2013
         DateTimeHelper.FakeUtcNow = new DateTimeOffset(2013, 10, 9, 0, 0, 0, TimeSpan.Zero);
         await ss.Unicycle(client);
-        Assert.AreEqual(2, generalChannel.Messages.Count);
+        Assert.HasCount(2, generalChannel.Messages);
 
         // third echo happens on Oct 10th 2013
         DateTimeHelper.FakeUtcNow = new DateTimeOffset(2013, 10, 10, 0, 0, 0, TimeSpan.Zero);
         await ss.Unicycle(client);
-        Assert.AreEqual(3, generalChannel.Messages.Count);
+        Assert.HasCount(3, generalChannel.Messages);
         Assert.AreEqual("test echo", generalChannel.Messages.Last().Content);
     }
 }
