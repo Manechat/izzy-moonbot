@@ -3,6 +3,16 @@ name: Docker Image Build
 on:
   push:
     branches: [ "mane" ]
+        # Don't run image build on things non-code related. Copied from dotnet-nobuild. Add additional ignores below.
+    paths-ignore:
+      - '**/*.md'
+#      - '**/Dockerfile'
+#      - '**/Docker Compose/**'
+      - '**/.gitignore'
+      - '**/.dockerignore'
+      - '**/.gitattributes'
+      - '**/.github/**'
+      - '**/.editorconfig'
   workflow_dispatch:
 
 jobs:
