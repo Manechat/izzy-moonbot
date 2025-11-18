@@ -4,8 +4,8 @@
 name: .NET Tests
 
 on:
-  #push:
-  #  branches: [ "mane" ]
+  push:
+    branches: [ "mane" ]
   pull_request:
     branches: [ "mane" ]
     # Don't run checks on things non-code related. Add additional ignores below.
@@ -31,6 +31,6 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore
     - name: Build
-      run: dotnet build -c Release --no-restore
+      run: dotnet build -c Debug --no-restore
     - name: Test
-      run: dotnet test -c Release --no-build --verbosity normal
+      run: dotnet test -c Debug --no-build --verbosity normal
