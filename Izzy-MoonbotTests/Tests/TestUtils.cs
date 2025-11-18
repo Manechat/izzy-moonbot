@@ -106,7 +106,7 @@ public static class TestUtils
     public static void AssertEmbedFieldsAre(IList<EmbedField> actual, IList<(string, string)> expected)
     {
         if (expected.Count() != actual.Count())
-            Assert.IsTrue(false, $"\nCount() mismatch: {expected.Count()} != {actual.Count()}");
+            Assert.Fail($"\nCount() mismatch: {expected.Count()} != {actual.Count()}");
 
         foreach (var ((name, value), embedField) in expected.Zip(actual, Tuple.Create))
         {
