@@ -88,6 +88,14 @@ public static class DiscordHelper
         return settings.DevUsers.Any(userId => userId == user);
     }
 
+    public static string RedactAllKnownSecrets(string text)
+    {
+        text = BooruHelper.RedactBooruSecrets(text);
+
+        var secret = GetDiscordSettings().Token;
+        return text.Replace(secret, "<REDACTED SECRET>");
+    }
+
     public static DiscordSettings GetDiscordSettings()
     {
         var config = new ConfigurationBuilder()

@@ -41,7 +41,13 @@ public static class BooruHelper
 
         return image;
     }
-    
+
+    public static string RedactBooruSecrets(string text)
+    {
+        var secret = _getBooruSettings().Token;
+        return text.Replace(secret, "<REDACTED SECRET>");
+    }
+
     private static BooruSettings _getBooruSettings()
     {
         var config = new ConfigurationBuilder()

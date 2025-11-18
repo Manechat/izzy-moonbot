@@ -65,7 +65,7 @@ public class ModLogBuilder
 
     public ModLogBuilder SetContent(string content)
     {
-        _log.Content = content;
+        _log.Content = DiscordHelper.RedactAllKnownSecrets(content);
         return this;
     }
 

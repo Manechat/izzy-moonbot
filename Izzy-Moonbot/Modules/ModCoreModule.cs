@@ -663,10 +663,10 @@ public class ModCoreModule : ModuleBase<SocketCommandContext>
             _logger.Log($"Assembling a bulk deletion log from the content of {messagesToDeleteCount} deleted messages");
             bulkDeletionLog.Sort((x, y) => x.Item1.CompareTo(y.Item1));
 
-            var bulkDeletionLogString = string.Join(
+            var bulkDeletionLogString = DiscordHelper.RedactAllKnownSecrets(string.Join(
                 "\n\n",
                 bulkDeletionLog.Select(logElement => logElement.Item3)
-            );
+            ));
 
             var involvedUserDescriptions = string.Join(", ", bulkDeletionLog.Select(logElement => logElement.Item2).ToHashSet());
 

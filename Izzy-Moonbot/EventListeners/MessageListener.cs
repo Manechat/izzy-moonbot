@@ -161,7 +161,7 @@ public class MessageListener
         }
 
         var logMessage = logMessageTemplate.Replace("{warn}", truncationWarning).Replace("{old}", oldContent).Replace("{new}", newContent);
-        await logChannel.SendMessageAsync(logMessage, allowedMentions: AllowedMentions.None);
+        await logChannel.SendMessageAsync(DiscordHelper.RedactAllKnownSecrets(logMessage), allowedMentions: AllowedMentions.None);
     }
 
     private async Task ProcessMessageDelete(
@@ -227,7 +227,7 @@ public class MessageListener
         }
 
         var logMessage = logMessageTemplate.Replace("{warn}", truncationWarning).Replace("{content}", content).Replace("{attachments}", attachmentUrls);
-        await logChannel.SendMessageAsync(logMessage, allowedMentions: AllowedMentions.None);
+        await logChannel.SendMessageAsync(DiscordHelper.RedactAllKnownSecrets(logMessage), allowedMentions: AllowedMentions.None);
     }
 
     private IIzzySocketTextChannel? GetLogChannel(IIzzyClient client)

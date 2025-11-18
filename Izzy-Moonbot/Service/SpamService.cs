@@ -340,7 +340,7 @@ public class SpamService
                 {
                     _logger.Log($"Assembling a bulk deletion log from the content of {bulkDeletionLog.Count} deleted messages");
                     bulkDeletionLog.Sort((x, y) => x.Item1.CompareTo(y.Item1));
-                    var bulkDeletionLogString = string.Join("\n\n", bulkDeletionLog.Select(logElement => logElement.Item2));
+                    var bulkDeletionLogString = DiscordHelper.RedactAllKnownSecrets(string.Join("\n\n", bulkDeletionLog.Select(logElement => logElement.Item2)));
                     var s = new MemoryStream(Encoding.UTF8.GetBytes(bulkDeletionLogString));
                     var fa = new FileAttachment(s, $"{context.User.Username}_{context.User.Id}_spam_bulk_deletion_log_{DateTimeHelper.UtcNow.ToString()}.txt");
 
