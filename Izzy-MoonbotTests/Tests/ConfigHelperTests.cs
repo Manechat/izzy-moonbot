@@ -19,7 +19,7 @@ public class ConfigHelperTests
         Assert.IsTrue(ConfigHelper.GetValue(cfg, "FilterIgnoredChannels") is HashSet<ulong>);
         Assert.IsTrue(ConfigHelper.GetValue(cfg, "Aliases") is Dictionary<string, string>);
 
-        Assert.ThrowsException<KeyNotFoundException>(() => ConfigHelper.GetValue(cfg, "foo"));
+        Assert.Throws<KeyNotFoundException>(() => ConfigHelper.GetValue(cfg, "foo"));
     }
 
     [TestMethod()]
@@ -69,23 +69,23 @@ public class ConfigHelperTests
     {
         var cfg = new Config();
 
-        Assert.ThrowsExceptionAsync<KeyNotFoundException>(() => ConfigHelper.SetSimpleValue(cfg, "foo", "bar"));
-        Assert.ThrowsExceptionAsync<ArgumentException>(() => ConfigHelper.SetSimpleValue(cfg, "Aliases", "bar"));
+        Assert.ThrowsAsync<KeyNotFoundException>(() => ConfigHelper.SetSimpleValue(cfg, "foo", "bar"));
+        Assert.ThrowsAsync<ArgumentException>(() => ConfigHelper.SetSimpleValue(cfg, "Aliases", "bar"));
 
-        Assert.ThrowsExceptionAsync<KeyNotFoundException>(() => ConfigHelper.SetSimpleValue(cfg, "foo", 'b'));
-        Assert.ThrowsExceptionAsync<ArgumentException>(() => ConfigHelper.SetSimpleValue(cfg, "Aliases", 'b'));
+        Assert.ThrowsAsync<KeyNotFoundException>(() => ConfigHelper.SetSimpleValue(cfg, "foo", 'b'));
+        Assert.ThrowsAsync<ArgumentException>(() => ConfigHelper.SetSimpleValue(cfg, "Aliases", 'b'));
 
-        Assert.ThrowsExceptionAsync<KeyNotFoundException>(() => ConfigHelper.SetBooleanValue(cfg, "foo", "bar"));
-        Assert.ThrowsExceptionAsync<ArgumentException>(() => ConfigHelper.SetBooleanValue(cfg, "Aliases", "bar"));
+        Assert.ThrowsAsync<KeyNotFoundException>(() => ConfigHelper.SetBooleanValue(cfg, "foo", "bar"));
+        Assert.ThrowsAsync<ArgumentException>(() => ConfigHelper.SetBooleanValue(cfg, "Aliases", "bar"));
 
-        Assert.ThrowsExceptionAsync<KeyNotFoundException>(() => ConfigHelper.SetSimpleValue(cfg, "foo", 42));
-        Assert.ThrowsExceptionAsync<ArgumentException>(() => ConfigHelper.SetSimpleValue(cfg, "Aliases", 42));
+        Assert.ThrowsAsync<KeyNotFoundException>(() => ConfigHelper.SetSimpleValue(cfg, "foo", 42));
+        Assert.ThrowsAsync<ArgumentException>(() => ConfigHelper.SetSimpleValue(cfg, "Aliases", 42));
 
-        Assert.ThrowsExceptionAsync<KeyNotFoundException>(() => ConfigHelper.SetSimpleValue(cfg, "foo", 1.0));
-        Assert.ThrowsExceptionAsync<ArgumentException>(() => ConfigHelper.SetSimpleValue(cfg, "Aliases", 1.0));
+        Assert.ThrowsAsync<KeyNotFoundException>(() => ConfigHelper.SetSimpleValue(cfg, "foo", 1.0));
+        Assert.ThrowsAsync<ArgumentException>(() => ConfigHelper.SetSimpleValue(cfg, "Aliases", 1.0));
 
-        Assert.ThrowsExceptionAsync<KeyNotFoundException>(() => ConfigHelper.SetSimpleValue(cfg, "foo", ConfigListener.BannerMode.ManebooruFeatured));
-        Assert.ThrowsExceptionAsync<ArgumentException>(() => ConfigHelper.SetSimpleValue(cfg, "Aliases", ConfigListener.BannerMode.ManebooruFeatured));
+        Assert.ThrowsAsync<KeyNotFoundException>(() => ConfigHelper.SetSimpleValue(cfg, "foo", ConfigListener.BannerMode.ManebooruFeatured));
+        Assert.ThrowsAsync<ArgumentException>(() => ConfigHelper.SetSimpleValue(cfg, "Aliases", ConfigListener.BannerMode.ManebooruFeatured));
     }
 
     // The built-in Assert.AreEqual and CollectionsAssert.AreEqual have error messages so bad it was worth writing my own asserts
@@ -123,8 +123,8 @@ public class ConfigHelperTests
         TestUtils.AssertSetsAreEqual(new HashSet<string>(), ConfigHelper.GetStringSet(cfg, "BannerImages"));
         Assert.IsFalse(ConfigHelper.HasValueInSet(cfg, "BannerImages", "manebooru.art/images/1"));
 
-        Assert.ThrowsException<KeyNotFoundException>(() => ConfigHelper.GetStringSet(cfg, "foo"));
-        Assert.ThrowsException<ArgumentException>(() => ConfigHelper.GetStringSet(cfg, "Prefix"));
+        Assert.Throws<KeyNotFoundException>(() => ConfigHelper.GetStringSet(cfg, "foo"));
+        Assert.Throws<ArgumentException>(() => ConfigHelper.GetStringSet(cfg, "Prefix"));
     }
 
     [TestMethod()]
@@ -158,7 +158,7 @@ public class ConfigHelperTests
         TestUtils.AssertDictionariesAreEqual(new Dictionary<string, string>(), ConfigHelper.GetDictionary<string>(cfg, "Aliases"));
         Assert.IsFalse(ConfigHelper.DoesDictionaryKeyExist<string>(cfg, "Aliases", "testalias"));
 
-        Assert.ThrowsException<KeyNotFoundException>(() => ConfigHelper.GetDictionary<string>(cfg, "foo"));
-        Assert.ThrowsException<ArgumentException>(() => ConfigHelper.GetDictionary<string>(cfg, "Prefix"));
+        Assert.Throws<KeyNotFoundException>(() => ConfigHelper.GetDictionary<string>(cfg, "foo"));
+        Assert.Throws<ArgumentException>(() => ConfigHelper.GetDictionary<string>(cfg, "Prefix"));
     }
 }
