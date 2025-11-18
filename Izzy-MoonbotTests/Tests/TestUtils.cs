@@ -2,6 +2,7 @@
 using Discord;
 using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Describers;
+using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Settings;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -24,7 +25,7 @@ public static class TestUtils
         var users = new List<StubGuildUser> { izzyHerself, sunny, zipp, pipp, hitch };
 
         var alicorn = new TestRole("Alicorn", 1);
-        List<TestRole> roles = [ alicorn, new TestRole("Pegasus", 2) ];
+        List<TestRole> roles = [ alicorn, new TestRole("Pegasus", 2), new TestRole("Tartarus", DiscordHelper.TartarusRoleId)];
 
         // because user ids are also Direct Message channel ids, regular channels must have different ids
         var generalChannel = new StubChannel(1001, "general");
