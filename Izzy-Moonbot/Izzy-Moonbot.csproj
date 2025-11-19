@@ -38,7 +38,7 @@
         <!-- This is the official Microsoft recommendation for a breaking change in .NET 10, see:
         https://learn.microsoft.com/en-us/dotnet/core/compatibility/core-libraries/10.0/asyncenumerable -->
         <PackageReference Include="System.Linq.Async" Version="6.0.1">
-            <ExcludeAssets>all</ExcludeAssets>
+            <ExcludeAssets>compile</ExcludeAssets>
         </PackageReference>
     </ItemGroup>
 </Project>
