@@ -277,11 +277,23 @@ public class ScheduleService
             modMessage = TimeTravelWarning(executeAt) + "\n\n" + modMessage;
 
         await _mod.AddRole(user, role.Id, reason);
-        await _modLogging.CreateModLog(guild)
-            .SetContent(modMessage)
-            .SetFileLogContent(
-                $"Gave {role.Name} ({role.Id}) to {user.DisplayName} ({user.Username}/{user.Id}). {(reason != null ? $"Reason: {reason}." : "")}")
-            .Send();
+
+        // Since every new join gets an automated MemberRole addition, those messages belong in the JoinChannel with the join messages
+        if (role.Id == _config.MemberRole)
+        {
+            var joinChannelId = _config.JoinChannel;
+            var joinChannel = guild?.GetTextChannel(joinChannelId);
+            if (joinChannel == null) return;
+            await joinChannel.SendMessageAsync(modMessage, allowedMentions: AllowedMentions.None);
+        }
+        else // all other role additions will be uncommon enough to post up in modchat
+        {
+            await _modLogging.CreateModLog(guild)
+                .SetContent(modMessage)
+                .SetFileLogContent(
+                    $"Gave {role.Name} ({role.Id}) to {user.DisplayName} ({user.Username}/{user.Id}). {(reason != null ? $"Reason: {reason}." : "")}")
+                .Send();
+        }
     }
     
     private async Task Unicycle_RemoveRole(ScheduledRoleRemovalJob job, IIzzyGuild guild, DateTimeOffset executeAt)

@@ -475,6 +475,13 @@ public class ConfigCommandTests
         Assert.AreEqual(2ul, cfg.ModChannel);
         Assert.AreEqual("I've set `ModChannel` to the following content: <#2>", generalChannel.Messages.Last().Content);
 
+        // post ".config JoinChannel <#3>"
+        Assert.AreEqual(0ul, cfg.JoinChannel);
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config JoinChannel <#3>");
+        await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "JoinChannel", "<#3>");
+        Assert.AreEqual(3ul, cfg.JoinChannel);
+        Assert.AreEqual("I've set `JoinChannel` to the following content: <#3>", generalChannel.Messages.Last().Content);
+
         // post ".config LogChannel <#3>"
         Assert.AreEqual(0ul, cfg.LogChannel);
         context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config LogChannel <#3>");
@@ -800,7 +807,7 @@ public class ConfigCommandTests
         // Ensure we can't forget to keep this test up to date
         var configPropsCount = typeof(Config).GetProperties().Length;
 
-        Assert.AreEqual(59, configPropsCount,
+        Assert.AreEqual(60, configPropsCount,
             $"\nIf you just added or removed a config item, then this test is probably out of date");
 
         Assert.AreEqual(configPropsCount * 2, generalChannel.Messages.Count(),

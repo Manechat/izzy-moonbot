@@ -256,6 +256,7 @@ public class FileHelperTests
               ],
               "ModRole": 964283794083446804,
               "ModChannel": 973218854237007963,
+              "JoinChannel": 0,
               "LogChannel": 964283764240973844,
               "ManageNewUserRoles": true,
               "MemberRole": 965978050229571634,

@@ -1,14 +1,15 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Discord;
 using Discord.Rest;
 using Discord.WebSocket;
+using Izzy_Moonbot.Adapters;
 using Izzy_Moonbot.Helpers;
 using Izzy_Moonbot.Service;
 using Izzy_Moonbot.Settings;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Izzy_Moonbot.EventListeners;
 
@@ -37,8 +38,8 @@ public class UserListener
     public void RegisterEvents(DiscordSocketClient client)
     {
         client.UserUnbanned += (user, guild) => Task.Run(async () => { await MemberUnbanEvent(user, guild); });
-        client.UserJoined += (member) => Task.Run(async () => { await MemberJoinEvent(member); });
-        client.UserLeft += (guild, user) => Task.Run(async () => { await MemberLeaveEvent(guild, user); });
+        client.UserJoined += (member) => Task.Run(async () => { await MemberJoinEvent(member, client); });
+        client.UserLeft += (guild, user) => Task.Run(async () => { await MemberLeaveEvent(guild, user, client); });
         client.GuildMemberUpdated += (oldMember, newMember) => Task.Run(async () => { await MemberUpdateEvent(oldMember, newMember); });
     }
 
@@ -58,9 +59,12 @@ public class UserListener
             await _schedule.DeleteScheduledJob(scheduledJob);
     }
 
-    public async Task MemberJoinEvent(SocketGuildUser member)
+    public async Task MemberJoinEvent(SocketGuildUser member, DiscordSocketClient client)
     {
         if (member.Guild.Id != DiscordHelper.DefaultGuild()) return;
+
+        var joinChannel = GetJoinChannel(client);
+        if (joinChannel == null) return;
 
         bool userInfoChanged = false;
         bool configChanged = false;
@@ -103,16 +107,16 @@ public class UserListener
 
         var msg = $"Join: <@{member.Id}> (`{member.Id}`), created <t:{member.CreatedAt.ToUnixTimeSeconds()}:R>{autoSilence}{joinedBefore}{rolesReappliedString}";
         _logger.Log($"Generated moderation log for user join: {msg}");
-        await _modLogger.CreateModLog(member.Guild)
-            .SetContent(msg)
-            .SetFileLogContent(msg)
-            .Send();
+        await joinChannel.SendMessageAsync(msg, allowedMentions: AllowedMentions.None);
     }
     
-    private async Task MemberLeaveEvent(SocketGuild guild, SocketUser user)
+    private async Task MemberLeaveEvent(SocketGuild guild, SocketUser user, DiscordSocketClient client)
     {
         if (guild.Id != DiscordHelper.DefaultGuild()) return;
-        
+
+        var joinChannel = GetJoinChannel(client);
+        if (joinChannel == null) return;
+
         _logger.Log($"Member leaving: {DiscordHelper.DisplayName(user, guild)} ({user.Username}/{user.Id})");
         var lastNickname = "";
         try
@@ -215,7 +219,7 @@ public class UserListener
         }
 
         _logger.Log($"Sending moderation log: ${output}");
-        await _modLogger.CreateModLog(guild).SetContent(output).SetFileLogContent(output).Send();
+        await joinChannel.SendMessageAsync(output, allowedMentions: AllowedMentions.None);
     }
 
     private async Task MemberUpdateEvent(Cacheable<SocketGuildUser,ulong> oldUser, SocketGuildUser newUser)
@@ -333,5 +337,25 @@ public class UserListener
                 $" They joined <t:{newUser.JoinedAt?.ToUnixTimeSeconds()}:R>";
             await _modLogger.CreateModLog(newUser.Guild).SetContent(msg).SetFileLogContent(msg).Send();
         }
+    }
+
+    private SocketTextChannel? GetJoinChannel(DiscordSocketClient client)
+    {
+        var defaultGuild = client.GetGuild(DiscordHelper.DefaultGuild());
+
+        var joinChannelId = _config.JoinChannel;
+        if (joinChannelId == 0)
+        {
+            _logger.Log("Can't post joins because .config JoinChannel hasn't been set.");
+            return null;
+        }
+        var joinChannel = defaultGuild?.GetTextChannel(joinChannelId);
+        if (joinChannel == null)
+        {
+            _logger.Log("Something went wrong trying to access JoinChannel.");
+            return null;
+        }
+
+        return joinChannel;
     }
 }

@@ -15,6 +15,7 @@ public class Config
         Prefix = '.';
         ModRole = 0;
         ModChannel = 0;
+        JoinChannel = 0;
         LogChannel = 0;
 
         // Misc settings
@@ -133,6 +134,7 @@ public class Config
     // Moderation settings
     public ulong ModRole { get; set; }
     public ulong ModChannel { get; set; }
+    public ulong JoinChannel { get; set; }
     public ulong LogChannel { get; set; }
 
     // User based settings
