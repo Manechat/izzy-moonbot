@@ -93,12 +93,12 @@ namespace Izzy_Moonbot
                 _client.Ready += ReadyEvent;
 
                 await _client.StartAsync();
-                
+
                 var filepath = FileHelper.SetUpFilepath(FilePathType.Root, "moderation", "log");
-                
+
                 if (!File.Exists(filepath))
                     await File.WriteAllTextAsync(filepath, $"----------= {DateTimeOffset.UtcNow:F} =----------\n", stoppingToken);
-                
+
                 await File.AppendAllTextAsync(filepath, $"----------= {DateTimeOffset.UtcNow:F} =----------\n", stoppingToken);
 
                 if (_config.DiscordActivityName != null)
@@ -129,12 +129,12 @@ namespace Izzy_Moonbot
                     if (_config.DiscordActivityName != null)
                     {
                         if (_client.Activity.Name != _config.DiscordActivityName ||
-                            _client.Activity.Type != (_config.DiscordActivityWatching ? ActivityType.Watching : ActivityType.Playing)) 
+                            _client.Activity.Type != (_config.DiscordActivityWatching ? ActivityType.Watching : ActivityType.Playing))
                             await _client.SetGameAsync(_config.DiscordActivityName, type: (_config.DiscordActivityWatching ? ActivityType.Watching : ActivityType.Playing));
                     }
                     else
                     {
-                        if (_client.Activity.Name != "") 
+                        if (_client.Activity.Name != "")
                             await _client.SetGameAsync("");
                     }
                 };
@@ -164,7 +164,7 @@ namespace Izzy_Moonbot
 
                 // Block this task until the program is closed.
                 await Task.Delay(-1, stoppingToken);
-                
+
                 while (!stoppingToken.IsCancellationRequested)
                 {
                     _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
@@ -545,8 +545,8 @@ namespace Izzy_Moonbot
                     if (socketGuildUser.Roles.Select(role => role.Id).Contains(_config.ModRole)) continue; // Mods aren't stowaways
 
                     if (
-                        socketGuildUser.Roles.Select(role => role.Id).Contains(DiscordHelper.BanishedRoleId) ||
-                        socketGuildUser.Roles.Select(role => role.Id).Contains(DiscordHelper.TartarusRoleId) ||
+                        socketGuildUser.Roles.Select(role => role.Id).Contains(_config.BanishedRole) ||
+                        socketGuildUser.Roles.Select(role => role.Id).Contains(_config.TartarusRole) ||
                         (_config.MemberRole is ulong memberRoleId && !socketGuildUser.Roles.Select(role => role.Id).Contains(memberRoleId))
                     )
                     {
@@ -566,7 +566,7 @@ namespace Izzy_Moonbot
                 {
                     var stowawayStringList = stowawaySet.Select(user => $"<@{user.Id}>");
                     var stowawayStringFileList = stowawaySet.Select(user => $"{user.DisplayName} ({user.Username}/{user.Id})");
-                    
+
                     await _modLog.CreateModLog(guild)
                         .SetContent($"I found these stowaways (as defined by `.help stowaways`) after I rebooted, cannot tell if they're new users:\n" +
                                     string.Join(", ", stowawayStringList))
@@ -641,16 +641,16 @@ namespace Izzy_Moonbot
                 if (_config.Aliases.Count != 0)
                 {
                     var command = parsedMessage.Split(" ");
-                        
+
                     foreach (var keyValuePair in _config.Aliases)
                     {
                         if (command[0].ToLower() != keyValuePair.Key.ToLower()) continue;
                         // Alias match
-                            
+
                         var commandAlias = keyValuePair.Value.StartsWith(_config.Prefix)
                             ? keyValuePair.Value[1..].TrimStart().Split(" ")[0]
                             : keyValuePair.Value.TrimStart().Split(" ")[0];
-                            
+
                         if (_config.Aliases.Any(alias => alias.Key.ToLower() == commandAlias.ToLower()))
                         {
                             await context.Channel.SendMessageAsync(
@@ -672,9 +672,9 @@ namespace Izzy_Moonbot
 
                     parsedMessage = string.Join(" ", command);
                 }
-                
+
                 var inputCommandName = parsedMessage.Split(" ")[0];
-                var validCommand = _commands.Commands.Any(command => 
+                var validCommand = _commands.Commands.Any(command =>
                     command.Name.ToLower() == inputCommandName.ToLower() || command.Aliases.Select(alias => alias.ToLower()).Contains(inputCommandName.ToLower()));
 
                 if (!validCommand)
@@ -720,7 +720,7 @@ namespace Izzy_Moonbot
                         return;
                     }
                 }
-                
+
                 var searchResult = _commands.Search(parsedMessage);
                 var commandToExec = searchResult.Commands[0].Command;
 
