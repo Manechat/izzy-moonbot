@@ -14,13 +14,6 @@ public class ConfigDescriber
         _config.Add("Prefix",
             new ConfigItem("Prefix", ConfigItemType.Char, "The prefix I will listen to for commands.",
                 ConfigItemCategory.Setup));
-        _config.Add("ModRole",
-            new ConfigItem("ModRole", ConfigItemType.Role, "The role that I allow to execute sensitive commands.",
-                ConfigItemCategory.Setup));
-        _config.Add("ModChannel",
-            new ConfigItem("ModChannel", ConfigItemType.Channel,
-                "The channel where I'll post messages about possible raids, spam trips, filter violations, most automated role changes, automated unbans, and so on.",
-                ConfigItemCategory.Setup));
         _config.Add("JoinChannel",
             new ConfigItem("JoinChannel", ConfigItemType.Channel,
                 "The channel where I'll post messages about users joining and leaving, as well as automated member role additions (since every user gets one of those).",
@@ -28,6 +21,21 @@ public class ConfigDescriber
         _config.Add("LogChannel",
             new ConfigItem("LogChannel", ConfigItemType.Channel, "The channel where I will post verbose message edit/deletion logs, including bulk deletion logs created by spam trips or the `wipe` command.",
                 ConfigItemCategory.Setup));
+
+        // Moderation settings
+        _config.Add("ModRole",
+            new ConfigItem("ModRole", ConfigItemType.Role, "The role that I allow to execute sensitive commands.",
+                ConfigItemCategory.Moderation));
+        _config.Add("ModChannel",
+            new ConfigItem("ModChannel", ConfigItemType.Channel,
+                "The channel where I'll post messages about possible raids, spam trips, filter violations, most automated role changes, automated unbans, and so on.",
+                ConfigItemCategory.Moderation));
+        _config.Add("BanishedRole",
+            new ConfigItem("BanishedRole", ConfigItemType.Role, "The role that I assign when banishing users.",
+                ConfigItemCategory.Moderation));
+        _config.Add("TartarusRole",
+            new ConfigItem("TartarusRole", ConfigItemType.Role, "The role that I assign when sending users to Tartarus.",
+                ConfigItemCategory.Moderation));
 
         // Misc settings
         _config.Add("UnicycleInterval",
@@ -318,6 +326,8 @@ public class ConfigDescriber
         {
             case "setup":
                 return ConfigItemCategory.Setup;
+            case "moderation":
+                return ConfigItemCategory.Moderation;
             case "misc":
                 return ConfigItemCategory.Misc;
             case "banner":
@@ -347,6 +357,8 @@ public class ConfigDescriber
         {
             case ConfigItemCategory.Setup:
                 return "Setup";
+            case ConfigItemCategory.Moderation:
+                return "Moderation";
             case ConfigItemCategory.Misc:
                 return "Misc";
             case ConfigItemCategory.Banner:

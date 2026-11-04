@@ -43,7 +43,7 @@ public static class DiscordHelper
         {
             return externalUsageAllowedFlag;
         }
-        
+
         return true;
     }
 
@@ -54,10 +54,10 @@ public static class DiscordHelper
     public static bool IsDefaultGuild(IIzzyContext context)
     {
         if (context.IsPrivate) return false;
-        
+
         return context.Guild?.Id == DefaultGuild();
     }
-    
+
     public static ulong DefaultGuild()
     {
         var maybeDefaultGuildId = DefaultGuildId;
@@ -77,7 +77,7 @@ public static class DiscordHelper
             throw;
         }
     }
-    
+
     public static bool IsDev(ulong user)
     {
         var maybeDevUserIds = DevUserIds;
@@ -108,12 +108,12 @@ public static class DiscordHelper
 
         var section = config.GetSection(nameof(DiscordSettings));
         var settings = section.Get<DiscordSettings>();
-        
+
         if (settings == null) throw new NullReferenceException("Discord settings is null!");
 
         return settings;
     }
-    
+
     public static bool IsProcessableMessage(IIzzyMessage msg)
     {
         if (msg.Type != MessageType.Default && msg.Type != MessageType.Reply &&
@@ -370,7 +370,4 @@ public static class DiscordHelper
     // This is essentially https://stackoverflow.com/a/3809435 with added lookaround for <>s.
     public static Regex UnfurlableUrl =
         new(@"(?<!<)(https?://(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&//=]*))(?!>)");
-
-    public static ulong BanishedRoleId = 368961099925553153ul;
-    public static ulong TartarusRoleId = 1343381219769061376ul;
 }

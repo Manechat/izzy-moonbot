@@ -17,14 +17,14 @@ public class UserListener
 {
     // This listener handles listening to user related events (join, leave, etc)
     // This is mostly used for logging and constructing user settings
-    
+
     private readonly LoggingService _logger;
     private readonly Dictionary<ulong, User> _users;
     private readonly ModLoggingService _modLogger;
     private readonly ModService _mod;
     private readonly ScheduleService _schedule;
     private readonly Config _config;
-    
+
     public UserListener(LoggingService logger, Dictionary<ulong, User> users, ModLoggingService modLogger, ModService mod, ScheduleService schedule, Config config)
     {
         _logger = logger;
@@ -46,8 +46,8 @@ public class UserListener
     public async Task MemberUnbanEvent(SocketUser user, SocketGuild guild)
     {
         if (guild.Id != DiscordHelper.DefaultGuild()) return;
-        
-        var scheduledJobs = _schedule.GetScheduledJobs(job => 
+
+        var scheduledJobs = _schedule.GetScheduledJobs(job =>
             job.Action switch
             {
                 ScheduledUnbanJob unbanJob => unbanJob.User == user.Id,
@@ -109,7 +109,7 @@ public class UserListener
         _logger.Log($"Generated moderation log for user join: {msg}");
         await joinChannel.SendMessageAsync(msg, allowedMentions: AllowedMentions.None);
     }
-    
+
     private async Task MemberLeaveEvent(SocketGuild guild, SocketUser user, DiscordSocketClient client)
     {
         if (guild.Id != DiscordHelper.DefaultGuild()) return;
@@ -227,7 +227,7 @@ public class UserListener
         if (newUser.Guild.Id != DiscordHelper.DefaultGuild()) return;
 
         var changed = false;
-        
+
         if (!_users.ContainsKey(newUser.Id))
         {
             changed = true;
@@ -255,11 +255,11 @@ public class UserListener
                 changed = true;
             }
         }
-        
+
         if (_config.MemberRole != null)
         {
             if (_users[newUser.Id].Silenced &&
-                !newUser.Roles.Select(role => role.Id).Contains(DiscordHelper.TartarusRoleId))
+                !newUser.Roles.Select(role => role.Id).Contains(_config.TartarusRole))
             {
                 // Unsilenced, Remove the flag.
                 _logger.Log(
@@ -269,7 +269,7 @@ public class UserListener
             }
 
             if (!_users[newUser.Id].Silenced &&
-                newUser.Roles.Select(role => role.Id).Contains(DiscordHelper.TartarusRoleId))
+                newUser.Roles.Select(role => role.Id).Contains(_config.TartarusRole))
             {
                 // Silenced, add the flag
                 _logger.Log(
@@ -299,7 +299,7 @@ public class UserListener
                 changed = true;
             }
         }
-        
+
         foreach (var roleId in _users[newUser.Id].RolesToReapplyOnRejoin)
         {
             if (!newUser.Guild.Roles.Select(role => role.Id).Contains(roleId))
@@ -309,7 +309,7 @@ public class UserListener
                 _users[newUser.Id].RolesToReapplyOnRejoin.Remove(roleId);
                 _config.RolesToReapplyOnRejoin.Remove(roleId);
                 await FileHelper.SaveConfigAsync(_config);
-                changed = true;       
+                changed = true;
             }
             else
             {

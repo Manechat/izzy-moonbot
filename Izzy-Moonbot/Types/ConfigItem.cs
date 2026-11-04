@@ -22,6 +22,7 @@ public class ConfigItem
 public enum ConfigItemCategory
 {
     Setup,
+    Moderation,
     Misc,
     Banner,
     ManagedRoles,
@@ -45,15 +46,15 @@ public enum ConfigItemType
     Enum,
     Role,
     Channel,
-    
+
     // Sets
     StringSet,
     RoleSet,
     ChannelSet,
-    
+
     // Dictionaries
     StringDictionary,
-    
+
     // Dictionaries of Sets
     StringSetDictionary
 }

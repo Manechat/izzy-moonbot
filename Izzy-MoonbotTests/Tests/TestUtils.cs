@@ -25,7 +25,7 @@ public static class TestUtils
         var users = new List<StubGuildUser> { izzyHerself, sunny, zipp, pipp, hitch };
 
         var alicorn = new TestRole("Alicorn", 1);
-        List<TestRole> roles = [ alicorn, new TestRole("Pegasus", 2), new TestRole("Tartarus", DiscordHelper.TartarusRoleId)];
+        List<TestRole> roles = [ alicorn, new TestRole("Pegasus", 2), new TestRole("Tartarus", 3)];
 
         // because user ids are also Direct Message channel ids, regular channels must have different ids
         var generalChannel = new StubChannel(1001, "general");

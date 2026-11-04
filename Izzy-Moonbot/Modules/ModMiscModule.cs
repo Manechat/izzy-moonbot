@@ -211,15 +211,15 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
             if (!Context.Guild.HasAllMembers) await Context.Guild.DownloadUsersAsync();
 
             var stowawaySet = new HashSet<SocketGuildUser>();
-            
+
             await foreach (var socketGuildUser in Context.Guild.Users.ToAsyncEnumerable())
             {
                 if (socketGuildUser.IsBot) continue; // Bots aren't stowaways
                 if (socketGuildUser.Roles.Select(role => role.Id).Contains(_config.ModRole)) continue; // Mods aren't stowaways
 
                 if (
-                    socketGuildUser.Roles.Select(role => role.Id).Contains(DiscordHelper.BanishedRoleId) ||
-                    socketGuildUser.Roles.Select(role => role.Id).Contains(DiscordHelper.TartarusRoleId) ||
+                    socketGuildUser.Roles.Select(role => role.Id).Contains(_config.BanishedRole) ||
+                    socketGuildUser.Roles.Select(role => role.Id).Contains(_config.TartarusRole) ||
                     (_config.MemberRole is ulong memberRoleId && !socketGuildUser.Roles.Select(role => role.Id).Contains(memberRoleId))
                 )
                 {
@@ -297,7 +297,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
         }
 
         var args = DiscordHelper.GetArguments(argsString);
-        
+
         if (args.Arguments[0].ToLower() == "list")
         {
             if (args.Arguments.Length == 1)
@@ -351,7 +351,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
             {
                 // All
                 var jobs = _schedule.GetScheduledJobs().Select(job => job.ToFileString()).ToList();
-                
+
                 var s = new MemoryStream(Encoding.UTF8.GetBytes(string.Join('\n', jobs)));
                 var fa = new FileAttachment(s, $"all_scheduled_jobs_{DateTimeHelper.UtcNow.ToUnixTimeSeconds()}.txt");
 
@@ -368,9 +368,9 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                         $"There is no \"{jobType}\" job type.\n{supportedJobTypesMessage}");
                     return;
                 }
-                
+
                 var jobs = _schedule.GetScheduledJobs().Where(job => job.Action.GetType().FullName == type.FullName).Select(job => job.ToFileString()).ToList();
-                
+
                 var s = new MemoryStream(Encoding.UTF8.GetBytes(string.Join('\n', jobs)));
                 var fa = new FileAttachment(s, $"{jobType}_scheduled_jobs_{DateTimeHelper.UtcNow.ToUnixTimeSeconds()}.txt");
 
@@ -386,7 +386,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                 await context.Channel.SendMessageAsync("You need to provide either a job type, or an ID for a specific job.");
                 return;
             }
-            
+
             // Check IDs first
             var potentialJob = _schedule.GetScheduledJob(searchString);
             if (potentialJob != null)
@@ -407,7 +407,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                     ScheduledEndRaidJob endRaidJob => $"Raid IsLarge: {endRaidJob.IsLarge}",
                     _ => ""
                 };
-                
+
                 var expandedRepeatInfo = potentialJob.RepeatType switch
                 {
                     ScheduledJobRepeatType.None => "",
@@ -417,7 +417,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                     ScheduledJobRepeatType.Yearly => $"Every year at {potentialJob.ExecuteAt:T} on {potentialJob.ExecuteAt:dd MMMM}\n",
                     _ => throw new NotImplementedException("Unknown repeat type.")
                 };
-                
+
                 await context.Channel.SendMessageAsync(
                     $"Here's information regarding the scheduled job with ID of `{potentialJob.Id}`:\n" +
                     $"Job type: {jobType}\n" +
@@ -435,7 +435,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                         $"There is no \"{searchString}\" job ID or job type.\n{supportedJobTypesMessage}");
                     return;
                 }
-                
+
                 var content = "";
                 switch (type.Name)
                 {
@@ -531,7 +531,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
 
                 await context.Channel.SendMessageAsync(content, allowedMentions: AllowedMentions.None);
             }
-        } 
+        }
         else if (args.Arguments[0].ToLower() == "add")
         {
             if (args.Arguments.Length == 1)
@@ -639,7 +639,7 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                 await context.Channel.SendMessageAsync("You need to provide an ID for a specific scheduled job.");
                 return;
             }
-            
+
             // Check IDs first
             var potentialJob = _schedule.GetScheduledJob(searchString);
             if (potentialJob == null)
@@ -659,8 +659,8 @@ public class ModMiscModule : ModuleBase<SocketCommandContext>
                 await context.Channel.SendMessageAsync("Sorry, I couldn't find that job.");
             }
         }
-    } 
-    
+    }
+
     private static string ConstructRelativeRepeatTimeString(ScheduledJob job)
     {
         var secondsBetweenExecution = job.ExecuteAt.ToUnixTimeSeconds() - (job.LastExecutedAt?.ToUnixTimeSeconds() ?? job.CreatedAt.ToUnixTimeSeconds());

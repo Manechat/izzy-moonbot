@@ -8,15 +8,19 @@ namespace Izzy_Moonbot.Settings;
 public class Config
 {
     public event EventHandler<ConfigValueChangeEvent>? Changed;
-    
+
     public Config()
     {
         // Setup settings
         Prefix = '.';
-        ModRole = 0;
-        ModChannel = 0;
         JoinChannel = 0;
         LogChannel = 0;
+
+        // Mod settings
+        ModRole = 0;
+        ModChannel = 0;
+        BanishedRole = 0;
+        TartarusRole = 0;
 
         // Misc settings
         UnicycleInterval = 100;
@@ -129,13 +133,15 @@ public class Config
         }
     }
     public HashSet<string> BannerImages { get; set; }
-    
+
 
     // Moderation settings
     public ulong ModRole { get; set; }
     public ulong ModChannel { get; set; }
     public ulong JoinChannel { get; set; }
     public ulong LogChannel { get; set; }
+    public ulong BanishedRole { get; set; }
+    public ulong TartarusRole { get; set; }
 
     // User based settings
     public bool ManageNewUserRoles { get; set; }

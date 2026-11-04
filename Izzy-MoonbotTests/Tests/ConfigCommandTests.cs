@@ -117,7 +117,7 @@ public class ConfigCommandTests
         description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "ModRole");
         StringAssert.Contains(description, "Role");
-        StringAssert.Contains(description, "Setup category");
+        StringAssert.Contains(description, "Moderation category");
         StringAssert.Contains(description, "The role that I allow");
         StringAssert.Contains(description, "Current value: <@&1234>"); // this is the difference
         StringAssert.Contains(description, "Run `.config ModRole <value>`");
@@ -130,7 +130,7 @@ public class ConfigCommandTests
         description = generalChannel.Messages.Last().Content;
         StringAssert.Contains(description, "ModChannel");
         StringAssert.Contains(description, "Channel");
-        StringAssert.Contains(description, "Setup category");
+        StringAssert.Contains(description, "Moderation category");
         StringAssert.Contains(description, "The channel where I'll post");
         StringAssert.Contains(description, "Current value: <#42>"); // this is the difference
         StringAssert.Contains(description, "Run `.config ModChannel <value>`");
@@ -247,9 +247,9 @@ public class ConfigCommandTests
 
         cfg.SpamBypassRoles.Add(2ul);
         var context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config SpamBypassRoles add <@&1>");
-    
+
         await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "SpamBypassRoles", "add <@&1>");
-    
+
         TestUtils.AssertSetsAreEqual(cfg.SpamBypassRoles, new HashSet<ulong> { 2ul, 1ul });
 
         var description = generalChannel.Messages.Last().Content;
@@ -347,7 +347,9 @@ public class ConfigCommandTests
         var alicorn = new TestRole("Alicorn", 1);
         var pony = new TestRole("Pony", 2);
         var newPony = new TestRole("New Pony", 3);
-        List<TestRole> roles = [ alicorn, pony, newPony ];
+        var banished = new TestRole("Banished", 4);
+        var tartarus = new TestRole("Tartarus", 5);
+        List<TestRole> roles = [ alicorn, pony, newPony, banished, tartarus ];
 
         var generalChannel = new StubChannel(1, "general");
         var modChannel = new StubChannel(2, "modchat");
@@ -488,6 +490,20 @@ public class ConfigCommandTests
         await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "LogChannel", "<#3>");
         Assert.AreEqual(3ul, cfg.LogChannel);
         Assert.AreEqual("I've set `LogChannel` to the following content: <#3>", generalChannel.Messages.Last().Content);
+
+        // post ".config BanishedRole <@&4>"
+        Assert.AreEqual(0ul, cfg.BanishedRole);
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config BanishedRole <@&4>");
+        await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "BanishedRole", "<@&4>");
+        Assert.AreEqual(4ul, cfg.BanishedRole);
+        Assert.AreEqual("I've set `BanishedRole` to the following content: <@&4>", generalChannel.Messages.Last().Content);
+
+        // post ".config TartarusRole <@&5>"
+        Assert.AreEqual(0ul, cfg.TartarusRole);
+        context = await client.AddMessageAsync(guild.Id, generalChannel.Id, sunny.Id, ".config TartarusRole <@&5>");
+        await ConfigCommand.TestableConfigCommandAsync(context, cfg, cd, "TartarusRole", "<@&5>");
+        Assert.AreEqual(5ul, cfg.TartarusRole);
+        Assert.AreEqual("I've set `TartarusRole` to the following content: <@&5>", generalChannel.Messages.Last().Content);
 
         // post ".config BestPonyChannel <#42>"
         Assert.AreEqual(0ul, cfg.BestPonyChannel);
@@ -807,7 +823,7 @@ public class ConfigCommandTests
         // Ensure we can't forget to keep this test up to date
         var configPropsCount = typeof(Config).GetProperties().Length;
 
-        Assert.AreEqual(60, configPropsCount,
+        Assert.AreEqual(62, configPropsCount,
             $"\nIf you just added or removed a config item, then this test is probably out of date");
 
         Assert.AreEqual(configPropsCount * 2, generalChannel.Messages.Count(),
